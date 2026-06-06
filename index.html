@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfect World: Web Idle MMO</title>
+    <style>
+        /* Modern UI: Dark Theme & Glassmorphism */
+        :root {
+            --primary: #00e5ff;
+            --secondary: #ff0055;
+            --bg-color: #0a0f1a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at top right, #1a233a, #0a0f1a);
+        }
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            display: none; /* Disembunyikan, diatur oleh JS */
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h2 { margin-top: 0; color: var(--primary); }
+        h3 { color: #aaa; font-size: 14px; margin-bottom: 5px; }
+        
+        /* Form & Buttons */
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            color: white;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .btn {
+            background: linear-gradient(45deg, #00e5ff, #0077ff);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .btn:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
+        .btn-danger { background: linear-gradient(45deg, #ff0055, #cc0044); }
+        .btn-danger:hover { box-shadow: 0 0 15px rgba(255, 0, 85, 0.4); }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+        }
+        .stat-val { font-size: 24px; font-weight: bold; color: var(--primary); }
+
+        /* Admin Section */
+        .admin-badge {
+            background: var(--secondary);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        #authScreen { display: block; width: 400px; }
+        #gameScreen { display: none; }
+        #adminScreen { display: none; }
+        .nav-bar { display: flex; gap: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="glass-panel" id="authScreen">
+        <h2 style="text-align: center;">Perfect World Web</h2>
+        <p style="text-align: center; color: #aaa;">Masukkan kredensial Anda</p>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        
+        <button class="btn" id="btnLogin">Login</button>
+        <button class="btn" id="btnRegister" style="background: transparent; border: 1px solid var(--primary);">Register</button>
+        <div id="authError" style="color: var(--secondary); text-align: center; font-size: 14px; margin-top: 10px;"></div>
+    </div>
+
+    <div class="container" id="gameScreen">
+        <div class="glass-panel">
+            <div id="adminBadgeUI" class="admin-badge" style="display: none;">ADMIN</div>
+            <h2>Profil Karakter</h2>
+            <p>Email: <span id="uiEmail">-</span></p>
+            <p>Class: <strong id="uiClass" style="color: var(--primary);">-</strong></p>
+            
+            <hr style="border-color: var(--glass-border); margin: 20px 0;">
+            <button class="btn" id="btnCultivate">Meditasi (Kumpulkan Chi)</button>
+            <button class="btn btn-danger" id="btnLogout">Logout</button>
+        </div>
+
+        <div class="glass-panel">
+            <h2>Dunia Pan Gu</h2>
+            <p>Selamat datang! Kumpulkan Chi untuk menembus batas levelmu.</p>
+            
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h3>Level</h3>
+                    <div class="stat-val" id="uiLevel">0</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Gold</h3>
+                    <div class="stat-val" id="uiGold">0</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Chi</h3>
+                    <div class="stat-val" id="uiChi">0 / 100</div>
+                </div>
+            </div>
+
+            <div class="nav-bar">
+                <button class="btn" id="btnGoAdmin" style="display: none; background: #333;">Buka Admin Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="adminScreen" style="grid-template-columns: 1fr;">
+        <div class="glass-panel">
+            <div class="admin-badge">ADMIN PANEL</div>
+            <h2>Manajemen Server</h2>
+            <p>Berikan item atau Gold kepada pemain (Masukkan UID pemain).</p>
+            
+            <input type="text" id="targetUid" placeholder="Masukkan UID Target">
+            <input type="number" id="giveGoldAmount" placeholder="Jumlah Gold">
+            <button class="btn" id="btnGiveGold">Kirim Gold ke Pemain</button>
+
+            <div class="nav-bar">
+                <button class="btn" id="btnBackToGame" style="background: #333; width: auto;">Kembali ke Game</button>
+            </div>
+            <div id="adminLog" style="color: #00e5ff; margin-top: 10px; font-size: 14px;"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // 1. IMPORT FIREBASE
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } 
+            from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, increment } 
+            from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+
+        // 2. KONFIGURASI FIREBASE ANDA (PASTIKAN UNTUK MENGGANTI INI)
+        const firebaseConfig = {
+            apiKey: "API_KEY_ANDA",
+            authDomain: "PROJECT_ID.firebaseapp.com",
+            projectId: "PROJECT_ID",
+            storageBucket: "PROJECT_ID.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
+
+        // Inisialisasi Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // State Global
+        let currentUser = null;
+        let unsubSnapshot = null;
+
+        // UI Elements
+        const authScreen = document.getElementById('authScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const adminScreen = document.getElementById('adminScreen');
+        
+        // 3. FUNGSI AUTENTIKASI
+        document.getElementById('btnLogin').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                document.getElementById('authError').innerText = "Login Gagal: " + error.message;
+            }
+        });
+
+        document.getElementById('btnRegister').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                // Buat data default di Firestore saat register
+                await setDoc(doc(db, "users", user.uid), {
+                    email: user.email,
+                    role: "player", // Ubah manual jadi 'admin' di database untuk testing panel admin
+                    class: "Blademaster",
+                    level: 1,
+                    gold: 0,
+                    chi: 0
+                });
+            } catch (error) {
+                document.getElementById('authError').innerText = "Register Gagal: " + error.message;
+            }
+        });
+
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        // 4. LISTENER STATUS LOGIN & SINKRONISASI DATA GAME
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                authScreen.style.display = 'none';
+                gameScreen.style.display = 'grid';
+                adminScreen.style.display = 'none';
+
+                // Listen ke database karakter secara Real-Time
+                unsubSnapshot = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        
+                        // Update UI
+                        document.getElementById('uiEmail').innerText = data.email;
+                        document.getElementById('uiClass').innerText = data.class;
+                        document.getElementById('uiLevel').innerText = data.level;
+                        document.getElementById('uiGold').innerText = data.gold;
+                        document.getElementById('uiChi').innerText = `${data.chi} / 100`;
+
+                        // Cek Role Admin
+                        if(data.role === 'admin') {
+                            document.getElementById('adminBadgeUI').style.display = 'inline-block';
+                            document.getElementById('btnGoAdmin').style.display = 'block';
+                        }
+                    }
+                });
+            } else {
+                currentUser = null;
+                if(unsubSnapshot) unsubSnapshot(); // Hentikan listener data
+                authScreen.style.display = 'block';
+                gameScreen.style.display = 'none';
+                adminScreen.style.display = 'none';
+            }
+        });
+
+        // 5. LOGIKA GAME (CULTIVATION)
+        document.getElementById('btnCultivate').addEventListener('click', async () => {
+            if(!currentUser) return;
+            
+            const userRef = doc(db, "users", currentUser.uid);
+            const docSnap = await getDoc(userRef);
+            
+            if(docSnap.exists()) {
+                let currentData = docSnap.data();
+                let newChi = currentData.chi + 10;
+                let newLevel = currentData.level;
+                let newGold = currentData.gold;
+
+                // Logika Level Up jika Chi mencapai 100
+                if(newChi >= 100) {
+                    newChi = 0;
+                    newLevel += 1;
+                    newGold += 100; // Bonus gold saat level up
+                }
+
+                // Update ke Firestore
+                await updateDoc(userRef, {
+                    chi: newChi,
+                    level: newLevel,
+                    gold: newGold
+                });
+            }
+        });
+
+        // 6. NAVIGASI ADMIN
+        document.getElementById('btnGoAdmin').addEventListener('click', () => {
+            gameScreen.style.display = 'none';
+            adminScreen.style.display = 'grid';
+        });
+
+        document.getElementById('btnBackToGame').addEventListener('click', () => {
+            adminScreen.style.display = 'none';
+            gameScreen.style.display = 'grid';
+        });
+
+        // 7. FUNGSI ADMIN PANEL
+        document.getElementById('btnGiveGold').addEventListener('click', async () => {
+            const targetUid = document.getElementById('targetUid').value;
+            const amount = parseInt(document.getElementById('giveGoldAmount').value);
+            const logElement = document.getElementById('adminLog');
+
+            if(!targetUid || isNaN(amount)) {
+                logElement.innerText = "Data tidak valid!";
+                return;
+            }
+
+            try {
+                const targetRef = doc(db, "users", targetUid);
+                await updateDoc(targetRef, {
+                    gold: increment(amount)
+                });
+                logElement.innerText = `Sukses mengirim ${amount} Gold ke UID: ${targetUid}`;
+            } catch (error) {
+                logElement.innerText = "Gagal: Pastikan UID benar dan Anda punya akses (Security Rules Firestore).";
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>
