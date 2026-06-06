@@ -3,119 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfect World: Web Idle MMO v3</title>
+    <title>Perfect World: Web Idle MMO v4</title>
     <style>
         /* Modern UI: Dark Theme & Glassmorphism */
         :root {
-            --primary: #00e5ff;
-            --secondary: #ff0055;
-            --accent: #e040fb;
-            --success: #00e676;
-            --bg-color: #0a0f1a;
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --primary: #00e5ff; --secondary: #ff0055; --accent: #e040fb;
+            --success: #00e676; --warning: #ffea00; --bg-color: #0a0f1a;
+            --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08);
         }
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-image: radial-gradient(circle at top right, #141f36, #0a0f1a);
-        }
-        .container {
-            width: 95%;
-            max-width: 1200px;
-            display: none; 
-            grid-template-columns: 1fr 2fr;
-            gap: 20px;
-            padding: 20px 0;
-        }
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-image: radial-gradient(circle at top right, #141f36, #0a0f1a); }
+        .container { width: 95%; max-width: 1200px; display: none; grid-template-columns: 1fr 2fr; gap: 20px; padding: 20px 0; }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 25px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); }
         h2 { margin-top: 0; color: var(--primary); letter-spacing: 1px; }
         h3 { color: #aaa; font-size: 13px; margin-bottom: 5px; text-transform: uppercase; }
         
-        /* Form & Buttons */
-        input, select {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--glass-border);
-            color: white;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
         input:focus, select:focus { outline: none; border-color: var(--primary); }
-        .btn {
-            background: linear-gradient(45deg, #00e5ff, #0077ff);
-            border: none;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-            width: 100%;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.1);
-        }
+        .btn { background: linear-gradient(45deg, #00e5ff, #0077ff); border: none; color: white; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; width: 100%; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0, 229, 255, 0.1); }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 229, 255, 0.4); }
         .btn-danger { background: linear-gradient(45deg, #ff0055, #cc0044); box-shadow: 0 4px 15px rgba(255, 0, 85, 0.1); }
         .btn-danger:hover { box-shadow: 0 0 20px rgba(255, 0, 85, 0.4); }
         .btn-accent { background: linear-gradient(45deg, #e040fb, #aa00ff); }
-        .btn-accent:hover { box-shadow: 0 0 20px rgba(224, 64, 251, 0.4); }
-        .btn-success { background: linear-gradient(45deg, #00e676, #00b0ff); }
+        .btn-warning { background: linear-gradient(45deg, #ffea00, #ff9100); color: #000; box-shadow: 0 4px 15px rgba(255, 234, 0, 0.1); }
+        .btn-small { padding: 6px 12px; font-size: 12px; width: auto; margin: 0; }
 
-        /* Stats & Character Grid */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
         .stat-box { background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; text-align: center; border: 1px solid var(--glass-border); }
         .stat-val { font-size: 20px; font-weight: bold; color: var(--primary); }
         
-        .sub-stats {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
-            background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px; margin-top: 15px;
-        }
+        .sub-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px; margin-top: 15px; }
         .sub-stat-item { font-size: 14px; color: #ccc; }
         .sub-stat-item strong { color: #fff; }
         .bonus-stat { color: var(--success); font-size: 12px; }
 
-        /* Equipment & Inventory */
         .equip-box { background: rgba(224, 64, 251, 0.1); border: 1px solid var(--accent); padding: 10px; border-radius: 8px; margin-top: 15px; text-align: center; font-size: 14px;}
         .inventory-section { margin-top: 25px; }
         .inventory-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 10px; min-height: 120px; }
-        .inv-slot {
-            aspect-ratio: 1; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); border-radius: 8px;
-            display: flex; justify-content: center; align-items: center; font-size: 11px; text-align: center; padding: 4px;
-            word-break: break-word; cursor: pointer; transition: all 0.2s;
-        }
+        .inv-slot { aspect-ratio: 1; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 11px; text-align: center; padding: 4px; word-break: break-word; cursor: pointer; transition: all 0.2s; position: relative;}
         .inv-slot.filled:hover { border-color: var(--primary); background: rgba(0, 229, 255, 0.1); transform: scale(1.05); }
         .inv-slot.filled { border-color: var(--accent); background: rgba(224, 64, 251, 0.05); }
+        
+        .market-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; max-height: 300px; overflow-y: auto; }
+        .market-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 15px; border-radius: 8px; border: 1px solid var(--glass-border); }
 
-        /* Badges & Screens */
         .admin-badge { background: var(--secondary); padding: 4px 8px; border-radius: 4px; font-size: 11px; display: inline-block; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; }
         #authScreen, #charCreateScreen { display: block; width: 400px; }
-        #charCreateScreen, #gameScreen, #adminScreen { display: none; }
+        #charCreateScreen, #gameScreen, #adminScreen, #marketScreen { display: none; }
         .nav-bar { display: flex; gap: 10px; margin-top: 20px; }
         .log-box { background: rgba(0, 0, 0, 0.5); padding: 12px; border-radius: 8px; height: 60px; overflow-y: auto; font-size: 13px; color: #00e5ff; border-left: 3px solid var(--primary); margin-top: 15px; }
-        
-        /* Dungeon Section */
         .dungeon-panel { background: rgba(255, 0, 85, 0.05); border: 1px solid rgba(255, 0, 85, 0.3); padding: 15px; border-radius: 8px; margin-top: 20px; }
+        
+        /* Modal for Items */
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a2235; border: 1px solid var(--primary); padding: 20px; border-radius: 12px; z-index: 100; box-shadow: 0 0 30px rgba(0, 229, 255, 0.3); text-align: center; width: 250px;}
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99; }
     </style>
 </head>
 <body>
+
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="itemModal">
+        <h3 id="modalItemName" style="color: var(--primary); margin-top:0;">Nama Item</h3>
+        <p id="modalItemDesc" style="font-size: 12px; color: #aaa;">Deskripsi status item.</p>
+        <button class="btn btn-accent" id="btnModalEquip">Equip (Gunakan)</button>
+        <input type="number" id="modalSellPrice" placeholder="Harga Jual (Gold)" style="margin-bottom: 10px;">
+        <button class="btn btn-warning" id="btnModalSell">Jual di Pasar Lelang</button>
+        <button class="btn btn-danger" id="btnModalClose">Tutup</button>
+    </div>
 
     <div class="glass-panel" id="authScreen">
         <h2 style="text-align: center; margin-bottom: 5px;">Perfect World Web</h2>
@@ -129,7 +82,6 @@
 
     <div class="glass-panel" id="charCreateScreen">
         <h2>Buat Karakter Anda</h2>
-        <p style="color: #aaa; font-size: 14px;">Pilih jalur kekuatan spiritual Anda di Pan Gu.</p>
         <input type="text" id="newCharName" placeholder="Nama Karakter">
         <label style="font-size: 12px; color: #aaa;">PILIH CLASS:</label>
         <select id="newCharClass">
@@ -150,12 +102,11 @@
                 
                 <div class="equip-box">
                     Equipped: <strong id="uiEquip" style="color: var(--primary);">Tidak Ada</strong>
-                    <br><span style="font-size: 11px; color: #aaa;">(Klik item di inventory untuk equip)</span>
                 </div>
 
                 <div class="sub-stats">
                     <div class="sub-stat-item">HP: <strong id="uiHp">0</strong> <span id="uiHpBonus" class="bonus-stat"></span></div>
-                    <div class="sub-stat-item">Mana: <strong id="uiMana">0</strong> <span id="uiManaBonus" class="bonus-stat"></span></div>
+                    <div class="sub-stat-item">Mana: <strong id="uiMana">0</strong></div>
                     <div class="sub-stat-item">Attack: <strong id="uiAtk">0</strong> <span id="uiAtkBonus" class="bonus-stat"></span></div>
                     <div class="sub-stat-item">Defense: <strong id="uiDef">0</strong> <span id="uiDefBonus" class="bonus-stat"></span></div>
                 </div>
@@ -164,42 +115,48 @@
             <div style="margin-top: 20px;">
                 <button class="btn" id="btnCultivate">Meditasi (+Chi & Gold)</button>
                 <button class="btn btn-accent" id="btnGacha">Gacha Item (50 Gold)</button>
+                <button class="btn btn-warning" id="btnGoMarket">Buka Pasar Lelang</button>
                 <button class="btn btn-danger" id="btnLogout">Logout</button>
             </div>
         </div>
 
         <div class="glass-panel">
             <h2>Dunia Pan Gu</h2>
-            
             <div class="stats-grid">
                 <div class="stat-box"><h3>Level</h3><div class="stat-val" id="uiLevel">0</div></div>
                 <div class="stat-box"><h3>Gold</h3><div class="stat-val" id="uiGold">0</div></div>
                 <div class="stat-box"><h3>Chi Spiritual</h3><div class="stat-val" id="uiChi">0 / 100</div></div>
             </div>
 
-            <div class="log-box" id="gameLog">Sistem siap. Mulailah bermeditasi atau bertarung...</div>
+            <div class="log-box" id="gameLog">Sistem siap. Mulailah bermeditasi...</div>
 
             <div class="dungeon-panel">
-                <h3 style="color: var(--secondary);">Area Berbahaya (Dungeon)</h3>
-                <p style="font-size: 13px; color: #ccc; margin-top: 0;">Lawan monster untuk merampas Gold. Kekalahan akan mengurangi Chi Anda.</p>
+                <h3 style="color: var(--secondary);">Area Berbahaya</h3>
                 <div style="display: flex; gap: 10px;">
                     <select id="dungeonTarget" style="margin-bottom: 0;">
-                        <option value="1">Lvl 1 - Wraith Minion (Rekomendasi Atk: 20)</option>
-                        <option value="2">Lvl 5 - Skeletal Archer (Rekomendasi Atk: 50)</option>
-                        <option value="3">Lvl 10 - Roaming Demon (Rekomendasi Atk: 120)</option>
+                        <option value="1">Lvl 1 - Wraith Minion (Req Power: 30)</option>
+                        <option value="2">Lvl 5 - Skeletal Archer (Req Power: 80)</option>
+                        <option value="boss">💀 WORLD BOSS: Azure Dragon (Req Power: 150) [-20 Chi]</option>
                     </select>
                     <button class="btn btn-danger" id="btnHunt" style="margin-bottom: 0; width: 40%;">Mulai Pertarungan</button>
                 </div>
             </div>
 
             <div class="inventory-section">
-                <h3>Tas Penyimpanan (Inventory)</h3>
+                <h3>Tas Penyimpanan (Klik item untuk interaksi)</h3>
                 <div class="inventory-grid" id="inventoryGrid"></div>
             </div>
+            <div class="nav-bar"><button class="btn" id="btnGoAdmin" style="display: none; background: #222; width: auto; border: 1px solid #444;">Buka Admin Panel</button></div>
+        </div>
+    </div>
 
-            <div class="nav-bar">
-                <button class="btn" id="btnGoAdmin" style="display: none; background: #222; width: auto; border: 1px solid #444;">Buka Admin Panel</button>
-            </div>
+    <div class="container" id="marketScreen" style="grid-template-columns: 1fr;">
+        <div class="glass-panel">
+            <h2 style="color: var(--warning);">Pasar Lelang Global</h2>
+            <p style="color: #aaa; font-size: 14px;">Beli item dari pemain lain. Saldo Anda: <strong id="marketUserGold" style="color: var(--primary);">0</strong> Gold</p>
+            <div class="market-list" id="marketList">
+                </div>
+            <div class="nav-bar"><button class="btn" id="btnMarketToGame" style="background: #333; width: auto;">Kembali ke Game</button></div>
         </div>
     </div>
 
@@ -211,24 +168,16 @@
                 <input type="text" id="targetUid" placeholder="Masukkan UID Target Player">
                 <input type="number" id="giveGoldAmount" placeholder="Jumlah Gold">
                 <button class="btn" id="btnGiveGold">Kirim Gold ke Pemain</button>
-                
-                <select id="adminAddItem">
-                    <option value="Mirage Sword">Mirage Sword</option>
-                    <option value="Celestial Wing">Celestial Wing</option>
-                    <option value="Soulgem Ring">Soulgem Ring</option>
-                    <option value="Pan Gu Artifact">Pan Gu Artifact</option>
-                </select>
-                <button class="btn btn-accent" id="btnGiveItem">Berikan Item ke Pemain</button>
             </div>
             <div class="nav-bar"><button class="btn" id="btnBackToGame" style="background: #333; width: auto;">Kembali ke Game</button></div>
-            <div id="adminLog" style="color: #00e5ff; margin-top: 15px; font-size: 14px; font-weight: bold;"></div>
+            <div id="adminLog" style="color: #00e5ff; margin-top: 15px; font-size: 14px;"></div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, addDoc, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB3RgNUF7fsjxGbp8Wy9oI4zIljVXtwpY4",
@@ -244,65 +193,75 @@
         const db = getFirestore(app);
 
         let currentUser = null;
-        let unsubSnapshot = null;
         let localPlayerData = null;
+        let selectedInventoryIndex = null;
+        let marketUnsub = null;
 
-        // Kamus Item & Efek Status
         const itemStats = {
             "Mirage Sword": { atk: 50, def: 0, hp: 0 },
             "Celestial Wing": { atk: 0, def: 30, hp: 0 },
             "Soulgem Ring": { atk: 0, def: 0, hp: 100 },
             "Pan Gu Artifact": { atk: 100, def: 50, hp: 200 },
-            "Elixir of Life": { atk: 0, def: 0, hp: 50 } // Consumable/Item kecil
+            "Dragon Scale": { atk: 150, def: 100, hp: 500 } // Eksklusif Boss Drop
         };
-        const itemPool = Object.keys(itemStats);
+        const itemPool = ["Mirage Sword", "Celestial Wing", "Soulgem Ring", "Pan Gu Artifact"];
 
-        // Kamus Monster Dungeon
         const monsterList = {
             "1": { name: "Wraith Minion", reqPower: 30, rewardGold: 20, penaltyChi: 5 },
             "2": { name: "Skeletal Archer", reqPower: 80, rewardGold: 60, penaltyChi: 15 },
-            "3": { name: "Roaming Demon", reqPower: 200, rewardGold: 150, penaltyChi: 40 }
+            "boss": { name: "Azure Dragon (World Boss)", reqPower: 150, rewardGold: 500, penaltyChi: 20 }
         };
 
-        const authScreen = document.getElementById('authScreen');
-        const charCreateScreen = document.getElementById('charCreateScreen');
-        const gameScreen = document.getElementById('gameScreen');
-        const adminScreen = document.getElementById('adminScreen');
+        const screens = {
+            auth: document.getElementById('authScreen'), char: document.getElementById('charCreateScreen'),
+            game: document.getElementById('gameScreen'), admin: document.getElementById('adminScreen'), market: document.getElementById('marketScreen')
+        };
 
+        function showScreen(screenKey) {
+            Object.values(screens).forEach(s => s.style.display = 'none');
+            screens[screenKey].style.display = (screenKey === 'game' || screenKey === 'admin' || screenKey === 'market') ? 'grid' : 'block';
+        }
         function addLog(message) { document.getElementById('gameLog').innerText = message; }
 
-        // 1. AUTHENTICATION
+        // --- SISTEM AUDIT LOG ---
+        async function logServerEvent(action, details) {
+            try {
+                await addDoc(collection(db, "server_logs"), {
+                    timestamp: new Date().toISOString(),
+                    userEmail: currentUser.email,
+                    uid: currentUser.uid,
+                    action: action,
+                    details: details
+                });
+            } catch(e) { console.error("Gagal mencatat log", e); }
+        }
+
+        // --- AUTH ---
         document.getElementById('btnLogin').addEventListener('click', async () => {
             try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
-            catch (error) { document.getElementById('authError').innerText = "Login Gagal: " + error.message; }
+            catch (error) { document.getElementById('authError').innerText = "Login Gagal!"; }
         });
-
         document.getElementById('btnRegister').addEventListener('click', async () => {
             try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
-            catch (error) { document.getElementById('authError').innerText = "Pendaftaran Gagal: " + error.message; }
+            catch (error) { document.getElementById('authError').innerText = "Pendaftaran Gagal!"; }
         });
-
         document.getElementById('btnLogout').addEventListener('click', () => signOut(auth));
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
                 const docSnap = await getDoc(doc(db, "users", user.uid));
-                if (docSnap.exists()) { showScreen(gameScreen); startRealtimeSync(user.uid); } 
-                else { showScreen(charCreateScreen); }
+                if (docSnap.exists()) { showScreen('game'); startRealtimeSync(user.uid); } 
+                else { showScreen('char'); }
             } else {
                 currentUser = null;
-                if(unsubSnapshot) unsubSnapshot();
-                showScreen(authScreen);
+                showScreen('auth');
             }
         });
 
-        // 2. CREATE CHARACTER
         document.getElementById('btnCreateChar').addEventListener('click', async () => {
             const charName = document.getElementById('newCharName').value;
             const selectedClass = document.getElementById('newCharClass').value;
-            if(!charName) return alert("Masukkan Nama Karakter!");
-
             let baseStats = { hp: 100, mana: 100, atk: 15, def: 10 };
             if(selectedClass === "Blademaster") { baseStats.hp = 150; baseStats.def = 18; }
             else if(selectedClass === "Cleric") { baseStats.mana = 200; baseStats.atk = 22; }
@@ -310,60 +269,42 @@
 
             await setDoc(doc(db, "users", currentUser.uid), {
                 name: charName, class: selectedClass, email: currentUser.email, role: "player",
-                level: 1, gold: 100, chi: 0,
-                hp: baseStats.hp, mana: baseStats.mana, atk: baseStats.atk, def: baseStats.def,
-                inventory: [], equippedItem: "" // Field baru
+                level: 1, gold: 100, chi: 0, hp: baseStats.hp, mana: baseStats.mana, atk: baseStats.atk, def: baseStats.def,
+                inventory: [], equippedItem: ""
             });
-            showScreen(gameScreen);
+            showScreen('game');
             startRealtimeSync(currentUser.uid);
+            logServerEvent("ACCOUNT_CREATED", `Karakter ${charName} (${selectedClass}) dibuat.`);
         });
 
-        // 3. REAL-TIME SYNC & CALCULATION
+        // --- SYNC & RENDER ---
         function startRealtimeSync(uid) {
-            unsubSnapshot = onSnapshot(doc(db, "users", uid), (docSnap) => {
+            onSnapshot(doc(db, "users", uid), (docSnap) => {
                 if (docSnap.exists()) {
                     localPlayerData = docSnap.data();
                     const data = localPlayerData;
                     
-                    // Kalkulasi Bonus Equipment
                     let bonusAtk = 0, bonusDef = 0, bonusHp = 0;
                     if(data.equippedItem && itemStats[data.equippedItem]) {
-                        bonusAtk = itemStats[data.equippedItem].atk;
-                        bonusDef = itemStats[data.equippedItem].def;
-                        bonusHp = itemStats[data.equippedItem].hp;
+                        bonusAtk = itemStats[data.equippedItem].atk; bonusDef = itemStats[data.equippedItem].def; bonusHp = itemStats[data.equippedItem].hp;
                     }
 
-                    // Render Basic Info
-                    document.getElementById('uiName').innerText = data.name;
-                    document.getElementById('uiClass').innerText = data.class;
-                    document.getElementById('uiLevel').innerText = data.level;
-                    document.getElementById('uiGold').innerText = data.gold;
-                    document.getElementById('uiChi').innerText = `${data.chi} / 100`;
-                    document.getElementById('uiEquip').innerText = data.equippedItem || "Tidak Ada";
-
-                    // Render Stats + Bonus
-                    document.getElementById('uiHp').innerText = data.hp;
-                    document.getElementById('uiHpBonus').innerText = bonusHp > 0 ? `(+${bonusHp})` : "";
+                    document.getElementById('uiName').innerText = data.name; document.getElementById('uiClass').innerText = data.class;
+                    document.getElementById('uiLevel').innerText = data.level; document.getElementById('uiGold').innerText = data.gold;
+                    document.getElementById('uiChi').innerText = `${data.chi} / 100`; document.getElementById('uiEquip').innerText = data.equippedItem || "Tidak Ada";
                     
-                    document.getElementById('uiMana').innerText = data.mana;
-                    
-                    document.getElementById('uiAtk').innerText = data.atk;
-                    document.getElementById('uiAtkBonus').innerText = bonusAtk > 0 ? `(+${bonusAtk})` : "";
-                    
-                    document.getElementById('uiDef').innerText = data.def;
-                    document.getElementById('uiDefBonus').innerText = bonusDef > 0 ? `(+${bonusDef})` : "";
+                    document.getElementById('uiHp').innerText = data.hp; document.getElementById('uiHpBonus').innerText = bonusHp > 0 ? `(+${bonusHp})` : "";
+                    document.getElementById('uiAtk').innerText = data.atk; document.getElementById('uiAtkBonus').innerText = bonusAtk > 0 ? `(+${bonusAtk})` : "";
+                    document.getElementById('uiDef').innerText = data.def; document.getElementById('uiDefBonus').innerText = bonusDef > 0 ? `(+${bonusDef})` : "";
+                    document.getElementById('marketUserGold').innerText = data.gold;
 
                     renderInventory(data.inventory);
-
-                    if(data.role === 'admin') {
-                        document.getElementById('adminBadgeUI').style.display = 'inline-block';
-                        document.getElementById('btnGoAdmin').style.display = 'block';
-                    }
+                    if(data.role === 'admin') { document.getElementById('adminBadgeUI').style.display = 'inline-block'; document.getElementById('btnGoAdmin').style.display = 'block'; }
                 }
             });
         }
 
-        // 4. INVENTORY & EQUIP LOGIC
+        // --- INVENTORY & MODAL LOGIC ---
         function renderInventory(items = []) {
             const grid = document.getElementById('inventoryGrid');
             grid.innerHTML = "";
@@ -371,97 +312,181 @@
                 const slot = document.createElement('div');
                 slot.className = "inv-slot";
                 if(items[i]) {
-                    slot.className = "inv-slot filled";
-                    slot.innerText = items[i];
-                    // Tambahkan event click untuk equip
-                    slot.onclick = () => equipItem(items[i]);
-                } else {
-                    slot.innerText = "[Kosong]";
-                }
+                    slot.className = "inv-slot filled"; slot.innerText = items[i];
+                    slot.onclick = () => openItemModal(items[i], i);
+                } else { slot.innerText = "[Kosong]"; }
                 grid.appendChild(slot);
             }
         }
 
-        async function equipItem(itemName) {
-            if(!currentUser || !localPlayerData) return;
-            addLog(`🔄 Anda mengenakan [${itemName}]. Status diperbarui!`);
-            await updateDoc(doc(db, "users", currentUser.uid), { equippedItem: itemName });
+        function openItemModal(itemName, index) {
+            selectedInventoryIndex = index;
+            document.getElementById('modalItemName').innerText = itemName;
+            const stats = itemStats[itemName] || {atk:0, def:0, hp:0};
+            document.getElementById('modalItemDesc').innerText = `Bonus: +${stats.atk} Atk | +${stats.def} Def | +${stats.hp} HP`;
+            document.getElementById('modalOverlay').style.display = 'block';
+            document.getElementById('itemModal').style.display = 'block';
         }
 
-        // 5. MECHANICS (CULTIVATE, GACHA, DUNGEON)
+        document.getElementById('btnModalClose').onclick = () => {
+            document.getElementById('modalOverlay').style.display = 'none';
+            document.getElementById('itemModal').style.display = 'none';
+        }
+
+        document.getElementById('btnModalEquip').onclick = async () => {
+            const itemName = document.getElementById('modalItemName').innerText;
+            await updateDoc(doc(db, "users", currentUser.uid), { equippedItem: itemName });
+            addLog(`🔄 Anda mengenakan [${itemName}].`);
+            document.getElementById('btnModalClose').click();
+        }
+
+        // --- MARKETPLACE LOGIC ---
+        document.getElementById('btnModalSell').onclick = async () => {
+            const itemName = document.getElementById('modalItemName').innerText;
+            const price = parseInt(document.getElementById('modalSellPrice').value);
+            if(!price || price <= 0) return alert("Masukkan harga jual yang valid!");
+
+            // Hapus dari inventory
+            let newInv = [...localPlayerData.inventory];
+            newInv.splice(selectedInventoryIndex, 1);
+            
+            // Update Firestore Player
+            await updateDoc(doc(db, "users", currentUser.uid), { inventory: newInv });
+            
+            // Masukkan ke collection Market
+            await addDoc(collection(db, "market"), {
+                sellerId: currentUser.uid, sellerName: localPlayerData.name,
+                itemName: itemName, price: price, timestamp: new Date().getTime()
+            });
+
+            addLog(`⚖️ Anda meletakkan [${itemName}] ke Pasar seharga ${price} Gold.`);
+            logServerEvent("MARKET_LISTING", `Menjual ${itemName} seharga ${price} Gold.`);
+            document.getElementById('btnModalClose').click();
+        }
+
+        document.getElementById('btnGoMarket').onclick = () => {
+            showScreen('market');
+            // Listen ke Global Market
+            marketUnsub = onSnapshot(collection(db, "market"), (snapshot) => {
+                const mList = document.getElementById('marketList');
+                mList.innerHTML = "";
+                snapshot.forEach((docSnap) => {
+                    const mData = docSnap.data();
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = "market-item";
+                    itemDiv.innerHTML = `
+                        <div>
+                            <strong style="color:var(--accent)">${mData.itemName}</strong><br>
+                            <span style="font-size:11px;color:#aaa">Penjual: ${mData.sellerName}</span>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="color:var(--warning); font-weight:bold;">${mData.price} Gold</span><br>
+                            <button class="btn btn-small btn-success" onclick="buyMarketItem('${docSnap.id}', '${mData.sellerId}', '${mData.itemName}', ${mData.price})">Beli</button>
+                        </div>
+                    `;
+                    mList.appendChild(itemDiv);
+                });
+            });
+        }
+        document.getElementById('btnMarketToGame').onclick = () => { if(marketUnsub) marketUnsub(); showScreen('game'); }
+
+        // Fungsi Global untuk Tombol Beli di Market
+        window.buyMarketItem = async function(marketDocId, sellerId, itemName, price) {
+            if(currentUser.uid === sellerId) return alert("Anda tidak bisa membeli barang Anda sendiri!");
+            if(localPlayerData.gold < price) return alert("Gold tidak cukup!");
+            if(localPlayerData.inventory.length >= 10) return alert("Inventory Penuh!");
+
+            try {
+                // 1. Kurangi gold pembeli, tambah item
+                let newInv = [...localPlayerData.inventory, itemName];
+                await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - price, inventory: newInv });
+
+                // 2. Tambah gold ke penjual
+                const sellerRef = doc(db, "users", sellerId);
+                const sellerSnap = await getDoc(sellerRef);
+                if(sellerSnap.exists()) {
+                    await updateDoc(sellerRef, { gold: sellerSnap.data().gold + price });
+                }
+
+                // 3. Hapus dokumen market
+                await deleteDoc(doc(db, "market", marketDocId));
+                
+                logServerEvent("MARKET_TRADE", `UID ${currentUser.uid} membeli ${itemName} dari UID ${sellerId} seharga ${price} Gold.`);
+                alert(`Berhasil membeli ${itemName}!`);
+            } catch (e) { alert("Transaksi gagal terjadi kesalahan database."); console.error(e); }
+        }
+
+
+        // --- CORE MECHANICS (CULTIVATE, GACHA, DUNGEON BOSS) ---
         document.getElementById('btnCultivate').addEventListener('click', async () => {
-            if(!localPlayerData) return;
-            let newChi = localPlayerData.chi + 15;
-            let newLevel = localPlayerData.level;
-            let newGold = localPlayerData.gold + 10;
+            let newChi = localPlayerData.chi + 15, newLevel = localPlayerData.level, newGold = localPlayerData.gold + 10;
             let newHp = localPlayerData.hp, newAtk = localPlayerData.atk, newDef = localPlayerData.def;
-
             addLog("Anda bermeditasi dengan khusyuk... (+15 Chi, +10 Gold)");
-
             if(newChi >= 100) {
                 newChi = 0; newLevel += 1; newGold += 150;
                 if(localPlayerData.class === "Blademaster") { newHp += 25; newDef += 4; newAtk += 2; }
                 else if(localPlayerData.class === "Cleric") { newAtk += 5; newDef += 2; }
                 else { newAtk += 7; newHp += 15; newDef += 1; }
-                addLog(`🌟 REINKARNASI! Level naik ke ${newLevel}! Status meningkat!`);
+                addLog(`🌟 REINKARNASI! Level naik ke ${newLevel}!`);
             }
             await updateDoc(doc(db, "users", currentUser.uid), { chi: newChi, level: newLevel, gold: newGold, hp: newHp, atk: newAtk, def: newDef });
         });
 
         document.getElementById('btnGacha').addEventListener('click', async () => {
-            if(!localPlayerData) return;
             if(localPlayerData.gold < 50) return alert("Gold tidak cukup!");
             if(localPlayerData.inventory && localPlayerData.inventory.length >= 10) return alert("Tas Penuh!");
-
             const randomItem = itemPool[Math.floor(Math.random() * itemPool.length)];
             let updatedInv = localPlayerData.inventory ? [...localPlayerData.inventory, randomItem] : [randomItem];
-
             await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 50, inventory: updatedInv });
-            addLog(`🎁 Gacha Sukses! Mendapatkan [${randomItem}]! Cek tas Anda.`);
+            
+            if(randomItem === "Pan Gu Artifact") logServerEvent("GACHA_RARE", `UID ${currentUser.uid} mendapatkan Pan Gu Artifact.`);
+            addLog(`🎁 Gacha Sukses! Mendapatkan [${randomItem}]!`);
         });
 
         document.getElementById('btnHunt').addEventListener('click', async () => {
-            if(!localPlayerData) return;
-            
             const monsterId = document.getElementById('dungeonTarget').value;
             const target = monsterList[monsterId];
             
-            // Hitung Total Power Pemain (Base + Equip)
-            let totalAtk = localPlayerData.atk;
-            let totalDef = localPlayerData.def;
+            // Syarat masuk Boss
+            if(monsterId === "boss" && localPlayerData.chi < 20) return alert("Chi tidak cukup untuk memanggil World Boss! (Butuh 20 Chi)");
+
+            let totalAtk = localPlayerData.atk; let totalDef = localPlayerData.def;
             if(localPlayerData.equippedItem && itemStats[localPlayerData.equippedItem]) {
-                totalAtk += itemStats[localPlayerData.equippedItem].atk;
-                totalDef += itemStats[localPlayerData.equippedItem].def;
+                totalAtk += itemStats[localPlayerData.equippedItem].atk; totalDef += itemStats[localPlayerData.equippedItem].def;
             }
-            
-            let playerPower = totalAtk + (totalDef * 0.5); // Rumus sederhana combat power
+            let playerPower = totalAtk + (totalDef * 0.5); 
             
             addLog(`⚔️ Menyerang ${target.name}...`);
             
             setTimeout(async () => {
                 const userRef = doc(db, "users", currentUser.uid);
-                // Logika Menang/Kalah
                 if(playerPower >= target.reqPower) {
-                    await updateDoc(userRef, { gold: localPlayerData.gold + target.rewardGold });
-                    addLog(`🏆 Kemenangan! Anda mengalahkan ${target.name} dan merampas ${target.rewardGold} Gold.`);
+                    let updateData = { gold: localPlayerData.gold + target.rewardGold };
+                    if(monsterId === "boss") {
+                        updateData.chi = localPlayerData.chi - 20; // Konsumsi Chi
+                        // 10% Chance drop Boss Item
+                        if(Math.random() < 0.10 && localPlayerData.inventory.length < 10) {
+                            updateData.inventory = [...localPlayerData.inventory, "Dragon Scale"];
+                            addLog(`🏆 KEMENANGAN EPIC! Anda mengalahkan Boss dan mendapatkan DRAGON SCALE!`);
+                            logServerEvent("BOSS_DEFEATED", `UID ${currentUser.uid} mengalahkan Azure Dragon dan mendapat Dragon Scale.`);
+                        } else {
+                            addLog(`🏆 Kemenangan! Anda mengalahkan ${target.name} dan merampas ${target.rewardGold} Gold.`);
+                        }
+                    } else {
+                        addLog(`🏆 Kemenangan! merampas ${target.rewardGold} Gold.`);
+                    }
+                    await updateDoc(userRef, updateData);
                 } else {
-                    let finalChi = Math.max(0, localPlayerData.chi - target.penaltyChi); // Tidak boleh minus
+                    let finalChi = Math.max(0, localPlayerData.chi - target.penaltyChi); 
                     await updateDoc(userRef, { chi: finalChi });
-                    addLog(`💀 Kekalahan! ${target.name} terlalu kuat. Anda kehilangan ${target.penaltyChi} Chi untuk melarikan diri.`);
+                    addLog(`💀 Kekalahan! Anda kehilangan ${target.penaltyChi} Chi.`);
                 }
-            }, 1000); // Jeda 1 detik agar terasa seperti loading combat
+            }, 1000);
         });
 
-        // 6. CONTROL SCREEN MANAGER
-        function showScreen(screen) {
-            authScreen.style.display = 'none'; charCreateScreen.style.display = 'none';
-            gameScreen.style.display = 'none'; adminScreen.style.display = 'none';
-            screen.style.display = (screen === gameScreen || screen === adminScreen) ? 'grid' : 'block';
-        }
-        document.getElementById('btnGoAdmin').addEventListener('click', () => showScreen(adminScreen));
-        document.getElementById('btnBackToGame').addEventListener('click', () => showScreen(gameScreen));
-
-        // 7. ADMIN PANEL
+        // --- ADMIN SCREEN ---
+        document.getElementById('btnGoAdmin').addEventListener('click', () => showScreen('admin'));
+        document.getElementById('btnBackToGame').addEventListener('click', () => showScreen('game'));
         document.getElementById('btnGiveGold').addEventListener('click', async () => {
             const tUid = document.getElementById('targetUid').value;
             const amt = parseInt(document.getElementById('giveGoldAmount').value);
@@ -470,18 +495,9 @@
                 const ref = doc(db, "users", tUid);
                 const snap = await getDoc(ref);
                 await updateDoc(ref, { gold: snap.data().gold + amt });
+                logServerEvent("ADMIN_INJECT", `Admin menyuntikkan ${amt} Gold ke UID: ${tUid}`);
                 document.getElementById('adminLog').innerText = `Sukses kirim ${amt} Gold.`;
             } catch(e) { document.getElementById('adminLog').innerText = "Gagal memproses."; }
-        });
-
-        document.getElementById('btnGiveItem').addEventListener('click', async () => {
-            const tUid = document.getElementById('targetUid').value;
-            const item = document.getElementById('adminAddItem').value;
-            if(!tUid) return;
-            try {
-                await updateDoc(doc(db, "users", tUid), { inventory: arrayUnion(item) });
-                document.getElementById('adminLog').innerText = `Sukses kirim [${item}].`;
-            } catch(e) { document.getElementById('adminLog').innerText = "Gagal kirim item."; }
         });
     </script>
 </body>
