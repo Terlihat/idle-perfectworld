@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfect World: Web Idle MMO</title>
+    <title>Perfect World: Web Idle MMO v2</title>
     <style>
         /* Modern UI: Dark Theme & Glassmorphism */
         :root {
             --primary: #00e5ff;
             --secondary: #ff0055;
+            --accent: #e040fb;
             --bg-color: #0a0f1a;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
         }
         body {
             margin: 0;
@@ -22,36 +23,43 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-image: radial-gradient(circle at top right, #1a233a, #0a0f1a);
+            background-image: radial-gradient(circle at top right, #141f36, #0a0f1a);
         }
         .container {
-            width: 90%;
-            max-width: 1000px;
-            display: none; /* Disembunyikan, diatur oleh JS */
+            width: 95%;
+            max-width: 1200px;
+            display: none; 
             grid-template-columns: 1fr 2fr;
             gap: 20px;
+            padding: 20px 0;
         }
         .glass-panel {
             background: var(--glass-bg);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--glass-border);
             border-radius: 16px;
             padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
-        h2 { margin-top: 0; color: var(--primary); }
-        h3 { color: #aaa; font-size: 14px; margin-bottom: 5px; }
+        h2 { margin-top: 0; color: var(--primary); letter-spacing: 1px; }
+        h3 { color: #aaa; font-size: 13px; margin-bottom: 5px; text-transform: uppercase; }
         
         /* Form & Buttons */
         input, select {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             margin-bottom: 15px;
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--glass-border);
             color: white;
             border-radius: 8px;
             box-sizing: border-box;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
         }
         .btn {
             background: linear-gradient(45deg, #00e5ff, #0077ff);
@@ -61,75 +69,150 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.2s;
             width: 100%;
             margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.1);
         }
-        .btn:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
-        .btn-danger { background: linear-gradient(45deg, #ff0055, #cc0044); }
-        .btn-danger:hover { box-shadow: 0 0 15px rgba(255, 0, 85, 0.4); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 229, 255, 0.4); }
+        .btn-danger { background: linear-gradient(45deg, #ff0055, #cc0044); box-shadow: 0 4px 15px rgba(255, 0, 85, 0.1); }
+        .btn-danger:hover { box-shadow: 0 0 20px rgba(255, 0, 85, 0.4); }
+        .btn-accent { background: linear-gradient(45deg, #e040fb, #aa00ff); }
+        .btn-accent:hover { box-shadow: 0 0 20px rgba(224, 64, 251, 0.4); }
 
-        /* Stats Grid */
+        /* Stats & Character Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 20px;
+            gap: 12px;
             margin-bottom: 20px;
         }
         .stat-box {
-            background: rgba(0, 0, 0, 0.4);
-            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
             border-radius: 8px;
             text-align: center;
             border: 1px solid var(--glass-border);
         }
-        .stat-val { font-size: 24px; font-weight: bold; color: var(--primary); }
+        .stat-val { font-size: 20px; font-weight: bold; color: var(--primary); }
+        
+        .sub-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .sub-stat-item { font-size: 14px; color: #ccc; }
+        .sub-stat-item strong { color: #fff; }
 
-        /* Admin Section */
+        /* Inventory Grid */
+        .inventory-section { margin-top: 25px; }
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+            min-height: 120px;
+        }
+        .inv-slot {
+            aspect-ratio: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 11px;
+            text-align: center;
+            padding: 4px;
+            word-break: break-word;
+            position: relative;
+            transition: border-color 0.2s;
+        }
+        .inv-slot.filled { border-color: var(--accent); background: rgba(224, 64, 251, 0.05); }
+
+        /* Badges & Screens */
         .admin-badge {
             background: var(--secondary);
             padding: 4px 8px;
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 11px;
             display: inline-block;
             margin-bottom: 10px;
             font-weight: bold;
+            letter-spacing: 1px;
         }
-        #authScreen { display: block; width: 400px; }
-        #gameScreen { display: none; }
-        #adminScreen { display: none; }
+        #authScreen, #charCreateScreen { display: block; width: 400px; }
+        #charCreateScreen, #gameScreen, #adminScreen { display: none; }
         .nav-bar { display: flex; gap: 10px; margin-top: 20px; }
+        .log-box {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 12px;
+            border-radius: 8px;
+            height: 60px;
+            overflow-y: auto;
+            font-size: 13px;
+            color: #00e5ff;
+            border-left: 3px solid var(--primary);
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
 
     <div class="glass-panel" id="authScreen">
-        <h2 style="text-align: center;">Perfect World Web</h2>
-        <p style="text-align: center; color: #aaa;">Masukkan kredensial Anda</p>
+        <h2 style="text-align: center; margin-bottom: 5px;">Perfect World Web</h2>
+        <p style="text-align: center; color: #aaa; margin-top: 0; font-size: 14px;">Mulai Kultivasi Karakter Anda</p>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
         
         <button class="btn" id="btnLogin">Login</button>
-        <button class="btn" id="btnRegister" style="background: transparent; border: 1px solid var(--primary);">Register</button>
-        <div id="authError" style="color: var(--secondary); text-align: center; font-size: 14px; margin-top: 10px;"></div>
+        <button class="btn" id="btnRegister" style="background: transparent; border: 1px solid var(--primary);">Register Akun Baru</button>
+        <div id="authError" style="color: var(--secondary); text-align: center; font-size: 13px; margin-top: 10px;"></div>
+    </div>
+
+    <div class="glass-panel" id="charCreateScreen">
+        <h2>Buat Karakter Anda</h2>
+        <p style="color: #aaa; font-size: 14px;">Pilih jalur kekuatan spiritual Anda di Pan Gu.</p>
+        <input type="text" id="newCharName" placeholder="Nama Karakter">
+        <label style="font-size: 12px; color: #aaa;">PILIH CLASS:</label>
+        <select id="newCharClass">
+            <option value="Blademaster">Blademaster (Unggul HP & Def)</option>
+            <option value="Cleric">Cleric (Unggul Mana & Magic)</option>
+            <option value="Archer">Archer (Unggul Serangan/Atk)</option>
+        </select>
+        <button class="btn" id="btnCreateChar">Masuk Ke Dunia</button>
     </div>
 
     <div class="container" id="gameScreen">
-        <div class="glass-panel">
-            <div id="adminBadgeUI" class="admin-badge" style="display: none;">ADMIN</div>
-            <h2>Profil Karakter</h2>
-            <p>Email: <span id="uiEmail">-</span></p>
-            <p>Class: <strong id="uiClass" style="color: var(--primary);">-</strong></p>
+        <div class="glass-panel" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div id="adminBadgeUI" class="admin-badge" style="display: none;">ADMIN ACCESS</div>
+                <h2>Profil Karakter</h2>
+                <p style="margin: 5px 0; font-size: 14px; color: #aaa;">Nama: <strong id="uiName" style="color: #fff;">-</strong></p>
+                <p style="margin: 5px 0; font-size: 14px; color: #aaa;">Class: <strong id="uiClass" style="color: var(--primary);">-</strong></p>
+                
+                <div class="sub-stats">
+                    <div class="sub-stat-item">HP: <strong id="uiHp">0</strong></div>
+                    <div class="sub-stat-item">Mana: <strong id="uiMana">0</strong></div>
+                    <div class="sub-stat-item">Attack: <strong id="uiAtk">0</strong></div>
+                    <div class="sub-stat-item">Defense: <strong id="uiDef">0</strong></div>
+                </div>
+            </div>
             
-            <hr style="border-color: var(--glass-border); margin: 20px 0;">
-            <button class="btn" id="btnCultivate">Meditasi (Kumpulkan Chi)</button>
-            <button class="btn btn-danger" id="btnLogout">Logout</button>
+            <div style="margin-top: 20px;">
+                <button class="btn" id="btnCultivate">Meditasi (Kumpulkan Chi)</button>
+                <button class="btn btn-accent" id="btnGacha">Gacha Item (50 Gold)</button>
+                <button class="btn btn-danger" id="btnLogout">Logout</button>
+            </div>
         </div>
 
         <div class="glass-panel">
             <h2>Dunia Pan Gu</h2>
-            <p>Selamat datang! Kumpulkan Chi untuk menembus batas levelmu.</p>
+            <p style="color: #aaa; margin-top: 0; font-size: 14px;">Lakukan meditasi tingkat tinggi untuk menembus batas reinkarnasi.</p>
             
             <div class="stats-grid">
                 <div class="stat-box">
@@ -141,43 +224,59 @@
                     <div class="stat-val" id="uiGold">0</div>
                 </div>
                 <div class="stat-box">
-                    <h3>Chi</h3>
+                    <h3>Chi Spiritual</h3>
                     <div class="stat-val" id="uiChi">0 / 100</div>
                 </div>
             </div>
 
+            <div class="log-box" id="gameLog">Sistem siap. Mulailah bermeditasi...</div>
+
+            <div class="inventory-section">
+                <h3>Tas Penyimpanan (Inventory)</h3>
+                <div class="inventory-grid" id="inventoryGrid">
+                    </div>
+            </div>
+
             <div class="nav-bar">
-                <button class="btn" id="btnGoAdmin" style="display: none; background: #333;">Buka Admin Panel</button>
+                <button class="btn" id="btnGoAdmin" style="display: none; background: #222; width: auto; border: 1px solid #444;">Buka Admin Panel</button>
             </div>
         </div>
     </div>
 
     <div class="container" id="adminScreen" style="grid-template-columns: 1fr;">
         <div class="glass-panel">
-            <div class="admin-badge">ADMIN PANEL</div>
-            <h2>Manajemen Server</h2>
-            <p>Berikan item atau Gold kepada pemain (Masukkan UID pemain).</p>
+            <div class="admin-badge">SERVER MANAGEMENT</div>
+            <h2>Admin Panel</h2>
+            <p style="color: #aaa; font-size: 14px;">Modifikasi data real-time server pemain.</p>
             
-            <input type="text" id="targetUid" placeholder="Masukkan UID Target">
-            <input type="number" id="giveGoldAmount" placeholder="Jumlah Gold">
-            <button class="btn" id="btnGiveGold">Kirim Gold ke Pemain</button>
+            <div style="max-width: 500px;">
+                <input type="text" id="targetUid" placeholder="Masukkan UID Target Player">
+                <input type="number" id="giveGoldAmount" placeholder="Jumlah Gold">
+                <button class="btn" id="btnGiveGold">Kirim Gold ke Pemain</button>
+                
+                <select id="adminAddItem">
+                    <option value="Mirage Sword">Mirage Sword (+50 Atk)</option>
+                    <option value="Celestial Wing">Celestial Wing (+30 Def)</option>
+                    <option value="Soulgem Ring">Soulgem Ring (+100 HP)</option>
+                </select>
+                <button class="btn btn-accent" id="btnGiveItem">Berikan Item ke Pemain</button>
+            </div>
 
             <div class="nav-bar">
                 <button class="btn" id="btnBackToGame" style="background: #333; width: auto;">Kembali ke Game</button>
             </div>
-            <div id="adminLog" style="color: #00e5ff; margin-top: 10px; font-size: 14px;"></div>
+            <div id="adminLog" style="color: #00e5ff; margin-top: 15px; font-size: 14px; font-weight: bold;"></div>
         </div>
     </div>
 
     <script type="module">
-        // 1. IMPORT FIREBASE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } 
             from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, increment } 
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion } 
             from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-        // 2. KONFIGURASI FIREBASE ANDA (PASTIKAN UNTUK MENGGANTI INI)
+        // Firebase Configuration Ter-registrasi Permanen
         const firebaseConfig = {
             apiKey: "AIzaSyB3RgNUF7fsjxGbp8Wy9oI4zIljVXtwpY4",
             authDomain: "idle-pefectworld.firebaseapp.com",
@@ -187,21 +286,29 @@
             appId: "1:648934472235:web:e25b6180ec9cdd1b45886e"
         };
 
-        // Inisialisasi Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // State Global
         let currentUser = null;
         let unsubSnapshot = null;
 
-        // UI Elements
+        // Daftar Item Gacha Pool
+        const itemPool = ["Mirage Sword", "Celestial Wing", "Soulgem Ring", "Pan Gu Artifact", "Elixir of Life"];
+
+        // UI Screens
         const authScreen = document.getElementById('authScreen');
+        const charCreateScreen = document.getElementById('charCreateScreen');
         const gameScreen = document.getElementById('gameScreen');
         const adminScreen = document.getElementById('adminScreen');
-        
-        // 3. FUNGSI AUTENTIKASI
+
+        // Log Fungsi Helper
+        function addLog(message) {
+            const logBox = document.getElementById('gameLog');
+            logBox.innerText = message;
+        }
+
+        // 1. SISTEM AUTENTIKASI
         document.getElementById('btnLogin').addEventListener('click', async () => {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -216,19 +323,10 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                // Buat data default di Firestore saat register
-                await setDoc(doc(db, "users", user.uid), {
-                    email: user.email,
-                    role: "player", // Ubah manual jadi 'admin' di database untuk testing panel admin
-                    class: "Blademaster",
-                    level: 1,
-                    gold: 0,
-                    chi: 0
-                });
+                await createUserWithEmailAndPassword(auth, email, password);
+                // Setelah register berhasil, State Listener akan memindahkan ke proses pembuatan karakter
             } catch (error) {
-                document.getElementById('authError').innerText = "Register Gagal: " + error.message;
+                document.getElementById('authError').innerText = "Pendaftaran Gagal: " + error.message;
             }
         });
 
@@ -236,103 +334,205 @@
             signOut(auth);
         });
 
-        // 4. LISTENER STATUS LOGIN & SINKRONISASI DATA GAME
+        // 2. AUTH STATE WATCHER
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                authScreen.style.display = 'none';
-                gameScreen.style.display = 'grid';
-                adminScreen.style.display = 'none';
+                // Ambil data profile untuk memastikan karakter sudah dibuat
+                const userRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(userRef);
 
-                // Listen ke database karakter secara Real-Time
-                unsubSnapshot = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        
-                        // Update UI
-                        document.getElementById('uiEmail').innerText = data.email;
-                        document.getElementById('uiClass').innerText = data.class;
-                        document.getElementById('uiLevel').innerText = data.level;
-                        document.getElementById('uiGold').innerText = data.gold;
-                        document.getElementById('uiChi').innerText = `${data.chi} / 100`;
-
-                        // Cek Role Admin
-                        if(data.role === 'admin') {
-                            document.getElementById('adminBadgeUI').style.display = 'inline-block';
-                            document.getElementById('btnGoAdmin').style.display = 'block';
-                        }
-                    }
-                });
+                if (docSnap.exists()) {
+                    showScreen(gameScreen);
+                    startRealtimeSync(user.uid);
+                } else {
+                    showScreen(charCreateScreen);
+                }
             } else {
                 currentUser = null;
-                if(unsubSnapshot) unsubSnapshot(); // Hentikan listener data
-                authScreen.style.display = 'block';
-                gameScreen.style.display = 'none';
-                adminScreen.style.display = 'none';
+                if(unsubSnapshot) unsubSnapshot();
+                showScreen(authScreen);
             }
         });
 
-        // 5. LOGIKA GAME (CULTIVATION)
+        // 3. PEMBUATAN KARAKTER & AKURASI STATUS CLASS
+        document.getElementById('btnCreateChar').addEventListener('click', async () => {
+            const charName = document.getElementById('newCharName').value;
+            const selectedClass = document.getElementById('newCharClass').value;
+            
+            if(!charName) return alert("Masukkan Nama Karakter!");
+
+            let baseStats = { hp: 100, mana: 100, atk: 15, def: 10 };
+            if(selectedClass === "Blademaster") { baseStats.hp = 150; baseStats.def = 18; }
+            else if(selectedClass === "Cleric") { baseStats.mana = 200; baseStats.atk = 22; }
+            else if(selectedClass === "Archer") { baseStats.atk = 30; baseStats.hp = 90; }
+
+            await setDoc(doc(db, "users", currentUser.uid), {
+                name: charName,
+                class: selectedClass,
+                email: currentUser.email,
+                role: "player",
+                level: 1,
+                gold: 100,
+                chi: 0,
+                hp: baseStats.hp,
+                mana: baseStats.mana,
+                atk: baseStats.atk,
+                def: baseStats.def,
+                inventory: []
+            });
+
+            showScreen(gameScreen);
+            startRealtimeSync(currentUser.uid);
+        });
+
+        // 4. SYNC REAL-TIME & RENDER INVENTORY
+        function startRealtimeSync(uid) {
+            unsubSnapshot = onSnapshot(doc(db, "users", uid), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    
+                    // Render UI Data Utama
+                    document.getElementById('uiName').innerText = data.name;
+                    document.getElementById('uiClass').innerText = data.class;
+                    document.getElementById('uiLevel').innerText = data.level;
+                    document.getElementById('uiGold').innerText = data.gold;
+                    document.getElementById('uiChi').innerText = `${data.chi} / 100`;
+                    
+                    // Render UI Sub-stats
+                    document.getElementById('uiHp').innerText = data.hp;
+                    document.getElementById('uiMana').innerText = data.mana;
+                    document.getElementById('uiAtk').innerText = data.atk;
+                    document.getElementById('uiDef').innerText = data.def;
+
+                    // Render Dynamic Inventory Slots
+                    renderInventory(data.inventory);
+
+                    if(data.role === 'admin') {
+                        document.getElementById('adminBadgeUI').style.display = 'inline-block';
+                        document.getElementById('btnGoAdmin').style.display = 'block';
+                    }
+                }
+            });
+        }
+
+        function renderInventory(items = []) {
+            const grid = document.getElementById('inventoryGrid');
+            grid.innerHTML = "";
+            for (let i = 0; i < 10; i++) {
+                const slot = document.createElement('div');
+                slot.className = "inv-slot";
+                if(items[i]) {
+                    slot.className = "inv-slot filled";
+                    slot.innerText = items[i];
+                } else {
+                    slot.innerText = "[Kosong]";
+                }
+                grid.appendChild(slot);
+            }
+        }
+
+        // 5. MECHANICS LOGIC: CULTIVATION & GACHA
         document.getElementById('btnCultivate').addEventListener('click', async () => {
             if(!currentUser) return;
-            
             const userRef = doc(db, "users", currentUser.uid);
             const docSnap = await getDoc(userRef);
             
             if(docSnap.exists()) {
-                let currentData = docSnap.data();
-                let newChi = currentData.chi + 10;
-                let newLevel = currentData.level;
-                let newGold = currentData.gold;
+                const data = docSnap.data();
+                let newChi = data.chi + 15;
+                let newLevel = data.level;
+                let newGold = data.gold + 10;
+                let newHp = data.hp, newMana = data.mana, newAtk = data.atk, newDef = data.def;
 
-                // Logika Level Up jika Chi mencapai 100
+                addLog("Anda bermeditasi dengan khusyuk... (+15 Chi, +10 Gold)");
+
                 if(newChi >= 100) {
                     newChi = 0;
                     newLevel += 1;
-                    newGold += 100; // Bonus gold saat level up
+                    newGold += 150;
+                    // Skala Kenaikan Status sesuai Class saat Level Up
+                    if(data.class === "Blademaster") { newHp += 25; newDef += 4; newAtk += 2; }
+                    else if(data.class === "Cleric") { newMana += 30; newAtk += 5; newDef += 2; }
+                    else { newAtk += 7; newHp += 15; newDef += 1; }
+                    
+                    addLog(`🌟 REINKARNASI! Level naik ke ${newLevel}! Status Anda meningkat pesat!`);
                 }
 
-                // Update ke Firestore
-                await updateDoc(userRef, {
-                    chi: newChi,
-                    level: newLevel,
-                    gold: newGold
-                });
+                await updateDoc(userRef, { chi: newChi, level: newLevel, gold: newGold, hp: newHp, mana: newMana, atk: newAtk, def: newDef });
             }
         });
 
-        // 6. NAVIGASI ADMIN
-        document.getElementById('btnGoAdmin').addEventListener('click', () => {
+        document.getElementById('btnGacha').addEventListener('click', async () => {
+            if(!currentUser) return;
+            const userRef = doc(db, "users", currentUser.uid);
+            const docSnap = await getDoc(userRef);
+
+            if(docSnap.exists()) {
+                const data = docSnap.data();
+                if(data.gold < 50) return alert("Gold tidak cukup untuk Gacha!");
+                if(data.inventory && data.inventory.length >= 10) return alert("Tas Penyimpanan Penuh!");
+
+                const randomItem = itemPool[Math.floor(Math.random() * itemPool.length)];
+                let updatedInv = data.inventory ? [...data.inventory, randomItem] : [randomItem];
+
+                await updateDoc(userRef, {
+                    gold: data.gold - 50,
+                    inventory: updatedInv
+                });
+                addLog(`🎁 Selamat! Anda mendapatkan [${randomItem}] dari peti harta karun!`);
+            }
+        });
+
+        // 6. CONTROL SCREEN MANAGER
+        function showScreen(screenToShow) {
+            authScreen.style.display = 'none';
+            charCreateScreen.style.display = 'none';
             gameScreen.style.display = 'none';
-            adminScreen.style.display = 'grid';
-        });
-
-        document.getElementById('btnBackToGame').addEventListener('click', () => {
             adminScreen.style.display = 'none';
-            gameScreen.style.display = 'grid';
-        });
+            
+            if(screenToShow === gameScreen || screenToShow === adminScreen) {
+                screenToShow.style.display = 'grid';
+            } else {
+                screenToShow.style.display = 'block';
+            }
+        }
 
-        // 7. FUNGSI ADMIN PANEL
+        document.getElementById('btnGoAdmin').addEventListener('click', () => showScreen(adminScreen));
+        document.getElementById('btnBackToGame').addEventListener('click', () => showScreen(gameScreen));
+
+        // 7. BACKEND ADMIN SYSTEM 
         document.getElementById('btnGiveGold').addEventListener('click', async () => {
             const targetUid = document.getElementById('targetUid').value;
             const amount = parseInt(document.getElementById('giveGoldAmount').value);
-            const logElement = document.getElementById('adminLog');
+            const log = document.getElementById('adminLog');
 
-            if(!targetUid || isNaN(amount)) {
-                logElement.innerText = "Data tidak valid!";
-                return;
-            }
+            if(!targetUid || isNaN(amount)) return log.innerText = "Error: Input tidak lengkap!";
+            
+            try {
+                const targetRef = doc(db, "users", targetUid);
+                const targetSnap = await getDoc(targetRef);
+                if(!targetSnap.exists()) return log.innerText = "Player UID tidak ditemukan.";
+                
+                await updateDoc(targetRef, { gold: targetSnap.data().gold + amount });
+                log.innerText = `Sukses menambahkan ${amount} Gold ke Target.`;
+            } catch(e) { log.innerText = "Gagal memproses eksekusi."; }
+        });
+
+        document.getElementById('btnGiveItem').addEventListener('click', async () => {
+            const targetUid = document.getElementById('targetUid').value;
+            const selectedItem = document.getElementById('adminAddItem').value;
+            const log = document.getElementById('adminLog');
+
+            if(!targetUid) return log.innerText = "Error: UID Target kosong!";
 
             try {
                 const targetRef = doc(db, "users", targetUid);
                 await updateDoc(targetRef, {
-                    gold: increment(amount)
+                    inventory: arrayUnion(selectedItem)
                 });
-                logElement.innerText = `Sukses mengirim ${amount} Gold ke UID: ${targetUid}`;
-            } catch (error) {
-                logElement.innerText = "Gagal: Pastikan UID benar dan Anda punya akses (Security Rules Firestore).";
-                console.error(error);
-            }
+                log.innerText = `Sukses mengirim [${selectedItem}] ke tas Player.`;
+            } catch(e) { log.innerText = "Gagal mengirimkan item."; }
         });
     </script>
 </body>
