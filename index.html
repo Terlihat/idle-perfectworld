@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfect World: Web Idle MMO v2</title>
+    <title>Perfect World: Web Idle MMO v3</title>
     <style>
         /* Modern UI: Dark Theme & Glassmorphism */
         :root {
             --primary: #00e5ff;
             --secondary: #ff0055;
             --accent: #e040fb;
+            --success: #00e676;
             --bg-color: #0a0f1a;
             --glass-bg: rgba(255, 255, 255, 0.03);
             --glass-border: rgba(255, 255, 255, 0.08);
@@ -57,10 +58,7 @@
             box-sizing: border-box;
             font-size: 14px;
         }
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
+        input:focus, select:focus { outline: none; border-color: var(--primary); }
         .btn {
             background: linear-gradient(45deg, #00e5ff, #0077ff);
             border: none;
@@ -79,86 +77,42 @@
         .btn-danger:hover { box-shadow: 0 0 20px rgba(255, 0, 85, 0.4); }
         .btn-accent { background: linear-gradient(45deg, #e040fb, #aa00ff); }
         .btn-accent:hover { box-shadow: 0 0 20px rgba(224, 64, 251, 0.4); }
+        .btn-success { background: linear-gradient(45deg, #00e676, #00b0ff); }
 
         /* Stats & Character Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .stat-box {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid var(--glass-border);
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .stat-box { background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; text-align: center; border: 1px solid var(--glass-border); }
         .stat-val { font-size: 20px; font-weight: bold; color: var(--primary); }
         
         .sub-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+            background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px; margin-top: 15px;
         }
         .sub-stat-item { font-size: 14px; color: #ccc; }
         .sub-stat-item strong { color: #fff; }
+        .bonus-stat { color: var(--success); font-size: 12px; }
 
-        /* Inventory Grid */
+        /* Equipment & Inventory */
+        .equip-box { background: rgba(224, 64, 251, 0.1); border: 1px solid var(--accent); padding: 10px; border-radius: 8px; margin-top: 15px; text-align: center; font-size: 14px;}
         .inventory-section { margin-top: 25px; }
-        .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            margin-top: 10px;
-            min-height: 120px;
-        }
+        .inventory-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 10px; min-height: 120px; }
         .inv-slot {
-            aspect-ratio: 1;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 11px;
-            text-align: center;
-            padding: 4px;
-            word-break: break-word;
-            position: relative;
-            transition: border-color 0.2s;
+            aspect-ratio: 1; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); border-radius: 8px;
+            display: flex; justify-content: center; align-items: center; font-size: 11px; text-align: center; padding: 4px;
+            word-break: break-word; cursor: pointer; transition: all 0.2s;
         }
+        .inv-slot.filled:hover { border-color: var(--primary); background: rgba(0, 229, 255, 0.1); transform: scale(1.05); }
         .inv-slot.filled { border-color: var(--accent); background: rgba(224, 64, 251, 0.05); }
 
         /* Badges & Screens */
-        .admin-badge {
-            background: var(--secondary);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            display: inline-block;
-            margin-bottom: 10px;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
+        .admin-badge { background: var(--secondary); padding: 4px 8px; border-radius: 4px; font-size: 11px; display: inline-block; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; }
         #authScreen, #charCreateScreen { display: block; width: 400px; }
         #charCreateScreen, #gameScreen, #adminScreen { display: none; }
         .nav-bar { display: flex; gap: 10px; margin-top: 20px; }
-        .log-box {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 12px;
-            border-radius: 8px;
-            height: 60px;
-            overflow-y: auto;
-            font-size: 13px;
-            color: #00e5ff;
-            border-left: 3px solid var(--primary);
-            margin-top: 15px;
-        }
+        .log-box { background: rgba(0, 0, 0, 0.5); padding: 12px; border-radius: 8px; height: 60px; overflow-y: auto; font-size: 13px; color: #00e5ff; border-left: 3px solid var(--primary); margin-top: 15px; }
+        
+        /* Dungeon Section */
+        .dungeon-panel { background: rgba(255, 0, 85, 0.05); border: 1px solid rgba(255, 0, 85, 0.3); padding: 15px; border-radius: 8px; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -168,7 +122,6 @@
         <p style="text-align: center; color: #aaa; margin-top: 0; font-size: 14px;">Mulai Kultivasi Karakter Anda</p>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
-        
         <button class="btn" id="btnLogin">Login</button>
         <button class="btn" id="btnRegister" style="background: transparent; border: 1px solid var(--primary);">Register Akun Baru</button>
         <div id="authError" style="color: var(--secondary); text-align: center; font-size: 13px; margin-top: 10px;"></div>
@@ -195,16 +148,21 @@
                 <p style="margin: 5px 0; font-size: 14px; color: #aaa;">Nama: <strong id="uiName" style="color: #fff;">-</strong></p>
                 <p style="margin: 5px 0; font-size: 14px; color: #aaa;">Class: <strong id="uiClass" style="color: var(--primary);">-</strong></p>
                 
+                <div class="equip-box">
+                    Equipped: <strong id="uiEquip" style="color: var(--primary);">Tidak Ada</strong>
+                    <br><span style="font-size: 11px; color: #aaa;">(Klik item di inventory untuk equip)</span>
+                </div>
+
                 <div class="sub-stats">
-                    <div class="sub-stat-item">HP: <strong id="uiHp">0</strong></div>
-                    <div class="sub-stat-item">Mana: <strong id="uiMana">0</strong></div>
-                    <div class="sub-stat-item">Attack: <strong id="uiAtk">0</strong></div>
-                    <div class="sub-stat-item">Defense: <strong id="uiDef">0</strong></div>
+                    <div class="sub-stat-item">HP: <strong id="uiHp">0</strong> <span id="uiHpBonus" class="bonus-stat"></span></div>
+                    <div class="sub-stat-item">Mana: <strong id="uiMana">0</strong> <span id="uiManaBonus" class="bonus-stat"></span></div>
+                    <div class="sub-stat-item">Attack: <strong id="uiAtk">0</strong> <span id="uiAtkBonus" class="bonus-stat"></span></div>
+                    <div class="sub-stat-item">Defense: <strong id="uiDef">0</strong> <span id="uiDefBonus" class="bonus-stat"></span></div>
                 </div>
             </div>
             
             <div style="margin-top: 20px;">
-                <button class="btn" id="btnCultivate">Meditasi (Kumpulkan Chi)</button>
+                <button class="btn" id="btnCultivate">Meditasi (+Chi & Gold)</button>
                 <button class="btn btn-accent" id="btnGacha">Gacha Item (50 Gold)</button>
                 <button class="btn btn-danger" id="btnLogout">Logout</button>
             </div>
@@ -212,29 +170,31 @@
 
         <div class="glass-panel">
             <h2>Dunia Pan Gu</h2>
-            <p style="color: #aaa; margin-top: 0; font-size: 14px;">Lakukan meditasi tingkat tinggi untuk menembus batas reinkarnasi.</p>
             
             <div class="stats-grid">
-                <div class="stat-box">
-                    <h3>Level</h3>
-                    <div class="stat-val" id="uiLevel">0</div>
-                </div>
-                <div class="stat-box">
-                    <h3>Gold</h3>
-                    <div class="stat-val" id="uiGold">0</div>
-                </div>
-                <div class="stat-box">
-                    <h3>Chi Spiritual</h3>
-                    <div class="stat-val" id="uiChi">0 / 100</div>
+                <div class="stat-box"><h3>Level</h3><div class="stat-val" id="uiLevel">0</div></div>
+                <div class="stat-box"><h3>Gold</h3><div class="stat-val" id="uiGold">0</div></div>
+                <div class="stat-box"><h3>Chi Spiritual</h3><div class="stat-val" id="uiChi">0 / 100</div></div>
+            </div>
+
+            <div class="log-box" id="gameLog">Sistem siap. Mulailah bermeditasi atau bertarung...</div>
+
+            <div class="dungeon-panel">
+                <h3 style="color: var(--secondary);">Area Berbahaya (Dungeon)</h3>
+                <p style="font-size: 13px; color: #ccc; margin-top: 0;">Lawan monster untuk merampas Gold. Kekalahan akan mengurangi Chi Anda.</p>
+                <div style="display: flex; gap: 10px;">
+                    <select id="dungeonTarget" style="margin-bottom: 0;">
+                        <option value="1">Lvl 1 - Wraith Minion (Rekomendasi Atk: 20)</option>
+                        <option value="2">Lvl 5 - Skeletal Archer (Rekomendasi Atk: 50)</option>
+                        <option value="3">Lvl 10 - Roaming Demon (Rekomendasi Atk: 120)</option>
+                    </select>
+                    <button class="btn btn-danger" id="btnHunt" style="margin-bottom: 0; width: 40%;">Mulai Pertarungan</button>
                 </div>
             </div>
 
-            <div class="log-box" id="gameLog">Sistem siap. Mulailah bermeditasi...</div>
-
             <div class="inventory-section">
                 <h3>Tas Penyimpanan (Inventory)</h3>
-                <div class="inventory-grid" id="inventoryGrid">
-                    </div>
+                <div class="inventory-grid" id="inventoryGrid"></div>
             </div>
 
             <div class="nav-bar">
@@ -247,36 +207,29 @@
         <div class="glass-panel">
             <div class="admin-badge">SERVER MANAGEMENT</div>
             <h2>Admin Panel</h2>
-            <p style="color: #aaa; font-size: 14px;">Modifikasi data real-time server pemain.</p>
-            
             <div style="max-width: 500px;">
                 <input type="text" id="targetUid" placeholder="Masukkan UID Target Player">
                 <input type="number" id="giveGoldAmount" placeholder="Jumlah Gold">
                 <button class="btn" id="btnGiveGold">Kirim Gold ke Pemain</button>
                 
                 <select id="adminAddItem">
-                    <option value="Mirage Sword">Mirage Sword (+50 Atk)</option>
-                    <option value="Celestial Wing">Celestial Wing (+30 Def)</option>
-                    <option value="Soulgem Ring">Soulgem Ring (+100 HP)</option>
+                    <option value="Mirage Sword">Mirage Sword</option>
+                    <option value="Celestial Wing">Celestial Wing</option>
+                    <option value="Soulgem Ring">Soulgem Ring</option>
+                    <option value="Pan Gu Artifact">Pan Gu Artifact</option>
                 </select>
                 <button class="btn btn-accent" id="btnGiveItem">Berikan Item ke Pemain</button>
             </div>
-
-            <div class="nav-bar">
-                <button class="btn" id="btnBackToGame" style="background: #333; width: auto;">Kembali ke Game</button>
-            </div>
+            <div class="nav-bar"><button class="btn" id="btnBackToGame" style="background: #333; width: auto;">Kembali ke Game</button></div>
             <div id="adminLog" style="color: #00e5ff; margin-top: 15px; font-size: 14px; font-weight: bold;"></div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } 
-            from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion } 
-            from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-        // Firebase Configuration Ter-registrasi Permanen
         const firebaseConfig = {
             apiKey: "AIzaSyB3RgNUF7fsjxGbp8Wy9oI4zIljVXtwpY4",
             authDomain: "idle-pefectworld.firebaseapp.com",
@@ -292,62 +245,51 @@
 
         let currentUser = null;
         let unsubSnapshot = null;
+        let localPlayerData = null;
 
-        // Daftar Item Gacha Pool
-        const itemPool = ["Mirage Sword", "Celestial Wing", "Soulgem Ring", "Pan Gu Artifact", "Elixir of Life"];
+        // Kamus Item & Efek Status
+        const itemStats = {
+            "Mirage Sword": { atk: 50, def: 0, hp: 0 },
+            "Celestial Wing": { atk: 0, def: 30, hp: 0 },
+            "Soulgem Ring": { atk: 0, def: 0, hp: 100 },
+            "Pan Gu Artifact": { atk: 100, def: 50, hp: 200 },
+            "Elixir of Life": { atk: 0, def: 0, hp: 50 } // Consumable/Item kecil
+        };
+        const itemPool = Object.keys(itemStats);
 
-        // UI Screens
+        // Kamus Monster Dungeon
+        const monsterList = {
+            "1": { name: "Wraith Minion", reqPower: 30, rewardGold: 20, penaltyChi: 5 },
+            "2": { name: "Skeletal Archer", reqPower: 80, rewardGold: 60, penaltyChi: 15 },
+            "3": { name: "Roaming Demon", reqPower: 200, rewardGold: 150, penaltyChi: 40 }
+        };
+
         const authScreen = document.getElementById('authScreen');
         const charCreateScreen = document.getElementById('charCreateScreen');
         const gameScreen = document.getElementById('gameScreen');
         const adminScreen = document.getElementById('adminScreen');
 
-        // Log Fungsi Helper
-        function addLog(message) {
-            const logBox = document.getElementById('gameLog');
-            logBox.innerText = message;
-        }
+        function addLog(message) { document.getElementById('gameLog').innerText = message; }
 
-        // 1. SISTEM AUTENTIKASI
+        // 1. AUTHENTICATION
         document.getElementById('btnLogin').addEventListener('click', async () => {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                document.getElementById('authError').innerText = "Login Gagal: " + error.message;
-            }
+            try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
+            catch (error) { document.getElementById('authError').innerText = "Login Gagal: " + error.message; }
         });
 
         document.getElementById('btnRegister').addEventListener('click', async () => {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                // Setelah register berhasil, State Listener akan memindahkan ke proses pembuatan karakter
-            } catch (error) {
-                document.getElementById('authError').innerText = "Pendaftaran Gagal: " + error.message;
-            }
+            try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
+            catch (error) { document.getElementById('authError').innerText = "Pendaftaran Gagal: " + error.message; }
         });
 
-        document.getElementById('btnLogout').addEventListener('click', () => {
-            signOut(auth);
-        });
+        document.getElementById('btnLogout').addEventListener('click', () => signOut(auth));
 
-        // 2. AUTH STATE WATCHER
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                // Ambil data profile untuk memastikan karakter sudah dibuat
-                const userRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(userRef);
-
-                if (docSnap.exists()) {
-                    showScreen(gameScreen);
-                    startRealtimeSync(user.uid);
-                } else {
-                    showScreen(charCreateScreen);
-                }
+                const docSnap = await getDoc(doc(db, "users", user.uid));
+                if (docSnap.exists()) { showScreen(gameScreen); startRealtimeSync(user.uid); } 
+                else { showScreen(charCreateScreen); }
             } else {
                 currentUser = null;
                 if(unsubSnapshot) unsubSnapshot();
@@ -355,11 +297,10 @@
             }
         });
 
-        // 3. PEMBUATAN KARAKTER & AKURASI STATUS CLASS
+        // 2. CREATE CHARACTER
         document.getElementById('btnCreateChar').addEventListener('click', async () => {
             const charName = document.getElementById('newCharName').value;
             const selectedClass = document.getElementById('newCharClass').value;
-            
             if(!charName) return alert("Masukkan Nama Karakter!");
 
             let baseStats = { hp: 100, mana: 100, atk: 15, def: 10 };
@@ -368,44 +309,50 @@
             else if(selectedClass === "Archer") { baseStats.atk = 30; baseStats.hp = 90; }
 
             await setDoc(doc(db, "users", currentUser.uid), {
-                name: charName,
-                class: selectedClass,
-                email: currentUser.email,
-                role: "player",
-                level: 1,
-                gold: 100,
-                chi: 0,
-                hp: baseStats.hp,
-                mana: baseStats.mana,
-                atk: baseStats.atk,
-                def: baseStats.def,
-                inventory: []
+                name: charName, class: selectedClass, email: currentUser.email, role: "player",
+                level: 1, gold: 100, chi: 0,
+                hp: baseStats.hp, mana: baseStats.mana, atk: baseStats.atk, def: baseStats.def,
+                inventory: [], equippedItem: "" // Field baru
             });
-
             showScreen(gameScreen);
             startRealtimeSync(currentUser.uid);
         });
 
-        // 4. SYNC REAL-TIME & RENDER INVENTORY
+        // 3. REAL-TIME SYNC & CALCULATION
         function startRealtimeSync(uid) {
             unsubSnapshot = onSnapshot(doc(db, "users", uid), (docSnap) => {
                 if (docSnap.exists()) {
-                    const data = docSnap.data();
+                    localPlayerData = docSnap.data();
+                    const data = localPlayerData;
                     
-                    // Render UI Data Utama
+                    // Kalkulasi Bonus Equipment
+                    let bonusAtk = 0, bonusDef = 0, bonusHp = 0;
+                    if(data.equippedItem && itemStats[data.equippedItem]) {
+                        bonusAtk = itemStats[data.equippedItem].atk;
+                        bonusDef = itemStats[data.equippedItem].def;
+                        bonusHp = itemStats[data.equippedItem].hp;
+                    }
+
+                    // Render Basic Info
                     document.getElementById('uiName').innerText = data.name;
                     document.getElementById('uiClass').innerText = data.class;
                     document.getElementById('uiLevel').innerText = data.level;
                     document.getElementById('uiGold').innerText = data.gold;
                     document.getElementById('uiChi').innerText = `${data.chi} / 100`;
-                    
-                    // Render UI Sub-stats
-                    document.getElementById('uiHp').innerText = data.hp;
-                    document.getElementById('uiMana').innerText = data.mana;
-                    document.getElementById('uiAtk').innerText = data.atk;
-                    document.getElementById('uiDef').innerText = data.def;
+                    document.getElementById('uiEquip').innerText = data.equippedItem || "Tidak Ada";
 
-                    // Render Dynamic Inventory Slots
+                    // Render Stats + Bonus
+                    document.getElementById('uiHp').innerText = data.hp;
+                    document.getElementById('uiHpBonus').innerText = bonusHp > 0 ? `(+${bonusHp})` : "";
+                    
+                    document.getElementById('uiMana').innerText = data.mana;
+                    
+                    document.getElementById('uiAtk').innerText = data.atk;
+                    document.getElementById('uiAtkBonus').innerText = bonusAtk > 0 ? `(+${bonusAtk})` : "";
+                    
+                    document.getElementById('uiDef').innerText = data.def;
+                    document.getElementById('uiDefBonus').innerText = bonusDef > 0 ? `(+${bonusDef})` : "";
+
                     renderInventory(data.inventory);
 
                     if(data.role === 'admin') {
@@ -416,6 +363,7 @@
             });
         }
 
+        // 4. INVENTORY & EQUIP LOGIC
         function renderInventory(items = []) {
             const grid = document.getElementById('inventoryGrid');
             grid.innerHTML = "";
@@ -425,6 +373,8 @@
                 if(items[i]) {
                     slot.className = "inv-slot filled";
                     slot.innerText = items[i];
+                    // Tambahkan event click untuk equip
+                    slot.onclick = () => equipItem(items[i]);
                 } else {
                     slot.innerText = "[Kosong]";
                 }
@@ -432,107 +382,106 @@
             }
         }
 
-        // 5. MECHANICS LOGIC: CULTIVATION & GACHA
+        async function equipItem(itemName) {
+            if(!currentUser || !localPlayerData) return;
+            addLog(`🔄 Anda mengenakan [${itemName}]. Status diperbarui!`);
+            await updateDoc(doc(db, "users", currentUser.uid), { equippedItem: itemName });
+        }
+
+        // 5. MECHANICS (CULTIVATE, GACHA, DUNGEON)
         document.getElementById('btnCultivate').addEventListener('click', async () => {
-            if(!currentUser) return;
-            const userRef = doc(db, "users", currentUser.uid);
-            const docSnap = await getDoc(userRef);
-            
-            if(docSnap.exists()) {
-                const data = docSnap.data();
-                let newChi = data.chi + 15;
-                let newLevel = data.level;
-                let newGold = data.gold + 10;
-                let newHp = data.hp, newMana = data.mana, newAtk = data.atk, newDef = data.def;
+            if(!localPlayerData) return;
+            let newChi = localPlayerData.chi + 15;
+            let newLevel = localPlayerData.level;
+            let newGold = localPlayerData.gold + 10;
+            let newHp = localPlayerData.hp, newAtk = localPlayerData.atk, newDef = localPlayerData.def;
 
-                addLog("Anda bermeditasi dengan khusyuk... (+15 Chi, +10 Gold)");
+            addLog("Anda bermeditasi dengan khusyuk... (+15 Chi, +10 Gold)");
 
-                if(newChi >= 100) {
-                    newChi = 0;
-                    newLevel += 1;
-                    newGold += 150;
-                    // Skala Kenaikan Status sesuai Class saat Level Up
-                    if(data.class === "Blademaster") { newHp += 25; newDef += 4; newAtk += 2; }
-                    else if(data.class === "Cleric") { newMana += 30; newAtk += 5; newDef += 2; }
-                    else { newAtk += 7; newHp += 15; newDef += 1; }
-                    
-                    addLog(`🌟 REINKARNASI! Level naik ke ${newLevel}! Status Anda meningkat pesat!`);
-                }
-
-                await updateDoc(userRef, { chi: newChi, level: newLevel, gold: newGold, hp: newHp, mana: newMana, atk: newAtk, def: newDef });
+            if(newChi >= 100) {
+                newChi = 0; newLevel += 1; newGold += 150;
+                if(localPlayerData.class === "Blademaster") { newHp += 25; newDef += 4; newAtk += 2; }
+                else if(localPlayerData.class === "Cleric") { newAtk += 5; newDef += 2; }
+                else { newAtk += 7; newHp += 15; newDef += 1; }
+                addLog(`🌟 REINKARNASI! Level naik ke ${newLevel}! Status meningkat!`);
             }
+            await updateDoc(doc(db, "users", currentUser.uid), { chi: newChi, level: newLevel, gold: newGold, hp: newHp, atk: newAtk, def: newDef });
         });
 
         document.getElementById('btnGacha').addEventListener('click', async () => {
-            if(!currentUser) return;
-            const userRef = doc(db, "users", currentUser.uid);
-            const docSnap = await getDoc(userRef);
+            if(!localPlayerData) return;
+            if(localPlayerData.gold < 50) return alert("Gold tidak cukup!");
+            if(localPlayerData.inventory && localPlayerData.inventory.length >= 10) return alert("Tas Penuh!");
 
-            if(docSnap.exists()) {
-                const data = docSnap.data();
-                if(data.gold < 50) return alert("Gold tidak cukup untuk Gacha!");
-                if(data.inventory && data.inventory.length >= 10) return alert("Tas Penyimpanan Penuh!");
+            const randomItem = itemPool[Math.floor(Math.random() * itemPool.length)];
+            let updatedInv = localPlayerData.inventory ? [...localPlayerData.inventory, randomItem] : [randomItem];
 
-                const randomItem = itemPool[Math.floor(Math.random() * itemPool.length)];
-                let updatedInv = data.inventory ? [...data.inventory, randomItem] : [randomItem];
+            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 50, inventory: updatedInv });
+            addLog(`🎁 Gacha Sukses! Mendapatkan [${randomItem}]! Cek tas Anda.`);
+        });
 
-                await updateDoc(userRef, {
-                    gold: data.gold - 50,
-                    inventory: updatedInv
-                });
-                addLog(`🎁 Selamat! Anda mendapatkan [${randomItem}] dari peti harta karun!`);
+        document.getElementById('btnHunt').addEventListener('click', async () => {
+            if(!localPlayerData) return;
+            
+            const monsterId = document.getElementById('dungeonTarget').value;
+            const target = monsterList[monsterId];
+            
+            // Hitung Total Power Pemain (Base + Equip)
+            let totalAtk = localPlayerData.atk;
+            let totalDef = localPlayerData.def;
+            if(localPlayerData.equippedItem && itemStats[localPlayerData.equippedItem]) {
+                totalAtk += itemStats[localPlayerData.equippedItem].atk;
+                totalDef += itemStats[localPlayerData.equippedItem].def;
             }
+            
+            let playerPower = totalAtk + (totalDef * 0.5); // Rumus sederhana combat power
+            
+            addLog(`⚔️ Menyerang ${target.name}...`);
+            
+            setTimeout(async () => {
+                const userRef = doc(db, "users", currentUser.uid);
+                // Logika Menang/Kalah
+                if(playerPower >= target.reqPower) {
+                    await updateDoc(userRef, { gold: localPlayerData.gold + target.rewardGold });
+                    addLog(`🏆 Kemenangan! Anda mengalahkan ${target.name} dan merampas ${target.rewardGold} Gold.`);
+                } else {
+                    let finalChi = Math.max(0, localPlayerData.chi - target.penaltyChi); // Tidak boleh minus
+                    await updateDoc(userRef, { chi: finalChi });
+                    addLog(`💀 Kekalahan! ${target.name} terlalu kuat. Anda kehilangan ${target.penaltyChi} Chi untuk melarikan diri.`);
+                }
+            }, 1000); // Jeda 1 detik agar terasa seperti loading combat
         });
 
         // 6. CONTROL SCREEN MANAGER
-        function showScreen(screenToShow) {
-            authScreen.style.display = 'none';
-            charCreateScreen.style.display = 'none';
-            gameScreen.style.display = 'none';
-            adminScreen.style.display = 'none';
-            
-            if(screenToShow === gameScreen || screenToShow === adminScreen) {
-                screenToShow.style.display = 'grid';
-            } else {
-                screenToShow.style.display = 'block';
-            }
+        function showScreen(screen) {
+            authScreen.style.display = 'none'; charCreateScreen.style.display = 'none';
+            gameScreen.style.display = 'none'; adminScreen.style.display = 'none';
+            screen.style.display = (screen === gameScreen || screen === adminScreen) ? 'grid' : 'block';
         }
-
         document.getElementById('btnGoAdmin').addEventListener('click', () => showScreen(adminScreen));
         document.getElementById('btnBackToGame').addEventListener('click', () => showScreen(gameScreen));
 
-        // 7. BACKEND ADMIN SYSTEM 
+        // 7. ADMIN PANEL
         document.getElementById('btnGiveGold').addEventListener('click', async () => {
-            const targetUid = document.getElementById('targetUid').value;
-            const amount = parseInt(document.getElementById('giveGoldAmount').value);
-            const log = document.getElementById('adminLog');
-
-            if(!targetUid || isNaN(amount)) return log.innerText = "Error: Input tidak lengkap!";
-            
+            const tUid = document.getElementById('targetUid').value;
+            const amt = parseInt(document.getElementById('giveGoldAmount').value);
+            if(!tUid || isNaN(amt)) return;
             try {
-                const targetRef = doc(db, "users", targetUid);
-                const targetSnap = await getDoc(targetRef);
-                if(!targetSnap.exists()) return log.innerText = "Player UID tidak ditemukan.";
-                
-                await updateDoc(targetRef, { gold: targetSnap.data().gold + amount });
-                log.innerText = `Sukses menambahkan ${amount} Gold ke Target.`;
-            } catch(e) { log.innerText = "Gagal memproses eksekusi."; }
+                const ref = doc(db, "users", tUid);
+                const snap = await getDoc(ref);
+                await updateDoc(ref, { gold: snap.data().gold + amt });
+                document.getElementById('adminLog').innerText = `Sukses kirim ${amt} Gold.`;
+            } catch(e) { document.getElementById('adminLog').innerText = "Gagal memproses."; }
         });
 
         document.getElementById('btnGiveItem').addEventListener('click', async () => {
-            const targetUid = document.getElementById('targetUid').value;
-            const selectedItem = document.getElementById('adminAddItem').value;
-            const log = document.getElementById('adminLog');
-
-            if(!targetUid) return log.innerText = "Error: UID Target kosong!";
-
+            const tUid = document.getElementById('targetUid').value;
+            const item = document.getElementById('adminAddItem').value;
+            if(!tUid) return;
             try {
-                const targetRef = doc(db, "users", targetUid);
-                await updateDoc(targetRef, {
-                    inventory: arrayUnion(selectedItem)
-                });
-                log.innerText = `Sukses mengirim [${selectedItem}] ke tas Player.`;
-            } catch(e) { log.innerText = "Gagal mengirimkan item."; }
+                await updateDoc(doc(db, "users", tUid), { inventory: arrayUnion(item) });
+                document.getElementById('adminLog').innerText = `Sukses kirim [${item}].`;
+            } catch(e) { document.getElementById('adminLog').innerText = "Gagal kirim item."; }
         });
     </script>
 </body>
