@@ -3,26 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfect World: Web Idle MMO v9</title>
+    <title>Perfect World: Web Idle MMO v10 Final</title>
     <style>
-        /* Modern UI & Dark Theme */
+        /* Modern UI, Dark Theme & Animations */
         :root {
             --primary: #00e5ff; --secondary: #ff0055; --accent: #e040fb;
             --success: #00e676; --warning: #ffea00; --bg-color: #0a0f1a;
             --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08);
         }
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-image: radial-gradient(circle at top right, #141f36, #0a0f1a); font-size: 14px;}
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-image: radial-gradient(circle at top right, #141f36, #0a0f1a); font-size: 14px; overflow: hidden;}
         
-        .main-wrapper { display: none; grid-template-columns: 260px 1fr 300px; gap: 20px; width: 98%; max-width: 1400px; padding: 20px 0; height: 95vh;}
-        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; overflow-y: auto;}
+        /* Ambient Particles */
+        .particle { position: absolute; background: var(--primary); border-radius: 50%; opacity: 0.3; animation: floatUp 10s infinite linear; pointer-events: none; }
+        @keyframes floatUp { 0% { transform: translateY(100vh) scale(0); opacity: 0; } 50% { opacity: 0.5; } 100% { transform: translateY(-10vh) scale(1.5); opacity: 0; } }
+
+        .main-wrapper { display: none; grid-template-columns: 260px 1fr 300px; gap: 20px; width: 98%; max-width: 1400px; padding: 20px 0; height: 95vh; z-index: 10;}
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; overflow-y: auto; transition: transform 0.3s ease; }
+        .glass-panel:hover { border-color: rgba(0, 229, 255, 0.2); }
         
-        h2 { margin-top: 0; color: var(--primary); letter-spacing: 1px; font-size: 18px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;}
+        h2 { margin-top: 0; color: var(--primary); letter-spacing: 1px; font-size: 18px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);}
         h3 { color: #aaa; font-size: 12px; margin-bottom: 5px; text-transform: uppercase; }
         
-        input, select { width: 100%; padding: 10px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); color: white; border-radius: 8px; box-sizing: border-box; font-size: 13px; }
-        input:focus, select:focus { outline: none; border-color: var(--primary); }
-        .btn { background: linear-gradient(45deg, #00e5ff, #0077ff); border: none; color: white; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; width: 100%; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(0, 229, 255, 0.1); font-size: 13px;}
+        input, select { width: 100%; padding: 10px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); color: white; border-radius: 8px; box-sizing: border-box; font-size: 13px; transition: border 0.3s; }
+        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);}
+        
+        .btn { background: linear-gradient(45deg, #00e5ff, #0077ff); border: none; color: white; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; width: 100%; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(0, 229, 255, 0.1); font-size: 13px; position: relative; overflow: hidden;}
+        .btn::after { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: 0.5s; }
+        .btn:hover::after { left: 100%; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 229, 255, 0.4); }
+        .btn:active { transform: translateY(0); }
+        
         .btn-danger { background: linear-gradient(45deg, #ff0055, #cc0044); box-shadow: 0 4px 15px rgba(255, 0, 85, 0.1); }
         .btn-accent { background: linear-gradient(45deg, #e040fb, #aa00ff); }
         .btn-warning { background: linear-gradient(45deg, #ffea00, #ff9100); color: #000; box-shadow: 0 4px 15px rgba(255, 234, 0, 0.1); }
@@ -30,78 +40,89 @@
         .btn-small { padding: 4px 8px; font-size: 11px; width: auto; margin: 0; }
 
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-        .stat-box { background: rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--glass-border); }
-        .stat-val { font-size: 18px; font-weight: bold; color: var(--primary); }
+        .stat-box { background: rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--glass-border); transition: all 0.3s; }
+        .stat-box:hover { background: rgba(0, 229, 255, 0.05); border-color: var(--primary); transform: translateY(-2px);}
+        .stat-val { font-size: 18px; font-weight: bold; color: var(--primary); text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);}
         
         .sub-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; background: rgba(0, 0, 0, 0.2); padding: 12px; border-radius: 8px; margin-top: 10px; }
         .sub-stat-item { font-size: 12px; color: #ccc; }
         .sub-stat-item strong { color: #fff; }
         .bonus-stat { color: var(--success); font-size: 11px; font-weight: bold;}
 
-        .equip-box, .guild-box, .pet-box { background: rgba(224, 64, 251, 0.05); border: 1px solid var(--glass-border); padding: 10px; border-radius: 8px; margin-top: 10px; text-align: center; font-size: 13px;}
+        .equip-box, .guild-box, .pet-box, .quest-box { background: rgba(224, 64, 251, 0.05); border: 1px solid var(--glass-border); padding: 10px; border-radius: 8px; margin-top: 10px; text-align: center; font-size: 13px; transition: border-color 0.3s;}
         .guild-box { border-color: var(--success); background: rgba(0, 230, 118, 0.05); margin-bottom: 10px;}
         .pet-box { border-color: var(--warning); background: rgba(255, 234, 0, 0.05); }
+        .quest-box { border-color: #00e5ff; background: rgba(0, 229, 255, 0.05); text-align: left; }
+
+        .quest-item { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; color: #ccc; }
+        .quest-item.done { color: var(--success); text-decoration: line-through; }
 
         .inventory-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
         .inv-slot { aspect-ratio: 1; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 10px; text-align: center; padding: 2px; cursor: pointer; transition: all 0.2s; position: relative;}
-        .inv-slot.filled:hover { border-color: var(--primary); background: rgba(0, 229, 255, 0.1); transform: scale(1.05); }
+        .inv-slot.filled:hover { border-color: var(--primary); background: rgba(0, 229, 255, 0.1); transform: scale(1.1) rotate(2deg); z-index: 2; box-shadow: 0 0 15px rgba(0,229,255,0.4);}
         .inv-slot.filled { border-color: var(--accent); background: rgba(224, 64, 251, 0.05); }
 
-        .log-box { background: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 8px; height: 50px; overflow-y: auto; font-size: 12px; color: #00e5ff; border-left: 3px solid var(--primary); margin-top: 10px; }
+        .log-box { background: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 8px; height: 50px; overflow-y: auto; font-size: 12px; color: #00e5ff; border-left: 3px solid var(--primary); margin-top: 10px; font-family: monospace;}
         .dungeon-panel { background: rgba(255, 0, 85, 0.05); border: 1px solid rgba(255, 0, 85, 0.3); padding: 12px; border-radius: 8px; margin-top: 10px; }
-        .boss-panel { background: rgba(255, 145, 0, 0.05); border: 1px solid rgba(255, 145, 0, 0.3); padding: 12px; border-radius: 8px; margin-top: 10px; text-align: center;}
+        .boss-panel { background: rgba(255, 145, 0, 0.05); border: 1px solid rgba(255, 145, 0, 0.3); padding: 12px; border-radius: 8px; margin-top: 10px; text-align: center; position: relative; overflow: hidden;}
         
         .chat-box { flex-grow: 1; background: rgba(0,0,0,0.3); border-radius: 8px; margin-bottom: 10px; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; border: 1px solid var(--glass-border);}
-        .chat-msg { font-size: 12px; line-height: 1.4; }
+        .chat-msg { font-size: 12px; line-height: 1.4; animation: fadeIn 0.3s ease; }
         .chat-name { font-weight: bold; color: var(--warning); }
         .chat-guild { color: var(--success); font-weight: normal; }
         .chat-title { color: #e040fb; font-weight: bold; font-size: 10px; border: 1px solid #e040fb; padding: 1px 3px; border-radius: 3px; margin-right: 3px;}
         
         .leaderboard-list { list-style: none; padding: 0; margin: 0; }
-        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid var(--glass-border); font-size: 12px; }
-        .leaderboard-item span.rank-1 { color: #ffd700; font-weight: bold;}
+        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid var(--glass-border); font-size: 12px; transition: background 0.2s;}
+        .leaderboard-item:hover { background: rgba(255,255,255,0.05); }
+        .leaderboard-item span.rank-1 { color: #ffd700; font-weight: bold; text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);}
         .leaderboard-item span.rank-2 { color: #c0c0c0; font-weight: bold;}
         .leaderboard-item span.rank-3 { color: #cd7f32; font-weight: bold;}
 
-        .single-container { width: 400px; display: none; }
+        .single-container { width: 400px; display: none; z-index: 10;}
         #authScreen, #charCreateScreen { display: block; }
         
-        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a2235; border: 1px solid var(--primary); padding: 20px; border-radius: 12px; z-index: 100; box-shadow: 0 0 30px rgba(0, 229, 255, 0.3); text-align: center; width: 250px;}
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(26, 34, 53, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--primary); padding: 20px; border-radius: 12px; z-index: 100; box-shadow: 0 0 30px rgba(0, 229, 255, 0.3); text-align: center; width: 250px; animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99; backdrop-filter: blur(3px);}
         
         @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px) rotate(-1deg); }
+            40%, 80% { transform: translateX(5px) rotate(1deg); }
         }
-        .shake-effect { animation: shake 0.3s; }
+        @keyframes scaleIn { from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .shake-effect { animation: shake 0.4s ease-in-out; }
     </style>
 </head>
 <body>
 
-    <!-- OVERLAY & MODAL UNTUK ITEM -->
+    <script>
+        for(let i=0; i<15; i++) {
+            let div = document.createElement('div');
+            div.className = 'particle';
+            div.style.left = Math.random() * 100 + 'vw';
+            div.style.width = Math.random() * 5 + 2 + 'px';
+            div.style.height = div.style.width;
+            div.style.animationDuration = (Math.random() * 5 + 5) + 's';
+            div.style.animationDelay = Math.random() * 5 + 's';
+            document.body.appendChild(div);
+        }
+    </script>
+
     <div class="modal-overlay" id="modalOverlay"></div>
     <div class="modal" id="itemModal">
         <h3 id="modalItemName" style="color: var(--primary); margin-top:0;">Nama Item</h3>
-        <p id="modalItemDesc" style="font-size: 12px; color: #aaa;">Deskripsi status item.</p>
-        <button class="btn btn-accent" id="btnModalEquip">Equip (Ganti Saat Ini)</button>
-        <input type="number" id="modalSellPrice" placeholder="Harga Jual (Gold)" style="margin-bottom: 10px;">
+        <p id="modalItemDesc" style="font-size: 12px; color: #aaa;">Peralatan tempur.</p>
+        <button class="btn btn-accent" id="btnModalEquip">Equip (Ganti & Reset Tempa)</button>
+        <input type="number" id="modalSellPrice" placeholder="Harga Jual (Gold)" min="1" style="margin-bottom: 10px;">
         <button class="btn btn-warning" id="btnModalSell">Jual di Pasar Lelang</button>
-        <button class="btn btn-danger" id="btnModalClose">Tutup</button>
+        <button class="btn btn-danger" id="btnModalClose">Batal</button>
     </div>
 
-    <!-- MODAL AFK REWARD -->
     <div class="modal" id="afkModal" style="border-color: var(--success); width: 300px;">
-        <h3 style="color: var(--success); margin-top:0;">Meditasi AFK Selesai!</h3>
-        <p style="font-size: 12px; color: #aaa;">Selama Anda offline, karakter Anda terus berlatih.</p>
+        <h3 style="color: var(--success); margin-top:0;">Meditasi Offline Selesai!</h3>
+        <p style="font-size: 12px; color: #aaa;">Tubuh fisik istirahat, tapi Jiwa Anda terus berlatih.</p>
         <div style="font-size: 16px; margin: 15px 0;">
             Dapat <strong id="afkGold" style="color:var(--warning)">0</strong> Gold<br>
             Dapat <strong id="afkChi" style="color:var(--primary)">0</strong> Chi
@@ -109,32 +130,29 @@
         <button class="btn btn-success" id="btnKlaimAFK">Klaim Hasil</button>
     </div>
 
-    <!-- SCREEN 1 & 2: AUTH & CHAR CREATE -->
     <div class="glass-panel single-container" id="authScreen">
-        <h2 style="text-align: center; border:none;">Perfect World <span style="color:var(--accent)">v9</span></h2>
+        <h2 style="text-align: center; border:none; text-shadow: 0 0 15px var(--accent);">Perfect World <span style="color:var(--accent)">v10 Final</span></h2>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
         <button class="btn" id="btnLogin">Login</button>
-        <button class="btn" id="btnRegister" style="background: transparent; border: 1px solid var(--primary);">Register Akun Baru</button>
+        <button class="btn" id="btnRegister" style="background: transparent; border: 1px solid var(--primary); box-shadow: none;">Register Akun Baru</button>
         <div id="authError" style="color: var(--secondary); text-align: center; font-size: 13px; margin-top: 10px;"></div>
     </div>
 
     <div class="glass-panel single-container" id="charCreateScreen">
         <h2>Pilih Takdir Anda</h2>
-        <input type="text" id="newCharName" placeholder="Nama Karakter">
+        <input type="text" id="newCharName" placeholder="Nama Karakter (Maks 10 huruf)" maxlength="10">
         <label style="font-size: 12px; color: #aaa;">PILIH CLASS:</label>
         <select id="newCharClass">
             <option value="Blademaster">Blademaster (Unggul HP & Def)</option>
             <option value="Cleric">Cleric (Unggul Mana & Magic)</option>
             <option value="Archer">Archer (Unggul Serangan/Atk)</option>
         </select>
-        <button class="btn" id="btnCreateChar">Masuk Ke Dunia</button>
+        <button class="btn" id="btnCreateChar">Masuk Ke Dunia Pan Gu</button>
     </div>
 
-    <!-- SCREEN 3: MAIN GAME MMO DASHBOARD -->
     <div class="main-wrapper" id="gameScreen">
         
-        <!-- PANEL KIRI: PROFIL, GUILD & PET -->
         <div class="glass-panel">
             <h2>Karakter Anda</h2>
             <p style="margin: 0 0 5px 0;"><span id="uiTitle" class="chat-title">Pemula</span> <strong id="uiName" style="color: #fff;">-</strong></p>
@@ -143,8 +161,8 @@
             <div class="guild-box" id="uiGuildBox">
                 Guild: <strong id="uiGuildName" style="color: var(--success);">[Tidak Ada]</strong>
                 <div id="guildActionDiv" style="margin-top: 8px;">
-                    <input type="text" id="inputGuildName" placeholder="Nama Guild Baru" style="padding: 6px; font-size: 11px;">
-                    <button class="btn btn-small btn-success" id="btnCreateGuild" style="width: 100%;">Buat Guild (1000 Gold)</button>
+                    <input type="text" id="inputGuildName" placeholder="Nama Guild (1000 G)" maxlength="8" style="padding: 6px; font-size: 11px;">
+                    <button class="btn btn-small btn-success" id="btnCreateGuild" style="width: 100%;">Buat Guild</button>
                 </div>
             </div>
 
@@ -162,7 +180,7 @@
                 Peralatan Aktif:<br>
                 <strong id="uiEquip" style="color: var(--primary); font-size:14px;">Tidak Ada</strong>
                 <div id="uiEquipLevel" style="color: var(--warning); font-size: 12px; font-weight:bold;"></div>
-                <button class="btn btn-small btn-success" id="btnEnhance" style="margin-top:8px;">Tempa Item (Butuh Gold)</button>
+                <button class="btn btn-small btn-success" id="btnEnhance" style="margin-top:8px;">Tempa Item (Gold)</button>
             </div>
 
             <div class="sub-stats">
@@ -178,7 +196,6 @@
             </div>
         </div>
 
-        <!-- PANEL TENGAH: DUNIA PAN GU & WORLD BOSS -->
         <div class="glass-panel" id="midPanel">
             <h2>Eksplorasi Dunia</h2>
             <div class="stats-grid">
@@ -192,23 +209,29 @@
                 <button class="btn btn-accent" id="btnGacha" style="flex:1;">Gacha Equip (50 G)</button>
             </div>
 
-            <div class="log-box" id="gameLog">Sistem v9 siap. Bergabunglah mengalahkan World Boss!</div>
+            <div class="log-box" id="gameLog">Sistem v10 Final siap. Dunia damai... untuk saat ini.</div>
 
-            <!-- GLOBAL WORLD BOSS RAID -->
+            <div class="quest-box">
+                <h3 style="color: var(--primary); margin-top:0; border-bottom: 1px solid rgba(0,229,255,0.3); padding-bottom:3px;">📜 Misi Harian</h3>
+                <div id="qCultivate" class="quest-item">Meditasi 5 Kali <span id="qCultivateProg">0/5</span></div>
+                <div id="qHunt" class="quest-item">Kalahkan 3 Musuh <span id="qHuntProg">0/3</span></div>
+                <div id="qChat" class="quest-item">Kirim 1 Pesan Global <span id="qChatProg">0/1</span></div>
+                <button class="btn btn-small btn-success" id="btnClaimQuest" style="width:100%; margin-top:5px; display:none;">Klaim Hadiah (500 G, 50 Chi)</button>
+            </div>
+
             <div class="boss-panel">
                 <h3 style="color: #ff9100; margin-top: 0; text-transform: uppercase; letter-spacing: 1px;">🔥 Raid Server: World Boss</h3>
                 <strong id="wbName" style="font-size: 16px; color: var(--secondary);">Memuat Boss...</strong> 
                 <span style="color: #aaa; font-size: 12px;">(Lv. <span id="wbLevel">1</span>)</span><br>
                 
                 <div style="background: rgba(0,0,0,0.6); border-radius: 8px; width: 100%; height: 16px; margin: 8px 0; overflow: hidden; border: 1px solid var(--secondary);">
-                    <div id="wbHpBar" style="background: linear-gradient(90deg, #cc0044, #ff0055); width: 100%; height: 100%; transition: width 0.2s;"></div>
+                    <div id="wbHpBar" style="background: linear-gradient(90deg, #cc0044, #ff0055); width: 100%; height: 100%; transition: width 0.3s ease-out;"></div>
                 </div>
                 <div style="font-size: 12px; font-weight:bold; color: #fff; margin-bottom: 10px;" id="wbHpText">0 / 0</div>
                 
                 <button class="btn btn-danger" id="btnAttackBoss" style="width: 100%; box-shadow: 0 0 15px rgba(255, 0, 85, 0.4);">Serang Bersama (Butuh 20 Chi)</button>
             </div>
 
-            <!-- Dungeon & Map System -->
             <div class="dungeon-panel">
                 <h3 style="color: var(--secondary); margin-top: 0;">Peta Perburuan Solo</h3>
                 <select id="mapSelector" style="background: rgba(255,0,85,0.1); border-color: var(--secondary);">
@@ -218,20 +241,17 @@
 
                 <div style="display: flex; gap: 10px; margin-top: 5px;">
                     <select id="dungeonTarget" style="margin-bottom: 0;">
-                        <!-- Diisi via JavaScript -->
-                    </select>
+                        </select>
                     <button class="btn btn-danger" id="btnHunt" style="margin-bottom: 0; width: 40%;">Serang</button>
                 </div>
             </div>
 
-            <!-- Inventory -->
             <div style="margin-top: 15px;">
                 <h3>Tas Penyimpanan</h3>
                 <div class="inventory-grid" id="inventoryGrid"></div>
             </div>
         </div>
 
-        <!-- PANEL KANAN: SOSIAL & PVP LEADERBOARD -->
         <div class="glass-panel">
             <h2>Global Chat</h2>
             <div class="chat-box" id="chatBox"></div>
@@ -241,7 +261,7 @@
             </div>
 
             <h2 style="margin-top: 20px;">Arena Leaderboard</h2>
-            <p style="font-size:11px; color:#aaa; margin-top:-5px;">Klik ⚔️ untuk menantang (Curi 50 Gold)</p>
+            <p style="font-size:11px; color:#aaa; margin-top:-5px;">Klik ⚔️ untuk menantang (Curi Gold)</p>
             <ul class="leaderboard-list" id="leaderboardList">
                 <li style="text-align:center; color:#aaa; font-size:12px;">Memuat data...</li>
             </ul>
@@ -249,14 +269,12 @@
 
     </div>
 
-    <!-- PANEL PASAR LELANG (MARKETPLACE) -->
     <div class="glass-panel single-container" id="marketScreen" style="width: 600px;">
         <h2 style="color: var(--warning);">Pasar Lelang Global</h2>
         <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px; max-height: 400px; overflow-y: auto;" id="marketList"></div>
         <button class="btn" id="btnMarketToGame" style="background: #333; margin-top: 20px;">Kembali ke Game</button>
     </div>
 
-    <!-- FIREBASE SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
@@ -277,12 +295,17 @@
         let selectedInventoryIndex = null;
         let marketUnsub = null;
         let afkRewardPending = { gold: 0, chi: 0 };
+        
+        // Helper Time
+        function getCurrentDateString() {
+            return new Date().toLocaleDateString('id-ID', { timeZone: 'Asia/Makassar' });
+        }
 
         // ITEM, MAP & PET DATA
         const itemStats = {
             "Mirage Sword": { atk: 50, def: 0, hp: 0 }, "Celestial Wing": { atk: 0, def: 30, hp: 0 },
             "Soulgem Ring": { atk: 0, def: 0, hp: 100 }, "Pan Gu Artifact": { atk: 100, def: 50, hp: 200 },
-            "Dragon Scale": { atk: 150, def: 100, hp: 500 }
+            "Dragon Scale": { atk: 150, def: 100, hp: 500 }, "Godly Cape": { atk: 0, def: 200, hp: 1000 }
         };
         const itemPool = ["Mirage Sword", "Celestial Wing", "Soulgem Ring", "Pan Gu Artifact"];
         const petPool = ["Pixie Kecil", "Firefox Berapi", "Golden Dragon"];
@@ -296,11 +319,10 @@
             "map2": {
                 "1": { name: "Fire Imp", reqPower: 350, rewardGold: 150, penaltyChi: 25 },
                 "2": { name: "Lava Golem", reqPower: 700, rewardGold: 400, penaltyChi: 40 },
-                "boss": { name: "Lord Demon (Map Boss)", reqPower: 1500, rewardGold: 3000, penaltyChi: 100, drops: ["Dragon Scale", "Pan Gu Artifact"] }
+                "boss": { name: "Lord Demon (Map Boss)", reqPower: 1500, rewardGold: 3000, penaltyChi: 100, drops: ["Dragon Scale", "Godly Cape"] }
             }
         };
 
-        // DOM Manipulations
         const mapSelect = document.getElementById('mapSelector');
         const monsterSelect = document.getElementById('dungeonTarget');
 
@@ -348,14 +370,27 @@
             return tAtk + (tDef * 0.5);
         }
 
+        // --- QUEST HELPER ---
+        async function updateDailyQuest(taskStr) {
+            if(!localPlayerData || !localPlayerData.dailyQuests) return;
+            if(localPlayerData.dailyQuests.claimed) return; // Already finished today
+            
+            let q = { ...localPlayerData.dailyQuests };
+            if(taskStr === "cultivate" && q.cultivate < 5) q.cultivate++;
+            if(taskStr === "hunt" && q.hunt < 3) q.hunt++;
+            if(taskStr === "chat" && q.chat < 1) q.chat++;
+            
+            await updateDoc(doc(db, "users", currentUser.uid), { dailyQuests: q });
+        }
+
         // --- AUTH & INIT ---
         document.getElementById('btnLogin').addEventListener('click', async () => {
             try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
-            catch (error) { document.getElementById('authError').innerText = "Login Gagal!"; }
+            catch (error) { document.getElementById('authError').innerText = "Login Gagal! Periksa kredensial."; }
         });
         document.getElementById('btnRegister').addEventListener('click', async () => {
             try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
-            catch (error) { document.getElementById('authError').innerText = "Register Gagal!"; }
+            catch (error) { document.getElementById('authError').innerText = "Register Gagal! Password min 6 karakter."; }
         });
         
         document.getElementById('btnLogout').addEventListener('click', async () => {
@@ -369,16 +404,32 @@
                 const docSnap = await getDoc(doc(db, "users", user.uid));
                 if (docSnap.exists()) { 
                     const data = docSnap.data();
+                    let updates = {};
+                    
+                    // Daily Quest Reset Logic
+                    const todayDate = getCurrentDateString();
+                    if(data.lastQuestDate !== todayDate) {
+                        updates.lastQuestDate = todayDate;
+                        updates.dailyQuests = { cultivate: 0, hunt: 0, chat: 0, claimed: false };
+                    }
+
+                    // AFK Logic
                     if (data.lastActive) {
                         const afkMinutes = Math.floor((Date.now() - data.lastActive) / 60000);
                         if (afkMinutes > 1) { 
-                            afkRewardPending.gold = afkMinutes * 5; afkRewardPending.chi = afkMinutes * 2; 
+                            afkRewardPending.gold = Math.min(afkMinutes * 5, 5000); // Max cap
+                            afkRewardPending.chi = Math.min(afkMinutes * 2, 2000); 
                             document.getElementById('afkGold').innerText = afkRewardPending.gold;
                             document.getElementById('afkChi').innerText = afkRewardPending.chi;
                             document.getElementById('modalOverlay').style.display = 'block';
                             document.getElementById('afkModal').style.display = 'block';
                         }
                     }
+
+                    if(Object.keys(updates).length > 0) {
+                        await updateDoc(doc(db, "users", user.uid), updates);
+                    }
+
                     showScreen('gameScreen'); startRealtimeSync(user.uid); initSocialFeatures(); initWorldBoss();
                 } else { showScreen('charCreateScreen'); }
             } else { currentUser = null; showScreen('authScreen'); }
@@ -390,7 +441,8 @@
         });
 
         document.getElementById('btnCreateChar').addEventListener('click', async () => {
-            const charName = document.getElementById('newCharName').value || "Guest";
+            const charName = document.getElementById('newCharName').value.trim() || "Guest";
+            if(charName.length === 0) return alert("Nama tidak boleh kosong!");
             const selectedClass = document.getElementById('newCharClass').value;
             let baseStats = { hp: 100, mana: 100, atk: 15, def: 10 };
             if(selectedClass === "Blademaster") { baseStats.hp = 150; baseStats.def = 18; }
@@ -401,7 +453,8 @@
                 name: charName, class: selectedClass, role: "player", level: 1, gold: 100, chi: 0, 
                 hp: baseStats.hp, mana: baseStats.mana, atk: baseStats.atk, def: baseStats.def,
                 inventory: [], equippedItem: "", equipUpgrade: 0, lastActive: Date.now(), guild: "",
-                pet: "None", petLevel: 0
+                pet: "None", petLevel: 0,
+                lastQuestDate: getCurrentDateString(), dailyQuests: { cultivate: 0, hunt: 0, chat: 0, claimed: false }
             });
             showScreen('gameScreen'); startRealtimeSync(currentUser.uid); initSocialFeatures(); initWorldBoss();
         });
@@ -446,10 +499,36 @@
                         document.getElementById('uiGuildName').innerText = "[Tidak Ada]";
                         document.getElementById('guildActionDiv').style.display = 'block';
                     }
+
+                    // Render Quests
+                    if(data.dailyQuests) {
+                        let q = data.dailyQuests;
+                        document.getElementById('qCultivateProg').innerText = `${q.cultivate}/5`;
+                        document.getElementById('qHuntProg').innerText = `${q.hunt}/3`;
+                        document.getElementById('qChatProg').innerText = `${q.chat}/1`;
+                        
+                        document.getElementById('qCultivate').className = q.cultivate >= 5 ? "quest-item done" : "quest-item";
+                        document.getElementById('qHunt').className = q.hunt >= 3 ? "quest-item done" : "quest-item";
+                        document.getElementById('qChat').className = q.chat >= 1 ? "quest-item done" : "quest-item";
+
+                        if(q.cultivate >= 5 && q.hunt >= 3 && q.chat >= 1 && !q.claimed) {
+                            document.getElementById('btnClaimQuest').style.display = 'block';
+                        } else {
+                            document.getElementById('btnClaimQuest').style.display = 'none';
+                        }
+                    }
+
                     renderInventory(data.inventory);
                 }
             });
         }
+
+        // QUEST CLAIM
+        document.getElementById('btnClaimQuest').addEventListener('click', async () => {
+            let q = { ...localPlayerData.dailyQuests, claimed: true };
+            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold + 500, chi: localPlayerData.chi + 50, dailyQuests: q });
+            addLog("🎁 Anda mengklaim Hadiah Misi Harian!");
+        });
 
         // --- GLOBAL WORLD BOSS SYSTEM ---
         function initWorldBoss() {
@@ -463,7 +542,6 @@
                     let hpPercent = Math.max(0, (data.hp / data.maxHp) * 100);
                     document.getElementById('wbHpBar').style.width = `${hpPercent}%`;
                 } else {
-                    // Jika Boss belum ada di database, kita inisialisasi
                     setDoc(bossRef, { name: "Behemoth Raja Iblis", hp: 100000, maxHp: 100000, level: 1 });
                 }
             });
@@ -483,31 +561,28 @@
                     const bossDoc = await transaction.get(bossRef);
                     if (!bossDoc.exists()) throw "Boss tidak ditemukan!";
                     
-                    let newHp = bossDoc.data().hp - dmg;
+                    let currentHp = bossDoc.data().hp;
+                    let newHp = Math.max(0, currentHp - dmg);
                     
                     if (newHp <= 0) {
-                        // Boss Mati (Pemain ini Last Hitter)
+                        // Boss Mati (Last Hitter)
                         let nextLevel = bossDoc.data().level + 1;
                         let nextMaxHp = 100000 * nextLevel;
                         
-                        // Respawn Boss
                         transaction.set(bossRef, { name: "Behemoth Raja Iblis", hp: nextMaxHp, maxHp: nextMaxHp, level: nextLevel });
                         
-                        // Beri Reward Last Hitter
                         const rewardGold = 5000 * bossDoc.data().level;
                         transaction.update(doc(db, "users", currentUser.uid), { 
                             gold: localPlayerData.gold + rewardGold, 
-                            chi: localPlayerData.chi - 20
+                            chi: Math.max(0, localPlayerData.chi - 20)
                         });
                         
-                        // Announce Server
                         addDoc(collection(db, "global_chat"), { sender: "SISTEM RAID", text: `🌟 LUAR BIASA! ${localPlayerData.name} memberikan pukulan terakhir ke World Boss dan merampas ${rewardGold} Gold! Boss berevolusi ke Level ${nextLevel}!`, timestamp: serverTimestamp() });
                     } else {
-                        // Boss Hanya Kena Hit Biasa
                         transaction.update(bossRef, { hp: newHp });
                         transaction.update(doc(db, "users", currentUser.uid), { 
-                            chi: localPlayerData.chi - 20, 
-                            gold: localPlayerData.gold + (dmg * 2) // Gold sesuai damage
+                            chi: Math.max(0, localPlayerData.chi - 20), 
+                            gold: localPlayerData.gold + Math.floor(dmg * 2)
                         });
                     }
                 });
@@ -515,7 +590,7 @@
             } catch (e) { console.error("Raid Error: ", e); }
         });
 
-        // --- CORE GAMEPLAY (CULTIVATE, PET, GUILD, HUNT) ---
+        // --- CORE GAMEPLAY ---
         document.getElementById('btnGachaPet').addEventListener('click', async () => {
             if(localPlayerData.gold < 500) return alert("Butuh 500 Gold!");
             const randomPet = petPool[Math.floor(Math.random() * petPool.length)];
@@ -532,7 +607,7 @@
 
         document.getElementById('btnCreateGuild').addEventListener('click', async () => {
             const gName = document.getElementById('inputGuildName').value.trim();
-            if(!gName || gName.length > 12) return alert("Nama tidak valid!");
+            if(!gName || gName.length > 8) return alert("Nama tidak valid! Maksimal 8 huruf.");
             if(localPlayerData.gold < 1000) return alert("Butuh 1000 Gold!");
             await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 1000, guild: gName });
         });
@@ -542,6 +617,8 @@
             let newHp = localPlayerData.hp, newAtk = localPlayerData.atk, newDef = localPlayerData.def;
             addLog("Anda menyerap aura langit... (+15 Chi, +10 Gold)");
             
+            updateDailyQuest("cultivate"); // Trigger Misi Harian
+
             if(newChi >= 100) {
                 newChi = 0; newLevel += 1; newGold += 150;
                 if(localPlayerData.class === "Blademaster") { newHp += 25; newDef += 4; newAtk += 2; }
@@ -581,7 +658,9 @@
                             addLog(`🏆 KEMENANGAN EPIC! Merampas ${target.rewardGold} Gold & [${dropItem}]!`);
                         } else { addLog(`🏆 Mengalahkan Bos! Merampas ${target.rewardGold} Gold.`); }
                     } else { addLog(`⚔️ Kemenangan! Mendapat ${target.rewardGold} Gold.`); }
+                    
                     await updateDoc(userRef, updateData);
+                    updateDailyQuest("hunt"); // Trigger Misi Harian
                 } else {
                     let finalChi = Math.max(0, localPlayerData.chi - target.penaltyChi); 
                     await updateDoc(userRef, { chi: finalChi });
@@ -607,11 +686,11 @@
                 if(myPower > enemyPower) {
                     const stolenGold = Math.min(50, targetData.gold);
                     await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 10 + stolenGold + 20 });
-                    await updateDoc(targetRef, { gold: targetData.gold - stolenGold });
+                    await updateDoc(targetRef, { gold: Math.max(0, targetData.gold - stolenGold) });
                     addLog(`⚔️ ARENA: Mengalahkan ${targetName}! Merampas ${stolenGold} Gold.`);
                     await addDoc(collection(db, "global_chat"), { sender: "Arena", text: `⚔️ ${localPlayerData.name} mempermalukan ${targetName} di Colosseum!`, timestamp: serverTimestamp() });
                 } else {
-                    await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 10 });
+                    await updateDoc(doc(db, "users", currentUser.uid), { gold: Math.max(0, localPlayerData.gold - 10) });
                     addLog(`⚔️ ARENA: Anda dihajar balik oleh ${targetName}!`);
                 }
             } catch (e) { console.error(e); }
@@ -656,6 +735,7 @@
             let chatData = { sender: localPlayerData.name, text: text, timestamp: serverTimestamp(), title: getPlayerTitle(localPlayerData.level) };
             if(localPlayerData.guild) chatData.guild = localPlayerData.guild;
             await addDoc(collection(db, "global_chat"), chatData);
+            updateDailyQuest("chat"); // Trigger Misi Harian
         });
         document.getElementById('chatInput').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('btnSendChat').click(); });
 
@@ -671,13 +751,20 @@
         }
         function openItemModal(itemName, index) {
             selectedInventoryIndex = index; document.getElementById('modalItemName').innerText = itemName;
+            // Tampilkan Stat Dasar
+            if(itemStats[itemName]) {
+                let s = itemStats[itemName];
+                document.getElementById('modalItemDesc').innerText = `Status Dasar: Atk +${s.atk}, Def +${s.def}, HP +${s.hp}`;
+            } else {
+                document.getElementById('modalItemDesc').innerText = "Item Spesial.";
+            }
             document.getElementById('modalOverlay').style.display = 'block'; document.getElementById('itemModal').style.display = 'block';
         }
         document.getElementById('btnModalClose').onclick = () => { document.getElementById('modalOverlay').style.display = 'none'; document.getElementById('itemModal').style.display = 'none'; }
         
         document.getElementById('btnModalEquip').onclick = async () => {
             const itemName = document.getElementById('modalItemName').innerText;
-            await updateDoc(doc(db, "users", currentUser.uid), { equippedItem: itemName, equipUpgrade: 0 });
+            await updateDoc(doc(db, "users", currentUser.uid), { equippedItem: itemName, equipUpgrade: 0 }); // BUGFIX: Reset Enhance ke 0
             addLog(`🔄 Mengenakan [${itemName}]. Enhance direset.`);
             document.getElementById('btnModalClose').click();
         }
@@ -687,6 +774,7 @@
             const cost = 200 + (currentUpg * 150); 
             if(confirm(`Tempa senjata menjadi +${currentUpg + 1}? Biaya ${cost} Gold.`)) {
                 if(localPlayerData.gold < cost) return alert("Gold tidak cukup!");
+                // Validasi agar saldo aman
                 await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - cost, equipUpgrade: currentUpg + 1 });
                 addLog(`🔨 TING! Item berhasil ditempa menjadi +${currentUpg + 1}!`);
             }
@@ -699,7 +787,7 @@
             addLog(`🎁 Gacha: Mendapatkan [${randomItem}]!`);
         });
 
-        // MARKETPLACE
+        // MARKETPLACE (BUGFIX: TRANSAKSI AMAN)
         document.getElementById('btnGoMarket').onclick = () => { 
             showScreen('marketScreen'); 
             marketUnsub = onSnapshot(collection(db, "market"), (snapshot) => {
@@ -715,6 +803,7 @@
             });
         }
         document.getElementById('btnMarketToGame').onclick = () => { if(marketUnsub) marketUnsub(); showScreen('gameScreen'); }
+        
         document.getElementById('btnModalSell').onclick = async () => {
             const price = parseInt(document.getElementById('modalSellPrice').value);
             if(!price || price <= 0) return alert("Harga tidak valid!");
@@ -724,15 +813,43 @@
             document.getElementById('btnModalClose').click();
             addLog(`⚖️ Item masuk ke Pasar Lelang.`);
         }
+
+        // Transaksi Aman Menggunakan runTransaction agar tidak duplikasi item
         window.buyMarketItem = async function(docId, sId, iName, price) {
             if(currentUser.uid === sId) return alert("Barang Anda sendiri!");
             if(localPlayerData.gold < price) return alert("Gold tidak cukup!");
             if(localPlayerData.inventory.length >= 10) return alert("Tas Penuh!");
-            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - price, inventory: [...localPlayerData.inventory, iName] });
-            const sRef = doc(db, "users", sId); const sSnap = await getDoc(sRef);
-            if(sSnap.exists()) await updateDoc(sRef, { gold: sSnap.data().gold + price });
-            await deleteDoc(doc(db, "market", docId));
-            addLog(`🛒 Berhasil membeli ${iName}!`);
+
+            try {
+                const marketRef = doc(db, "market", docId);
+                const sellerRef = doc(db, "users", sId);
+                const buyerRef = doc(db, "users", currentUser.uid);
+
+                await runTransaction(db, async (transaction) => {
+                    const marketDoc = await transaction.get(marketRef);
+                    if (!marketDoc.exists()) throw "Barang sudah terjual ke orang lain!";
+                    
+                    const buyerDoc = await transaction.get(buyerRef);
+                    if (buyerDoc.data().gold < price) throw "Uang tidak cukup saat transaksi berjalan.";
+                    
+                    const sellerDoc = await transaction.get(sellerRef);
+                    
+                    // Eksekusi Perpindahan
+                    transaction.update(buyerRef, { 
+                        gold: buyerDoc.data().gold - price, 
+                        inventory: [...buyerDoc.data().inventory, iName] 
+                    });
+                    
+                    if(sellerDoc.exists()) {
+                        transaction.update(sellerRef, { gold: sellerDoc.data().gold + price });
+                    }
+                    
+                    transaction.delete(marketRef);
+                });
+                addLog(`🛒 Berhasil membeli ${iName}!`);
+            } catch(e) {
+                alert("Transaksi Gagal: " + e);
+            }
         }
     </script>
 </body>
