@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfect World: Web Idle MMO v8</title>
+    <title>Perfect World: Web Idle MMO v9</title>
     <style>
         /* Modern UI & Dark Theme */
         :root {
@@ -13,7 +13,7 @@
         }
         body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-image: radial-gradient(circle at top right, #141f36, #0a0f1a); font-size: 14px;}
         
-        .main-wrapper { display: none; grid-template-columns: 260px 1fr 300px; gap: 20px; width: 98%; max-width: 1400px; padding: 20px 0; height: 90vh;}
+        .main-wrapper { display: none; grid-template-columns: 260px 1fr 300px; gap: 20px; width: 98%; max-width: 1400px; padding: 20px 0; height: 95vh;}
         .glass-panel { background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; overflow-y: auto;}
         
         h2 { margin-top: 0; color: var(--primary); letter-spacing: 1px; font-size: 18px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;}
@@ -49,6 +49,7 @@
 
         .log-box { background: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 8px; height: 50px; overflow-y: auto; font-size: 12px; color: #00e5ff; border-left: 3px solid var(--primary); margin-top: 10px; }
         .dungeon-panel { background: rgba(255, 0, 85, 0.05); border: 1px solid rgba(255, 0, 85, 0.3); padding: 12px; border-radius: 8px; margin-top: 10px; }
+        .boss-panel { background: rgba(255, 145, 0, 0.05); border: 1px solid rgba(255, 145, 0, 0.3); padding: 12px; border-radius: 8px; margin-top: 10px; text-align: center;}
         
         .chat-box { flex-grow: 1; background: rgba(0,0,0,0.3); border-radius: 8px; margin-bottom: 10px; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; border: 1px solid var(--glass-border);}
         .chat-msg { font-size: 12px; line-height: 1.4; }
@@ -110,7 +111,7 @@
 
     <!-- SCREEN 1 & 2: AUTH & CHAR CREATE -->
     <div class="glass-panel single-container" id="authScreen">
-        <h2 style="text-align: center; border:none;">Perfect World <span style="color:var(--accent)">v8</span></h2>
+        <h2 style="text-align: center; border:none;">Perfect World <span style="color:var(--accent)">v9</span></h2>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
         <button class="btn" id="btnLogin">Login</button>
@@ -147,7 +148,6 @@
                 </div>
             </div>
 
-            <!-- SISTEM PET BARU -->
             <div class="pet-box">
                 Spirit Pet (Bonus Stat):<br>
                 <strong id="uiPet" style="color: var(--warning); font-size:14px;">Tidak Ada</strong>
@@ -178,7 +178,7 @@
             </div>
         </div>
 
-        <!-- PANEL TENGAH: DUNIA PAN GU -->
+        <!-- PANEL TENGAH: DUNIA PAN GU & WORLD BOSS -->
         <div class="glass-panel" id="midPanel">
             <h2>Eksplorasi Dunia</h2>
             <div class="stats-grid">
@@ -189,14 +189,28 @@
 
             <div style="display: flex; gap:10px;">
                 <button class="btn" id="btnCultivate" style="flex:1;">Meditasi (+Chi)</button>
-                <button class="btn btn-accent" id="btnGacha" style="flex:1;">Gacha Equip (50 Gold)</button>
+                <button class="btn btn-accent" id="btnGacha" style="flex:1;">Gacha Equip (50 G)</button>
             </div>
 
-            <div class="log-box" id="gameLog">Sistem v8 Age of Spirits siap. Tetaskan telur Pet Anda!</div>
+            <div class="log-box" id="gameLog">Sistem v9 siap. Bergabunglah mengalahkan World Boss!</div>
+
+            <!-- GLOBAL WORLD BOSS RAID -->
+            <div class="boss-panel">
+                <h3 style="color: #ff9100; margin-top: 0; text-transform: uppercase; letter-spacing: 1px;">🔥 Raid Server: World Boss</h3>
+                <strong id="wbName" style="font-size: 16px; color: var(--secondary);">Memuat Boss...</strong> 
+                <span style="color: #aaa; font-size: 12px;">(Lv. <span id="wbLevel">1</span>)</span><br>
+                
+                <div style="background: rgba(0,0,0,0.6); border-radius: 8px; width: 100%; height: 16px; margin: 8px 0; overflow: hidden; border: 1px solid var(--secondary);">
+                    <div id="wbHpBar" style="background: linear-gradient(90deg, #cc0044, #ff0055); width: 100%; height: 100%; transition: width 0.2s;"></div>
+                </div>
+                <div style="font-size: 12px; font-weight:bold; color: #fff; margin-bottom: 10px;" id="wbHpText">0 / 0</div>
+                
+                <button class="btn btn-danger" id="btnAttackBoss" style="width: 100%; box-shadow: 0 0 15px rgba(255, 0, 85, 0.4);">Serang Bersama (Butuh 20 Chi)</button>
+            </div>
 
             <!-- Dungeon & Map System -->
             <div class="dungeon-panel">
-                <h3 style="color: var(--secondary); margin-top: 0;">Peta Perburuan (PvE)</h3>
+                <h3 style="color: var(--secondary); margin-top: 0;">Peta Perburuan Solo</h3>
                 <select id="mapSelector" style="background: rgba(255,0,85,0.1); border-color: var(--secondary);">
                     <option value="map1">🌲 Lembah Pemula</option>
                     <option value="map2">🌋 Kawah Neraka (End-Game)</option>
@@ -204,7 +218,7 @@
 
                 <div style="display: flex; gap: 10px; margin-top: 5px;">
                     <select id="dungeonTarget" style="margin-bottom: 0;">
-                        <!-- Diisi via JavaScript berdasarkan map -->
+                        <!-- Diisi via JavaScript -->
                     </select>
                     <button class="btn btn-danger" id="btnHunt" style="margin-bottom: 0; width: 40%;">Serang</button>
                 </div>
@@ -246,7 +260,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc, query, orderBy, limit, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB3RgNUF7fsjxGbp8Wy9oI4zIljVXtwpY4",
@@ -282,7 +296,7 @@
             "map2": {
                 "1": { name: "Fire Imp", reqPower: 350, rewardGold: 150, penaltyChi: 25 },
                 "2": { name: "Lava Golem", reqPower: 700, rewardGold: 400, penaltyChi: 40 },
-                "boss": { name: "Lord Demon (World Boss)", reqPower: 1500, rewardGold: 3000, penaltyChi: 100, drops: ["Dragon Scale", "Pan Gu Artifact"] }
+                "boss": { name: "Lord Demon (Map Boss)", reqPower: 1500, rewardGold: 3000, penaltyChi: 100, drops: ["Dragon Scale", "Pan Gu Artifact"] }
             }
         };
 
@@ -316,31 +330,21 @@
             panel.classList.remove('shake-effect'); void panel.offsetWidth; panel.classList.add('shake-effect');
         }
 
-        // FUNGSI GET TITLE (GELAR)
         function getPlayerTitle(level) {
-            if (level >= 100) return "Dewa";
-            if (level >= 50) return "Master";
-            if (level >= 25) return "Pendekar";
-            if (level >= 10) return "Adept";
+            if (level >= 100) return "Dewa"; if (level >= 50) return "Master";
+            if (level >= 25) return "Pendekar"; if (level >= 10) return "Adept";
             return "Pemula";
         }
 
         function calculatePower(data) {
             let tAtk = data.atk || 0, tDef = data.def || 0;
             const upgMult = 1 + ((data.equipUpgrade || 0) * 0.2);
-            
-            // Stats dari Equip
             if(data.equippedItem && itemStats[data.equippedItem]) {
                 tAtk += Math.floor(itemStats[data.equippedItem].atk * upgMult);
                 tDef += Math.floor(itemStats[data.equippedItem].def * upgMult);
             }
-            
-            // Stats dari Pet
             const pLv = data.petLevel || 0;
-            if(data.pet && data.pet !== "None") {
-                tAtk += pLv * 5; 
-                tDef += pLv * 3;
-            }
+            if(data.pet && data.pet !== "None") { tAtk += pLv * 5; tDef += pLv * 3; }
             return tAtk + (tDef * 0.5);
         }
 
@@ -359,10 +363,6 @@
             signOut(auth);
         });
 
-        setInterval(async () => {
-            if(currentUser && localPlayerData) await updateDoc(doc(db, "users", currentUser.uid), { lastActive: Date.now() });
-        }, 30000);
-
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -379,7 +379,7 @@
                             document.getElementById('afkModal').style.display = 'block';
                         }
                     }
-                    showScreen('gameScreen'); startRealtimeSync(user.uid); initSocialFeatures(); 
+                    showScreen('gameScreen'); startRealtimeSync(user.uid); initSocialFeatures(); initWorldBoss();
                 } else { showScreen('charCreateScreen'); }
             } else { currentUser = null; showScreen('authScreen'); }
         });
@@ -387,7 +387,6 @@
         document.getElementById('btnKlaimAFK').addEventListener('click', async () => {
             await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold + afkRewardPending.gold, chi: localPlayerData.chi + afkRewardPending.chi, lastActive: Date.now() });
             document.getElementById('modalOverlay').style.display = 'none'; document.getElementById('afkModal').style.display = 'none';
-            addLog(`💤 AFK Selesai. (+${afkRewardPending.gold} Gold, +${afkRewardPending.chi} Chi)`);
         });
 
         document.getElementById('btnCreateChar').addEventListener('click', async () => {
@@ -398,14 +397,13 @@
             else if(selectedClass === "Cleric") { baseStats.mana = 200; baseStats.atk = 22; }
             else if(selectedClass === "Archer") { baseStats.atk = 30; baseStats.hp = 90; }
 
-            // Penambahan field pet & petLevel
             await setDoc(doc(db, "users", currentUser.uid), {
                 name: charName, class: selectedClass, role: "player", level: 1, gold: 100, chi: 0, 
                 hp: baseStats.hp, mana: baseStats.mana, atk: baseStats.atk, def: baseStats.def,
                 inventory: [], equippedItem: "", equipUpgrade: 0, lastActive: Date.now(), guild: "",
                 pet: "None", petLevel: 0
             });
-            showScreen('gameScreen'); startRealtimeSync(currentUser.uid); initSocialFeatures();
+            showScreen('gameScreen'); startRealtimeSync(currentUser.uid); initSocialFeatures(); initWorldBoss();
         });
 
         // --- REALTIME SYNC (UI RENDER) ---
@@ -417,33 +415,23 @@
                     
                     let bonusAtk = 0, bonusDef = 0, bonusHp = 0;
                     const upgLv = data.equipUpgrade || 0;
-                    const upgMultiplier = 1 + (upgLv * 0.2); 
+                    const upgMult = 1 + (upgLv * 0.2); 
 
-                    // Equip Bonus
                     if(data.equippedItem && itemStats[data.equippedItem]) {
-                        bonusAtk = Math.floor(itemStats[data.equippedItem].atk * upgMultiplier);
-                        bonusDef = Math.floor(itemStats[data.equippedItem].def * upgMultiplier);
-                        bonusHp = Math.floor(itemStats[data.equippedItem].hp * upgMultiplier);
+                        bonusAtk = Math.floor(itemStats[data.equippedItem].atk * upgMult);
+                        bonusDef = Math.floor(itemStats[data.equippedItem].def * upgMult);
+                        bonusHp = Math.floor(itemStats[data.equippedItem].hp * upgMult);
                     }
-                    
-                    // Pet Bonus
                     const pLv = data.petLevel || 0;
-                    if(data.pet && data.pet !== "None") {
-                        bonusAtk += pLv * 5; bonusDef += pLv * 3; bonusHp += pLv * 15;
-                    }
+                    if(data.pet && data.pet !== "None") { bonusAtk += pLv * 5; bonusDef += pLv * 3; bonusHp += pLv * 15; }
 
-                    // Update UI Title
-                    const pTitle = getPlayerTitle(data.level);
-                    document.getElementById('uiTitle').innerText = pTitle;
-
+                    document.getElementById('uiTitle').innerText = getPlayerTitle(data.level);
                     document.getElementById('uiName').innerText = data.name; document.getElementById('uiClass').innerText = data.class;
                     document.getElementById('uiLevel').innerText = data.level; document.getElementById('uiGold').innerText = data.gold;
                     document.getElementById('uiChi').innerText = `${data.chi} / 100`; 
                     
                     document.getElementById('uiEquip').innerText = data.equippedItem || "Tidak Ada";
                     document.getElementById('uiEquipLevel').innerText = (data.equippedItem && upgLv > 0) ? `[+${upgLv}]` : "";
-                    
-                    // Update UI Pet
                     document.getElementById('uiPet').innerText = (data.pet && data.pet !== "None") ? data.pet : "Tidak Ada";
                     document.getElementById('uiPetLevel').innerText = (data.pet && data.pet !== "None") ? `Lv. ${pLv}` : "";
 
@@ -458,41 +446,97 @@
                         document.getElementById('uiGuildName').innerText = "[Tidak Ada]";
                         document.getElementById('guildActionDiv').style.display = 'block';
                     }
-
                     renderInventory(data.inventory);
                 }
             });
         }
 
-        // --- PET SYSTEM ---
+        // --- GLOBAL WORLD BOSS SYSTEM ---
+        function initWorldBoss() {
+            const bossRef = doc(db, "events", "world_boss");
+            onSnapshot(bossRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('wbName').innerText = data.name;
+                    document.getElementById('wbLevel').innerText = data.level;
+                    document.getElementById('wbHpText').innerText = `${Math.floor(data.hp)} / ${data.maxHp}`;
+                    let hpPercent = Math.max(0, (data.hp / data.maxHp) * 100);
+                    document.getElementById('wbHpBar').style.width = `${hpPercent}%`;
+                } else {
+                    // Jika Boss belum ada di database, kita inisialisasi
+                    setDoc(bossRef, { name: "Behemoth Raja Iblis", hp: 100000, maxHp: 100000, level: 1 });
+                }
+            });
+        }
+
+        document.getElementById('btnAttackBoss').addEventListener('click', async () => {
+            if(!localPlayerData) return;
+            if(localPlayerData.chi < 20) return alert("Butuh 20 Chi untuk menyerang World Boss!");
+            
+            shakeScreen();
+            const bossRef = doc(db, "events", "world_boss");
+            let pPower = calculatePower(localPlayerData);
+            let dmg = Math.floor(pPower * (1 + Math.random() * 0.5)); // Random crit multiplier
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const bossDoc = await transaction.get(bossRef);
+                    if (!bossDoc.exists()) throw "Boss tidak ditemukan!";
+                    
+                    let newHp = bossDoc.data().hp - dmg;
+                    
+                    if (newHp <= 0) {
+                        // Boss Mati (Pemain ini Last Hitter)
+                        let nextLevel = bossDoc.data().level + 1;
+                        let nextMaxHp = 100000 * nextLevel;
+                        
+                        // Respawn Boss
+                        transaction.set(bossRef, { name: "Behemoth Raja Iblis", hp: nextMaxHp, maxHp: nextMaxHp, level: nextLevel });
+                        
+                        // Beri Reward Last Hitter
+                        const rewardGold = 5000 * bossDoc.data().level;
+                        transaction.update(doc(db, "users", currentUser.uid), { 
+                            gold: localPlayerData.gold + rewardGold, 
+                            chi: localPlayerData.chi - 20
+                        });
+                        
+                        // Announce Server
+                        addDoc(collection(db, "global_chat"), { sender: "SISTEM RAID", text: `🌟 LUAR BIASA! ${localPlayerData.name} memberikan pukulan terakhir ke World Boss dan merampas ${rewardGold} Gold! Boss berevolusi ke Level ${nextLevel}!`, timestamp: serverTimestamp() });
+                    } else {
+                        // Boss Hanya Kena Hit Biasa
+                        transaction.update(bossRef, { hp: newHp });
+                        transaction.update(doc(db, "users", currentUser.uid), { 
+                            chi: localPlayerData.chi - 20, 
+                            gold: localPlayerData.gold + (dmg * 2) // Gold sesuai damage
+                        });
+                    }
+                });
+                addLog(`💥 Menyerang World Boss! Menghasilkan ${dmg} Damage.`);
+            } catch (e) { console.error("Raid Error: ", e); }
+        });
+
+        // --- CORE GAMEPLAY (CULTIVATE, PET, GUILD, HUNT) ---
         document.getElementById('btnGachaPet').addEventListener('click', async () => {
-            if(localPlayerData.gold < 500) return alert("Butuh 500 Gold untuk menetaskan telur Pet!");
+            if(localPlayerData.gold < 500) return alert("Butuh 500 Gold!");
             const randomPet = petPool[Math.floor(Math.random() * petPool.length)];
             await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 500, pet: randomPet, petLevel: 1 });
             addLog(`🥚 Telur menetas! Anda mendapatkan Pet [${randomPet}]!`);
-            await addDoc(collection(db, "global_chat"), { sender: "Sistem", text: `🌟 ${localPlayerData.name} berhasil menetaskan Pet legendaris [${randomPet}]!`, timestamp: serverTimestamp() });
         });
 
         document.getElementById('btnFeedPet').addEventListener('click', async () => {
             if(!localPlayerData.pet || localPlayerData.pet === "None") return alert("Anda tidak memiliki Pet!");
-            if(localPlayerData.chi < 50) return alert("Butuh 50 Chi untuk memberi makan Pet!");
-            
-            const currentPetLv = localPlayerData.petLevel || 1;
-            await updateDoc(doc(db, "users", currentUser.uid), { chi: localPlayerData.chi - 50, petLevel: currentPetLv + 1 });
-            addLog(`✨ Anda memberi makan ${localPlayerData.pet}. Pet naik ke Level ${currentPetLv + 1}! Status meningkat.`);
+            if(localPlayerData.chi < 50) return alert("Butuh 50 Chi!");
+            await updateDoc(doc(db, "users", currentUser.uid), { chi: localPlayerData.chi - 50, petLevel: (localPlayerData.petLevel || 1) + 1 });
+            addLog(`✨ Pet Anda naik Level!`);
         });
 
-        // --- GUILD SYSTEM ---
         document.getElementById('btnCreateGuild').addEventListener('click', async () => {
-            const guildName = document.getElementById('inputGuildName').value.trim();
-            if(!guildName || guildName.length > 12) return alert("Nama Guild tidak valid (Maks 12 huruf)!");
-            if(localPlayerData.gold < 1000) return alert("Butuh 1000 Gold untuk membuat Guild!");
-            
-            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 1000, guild: guildName });
-            await addDoc(collection(db, "global_chat"), { sender: "Sistem", text: `🚩 ${localPlayerData.name} mendirikan Guild: [${guildName}]!`, timestamp: serverTimestamp() });
+            const gName = document.getElementById('inputGuildName').value.trim();
+            if(!gName || gName.length > 12) return alert("Nama tidak valid!");
+            if(localPlayerData.gold < 1000) return alert("Butuh 1000 Gold!");
+            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 1000, guild: gName });
         });
 
-        // --- CORE GAMEPLAY ---
         document.getElementById('btnCultivate').addEventListener('click', async () => {
             let newChi = localPlayerData.chi + 15, newLevel = localPlayerData.level, newGold = localPlayerData.gold + 10;
             let newHp = localPlayerData.hp, newAtk = localPlayerData.atk, newDef = localPlayerData.def;
@@ -505,9 +549,7 @@
                 else { newAtk += 7; newHp += 15; newDef += 1; }
                 
                 let msg = `🌟 REINKARNASI! Level naik ke ${newLevel}!`;
-                // Notifikasi Global jika dapat Gelar baru
-                let oldTitle = getPlayerTitle(localPlayerData.level);
-                let newTitle = getPlayerTitle(newLevel);
+                let oldTitle = getPlayerTitle(localPlayerData.level); let newTitle = getPlayerTitle(newLevel);
                 if(oldTitle !== newTitle) {
                     msg += ` Mendapat gelar [${newTitle}]!`;
                     addDoc(collection(db, "global_chat"), { sender: "Sistem", text: `👑 ${localPlayerData.name} telah mencapai ranah [${newTitle}]!`, timestamp: serverTimestamp() });
@@ -524,7 +566,6 @@
             const target = worldMaps[mapId][monsterId];
             
             if(monsterId === "boss" && localPlayerData.chi < target.penaltyChi) return alert(`Butuh ${target.penaltyChi} Chi untuk melawan Bos ini!`);
-
             let playerPower = calculatePower(localPlayerData);
             
             setTimeout(async () => {
@@ -538,7 +579,6 @@
                             let dropItem = target.drops[Math.floor(Math.random() * target.drops.length)];
                             updateData.inventory = [...localPlayerData.inventory, dropItem];
                             addLog(`🏆 KEMENANGAN EPIC! Merampas ${target.rewardGold} Gold & [${dropItem}]!`);
-                            await addDoc(collection(db, "global_chat"), { sender: "Sistem", text: `🔥 ${localPlayerData.name} berhasil mengalahkan ${target.name} dan mendapat ${dropItem}!`, timestamp: serverTimestamp() });
                         } else { addLog(`🏆 Mengalahkan Bos! Merampas ${target.rewardGold} Gold.`); }
                     } else { addLog(`⚔️ Kemenangan! Mendapat ${target.rewardGold} Gold.`); }
                     await updateDoc(userRef, updateData);
@@ -554,7 +594,6 @@
         window.challengePvP = async function(targetId, targetName) {
             if(targetId === currentUser.uid) return alert("Anda tidak waras menantang diri sendiri.");
             if(localPlayerData.gold < 10) return alert("Butuh 10 Gold (Biaya Arena).");
-            
             shakeScreen();
             try {
                 const targetRef = doc(db, "users", targetId);
@@ -589,11 +628,7 @@
                     let rankClass = (rank <= 3) ? `rank-${rank}` : '';
                     let guildTag = d.guild ? `<span style="color:var(--success); font-size:10px;">[${d.guild}]</span>` : "";
                     let btnPvP = docSnap.id !== currentUser.uid ? `<button class="btn btn-small btn-danger" onclick="challengePvP('${docSnap.id}', '${d.name}')">⚔️</button>` : `<span style="width:28px"></span>`;
-                    
-                    list.innerHTML += `<li class="leaderboard-item">
-                        <span class="${rankClass}">#${rank} ${guildTag} ${d.name} <span style="color:var(--primary); font-size:10px;">(Lv.${d.level})</span></span>
-                        ${btnPvP}
-                    </li>`;
+                    list.innerHTML += `<li class="leaderboard-item"><span class="${rankClass}">#${rank} ${guildTag} ${d.name} <span style="color:var(--primary); font-size:10px;">(Lv.${d.level})</span></span>${btnPvP}</li>`;
                     rank++;
                 });
             });
@@ -605,13 +640,9 @@
                 msgs.forEach(docSnap => {
                     const d = docSnap.data();
                     let senderDisplay = d.sender;
-                    
-                    if(d.title && d.sender !== "Sistem" && d.sender !== "Arena") {
-                        senderDisplay = `<span class="chat-title">${d.title}</span> ` + senderDisplay;
-                    }
+                    if(d.title && d.sender !== "Sistem" && d.sender !== "Arena" && d.sender !== "SISTEM RAID") senderDisplay = `<span class="chat-title">${d.title}</span> ` + senderDisplay;
                     if(d.guild) senderDisplay = `<span class="chat-guild">[${d.guild}]</span> ` + senderDisplay;
-                    
-                    let color = d.sender === "Sistem" ? "var(--accent)" : (d.sender === "Arena" ? "var(--secondary)" : "var(--warning)");
+                    let color = (d.sender === "Sistem" || d.sender === "SISTEM RAID") ? "var(--accent)" : (d.sender === "Arena" ? "var(--secondary)" : "var(--warning)");
                     cb.innerHTML += `<div class="chat-msg"><span class="chat-name" style="color:${color}">${senderDisplay}:</span> <span style="color:#eee">${d.text}</span></div>`;
                 });
                 cb.scrollTop = cb.scrollHeight;
@@ -622,12 +653,7 @@
             const text = document.getElementById('chatInput').value.trim();
             if(!text) return;
             document.getElementById('chatInput').value = "";
-            let chatData = { 
-                sender: localPlayerData.name, 
-                text: text, 
-                timestamp: serverTimestamp(),
-                title: getPlayerTitle(localPlayerData.level)
-            };
+            let chatData = { sender: localPlayerData.name, text: text, timestamp: serverTimestamp(), title: getPlayerTitle(localPlayerData.level) };
             if(localPlayerData.guild) chatData.guild = localPlayerData.guild;
             await addDoc(collection(db, "global_chat"), chatData);
         });
