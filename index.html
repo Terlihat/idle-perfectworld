@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfect World: Web Idle MMO v7</title>
+    <title>Perfect World: Web Idle MMO v8</title>
     <style>
         /* Modern UI & Dark Theme */
         :root {
@@ -38,9 +38,10 @@
         .sub-stat-item strong { color: #fff; }
         .bonus-stat { color: var(--success); font-size: 11px; font-weight: bold;}
 
-        .equip-box, .guild-box { background: rgba(224, 64, 251, 0.05); border: 1px solid var(--glass-border); padding: 10px; border-radius: 8px; margin-top: 10px; text-align: center; font-size: 13px;}
+        .equip-box, .guild-box, .pet-box { background: rgba(224, 64, 251, 0.05); border: 1px solid var(--glass-border); padding: 10px; border-radius: 8px; margin-top: 10px; text-align: center; font-size: 13px;}
         .guild-box { border-color: var(--success); background: rgba(0, 230, 118, 0.05); margin-bottom: 10px;}
-        
+        .pet-box { border-color: var(--warning); background: rgba(255, 234, 0, 0.05); }
+
         .inventory-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
         .inv-slot { aspect-ratio: 1; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 10px; text-align: center; padding: 2px; cursor: pointer; transition: all 0.2s; position: relative;}
         .inv-slot.filled:hover { border-color: var(--primary); background: rgba(0, 229, 255, 0.1); transform: scale(1.05); }
@@ -53,6 +54,7 @@
         .chat-msg { font-size: 12px; line-height: 1.4; }
         .chat-name { font-weight: bold; color: var(--warning); }
         .chat-guild { color: var(--success); font-weight: normal; }
+        .chat-title { color: #e040fb; font-weight: bold; font-size: 10px; border: 1px solid #e040fb; padding: 1px 3px; border-radius: 3px; margin-right: 3px;}
         
         .leaderboard-list { list-style: none; padding: 0; margin: 0; }
         .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid var(--glass-border); font-size: 12px; }
@@ -108,7 +110,7 @@
 
     <!-- SCREEN 1 & 2: AUTH & CHAR CREATE -->
     <div class="glass-panel single-container" id="authScreen">
-        <h2 style="text-align: center; border:none;">Perfect World <span style="color:var(--accent)">v7</span></h2>
+        <h2 style="text-align: center; border:none;">Perfect World <span style="color:var(--accent)">v8</span></h2>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
         <button class="btn" id="btnLogin">Login</button>
@@ -131,10 +133,10 @@
     <!-- SCREEN 3: MAIN GAME MMO DASHBOARD -->
     <div class="main-wrapper" id="gameScreen">
         
-        <!-- PANEL KIRI: PROFIL & GUILD -->
+        <!-- PANEL KIRI: PROFIL, GUILD & PET -->
         <div class="glass-panel">
             <h2>Karakter Anda</h2>
-            <p style="margin: 0 0 5px 0;">Nama: <strong id="uiName" style="color: #fff;">-</strong></p>
+            <p style="margin: 0 0 5px 0;"><span id="uiTitle" class="chat-title">Pemula</span> <strong id="uiName" style="color: #fff;">-</strong></p>
             <p style="margin: 0 0 10px 0;">Class: <strong id="uiClass" style="color: var(--primary);">-</strong></p>
             
             <div class="guild-box" id="uiGuildBox">
@@ -145,9 +147,20 @@
                 </div>
             </div>
 
+            <!-- SISTEM PET BARU -->
+            <div class="pet-box">
+                Spirit Pet (Bonus Stat):<br>
+                <strong id="uiPet" style="color: var(--warning); font-size:14px;">Tidak Ada</strong>
+                <div id="uiPetLevel" style="color: var(--accent); font-size: 12px; font-weight:bold; margin-bottom: 5px;"></div>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn btn-small" id="btnGachaPet" style="flex:1;">Telur (500 G)</button>
+                    <button class="btn btn-small btn-accent" id="btnFeedPet" style="flex:1;">Makan (50 Chi)</button>
+                </div>
+            </div>
+
             <div class="equip-box">
                 Peralatan Aktif:<br>
-                <strong id="uiEquip" style="color: var(--primary); font-size:15px;">Tidak Ada</strong>
+                <strong id="uiEquip" style="color: var(--primary); font-size:14px;">Tidak Ada</strong>
                 <div id="uiEquipLevel" style="color: var(--warning); font-size: 12px; font-weight:bold;"></div>
                 <button class="btn btn-small btn-success" id="btnEnhance" style="margin-top:8px;">Tempa Item (Butuh Gold)</button>
             </div>
@@ -176,10 +189,10 @@
 
             <div style="display: flex; gap:10px;">
                 <button class="btn" id="btnCultivate" style="flex:1;">Meditasi (+Chi)</button>
-                <button class="btn btn-accent" id="btnGacha" style="flex:1;">Gacha (50 Gold)</button>
+                <button class="btn btn-accent" id="btnGacha" style="flex:1;">Gacha Equip (50 Gold)</button>
             </div>
 
-            <div class="log-box" id="gameLog">Sistem v7 siap. Temukan takdirmu...</div>
+            <div class="log-box" id="gameLog">Sistem v8 Age of Spirits siap. Tetaskan telur Pet Anda!</div>
 
             <!-- Dungeon & Map System -->
             <div class="dungeon-panel">
@@ -251,13 +264,14 @@
         let marketUnsub = null;
         let afkRewardPending = { gold: 0, chi: 0 };
 
-        // ITEM & MAP DATA
+        // ITEM, MAP & PET DATA
         const itemStats = {
             "Mirage Sword": { atk: 50, def: 0, hp: 0 }, "Celestial Wing": { atk: 0, def: 30, hp: 0 },
             "Soulgem Ring": { atk: 0, def: 0, hp: 100 }, "Pan Gu Artifact": { atk: 100, def: 50, hp: 200 },
             "Dragon Scale": { atk: 150, def: 100, hp: 500 }
         };
         const itemPool = ["Mirage Sword", "Celestial Wing", "Soulgem Ring", "Pan Gu Artifact"];
+        const petPool = ["Pixie Kecil", "Firefox Berapi", "Golden Dragon"];
 
         const worldMaps = {
             "map1": {
@@ -286,7 +300,7 @@
             }
         }
         mapSelect.addEventListener('change', updateMonsterList);
-        updateMonsterList(); // Init
+        updateMonsterList();
 
         function showScreen(screenId) {
             document.querySelectorAll('.single-container, .main-wrapper').forEach(el => el.style.display = 'none');
@@ -302,13 +316,30 @@
             panel.classList.remove('shake-effect'); void panel.offsetWidth; panel.classList.add('shake-effect');
         }
 
-        function calculatePower(playerData) {
-            let tAtk = playerData.atk || 0, tDef = playerData.def || 0;
-            const upgLv = playerData.equipUpgrade || 0;
-            const upgMult = 1 + (upgLv * 0.2);
-            if(playerData.equippedItem && itemStats[playerData.equippedItem]) {
-                tAtk += Math.floor(itemStats[playerData.equippedItem].atk * upgMult);
-                tDef += Math.floor(itemStats[playerData.equippedItem].def * upgMult);
+        // FUNGSI GET TITLE (GELAR)
+        function getPlayerTitle(level) {
+            if (level >= 100) return "Dewa";
+            if (level >= 50) return "Master";
+            if (level >= 25) return "Pendekar";
+            if (level >= 10) return "Adept";
+            return "Pemula";
+        }
+
+        function calculatePower(data) {
+            let tAtk = data.atk || 0, tDef = data.def || 0;
+            const upgMult = 1 + ((data.equipUpgrade || 0) * 0.2);
+            
+            // Stats dari Equip
+            if(data.equippedItem && itemStats[data.equippedItem]) {
+                tAtk += Math.floor(itemStats[data.equippedItem].atk * upgMult);
+                tDef += Math.floor(itemStats[data.equippedItem].def * upgMult);
+            }
+            
+            // Stats dari Pet
+            const pLv = data.petLevel || 0;
+            if(data.pet && data.pet !== "None") {
+                tAtk += pLv * 5; 
+                tDef += pLv * 3;
             }
             return tAtk + (tDef * 0.5);
         }
@@ -367,10 +398,12 @@
             else if(selectedClass === "Cleric") { baseStats.mana = 200; baseStats.atk = 22; }
             else if(selectedClass === "Archer") { baseStats.atk = 30; baseStats.hp = 90; }
 
+            // Penambahan field pet & petLevel
             await setDoc(doc(db, "users", currentUser.uid), {
                 name: charName, class: selectedClass, role: "player", level: 1, gold: 100, chi: 0, 
                 hp: baseStats.hp, mana: baseStats.mana, atk: baseStats.atk, def: baseStats.def,
-                inventory: [], equippedItem: "", equipUpgrade: 0, lastActive: Date.now(), guild: ""
+                inventory: [], equippedItem: "", equipUpgrade: 0, lastActive: Date.now(), guild: "",
+                pet: "None", petLevel: 0
             });
             showScreen('gameScreen'); startRealtimeSync(currentUser.uid); initSocialFeatures();
         });
@@ -381,15 +414,27 @@
                 if (docSnap.exists()) {
                     localPlayerData = docSnap.data();
                     const data = localPlayerData;
+                    
                     let bonusAtk = 0, bonusDef = 0, bonusHp = 0;
                     const upgLv = data.equipUpgrade || 0;
                     const upgMultiplier = 1 + (upgLv * 0.2); 
 
+                    // Equip Bonus
                     if(data.equippedItem && itemStats[data.equippedItem]) {
                         bonusAtk = Math.floor(itemStats[data.equippedItem].atk * upgMultiplier);
                         bonusDef = Math.floor(itemStats[data.equippedItem].def * upgMultiplier);
                         bonusHp = Math.floor(itemStats[data.equippedItem].hp * upgMultiplier);
                     }
+                    
+                    // Pet Bonus
+                    const pLv = data.petLevel || 0;
+                    if(data.pet && data.pet !== "None") {
+                        bonusAtk += pLv * 5; bonusDef += pLv * 3; bonusHp += pLv * 15;
+                    }
+
+                    // Update UI Title
+                    const pTitle = getPlayerTitle(data.level);
+                    document.getElementById('uiTitle').innerText = pTitle;
 
                     document.getElementById('uiName').innerText = data.name; document.getElementById('uiClass').innerText = data.class;
                     document.getElementById('uiLevel').innerText = data.level; document.getElementById('uiGold').innerText = data.gold;
@@ -398,11 +443,14 @@
                     document.getElementById('uiEquip').innerText = data.equippedItem || "Tidak Ada";
                     document.getElementById('uiEquipLevel').innerText = (data.equippedItem && upgLv > 0) ? `[+${upgLv}]` : "";
                     
+                    // Update UI Pet
+                    document.getElementById('uiPet').innerText = (data.pet && data.pet !== "None") ? data.pet : "Tidak Ada";
+                    document.getElementById('uiPetLevel').innerText = (data.pet && data.pet !== "None") ? `Lv. ${pLv}` : "";
+
                     document.getElementById('uiHp').innerText = data.hp; document.getElementById('uiHpBonus').innerText = bonusHp > 0 ? `(+${bonusHp})` : "";
                     document.getElementById('uiAtk').innerText = data.atk; document.getElementById('uiAtkBonus').innerText = bonusAtk > 0 ? `(+${bonusAtk})` : "";
                     document.getElementById('uiDef').innerText = data.def; document.getElementById('uiDefBonus').innerText = bonusDef > 0 ? `(+${bonusDef})` : "";
                     
-                    // Guild UI
                     if(data.guild) {
                         document.getElementById('uiGuildName').innerText = data.guild;
                         document.getElementById('guildActionDiv').style.display = 'none';
@@ -416,20 +464,35 @@
             });
         }
 
+        // --- PET SYSTEM ---
+        document.getElementById('btnGachaPet').addEventListener('click', async () => {
+            if(localPlayerData.gold < 500) return alert("Butuh 500 Gold untuk menetaskan telur Pet!");
+            const randomPet = petPool[Math.floor(Math.random() * petPool.length)];
+            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 500, pet: randomPet, petLevel: 1 });
+            addLog(`🥚 Telur menetas! Anda mendapatkan Pet [${randomPet}]!`);
+            await addDoc(collection(db, "global_chat"), { sender: "Sistem", text: `🌟 ${localPlayerData.name} berhasil menetaskan Pet legendaris [${randomPet}]!`, timestamp: serverTimestamp() });
+        });
+
+        document.getElementById('btnFeedPet').addEventListener('click', async () => {
+            if(!localPlayerData.pet || localPlayerData.pet === "None") return alert("Anda tidak memiliki Pet!");
+            if(localPlayerData.chi < 50) return alert("Butuh 50 Chi untuk memberi makan Pet!");
+            
+            const currentPetLv = localPlayerData.petLevel || 1;
+            await updateDoc(doc(db, "users", currentUser.uid), { chi: localPlayerData.chi - 50, petLevel: currentPetLv + 1 });
+            addLog(`✨ Anda memberi makan ${localPlayerData.pet}. Pet naik ke Level ${currentPetLv + 1}! Status meningkat.`);
+        });
+
         // --- GUILD SYSTEM ---
         document.getElementById('btnCreateGuild').addEventListener('click', async () => {
             const guildName = document.getElementById('inputGuildName').value.trim();
             if(!guildName || guildName.length > 12) return alert("Nama Guild tidak valid (Maks 12 huruf)!");
             if(localPlayerData.gold < 1000) return alert("Butuh 1000 Gold untuk membuat Guild!");
             
-            await updateDoc(doc(db, "users", currentUser.uid), {
-                gold: localPlayerData.gold - 1000,
-                guild: guildName
-            });
-            await addDoc(collection(db, "global_chat"), { sender: "Sistem", text: `🚩 ${localPlayerData.name} telah mendirikan Guild baru: [${guildName}]!`, timestamp: serverTimestamp() });
+            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 1000, guild: guildName });
+            await addDoc(collection(db, "global_chat"), { sender: "Sistem", text: `🚩 ${localPlayerData.name} mendirikan Guild: [${guildName}]!`, timestamp: serverTimestamp() });
         });
 
-        // --- CORE GAMEPLAY (CULTIVATE, GACHA, HUNT) ---
+        // --- CORE GAMEPLAY ---
         document.getElementById('btnCultivate').addEventListener('click', async () => {
             let newChi = localPlayerData.chi + 15, newLevel = localPlayerData.level, newGold = localPlayerData.gold + 10;
             let newHp = localPlayerData.hp, newAtk = localPlayerData.atk, newDef = localPlayerData.def;
@@ -440,7 +503,16 @@
                 if(localPlayerData.class === "Blademaster") { newHp += 25; newDef += 4; newAtk += 2; }
                 else if(localPlayerData.class === "Cleric") { newAtk += 5; newDef += 2; }
                 else { newAtk += 7; newHp += 15; newDef += 1; }
-                addLog(`🌟 REINKARNASI! Level naik ke ${newLevel}!`);
+                
+                let msg = `🌟 REINKARNASI! Level naik ke ${newLevel}!`;
+                // Notifikasi Global jika dapat Gelar baru
+                let oldTitle = getPlayerTitle(localPlayerData.level);
+                let newTitle = getPlayerTitle(newLevel);
+                if(oldTitle !== newTitle) {
+                    msg += ` Mendapat gelar [${newTitle}]!`;
+                    addDoc(collection(db, "global_chat"), { sender: "Sistem", text: `👑 ${localPlayerData.name} telah mencapai ranah [${newTitle}]!`, timestamp: serverTimestamp() });
+                }
+                addLog(msg);
             }
             await updateDoc(doc(db, "users", currentUser.uid), { chi: newChi, level: newLevel, gold: newGold, hp: newHp, atk: newAtk, def: newDef });
         });
@@ -461,7 +533,7 @@
                     let updateData = { gold: localPlayerData.gold + target.rewardGold };
                     if(monsterId === "boss") {
                         updateData.chi = localPlayerData.chi - target.penaltyChi; 
-                        let dropRate = mapId === "map2" ? 0.30 : 0.15; // Map 2 drop rate lebih tinggi
+                        let dropRate = mapId === "map2" ? 0.30 : 0.15;
                         if(Math.random() < dropRate && localPlayerData.inventory.length < 10) {
                             let dropItem = target.drops[Math.floor(Math.random() * target.drops.length)];
                             updateData.inventory = [...localPlayerData.inventory, dropItem];
@@ -506,7 +578,7 @@
             } catch (e) { console.error(e); }
         }
 
-        // --- SOCIAL (CHAT & LEADERBOARD INTERAKTIF) ---
+        // --- SOCIAL (CHAT & LEADERBOARD) ---
         function initSocialFeatures() {
             const qLeaderboard = query(collection(db, "users"), orderBy("level", "desc"), limit(10));
             onSnapshot(qLeaderboard, (snapshot) => {
@@ -533,8 +605,11 @@
                 msgs.forEach(docSnap => {
                     const d = docSnap.data();
                     let senderDisplay = d.sender;
-                    // Inject Guild tag if present
-                    if(d.guild) senderDisplay = `<span class="chat-guild">[${d.guild}]</span> ${d.sender}`;
+                    
+                    if(d.title && d.sender !== "Sistem" && d.sender !== "Arena") {
+                        senderDisplay = `<span class="chat-title">${d.title}</span> ` + senderDisplay;
+                    }
+                    if(d.guild) senderDisplay = `<span class="chat-guild">[${d.guild}]</span> ` + senderDisplay;
                     
                     let color = d.sender === "Sistem" ? "var(--accent)" : (d.sender === "Arena" ? "var(--secondary)" : "var(--warning)");
                     cb.innerHTML += `<div class="chat-msg"><span class="chat-name" style="color:${color}">${senderDisplay}:</span> <span style="color:#eee">${d.text}</span></div>`;
@@ -547,7 +622,12 @@
             const text = document.getElementById('chatInput').value.trim();
             if(!text) return;
             document.getElementById('chatInput').value = "";
-            let chatData = { sender: localPlayerData.name, text: text, timestamp: serverTimestamp() };
+            let chatData = { 
+                sender: localPlayerData.name, 
+                text: text, 
+                timestamp: serverTimestamp(),
+                title: getPlayerTitle(localPlayerData.level)
+            };
             if(localPlayerData.guild) chatData.guild = localPlayerData.guild;
             await addDoc(collection(db, "global_chat"), chatData);
         });
@@ -593,7 +673,7 @@
             addLog(`🎁 Gacha: Mendapatkan [${randomItem}]!`);
         });
 
-        // MARKETPLACE POPUP
+        // MARKETPLACE
         document.getElementById('btnGoMarket').onclick = () => { 
             showScreen('marketScreen'); 
             marketUnsub = onSnapshot(collection(db, "market"), (snapshot) => {
