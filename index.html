@@ -3,260 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfect World: Web Idle MMO v14</title>
+    <title>Perfect World: Web Idle MMO v15</title>
     <style>
-        /* Modern UI, Dark Theme & Animations */
+        /* Modern PC UI, Dark Theme & Animations */
         :root {
             --primary: #00e5ff; --secondary: #ff0055; --accent: #e040fb;
             --success: #00e676; --warning: #ffea00; --mystic: #7c4dff; --gold: #ffd700;
-            --bg-color: #0a0f1a; --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08);
+            --bg-color: #05080f; --glass-bg: rgba(20, 25, 40, 0.6); --glass-border: rgba(0, 229, 255, 0.15);
         }
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; background-image: radial-gradient(circle at top right, #141f36, #0a0f1a); font-size: 14px; overflow: hidden;}
+        body { 
+            margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-color); color: #fff; 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; 
+            background-image: radial-gradient(circle at center 20%, #111a2e, #05080f); 
+            font-size: 14px; overflow: hidden;
+        }
         
-        .main-wrapper { display: none; grid-template-columns: 260px 1fr 300px; gap: 20px; width: 98%; max-width: 1400px; padding: 20px 0; height: 95vh; z-index: 10;}
+        /* PC WIDESCREEN LAYOUT */
+        .main-wrapper { 
+            display: none; 
+            grid-template-columns: 320px 1fr 350px; /* Lebar panel disesuaikan untuk PC */
+            gap: 25px; 
+            width: 98%; 
+            max-width: 1600px; 
+            padding: 20px 0; 
+            height: 94vh; 
+            z-index: 10;
+        }
         
         /* Panel Settings */
-        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; overflow-y: auto; }
-        .glass-panel::-webkit-scrollbar { width: 6px; }
-        .glass-panel::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.3); border-radius: 10px; }
+        .glass-panel { 
+            background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); 
+            border: 1px solid var(--glass-border); border-radius: 12px; padding: 25px; 
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5), 0 8px 32px rgba(0, 0, 0, 0.6); 
+            display: flex; flex-direction: column; overflow-y: auto; 
+        }
+        .glass-panel::-webkit-scrollbar { width: 8px; }
+        .glass-panel::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 10px; }
+        .glass-panel::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
         
-        h2 { margin-top: 0; color: var(--primary); letter-spacing: 1px; font-size: 18px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);}
-        h3 { color: #aaa; font-size: 12px; margin-bottom: 5px; text-transform: uppercase; }
+        h2 { margin-top: 0; color: var(--primary); letter-spacing: 1.5px; font-size: 20px; border-bottom: 2px solid rgba(0, 229, 255, 0.2); padding-bottom: 12px; text-shadow: 0 0 10px rgba(0, 229, 255, 0.4); text-transform: uppercase;}
+        h3 { color: #aaa; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;}
         
-        input, select { width: 100%; padding: 10px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); color: white; border-radius: 8px; box-sizing: border-box; font-size: 13px; transition: border 0.3s; }
-        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);}
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--glass-border); color: white; border-radius: 6px; box-sizing: border-box; font-size: 14px; transition: border 0.3s; }
+        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);}
         
-        .btn { background: linear-gradient(45deg, #00e5ff, #0077ff); border: none; color: white; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; width: 100%; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(0, 229, 255, 0.1); font-size: 13px; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 229, 255, 0.4); filter: brightness(1.1);}
-        .btn:active { transform: translateY(0); }
-        .btn:disabled { filter: grayscale(1); cursor: not-allowed; opacity: 0.6; }
+        .btn { background: linear-gradient(135deg, #0077ff, #00e5ff); border: none; color: white; padding: 12px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; width: 100%; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0, 119, 255, 0.2); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;}
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5); filter: brightness(1.2);}
+        .btn:active { transform: translateY(1px); }
+        .btn:disabled { filter: grayscale(1); cursor: not-allowed; opacity: 0.5; transform: none; }
         
-        .btn-danger { background: linear-gradient(45deg, #ff0055, #cc0044); box-shadow: 0 4px 15px rgba(255, 0, 85, 0.1); }
-        .btn-accent { background: linear-gradient(45deg, #e040fb, #aa00ff); }
-        .btn-warning { background: linear-gradient(45deg, #ffea00, #ff9100); color: #000; box-shadow: 0 4px 15px rgba(255, 234, 0, 0.1); }
-        .btn-success { background: linear-gradient(45deg, #00e676, #00b359); }
-        .btn-mystic { background: linear-gradient(45deg, #7c4dff, #512da8); box-shadow: 0 4px 15px rgba(124, 77, 255, 0.2); }
-        .btn-small { padding: 4px 8px; font-size: 11px; width: auto; margin: 0; }
+        .btn-danger { background: linear-gradient(135deg, #cc0044, #ff0055); box-shadow: 0 4px 15px rgba(255, 0, 85, 0.2); }
+        .btn-accent { background: linear-gradient(135deg, #aa00ff, #e040fb); }
+        .btn-warning { background: linear-gradient(135deg, #ff9100, #ffea00); color: #111; box-shadow: 0 4px 15px rgba(255, 234, 0, 0.2); }
+        .btn-success { background: linear-gradient(135deg, #00b359, #00e676); }
+        .btn-mystic { background: linear-gradient(135deg, #512da8, #7c4dff); box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3); }
+        .btn-small { padding: 6px 12px; font-size: 12px; width: auto; margin: 0; }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 15px; }
-        .stat-box { background: rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--glass-border); transition: all 0.3s; }
-        .stat-val { font-size: 16px; font-weight: bold; color: var(--primary); text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);}
+        .hotkey-badge { background: rgba(0,0,0,0.8); color: #fff; font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-left: 5px; border: 1px solid #555; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: rgba(0, 0, 0, 0.4); padding: 15px 10px; border-radius: 8px; text-align: center; border: 1px solid var(--glass-border); transition: all 0.3s; }
+        .stat-val { font-size: 18px; font-weight: bold; color: var(--primary); text-shadow: 0 0 10px rgba(0, 229, 255, 0.5); margin-top: 5px;}
         
-        .sub-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; background: rgba(0, 0, 0, 0.2); padding: 12px; border-radius: 8px; margin-top: 10px; }
-        .sub-stat-item { font-size: 12px; color: #ccc; }
-        .sub-stat-item strong { color: #fff; }
-        .bonus-stat { color: var(--success); font-size: 11px; font-weight: bold;}
+        .sub-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        .sub-stat-item { font-size: 14px; color: #ccc; }
+        .sub-stat-item strong { color: #fff; font-size: 16px;}
+        .bonus-stat { color: var(--success); font-size: 12px; font-weight: bold;}
 
         /* Content Boxes */
-        .equip-box, .pet-box, .bank-box, .mystic-box { background: rgba(224, 64, 251, 0.05); border: 1px solid var(--glass-border); padding: 10px; border-radius: 8px; margin-top: 10px; text-align: center; font-size: 13px;}
-        .pet-box { border-color: var(--warning); background: rgba(255, 234, 0, 0.05); }
-        .bank-box { border-color: var(--success); background: rgba(0, 230, 118, 0.05); text-align: left; margin-bottom: 10px; display:flex; justify-content: space-between; align-items:center;}
-        .mystic-box { border-color: var(--mystic); background: rgba(124, 77, 255, 0.05); text-align: left; }
+        .equip-box, .pet-box, .bank-box, .mystic-box { background: rgba(224, 64, 251, 0.05); border: 1px solid rgba(224, 64, 251, 0.2); padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center; font-size: 14px;}
+        .pet-box { border-color: rgba(255, 234, 0, 0.3); background: rgba(255, 234, 0, 0.05); }
+        .bank-box { border-color: rgba(0, 230, 118, 0.3); background: rgba(0, 230, 118, 0.05); text-align: left; margin-bottom: 15px; display:flex; justify-content: space-between; align-items:center;}
+        .mystic-box { border-color: rgba(124, 77, 255, 0.3); background: rgba(124, 77, 255, 0.05); text-align: left; }
 
-        /* Inventory */
-        .inventory-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
-        .inv-slot { aspect-ratio: 1; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border); border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 10px; text-align: center; padding: 2px; cursor: pointer; transition: all 0.2s;}
-        .inv-slot.filled:hover { border-color: var(--primary); background: rgba(0, 229, 255, 0.1); transform: scale(1.1) rotate(2deg); box-shadow: 0 0 15px rgba(0,229,255,0.4);}
-        .inv-slot.filled { border-color: var(--accent); background: rgba(224, 64, 251, 0.05); }
+        /* Inventory PC Focus */
+        .inventory-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 15px; }
+        .inv-slot { aspect-ratio: 1; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; text-align: center; padding: 5px; cursor: pointer; transition: all 0.2s; word-break: break-word;}
+        .inv-slot.filled:hover { border-color: var(--primary); background: rgba(0, 229, 255, 0.15); transform: translateY(-3px) scale(1.05); box-shadow: 0 5px 15px rgba(0,229,255,0.3); z-index: 2;}
+        .inv-slot.filled { border-color: rgba(224, 64, 251, 0.5); background: rgba(224, 64, 251, 0.08); font-weight: bold;}
 
-        /* Log Box */
-        .log-box { background: rgba(0, 0, 0, 0.5); padding: 10px; border-radius: 8px; height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #ccc; border-left: 3px solid var(--primary); margin-top: 10px; font-family: monospace; }
-        .log-entry { animation: fadeIn 0.3s ease; }
+        /* Advanced Log Box */
+        .log-box { background: rgba(5, 8, 15, 0.8); padding: 15px; border-radius: 8px; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #ccc; border: 1px solid #222; border-left: 4px solid var(--primary); margin-top: 15px; font-family: 'Consolas', monospace; box-shadow: inset 0 0 10px #000; min-height: 150px;}
+        .log-box::-webkit-scrollbar { width: 6px; }
+        .log-box::-webkit-scrollbar-thumb { background: #444; border-radius: 5px; }
+        .log-entry { animation: fadeIn 0.2s ease; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 4px;}
         .log-entry.combat { color: #ff9100; }
         .log-entry.system { color: #00e5ff; }
         .log-entry.loot { color: #00e676; }
         .log-entry.mystic { color: #e040fb; font-weight: bold; }
+        .log-entry.error { color: var(--secondary); font-weight: bold; }
 
         /* Combat & Chat Areas */
-        .dungeon-panel { background: rgba(255, 0, 85, 0.05); border: 1px solid rgba(255, 0, 85, 0.3); padding: 12px; border-radius: 8px; margin-top: 10px; }
-        .chat-box { flex-grow: 1; background: rgba(0,0,0,0.3); border-radius: 8px; margin-bottom: 10px; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; border: 1px solid var(--glass-border); height: 200px;}
-        .chat-msg { font-size: 12px; line-height: 1.4; animation: fadeIn 0.3s ease; }
+        .dungeon-panel { background: rgba(255, 0, 85, 0.05); border: 1px solid rgba(255, 0, 85, 0.2); padding: 15px; border-radius: 8px; margin-top: 15px; }
+        .chat-box { flex-grow: 1; background: rgba(0,0,0,0.5); border-radius: 8px; margin-bottom: 15px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); height: 250px;}
+        .chat-msg { font-size: 13px; line-height: 1.5; animation: fadeIn 0.3s ease; word-break: break-word;}
         .chat-name { font-weight: bold; color: var(--warning); }
-        .chat-title { color: #e040fb; font-weight: bold; font-size: 10px; border: 1px solid #e040fb; padding: 1px 3px; border-radius: 3px; margin-right: 3px;}
+        .chat-title { color: #e040fb; font-weight: bold; font-size: 11px; border: 1px solid #e040fb; padding: 2px 5px; border-radius: 4px; margin-right: 5px;}
         
         /* PRESTISE UI */
-        .rebirth-stars { color: var(--gold); letter-spacing: 1px; }
-        .name-god { color: var(--gold) !important; text-shadow: 0 0 8px rgba(255, 215, 0, 0.8); font-weight: bold; }
-        .border-god { border-color: var(--gold) !important; box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.2); }
+        .rebirth-stars { color: var(--gold); letter-spacing: 2px; }
+        .name-god { color: var(--gold) !important; text-shadow: 0 0 10px rgba(255, 215, 0, 0.8); font-weight: bold; font-size: 110%;}
+        .border-god { border-color: var(--gold) !important; box-shadow: inset 0 0 15px rgba(255, 215, 0, 0.15), 0 8px 32px rgba(0,0,0,0.6); }
         
-        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid var(--glass-border); font-size: 12px;}
+        .leaderboard-list { margin-top: 10px;}
+        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px;}
+        .leaderboard-item:hover { background: rgba(255,255,255,0.02); }
         
-        .single-container { width: 400px; display: none; z-index: 10;}
+        .single-container { width: 450px; display: none; z-index: 10; margin: auto;}
         #authScreen, #charCreateScreen { display: block; }
         
         /* Modals */
-        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(26, 34, 53, 0.98); backdrop-filter: blur(10px); border: 1px solid var(--primary); padding: 25px; border-radius: 12px; z-index: 1000; box-shadow: 0 0 30px rgba(0, 229, 255, 0.3); text-align: center; width: 280px; animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 999; backdrop-filter: blur(3px);}
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15, 20, 30, 0.98); backdrop-filter: blur(15px); border: 2px solid var(--primary); padding: 30px; border-radius: 12px; z-index: 1000; box-shadow: 0 0 40px rgba(0, 229, 255, 0.4); text-align: center; width: 320px; animation: scaleIn 0.2s ease-out;}
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; backdrop-filter: blur(5px);}
         
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
-        @keyframes damageFlash { 0% { box-shadow: inset 0 0 0 rgba(255,0,0,0); } 50% { box-shadow: inset 0 0 150px rgba(255,0,85,0.5); } 100% { box-shadow: inset 0 0 0 rgba(255,0,0,0); } }
-        @keyframes scaleIn { from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+        @keyframes damageFlash { 0% { box-shadow: inset 0 0 0 rgba(255,0,0,0); } 50% { box-shadow: inset 0 0 200px rgba(255,0,85,0.6); } 100% { box-shadow: inset 0 0 0 rgba(255,0,0,0); } }
+        @keyframes scaleIn { from { transform: translate(-50%, -50%) scale(0.9); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .shake-effect { animation: shake 0.4s ease-in-out; }
         .damage-effect { animation: shake 0.4s ease-in-out, damageFlash 0.5s ease-out; }
         
-        /* Auto Toggle Switch */
-        .auto-active { border: 2px solid var(--success) !important; background: rgba(0, 230, 118, 0.2) !important; box-shadow: 0 0 15px rgba(0,230,118,0.5) !important; color: #fff !important; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+        /* Auto Toggle Switch PC */
+        .auto-active { border: 2px solid var(--success) !important; background: rgba(0, 230, 118, 0.15) !important; box-shadow: 0 0 15px rgba(0,230,118,0.4) !important; color: var(--success) !important; text-shadow: 0 0 5px rgba(0,230,118,0.5);}
     </style>
 </head>
 <body>
 
     <div class="modal-overlay" id="modalOverlay"></div>
     
+    <!-- Item Modal -->
     <div class="modal" id="itemModal">
-        <h3 id="modalItemName" style="color: var(--primary); margin-top:0; font-size:16px;">Nama Item</h3>
-        <p id="modalItemDesc" style="font-size: 13px; color: #aaa; margin-bottom: 20px;">Peralatan tempur.</p>
+        <h3 id="modalItemName" style="color: var(--primary); margin-top:0; font-size:18px; text-transform:none;">Nama Item</h3>
+        <p id="modalItemDesc" style="font-size: 14px; color: #ccc; margin-bottom: 25px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;">Peralatan tempur.</p>
         <button class="btn btn-accent" id="btnModalEquip">Equip (Ganti & Reset Tempa)</button>
         <button class="btn btn-mystic" id="btnModalDismantle">🔨 Lebur (Dapat Soul Dust)</button>
-        <div style="display:flex; gap:5px; margin-top: 10px;">
-            <input type="number" id="modalSellPrice" placeholder="Harga (Gold)" min="1" style="margin-bottom:0;">
-            <button class="btn btn-warning" id="btnModalSell" style="margin-bottom:0; width:60%;">Pasar</button>
+        <div style="display:flex; gap:10px; margin-top: 15px; align-items:center;">
+            <input type="number" id="modalSellPrice" placeholder="Harga (Gold)" min="1" style="margin-bottom:0; flex:2;">
+            <button class="btn btn-warning" id="btnModalSell" style="margin-bottom:0; flex:1;">Lelang</button>
         </div>
-        <button class="btn btn-danger" id="btnModalClose" style="margin-top: 10px;">Tutup</button>
+        <button class="btn btn-danger" id="btnModalClose" style="margin-top: 15px; background: transparent; border: 1px solid var(--secondary); box-shadow:none;">Tutup [ESC]</button>
     </div>
 
+    <!-- AUTH & CHAR CREATE -->
     <div class="glass-panel single-container" id="authScreen">
-        <h2 style="text-align: center; border:none; text-shadow: 0 0 15px var(--mystic);">Perfect World <span style="color:var(--primary)">v14</span><br><span style="font-size: 12px; color:var(--success);">The Idle Kingdom</span></h2>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Password">
-        <button class="btn" id="btnLogin">Login</button>
-        <button class="btn" id="btnRegister" style="background: transparent; border: 1px solid var(--primary); box-shadow: none;">Register Akun Baru</button>
-        <div id="authError" style="color: var(--secondary); text-align: center; font-size: 13px; margin-top: 10px;"></div>
+        <h2 style="text-align: center; border:none; text-shadow: 0 0 20px var(--mystic); font-size: 28px;">Perfect World <span style="color:var(--primary)">v15</span><br><span style="font-size: 14px; color:var(--success); letter-spacing: 3px;">PC MASTER RACE EDITION</span></h2>
+        <input type="email" id="email" placeholder="Alamat Email">
+        <input type="password" id="password" placeholder="Kata Sandi">
+        <button class="btn" id="btnLogin">Masuk Server</button>
+        <button class="btn" id="btnRegister" style="background: transparent; border: 1px solid var(--primary); box-shadow: none;">Registrasi Akun Baru</button>
+        <div id="authError" style="color: var(--secondary); text-align: center; font-size: 14px; margin-top: 15px;"></div>
     </div>
 
     <div class="glass-panel single-container" id="charCreateScreen">
-        <h2>Pilih Takdir Anda</h2>
-        <input type="text" id="newCharName" placeholder="Nama Karakter (Maks 10 huruf)" maxlength="10">
+        <h2 style="text-align: center;">Pilih Takdir Anda</h2>
+        <input type="text" id="newCharName" placeholder="Nama Karakter (Maks 12 huruf)" maxlength="12">
         <select id="newCharClass">
-            <option value="Blademaster">Blademaster (Tank/HP)</option>
-            <option value="Cleric">Cleric (Magic/Mana)</option>
-            <option value="Archer">Archer (Burst/Atk)</option>
+            <option value="Blademaster">Blademaster (Tank/HP Fokus)</option>
+            <option value="Cleric">Cleric (Magic/Mana Fokus)</option>
+            <option value="Archer">Archer (Burst/Atk Fokus)</option>
         </select>
-        <button class="btn" id="btnCreateChar">Masuk Ke Dunia</button>
+        <button class="btn" id="btnCreateChar">Mulai Petualangan</button>
     </div>
 
+    <!-- MAIN GAME MMO DASHBOARD (PC LAYOUT) -->
     <div class="main-wrapper" id="gameScreen">
         
+        <!-- PANEL KIRI: KARAKTER & PERALATAN -->
         <div class="glass-panel" id="leftPanel">
-            <h2>Karakter Anda</h2>
-            <p style="margin: 0 0 5px 0;"><span id="uiTitle" class="chat-title">Pemula</span> <strong id="uiName" style="color: #fff;">-</strong> <span id="uiRebirth" class="rebirth-stars"></span></p>
-            <p style="margin: 0 0 10px 0;">Class: <strong id="uiClass" style="color: var(--primary);">-</strong></p>
+            <h2>Status Karakter</h2>
+            <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align:center;">
+                <p style="margin: 0 0 8px 0;"><span id="uiTitle" class="chat-title">Pemula</span> <strong id="uiName" style="color: #fff; font-size:18px;">-</strong></p>
+                <p style="margin: 0 0 8px 0;"><span id="uiRebirth" class="rebirth-stars"></span></p>
+                <p style="margin: 0;">Class: <strong id="uiClass" style="color: var(--primary);">-</strong></p>
+            </div>
 
-            <button class="btn btn-success btn-small" id="btnDailyReward" style="margin-bottom: 10px;">🎁 Ambil Hadiah Harian</button>
+            <button class="btn btn-success" id="btnDailyReward" style="margin-bottom: 15px; font-size:13px;">🎁 Klaim Hadiah Harian</button>
 
             <div class="pet-box">
-                Spirit Pet:<br>
-                <strong id="uiPet" style="color: var(--warning); font-size:14px;">Tidak Ada</strong>
-                <div id="uiPetLevel" style="color: var(--accent); font-size: 12px; font-weight:bold; margin-bottom: 5px;"></div>
-                <div style="display:flex; gap:5px;">
+                <h3 style="margin-top:0; color:var(--warning);">Spirit Pet</h3>
+                <strong id="uiPet" style="color: #fff; font-size:16px;">Tidak Ada</strong>
+                <div id="uiPetLevel" style="color: var(--accent); font-size: 13px; font-weight:bold; margin-bottom: 10px;"></div>
+                <div style="display:flex; gap:8px;">
                     <button class="btn btn-small" id="btnGachaPet" style="flex:1;">Telur (500 G)</button>
-                    <button class="btn btn-small btn-accent" id="btnFeedPet" style="flex:1;">Makan (50 Chi)</button>
+                    <button class="btn btn-small btn-accent" id="btnFeedPet" style="flex:1;">Beri Makan (50 Chi)</button>
                 </div>
             </div>
 
             <div class="equip-box">
-                Peralatan Aktif:<br>
-                <strong id="uiEquip" style="color: var(--primary); font-size:14px;">Tidak Ada</strong>
-                <div id="uiEquipLevel" style="color: var(--warning); font-size: 12px; font-weight:bold;"></div>
-                <button class="btn btn-small btn-success" id="btnEnhance" style="margin-top:8px;">Tempa Item (Gold)</button>
+                <h3 style="margin-top:0; color:var(--primary);">Peralatan Aktif</h3>
+                <strong id="uiEquip" style="color: #fff; font-size:16px;">Tidak Ada</strong>
+                <span id="uiEquipLevel" style="color: var(--warning); font-size: 14px; font-weight:bold; margin-left:5px;"></span>
+                <button class="btn btn-small btn-success" id="btnEnhance" style="margin-top:12px; width:100%;">Tempa Peralatan (Gold)</button>
             </div>
 
             <div class="sub-stats">
-                <div class="sub-stat-item">HP: <strong id="uiHp">0</strong><br><span id="uiHpBonus" class="bonus-stat"></span></div>
-                <div class="sub-stat-item">Mana: <strong id="uiMana">0</strong></div>
-                <div class="sub-stat-item">Atk: <strong id="uiAtk">0</strong><br><span id="uiAtkBonus" class="bonus-stat"></span></div>
-                <div class="sub-stat-item">Def: <strong id="uiDef">0</strong><br><span id="uiDefBonus" class="bonus-stat"></span></div>
+                <div class="sub-stat-item">❤️ HP: <strong id="uiHp">0</strong><br><span id="uiHpBonus" class="bonus-stat"></span></div>
+                <div class="sub-stat-item">💧 Mana: <strong id="uiMana">0</strong></div>
+                <div class="sub-stat-item">⚔️ Atk: <strong id="uiAtk">0</strong><br><span id="uiAtkBonus" class="bonus-stat"></span></div>
+                <div class="sub-stat-item">🛡️ Def: <strong id="uiDef">0</strong><br><span id="uiDefBonus" class="bonus-stat"></span></div>
             </div>
 
-            <div style="margin-top: auto;">
-                <button class="btn btn-danger" id="btnLogout">Logout / Simpan</button>
+            <div style="margin-top: auto; padding-top: 20px;">
+                <button class="btn btn-danger" id="btnLogout" style="background:transparent; border:1px solid #cc0044; box-shadow:none;">Keluar Sistem / Save</button>
             </div>
         </div>
 
-        <div class="glass-panel" id="midPanel" style="padding-right: 15px;">
-            <h2>Eksplorasi & Pertarungan</h2>
+        <!-- PANEL TENGAH: EKSPLORASI & LOG -->
+        <div class="glass-panel" id="midPanel" style="display: flex; flex-direction: column;">
+            <h2>Dunia Perfect World</h2>
             
             <div class="bank-box">
                 <div>
-                    <h3 style="margin:0; color:var(--success);">🏦 Bank Emas</h3>
-                    <span style="font-size:11px; color:#aaa;">Saldo Aman: <strong id="uiBank" style="color:white;">0</strong> G</span>
+                    <h3 style="margin:0; color:var(--success); font-size: 15px;">🏦 Brankas Bank</h3>
+                    <span style="font-size:13px; color:#ccc;">Saldo Aman: <strong id="uiBank" style="color:white; font-size:15px;">0</strong> Gold</span>
                 </div>
-                <div style="display:flex; gap:5px;">
-                    <button class="btn btn-small btn-success" id="btnBankDeposit">Tabung (Potong 5%)</button>
-                    <button class="btn btn-small" id="btnBankWithdraw" style="background:#555;">Tarik</button>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-small btn-success" id="btnBankDeposit">Tabung (Fee 5%)</button>
+                    <button class="btn btn-small" id="btnBankWithdraw" style="background:#444;">Tarik</button>
                 </div>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-box"><h3>Level</h3><div class="stat-val" id="uiLevel">0</div></div>
-                <div class="stat-box"><h3>Dompet</h3><div class="stat-val" id="uiGold">0</div></div>
-                <div class="stat-box"><h3>Chi</h3><div class="stat-val" id="uiChi" style="font-size:13px">0/100</div></div>
-                <div class="stat-box" style="border-color:var(--mystic)"><h3>Dust</h3><div class="stat-val" id="uiDust" style="color:var(--mystic)">0</div></div>
-                <div class="stat-box" style="border-color:var(--accent)"><h3>Power</h3><div class="stat-val" id="uiPower" style="color:var(--accent); font-size:13px;">0</div></div>
+                <div class="stat-box"><h3>Dompet (G)</h3><div class="stat-val" id="uiGold">0</div></div>
+                <div class="stat-box"><h3>Chi</h3><div class="stat-val" id="uiChi" style="font-size:16px;">0/100</div></div>
+                <div class="stat-box" style="border-color:rgba(124, 77, 255, 0.4)"><h3>Dust</h3><div class="stat-val" id="uiDust" style="color:var(--mystic)">0</div></div>
+                <div class="stat-box" style="border-color:rgba(224, 64, 251, 0.4)"><h3>Power</h3><div class="stat-val" id="uiPower" style="color:var(--accent);">0</div></div>
             </div>
 
-            <div style="display: flex; gap:10px; margin-bottom: 10px;">
-                <button class="btn" id="btnCultivate" style="flex:1;">🧘‍♂️ Meditasi Manual (+Chi)</button>
-                <button class="btn" id="btnAutoCultivate" style="flex:1; background: transparent; border: 1px solid var(--success); color: var(--success);">⚙️ Auto-Meditasi (Off)</button>
-            </div>
-
-            <div class="mystic-box">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 11px; color:#ccc;">Tukar 100 Soul Dust dengan Peti Senjata Dewa.</span>
-                    <button class="btn btn-small btn-mystic" id="btnBlackMarket">Beli Peti Dewa</button>
-                </div>
-            </div>
-
-            <div class="log-box" id="gameLog">
-                <div class="log-entry system">> Sistem v14 (The Idle Kingdom) siap...</div>
+            <div style="display: flex; gap:15px; margin-bottom: 15px;">
+                <button class="btn" id="btnCultivate" style="flex:1;">🧘‍♂️ Meditasi Manual <span class="hotkey-badge">C</span></button>
+                <button class="btn" id="btnAutoCultivate" style="flex:1; background: transparent; border: 1px solid var(--success); color: var(--success); box-shadow:none;">⚙️ Auto-Meditasi (Off) <span class="hotkey-badge">A</span></button>
             </div>
 
             <div class="dungeon-panel">
-                <h3 style="color: var(--secondary); margin-top: 0;">Peta Perburuan Solo</h3>
-                <select id="mapSelector" style="background: rgba(255,0,85,0.1); border-color: var(--secondary);">
-                    <option value="map1">🌲 Lembah Pemula</option>
-                    <option value="map2">🌋 Kawah Neraka (End-Game)</option>
-                </select>
-                <div style="display: flex; gap: 10px; margin-top: 5px;">
-                    <select id="dungeonTarget" style="margin-bottom: 0;"></select>
-                    <button class="btn btn-danger" id="btnHunt" style="margin-bottom: 0; width: 40%;">Serang</button>
+                <h3 style="color: var(--secondary); margin-top: 0; font-size:15px;">Peta Perburuan Solo</h3>
+                <div style="display: flex; gap: 15px;">
+                    <select id="mapSelector" style="flex:1; background: rgba(255,0,85,0.1); border-color: rgba(255,0,85,0.3);">
+                        <option value="map1">🌲 Lembah Pemula</option>
+                        <option value="map2">🌋 Kawah Neraka (End-Game)</option>
+                    </select>
+                    <select id="dungeonTarget" style="flex:1;"></select>
+                    <button class="btn btn-danger" id="btnHunt" style="width: auto; padding: 0 30px; margin-bottom:15px;">Serang <span class="hotkey-badge">H</span></button>
                 </div>
             </div>
 
-            <div style="margin-top: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items:flex-end;">
-                    <h3 style="margin:0;">Tas Penyimpanan</h3>
-                    <span style="font-size:11px; color:var(--success); cursor:pointer;" id="btnGoMarket">Buka Pasar Lelang 🛒</span>
+            <div style="margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items:center;">
+                    <h3 style="margin:0; color:var(--primary); font-size:15px;">Tas Penyimpanan (Inventory)</h3>
+                    <button class="btn btn-small btn-warning" id="btnGoMarket" style="font-weight:bold; color:#111;">Buka Pasar Lelang 🛒</button>
                 </div>
                 <div class="inventory-grid" id="inventoryGrid"></div>
-                <button class="btn btn-small btn-accent" id="btnGacha" style="width:100%; margin-top:10px;">Gacha Equip (50 Gold)</button>
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button class="btn btn-small btn-accent" id="btnGacha" style="flex:1;">Buka Peti Gacha (50 Gold)</button>
+                    <button class="btn btn-small btn-mystic" id="btnBlackMarket" style="flex:1;">Peti Dewa (100 Dust)</button>
+                </div>
+            </div>
+
+            <!-- Advanced Log ditempatkan di bawah agar lebar dan mirip PC MMO -->
+            <h3 style="margin-top:20px; border-bottom:1px solid #333; padding-bottom:5px;">Sistem Log</h3>
+            <div class="log-box" id="gameLog">
+                <div class="log-entry system">> Sistem v15 (PC Master Race) siap... Integritas server: 100%</div>
             </div>
         </div>
 
+        <!-- PANEL KANAN: SOSIAL & PVP -->
         <div class="glass-panel">
-            <h2>Global Chat</h2>
+            <h2>Saluran Global</h2>
             <div class="chat-box" id="chatBox"></div>
-            <div style="display:flex; gap:5px;">
-                <input type="text" id="chatInput" placeholder="Ketik pesan..." style="margin-bottom:0;" maxlength="80">
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="chatInput" placeholder="Ketik pesan..." style="margin-bottom:0;" maxlength="100">
                 <button class="btn btn-primary" id="btnSendChat" style="width:auto; margin-bottom:0;">Kirim</button>
             </div>
 
-            <h2 style="margin-top: 20px;">Arena Leaderboard</h2>
-            <p style="font-size:11px; color:#aaa; margin-top:-5px;">Klik ⚔️ untuk menantang (Maks beda 10 Lv)</p>
-            <ul class="leaderboard-list" id="leaderboardList" style="list-style: none; padding: 0; margin: 0;">
-                <li style="text-align:center; color:#aaa; font-size:12px;">Memuat data...</li>
-            </ul>
+            <h2 style="margin-top: 25px;">Arena Leaderboard</h2>
+            <p style="font-size:12px; color:#aaa; margin-top:-10px; margin-bottom:15px;">Klik ⚔️ untuk menantang (Batas Max: 10 Level)</p>
+            <div style="flex-grow:1; overflow-y:auto; padding-right:5px;" id="leaderboardContainer">
+                <ul class="leaderboard-list" id="leaderboardList" style="list-style: none; padding: 0; margin: 0;">
+                    <li style="text-align:center; color:#aaa; font-size:13px;">Memuat data sinkronisasi...</li>
+                </ul>
+            </div>
         </div>
 
     </div>
 
-    <div class="glass-panel single-container" id="marketScreen" style="width: 600px; height: 80vh;">
-        <h2 style="color: var(--warning); text-align: center;">Pasar Lelang Global</h2>
-        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px; flex-grow: 1; overflow-y: auto;" id="marketList"></div>
-        <button class="btn" id="btnMarketToGame" style="background: #333; margin-top: 20px;">Kembali ke Game</button>
+    <!-- PASAR LELANG OVERLAY -->
+    <div class="glass-panel single-container" id="marketScreen" style="width: 700px; height: 80vh;">
+        <h2 style="color: var(--warning); text-align: center; border-bottom-color: var(--warning);">Pasar Lelang Global</h2>
+        <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px; flex-grow: 1; overflow-y: auto; padding-right:10px;" id="marketList"></div>
+        <button class="btn" id="btnMarketToGame" style="background: #222; border: 1px solid #555; margin-top: 25px;">Kembali ke Dunia</button>
     </div>
 
+    <!-- FIREBASE SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
@@ -266,7 +306,7 @@
         const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
         
         let currentUser = null; let localPlayerData = null; let selectedInventoryIndex = null; let marketUnsub = null;
-        let isAutoCultivating = false; let autoTimer = null;
+        let isAutoCultivating = false; let autoTimer = null; let isProcessingCultivate = false; // Bug fix flag
         
         const itemStats = { "Mirage Sword": { atk: 50, def: 0, hp: 0 }, "Celestial Wing": { atk: 0, def: 30, hp: 0 }, "Soulgem Ring": { atk: 0, def: 0, hp: 100 }, "Pan Gu Artifact": { atk: 100, def: 50, hp: 200 }, "Dragon Scale": { atk: 150, def: 100, hp: 500 }, "Godly Cape": { atk: 0, def: 200, hp: 1000 }, "Excalibur (God)": { atk: 500, def: 200, hp: 2000 } };
         const itemPool = ["Mirage Sword", "Celestial Wing", "Soulgem Ring", "Pan Gu Artifact"];
@@ -281,7 +321,7 @@
         const mapSelect = document.getElementById('mapSelector'); const monsterSelect = document.getElementById('dungeonTarget');
         function updateMonsterList() {
             const currentMap = worldMaps[mapSelect.value]; monsterSelect.innerHTML = "";
-            for(let key in currentMap) { let m = currentMap[key]; monsterSelect.innerHTML += `<option value="${key}">${key === "boss" ? "💀 " : ""}${m.name} (Power: ${m.reqPower})</option>`; }
+            for(let key in currentMap) { let m = currentMap[key]; monsterSelect.innerHTML += `<option value="${key}">${key === "boss" ? "💀 " : ""}${m.name} (Pwr: ${m.reqPower})</option>`; }
         }
         mapSelect.addEventListener('change', updateMonsterList); updateMonsterList();
 
@@ -290,7 +330,7 @@
         function addLog(message, type="system") { 
             const logBox = document.getElementById('gameLog'); const entry = document.createElement('div'); entry.className = `log-entry ${type}`;
             entry.innerText = `[${new Date().toLocaleTimeString('id-ID', { hour12: false })}] ${message}`;
-            logBox.appendChild(entry); if (logBox.children.length > 40) logBox.removeChild(logBox.firstChild); logBox.scrollTop = logBox.scrollHeight; 
+            logBox.appendChild(entry); if (logBox.children.length > 60) logBox.removeChild(logBox.firstChild); logBox.scrollTop = logBox.scrollHeight; 
         }
 
         function shakeScreen(isDamage = false) { const panel = document.getElementById('midPanel'); panel.classList.remove('shake-effect', 'damage-effect'); void panel.offsetWidth; panel.classList.add(isDamage ? 'damage-effect' : 'shake-effect'); }
@@ -306,8 +346,8 @@
             return Math.floor(power * rMult);
         }
 
-        document.getElementById('btnLogin').addEventListener('click', async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { document.getElementById('authError').innerText = "Login Gagal!"; } });
-        document.getElementById('btnRegister').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { document.getElementById('authError').innerText = "Register Gagal!"; } });
+        document.getElementById('btnLogin').addEventListener('click', async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { document.getElementById('authError').innerText = "Otorisasi Gagal: Periksa kembali kredensial Anda."; } });
+        document.getElementById('btnRegister').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { document.getElementById('authError').innerText = "Registrasi Gagal. Email mungkin sudah terdaftar."; } });
         document.getElementById('btnLogout').addEventListener('click', async () => { if(autoTimer) clearInterval(autoTimer); signOut(auth); });
 
         function getBaseStats(pClass) {
@@ -354,11 +394,11 @@
                     document.getElementById('uiClass').innerText = data.class; document.getElementById('uiLevel').innerText = data.level; 
                     document.getElementById('uiGold').innerText = data.gold; document.getElementById('uiBank').innerText = data.bankGold || 0;
                     document.getElementById('uiDust').innerText = data.soulDust || 0; document.getElementById('uiChi').innerText = `${data.chi}/100`; 
-                    document.getElementById('uiPower').innerText = calculatePower(data);
-                    document.getElementById('uiEquip').innerText = data.equippedItem || "Tidak Ada"; document.getElementById('uiEquipLevel').innerText = (data.equippedItem && upgLv > 0) ? `[+${upgLv}]` : "";
+                    document.getElementById('uiPower').innerText = calculatePower(data).toLocaleString();
+                    document.getElementById('uiEquip').innerText = data.equippedItem || "Kosong"; document.getElementById('uiEquipLevel').innerText = (data.equippedItem && upgLv > 0) ? `[+${upgLv}]` : "";
                     
                     let petNameDisplay = data.pet; if(pLv >= 10 && data.pet !== "None") petNameDisplay = `🔥 Awakened ${data.pet}`;
-                    document.getElementById('uiPet').innerText = (data.pet && data.pet !== "None") ? petNameDisplay : "Tidak Ada"; document.getElementById('uiPetLevel').innerText = (data.pet && data.pet !== "None") ? `Lv. ${pLv}` : "";
+                    document.getElementById('uiPet').innerText = (data.pet && data.pet !== "None") ? petNameDisplay : "Kosong"; document.getElementById('uiPetLevel').innerText = (data.pet && data.pet !== "None") ? `Lv. ${pLv}` : "";
                     
                     document.getElementById('uiHp').innerText = data.hp; document.getElementById('uiHpBonus').innerText = bonusHp > 0 ? `(+${bonusHp})` : "";
                     document.getElementById('uiAtk').innerText = data.atk; document.getElementById('uiAtkBonus').innerText = bonusAtk > 0 ? `(+${bonusAtk})` : "";
@@ -369,82 +409,109 @@
             });
         }
 
-        // FITUR BARU: BANK EMAS
+        // HOTKEY PC SYSTEM
+        document.addEventListener('keydown', (e) => {
+            if(document.getElementById('gameScreen').style.display === 'none') return;
+            // Cegah hotkey aktif jika user sedang mengetik di input box
+            if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                if(e.key === 'Enter' && e.target.id === 'chatInput') document.getElementById('btnSendChat').click();
+                return;
+            }
+            if(e.key === 'Escape' && document.getElementById('itemModal').style.display === 'block') document.getElementById('btnModalClose').click();
+
+            const key = e.key.toLowerCase();
+            if(key === 'c') document.getElementById('btnCultivate').click();
+            if(key === 'a') document.getElementById('btnAutoCultivate').click();
+            if(key === 'h') document.getElementById('btnHunt').click();
+        });
+
+        // BANK SYSTEM
         document.getElementById('btnBankDeposit').onclick = async () => {
-            const amount = parseInt(prompt("Berapa Gold yang ingin ditabung? (Potongan 5%)", localPlayerData.gold));
-            if(!amount || amount <= 0 || amount > localPlayerData.gold) return alert("Jumlah tidak valid!");
+            const amount = parseInt(prompt("Masukkan jumlah Gold untuk ditabung (Potongan Admin 5%):", localPlayerData.gold));
+            if(!amount || amount <= 0 || amount > localPlayerData.gold) return;
             let cost = Math.floor(amount * 0.05); let net = amount - cost;
             await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - amount, bankGold: (localPlayerData.bankGold || 0) + net });
-            addLog(`BANK: Menabung ${net} Gold (Biaya admin ${cost} Gold).`, "system");
+            addLog(`BANK: Menabung ${net} Gold (Biaya admin ${cost} G).`, "system");
         };
         document.getElementById('btnBankWithdraw').onclick = async () => {
-            const amount = parseInt(prompt("Berapa Gold yang ditarik?", localPlayerData.bankGold));
-            if(!amount || amount <= 0 || amount > (localPlayerData.bankGold || 0)) return alert("Jumlah tidak valid!");
+            const amount = parseInt(prompt("Masukkan jumlah Gold yang ditarik:", localPlayerData.bankGold));
+            if(!amount || amount <= 0 || amount > (localPlayerData.bankGold || 0)) return;
             await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold + amount, bankGold: localPlayerData.bankGold - amount });
             addLog(`BANK: Menarik ${amount} Gold.`, "system");
         };
 
-        // FITUR BARU: DAILY REWARD
         document.getElementById('btnDailyReward').onclick = async () => {
             const now = new Date().getTime(); const lastDaily = localPlayerData.lastDaily || 0;
-            if(now - lastDaily < 86400000) return alert(`Sudah diklaim hari ini! Tunggu ${Math.ceil((86400000 - (now - lastDaily))/3600000)} jam lagi.`);
-            const rewards = [{gold: 500}, {soulDust: 50}, {chi: 100}]; const win = rewards[Math.floor(Math.random() * rewards.length)];
+            if(now - lastDaily < 86400000) return alert(`Cooldown Harian: Tunggu ${Math.ceil((86400000 - (now - lastDaily))/3600000)} jam lagi.`);
+            const rewards = [{gold: 800}, {soulDust: 80}, {chi: 100}]; const win = rewards[Math.floor(Math.random() * rewards.length)];
             let updates = { lastDaily: now };
-            if(win.gold) { updates.gold = localPlayerData.gold + win.gold; addLog("DAILY: Klaim 500 Gold!", "loot"); }
-            if(win.soulDust) { updates.soulDust = (localPlayerData.soulDust || 0) + win.soulDust; addLog("DAILY: Klaim 50 Soul Dust!", "mystic"); }
+            if(win.gold) { updates.gold = localPlayerData.gold + win.gold; addLog("DAILY: Klaim 800 Gold!", "loot"); }
+            if(win.soulDust) { updates.soulDust = (localPlayerData.soulDust || 0) + win.soulDust; addLog("DAILY: Klaim 80 Soul Dust!", "mystic"); }
             if(win.chi) { updates.chi = localPlayerData.chi + win.chi; addLog("DAILY: Klaim 100 Chi!", "system"); }
             await updateDoc(doc(db, "users", currentUser.uid), updates);
         };
 
-        // FITUR BARU: AUTO-CULTIVATE
+        // AUTO-CULTIVATE TOGGLE PC
         document.getElementById('btnAutoCultivate').onclick = () => {
             isAutoCultivating = !isAutoCultivating; const btn = document.getElementById('btnAutoCultivate');
             if(isAutoCultivating) {
-                btn.innerText = "⚙️ Auto-Meditasi (Aktif)"; btn.classList.add("auto-active");
-                autoTimer = setInterval(() => { document.getElementById('btnCultivate').click(); }, 2500);
+                btn.innerHTML = `⚙️ Auto-Meditasi (Aktif) <span class="hotkey-badge">A</span>`; btn.classList.add("auto-active");
+                autoTimer = setInterval(() => { if(!isProcessingCultivate) document.getElementById('btnCultivate').click(); }, 2500);
             } else {
-                btn.innerText = "⚙️ Auto-Meditasi (Off)"; btn.classList.remove("auto-active"); clearInterval(autoTimer);
+                btn.innerHTML = `⚙️ Auto-Meditasi (Off) <span class="hotkey-badge">A</span>`; btn.classList.remove("auto-active"); clearInterval(autoTimer);
             }
         };
 
         document.getElementById('btnBlackMarket').addEventListener('click', async () => {
-            if((localPlayerData.soulDust || 0) < 100) return alert("Soul Dust kurang!"); if(localPlayerData.inventory.length >= 10) return alert("Tas Penuh!");
+            if((localPlayerData.soulDust || 0) < 100) return alert("Soul Dust tidak mencukupi (Butuh 100)."); if(localPlayerData.inventory.length >= 10) return alert("Tas Penyimpanan penuh!");
             const gachaGod = godlyPool[Math.floor(Math.random() * godlyPool.length)];
             await updateDoc(doc(db, "users", currentUser.uid), { soulDust: localPlayerData.soulDust - 100, inventory: [...localPlayerData.inventory, gachaGod] });
-            addLog(`BLACK MARKET: Menukar jiwa dengan senjata mistis [${gachaGod}]!`, "mystic");
+            addLog(`MYSTIC: Menukar jiwa dengan relik kuno [${gachaGod}]!`, "mystic");
         });
 
-        // BUG FIX: REINKARNASI STAT RESET
+        // BUG FIX: MENCEGAH RACE CONDITION SPAM KLIK
         document.getElementById('btnCultivate').addEventListener('click', async () => {
-            let newChi = localPlayerData.chi + 15, newLevel = localPlayerData.level, newGold = localPlayerData.gold + 10;
-            let newHp = localPlayerData.hp, newAtk = localPlayerData.atk, newDef = localPlayerData.def; let newMana = localPlayerData.mana;
-            let currentRebirth = localPlayerData.rebirth || 0;
+            if(isProcessingCultivate) return; // Kunci sistem selama memproses
+            isProcessingCultivate = true;
 
-            if(!isAutoCultivating) addLog("Meditasi... (+15 Chi, +10 Gold)", "system");
+            try {
+                let newChi = localPlayerData.chi + 15, newLevel = localPlayerData.level, newGold = localPlayerData.gold + 15;
+                let newHp = localPlayerData.hp, newAtk = localPlayerData.atk, newDef = localPlayerData.def; let newMana = localPlayerData.mana;
+                let currentRebirth = localPlayerData.rebirth || 0;
 
-            if(newChi >= 100) {
-                newChi = 0; 
-                if(newLevel >= 100) {
-                    if(isAutoCultivating || confirm("Level 100 Tercapai! Lakukan Reinkarnasi? (Level kembali 1, Status Dasar kembali 1, Bintang Multiplier bertambah permanen!)")) {
-                        newLevel = 1; currentRebirth += 1;
-                        // BUG FIX: Reset Stat ke base awal
-                        let base = getBaseStats(localPlayerData.class); newHp = base.hp; newMana = base.mana; newAtk = base.atk; newDef = base.def;
+                if(!isAutoCultivating) addLog("Meditasi Manual... (+15 Chi, +15 Gold)", "system");
+
+                if(newChi >= 100) {
+                    newChi = 0; 
+                    if(newLevel >= 100) {
+                        // Confirm dialog memblokir javascript, matikan auto sementara
+                        let prevAuto = isAutoCultivating; if(prevAuto) document.getElementById('btnAutoCultivate').click();
                         
-                        addDoc(collection(db, "global_chat"), { sender: "Sistem", text: `🌟 MUKJIZAT! ${localPlayerData.name} bereinkarnasi ke-${currentRebirth}!`, timestamp: serverTimestamp() });
-                        addLog(`REINKARNASI BERHASIL! Base status tereset, namun Multiplier Jiwa meningkat!`, "mystic");
-                    } else { newLevel += 1; } 
-                } else {
-                    newLevel += 1; newGold += 150;
-                    if(localPlayerData.class === "Blademaster") { newHp += 25; newDef += 4; newAtk += 2; } else if(localPlayerData.class === "Cleric") { newAtk += 5; newDef += 2; } else { newAtk += 7; newHp += 15; newDef += 1; }
-                    addLog(`🌟 Level naik ke ${newLevel}!`, "system");
+                        if(confirm("Batas Level Maksimal (100) Tercapai!\n\nLakukan Reinkarnasi?\n- Level kembali ke 1\n- Status Dasar di-reset\n- Kekuatan Multiplier Jiwa meningkat permanen!")) {
+                            newLevel = 1; currentRebirth += 1;
+                            let base = getBaseStats(localPlayerData.class); newHp = base.hp; newMana = base.mana; newAtk = base.atk; newDef = base.def;
+                            addDoc(collection(db, "global_chat"), { sender: "Server", text: `🌟 MUKJIZAT! ${localPlayerData.name} telah menembus batas Reinkarnasi ke-${currentRebirth}!`, timestamp: serverTimestamp() });
+                            addLog(`REINKARNASI BERHASIL! Anda terlahir kembali dengan potensi lebih besar!`, "mystic");
+                        } else { 
+                            newLevel += 1; // Overlevel dibolehkan jika menolak, tapi butuh chi banyak (sebagai rahasia game)
+                        }
+                    } else {
+                        newLevel += 1; newGold += 150;
+                        if(localPlayerData.class === "Blademaster") { newHp += 25; newDef += 4; newAtk += 2; } else if(localPlayerData.class === "Cleric") { newAtk += 5; newDef += 2; } else { newAtk += 7; newHp += 15; newDef += 1; }
+                        addLog(`🌟 Level Karakter naik ke ${newLevel}!`, "system");
+                    }
                 }
+                await updateDoc(doc(db, "users", currentUser.uid), { chi: newChi, level: newLevel, gold: newGold, hp: newHp, atk: newAtk, def: newDef, mana: newMana, rebirth: currentRebirth });
+            } catch(e) {
+                addLog(`ERROR: Gagal memproses sinkronisasi server.`, "error");
+            } finally {
+                isProcessingCultivate = false; // Buka kunci sistem
             }
-            await updateDoc(doc(db, "users", currentUser.uid), { chi: newChi, level: newLevel, gold: newGold, hp: newHp, atk: newAtk, def: newDef, mana: newMana, rebirth: currentRebirth });
         });
 
         document.getElementById('btnHunt').addEventListener('click', async () => {
             shakeScreen(); const mapId = mapSelect.value; const monsterId = monsterSelect.value; const target = worldMaps[mapId][monsterId];
-            if(monsterId === "boss" && localPlayerData.chi < target.penaltyChi) return alert(`Butuh ${target.penaltyChi} Chi!`);
+            if(monsterId === "boss" && localPlayerData.chi < target.penaltyChi) return addLog(`GAGAL: Butuh ${target.penaltyChi} Chi untuk memanggil Boss!`, "error");
             let playerPower = calculatePower(localPlayerData);
             
             setTimeout(async () => {
@@ -455,46 +522,49 @@
                         updateData.chi = localPlayerData.chi - target.penaltyChi; let dropRate = mapId === "map2" ? 0.30 : 0.15;
                         if(Math.random() < dropRate && localPlayerData.inventory.length < 10) {
                             let dropItem = target.drops[Math.floor(Math.random() * target.drops.length)]; updateData.inventory = [...localPlayerData.inventory, dropItem];
-                            addLog(`KEMENANGAN EPIC! Merampas ${target.rewardGold} Gold & [${dropItem}]!`, "loot");
+                            addLog(`KEMENANGAN EPIC! Mengalahkan Bos dan mendapat [${dropItem}]!`, "loot");
                         } else { addLog(`Mengalahkan Bos! Merampas ${target.rewardGold} Gold.`, "combat"); }
-                    } else { addLog(`Kemenangan! Mendapat ${target.rewardGold} Gold.`, "combat"); }
+                    } else { addLog(`Berhasil mengalahkan musuh! Mendapat ${target.rewardGold} Gold.`, "combat"); }
                     await updateDoc(userRef, updateData);
                 } else {
                     shakeScreen(true); let finalChi = Math.max(0, localPlayerData.chi - target.penaltyChi); await updateDoc(userRef, { chi: finalChi });
-                    addLog(`Kalah! Power Anda terlalu rendah. Kehilangan ${target.penaltyChi} Chi.`, "combat");
+                    addLog(`KALAH: Power Anda terlalu rendah. Terluka parah, kehilangan ${target.penaltyChi} Chi.`, "error");
                 }
-            }, 300);
+            }, 400);
         });
 
         window.challengePvP = async function(targetId, targetName, targetLevel) {
-            if(targetId === currentUser.uid) return alert("Itu diri Anda sendiri!");
-            if(Math.abs(localPlayerData.level - targetLevel) > 10) return alert("Jarak level terlalu jauh (Maks beda 10 Level).");
-            const now = new Date().getTime(); if(localPlayerData.lastPvP && now - localPlayerData.lastPvP < 30000) return alert(`Cooldown! Tunggu ${Math.ceil((30000 - (now - localPlayerData.lastPvP))/1000)} detik.`);
-            if(localPlayerData.gold < 10) return alert("Butuh 10 Gold."); shakeScreen();
+            if(targetId === currentUser.uid) return alert("Anda tidak bisa menyerang diri sendiri!");
+            if(Math.abs(localPlayerData.level - targetLevel) > 10) return alert("Sistem Perlindungan: Jarak maksimal 10 Level.");
+            const now = new Date().getTime(); if(localPlayerData.lastPvP && now - localPlayerData.lastPvP < 30000) return alert(`Cooldown Arena: ${Math.ceil((30000 - (now - localPlayerData.lastPvP))/1000)} detik tersisa.`);
+            if(localPlayerData.gold < 15) return alert("Biaya masuk Arena adalah 15 Gold."); shakeScreen();
             try {
                 const targetRef = doc(db, "users", targetId); const targetSnap = await getDoc(targetRef); if(!targetSnap.exists()) return; const targetData = targetSnap.data();
                 const myPower = calculatePower(localPlayerData); const enemyPower = calculatePower(targetData);
                 if(myPower > enemyPower) {
-                    const stolenGold = Math.min(50, targetData.gold); // Hanya merampas cash, bukan Bank
-                    await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 10 + stolenGold + 20, lastPvP: now });
+                    const stolenGold = Math.min(80, targetData.gold); // Perampokan batas 80 G dari dompet luar
+                    await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 15 + stolenGold + 30, lastPvP: now });
                     await updateDoc(targetRef, { gold: Math.max(0, targetData.gold - stolenGold) });
-                    addLog(`ARENA: Mengalahkan ${targetName}! Merampas ${stolenGold} Gold.`, "combat");
+                    addLog(`ARENA: Berhasil membunuh ${targetName}! Merampas ${stolenGold} Gold.`, "combat");
                 } else {
-                    shakeScreen(true); await updateDoc(doc(db, "users", currentUser.uid), { gold: Math.max(0, localPlayerData.gold - 10), lastPvP: now }); 
-                    addLog(`ARENA: Anda dihajar balik oleh ${targetName}!`, "combat");
+                    shakeScreen(true); await updateDoc(doc(db, "users", currentUser.uid), { gold: Math.max(0, localPlayerData.gold - 15), lastPvP: now }); 
+                    addLog(`ARENA: Anda tewas di tangan ${targetName}!`, "error");
                 }
             } catch (e) { console.error(e); }
         }
 
         function initSocialFeatures() {
-            const qLeaderboard = query(collection(db, "users"), orderBy("level", "desc"), limit(10));
+            const qLeaderboard = query(collection(db, "users"), orderBy("level", "desc"), limit(12));
             onSnapshot(qLeaderboard, (snapshot) => {
                 const list = document.getElementById('leaderboardList'); list.innerHTML = ""; let rank = 1;
                 snapshot.forEach(docSnap => {
                     const d = docSnap.data(); let rStars = getRebirthStars(d.rebirth);
                     let nameColor = d.rebirth > 0 ? "name-god" : "";
-                    let btnPvP = docSnap.id !== currentUser.uid ? `<button class="btn btn-small btn-danger" onclick="challengePvP('${docSnap.id}', '${d.name}', ${d.level})">⚔️</button>` : `<span style="width:28px"></span>`;
-                    list.innerHTML += `<li class="leaderboard-item"><span>#${rank} <span class="${nameColor}" style="color:#fff">${d.name}</span> <span class="rebirth-stars">${rStars}</span> <span style="color:var(--primary); font-size:10px;">(Lv.${d.level})</span></span>${btnPvP}</li>`;
+                    let btnPvP = docSnap.id !== currentUser.uid ? `<button class="btn btn-small btn-danger" onclick="challengePvP('${docSnap.id}', '${d.name}', ${d.level})" style="padding:4px 8px;">⚔️ Attack</button>` : `<span style="width:65px; display:inline-block; text-align:center; color:#555;">[ Anda ]</span>`;
+                    list.innerHTML += `<li class="leaderboard-item">
+                        <span><strong style="color:#666;">#${rank}</strong> <span class="${nameColor}" style="color:#fff; font-size:14px; margin-left:5px;">${d.name}</span> <span class="rebirth-stars">${rStars}</span> <br><span style="color:var(--primary); font-size:11px; margin-left:22px;">Level ${d.level} | ${d.class}</span></span>
+                        ${btnPvP}
+                    </li>`;
                     rank++;
                 });
             });
@@ -503,9 +573,9 @@
             onSnapshot(qChat, (snapshot) => {
                 const cb = document.getElementById('chatBox'); cb.innerHTML = ""; const msgs = snapshot.docs.slice(-50);
                 msgs.forEach(docSnap => {
-                    const d = docSnap.data(); let isSys = d.sender === "Sistem"; let isGod = d.isGod;
+                    const d = docSnap.data(); let isSys = d.sender === "Server"; let isGod = d.isGod;
                     let color = isSys ? "var(--accent)" : "var(--warning)"; let nameClass = isGod ? "name-god" : "";
-                    cb.innerHTML += `<div class="chat-msg"><span class="chat-name ${nameClass}" style="color:${color}">${d.sender}:</span> <span style="color:#eee">${d.text}</span></div>`;
+                    cb.innerHTML += `<div class="chat-msg"><span class="chat-name ${nameClass}" style="color:${color}">[${d.sender}]</span> <span style="color:#eee">${d.text}</span></div>`;
                 }); cb.scrollTop = cb.scrollHeight;
             });
         }
@@ -518,13 +588,13 @@
 
         // PET SYSTEM
         document.getElementById('btnGachaPet').addEventListener('click', async () => {
-            if(localPlayerData.gold < 500) return alert("Butuh 500 Gold!"); const randomPet = petPool[Math.floor(Math.random() * petPool.length)];
-            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 500, pet: randomPet, petLevel: 1 }); addLog(`Mendapat Pet [${randomPet}]!`, "loot");
+            if(localPlayerData.gold < 500) return alert("Gold tidak cukup (Butuh 500)!"); const randomPet = petPool[Math.floor(Math.random() * petPool.length)];
+            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 500, pet: randomPet, petLevel: 1 }); addLog(`SYSTEM: Menetaskan Pet [${randomPet}]!`, "loot");
         });
         document.getElementById('btnFeedPet').addEventListener('click', async () => {
-            if(!localPlayerData.pet || localPlayerData.pet === "None") return alert("Tidak ada Pet!"); if(localPlayerData.chi < 50) return alert("Butuh 50 Chi!");
+            if(!localPlayerData.pet || localPlayerData.pet === "None") return alert("Anda tidak memiliki Pet!"); if(localPlayerData.chi < 50) return alert("Chi tidak cukup (Butuh 50)!");
             let newLv = (localPlayerData.petLevel || 1) + 1;
-            await updateDoc(doc(db, "users", currentUser.uid), { chi: localPlayerData.chi - 50, petLevel: newLv }); addLog(`Pet naik Level!`, "system");
+            await updateDoc(doc(db, "users", currentUser.uid), { chi: localPlayerData.chi - 50, petLevel: newLv }); addLog(`SYSTEM: Spirit Pet naik Level ke ${newLv}!`, "system");
         });
 
         // INVENTORY SYSTEM
@@ -538,75 +608,75 @@
         }
         function openItemModal(itemName, index) {
             selectedInventoryIndex = index; document.getElementById('modalItemName').innerText = itemName;
-            if(itemStats[itemName]) { let s = itemStats[itemName]; document.getElementById('modalItemDesc').innerText = `Stat: Atk +${s.atk}, Def +${s.def}, HP +${s.hp}`; } 
-            else { document.getElementById('modalItemDesc').innerText = "Item Spesial."; }
+            if(itemStats[itemName]) { let s = itemStats[itemName]; document.getElementById('modalItemDesc').innerHTML = `Atribut Dasar:<br><strong style="color:var(--primary)">Attack +${s.atk}</strong> | <strong style="color:var(--warning)">Defense +${s.def}</strong> | <strong style="color:var(--success)">HP +${s.hp}</strong>`; } 
+            else { document.getElementById('modalItemDesc').innerText = "Relik spesial tanpa status dasar."; }
             document.getElementById('modalOverlay').style.display = 'block'; document.getElementById('itemModal').style.display = 'block';
         }
         document.getElementById('btnModalClose').onclick = () => { document.getElementById('modalOverlay').style.display = 'none'; document.getElementById('itemModal').style.display = 'none'; }
         
         document.getElementById('btnModalEquip').onclick = async () => {
             const itemName = document.getElementById('modalItemName').innerText; await updateDoc(doc(db, "users", currentUser.uid), { equippedItem: itemName, equipUpgrade: 0 }); 
-            addLog(`Mengenakan [${itemName}]. Enhance reset.`, "system"); document.getElementById('btnModalClose').click();
+            addLog(`EQUIP: Mengenakan [${itemName}]. Enhance Level ter-reset.`, "system"); document.getElementById('btnModalClose').click();
         }
         document.getElementById('btnModalDismantle').onclick = async () => {
-            let newInv = [...localPlayerData.inventory]; newInv.splice(selectedInventoryIndex, 1); let gainedDust = Math.floor(Math.random() * 10) + 5; 
+            let newInv = [...localPlayerData.inventory]; newInv.splice(selectedInventoryIndex, 1); let gainedDust = Math.floor(Math.random() * 12) + 8; 
             await updateDoc(doc(db, "users", currentUser.uid), { inventory: newInv, soulDust: (localPlayerData.soulDust || 0) + gainedDust });
-            addLog(`Peleburan sukses! +${gainedDust} Dust.`, "mystic"); document.getElementById('btnModalClose').click();
+            addLog(`FORGE: Item dilebur. Mendapat +${gainedDust} Soul Dust.`, "mystic"); document.getElementById('btnModalClose').click();
         }
         document.getElementById('btnEnhance').addEventListener('click', async () => {
-            if(!localPlayerData.equippedItem) return alert("Peralatan kosong!"); const currentUpg = localPlayerData.equipUpgrade || 0; const cost = 200 + (currentUpg * 150); 
-            if(confirm(`Tempa +${currentUpg + 1}? Biaya ${cost} Gold.`)) {
-                if(localPlayerData.gold < cost) return alert("Gold kurang!");
-                await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - cost, equipUpgrade: currentUpg + 1 }); addLog(`Senjata +${currentUpg + 1}!`, "system");
+            if(!localPlayerData.equippedItem) return alert("Peralatan aktif masih kosong!"); const currentUpg = localPlayerData.equipUpgrade || 0; const cost = 250 + (currentUpg * 200); 
+            if(confirm(`Tempa Senjata ke +${currentUpg + 1}?\nBiaya: ${cost} Gold.\nCatatan: Meningkatkan atribut item sebesar 20%.`)) {
+                if(localPlayerData.gold < cost) return alert("Gold di dompet tidak cukup!");
+                await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - cost, equipUpgrade: currentUpg + 1 }); addLog(`FORGE: Tempa Berhasil! Item naik ke +${currentUpg + 1}!`, "system");
             }
         });
         document.getElementById('btnGacha').addEventListener('click', async () => {
-            if(localPlayerData.gold < 50) return alert("Gold kurang!"); if(localPlayerData.inventory && localPlayerData.inventory.length >= 10) return alert("Tas Penuh!");
+            if(localPlayerData.gold < 50) return alert("Butuh 50 Gold!"); if(localPlayerData.inventory && localPlayerData.inventory.length >= 10) return alert("Tas Penyimpanan Penuh!");
             const randomItem = itemPool[Math.floor(Math.random() * itemPool.length)];
-            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 50, inventory: [...(localPlayerData.inventory||[]), randomItem] }); addLog(`Gacha: [${randomItem}]!`, "loot");
+            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 50, inventory: [...(localPlayerData.inventory||[]), randomItem] }); addLog(`GACHA: Membuka peti dan mendapat [${randomItem}]!`, "loot");
         });
 
-        // MARKETPLACE (DENGAN BUG FIX DOUBLE CLICK)
+        // MARKETPLACE PC
         document.getElementById('btnGoMarket').onclick = () => { 
             showScreen('marketScreen'); 
             marketUnsub = onSnapshot(collection(db, "market"), (snapshot) => {
                 const mList = document.getElementById('marketList'); mList.innerHTML = "";
-                if (snapshot.empty) { mList.innerHTML = `<div style="text-align:center; color:#aaa;">Pasar kosong.</div>`; return; }
+                if (snapshot.empty) { mList.innerHTML = `<div style="text-align:center; color:#aaa; font-size:16px; margin-top:50px;">Tidak ada item yang dilelang saat ini.</div>`; return; }
                 snapshot.forEach((docSnap) => {
                     const mData = docSnap.data();
-                    mList.innerHTML += `<div style="display:flex; justify-content:space-between; background:rgba(0,0,0,0.6); padding:15px; border-radius:8px;">
-                        <div><strong style="color:var(--accent);">${mData.itemName}</strong><br><span style="font-size:11px;color:#aaa">Dari: ${mData.sellerName}</span></div>
-                        <div style="text-align:right;"><span style="color:var(--warning); font-weight:bold;">${mData.price} Gold</span><br>
-                        <button class="btn btn-small btn-success btn-buy" id="btnBuy_${docSnap.id}" onclick="buyMarketItem('${docSnap.id}', '${mData.sellerId}', '${mData.itemName}', ${mData.price})">Beli</button></div>
+                    mList.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.7); padding:15px 20px; border-radius:8px; border-left: 4px solid var(--warning);">
+                        <div><strong style="color:var(--accent); font-size:16px;">${mData.itemName}</strong><br><span style="font-size:12px;color:#aaa">Pelelang: ${mData.sellerName}</span></div>
+                        <div style="text-align:right;"><span style="color:var(--warning); font-weight:bold; font-size:16px; margin-right:15px;">${mData.price.toLocaleString()} Gold</span>
+                        <button class="btn btn-small btn-success btn-buy" id="btnBuy_${docSnap.id}" onclick="buyMarketItem('${docSnap.id}', '${mData.sellerId}', '${mData.itemName}', ${mData.price})" style="padding:8px 15px;">Beli Item</button></div>
                     </div>`;
                 });
             });
         }
         document.getElementById('btnMarketToGame').onclick = () => { if(marketUnsub) marketUnsub(); showScreen('gameScreen'); }
         document.getElementById('btnModalSell').onclick = async () => {
-            const price = parseInt(document.getElementById('modalSellPrice').value); if(!price || price <= 0) return alert("Harga salah!");
+            const price = parseInt(document.getElementById('modalSellPrice').value); if(!price || price <= 0) return alert("Format harga tidak valid!");
             let newInv = [...localPlayerData.inventory]; newInv.splice(selectedInventoryIndex, 1);
             await updateDoc(doc(db, "users", currentUser.uid), { inventory: newInv });
             await addDoc(collection(db, "market"), { sellerId: currentUser.uid, sellerName: localPlayerData.name, itemName: document.getElementById('modalItemName').innerText, price: price });
-            document.getElementById('btnModalClose').click(); addLog(`Item dilelang.`, "system");
+            document.getElementById('btnModalClose').click(); addLog(`MARKET: Mendaftarkan item ke pasar lelang seharga ${price} G.`, "system");
         }
         
         window.buyMarketItem = async function(docId, sId, iName, price) {
-            const btn = document.getElementById(`btnBuy_${docId}`); if(btn) btn.disabled = true; // BUG FIX: Disable click spam
-            if(currentUser.uid === sId) { if(btn) btn.disabled = false; return alert("Barang Anda sendiri!"); }
-            if(localPlayerData.gold < price) { if(btn) btn.disabled = false; return alert("Gold kurang!"); }
-            if(localPlayerData.inventory.length >= 10) { if(btn) btn.disabled = false; return alert("Tas Penuh!"); }
+            const btn = document.getElementById(`btnBuy_${docId}`); if(btn) btn.disabled = true; 
+            if(currentUser.uid === sId) { if(btn) btn.disabled = false; return alert("Anda tidak bisa membeli barang lelang sendiri!"); }
+            if(localPlayerData.gold < price) { if(btn) btn.disabled = false; return alert("Gold tidak cukup!"); }
+            if(localPlayerData.inventory.length >= 10) { if(btn) btn.disabled = false; return alert("Tas Penyimpanan Penuh!"); }
             try {
                 const marketRef = doc(db, "market", docId); const sellerRef = doc(db, "users", sId); const buyerRef = doc(db, "users", currentUser.uid);
                 await runTransaction(db, async (transaction) => {
-                    const marketDoc = await transaction.get(marketRef); if (!marketDoc.exists()) throw "Sudah terjual!";
-                    const buyerDoc = await transaction.get(buyerRef); if (buyerDoc.data().gold < price) throw "Uang tidak cukup.";
+                    const marketDoc = await transaction.get(marketRef); if (!marketDoc.exists()) throw "Barang sudah terjual ke pemain lain!";
+                    const buyerDoc = await transaction.get(buyerRef); if (buyerDoc.data().gold < price) throw "Uang Anda terpotong dari transaksi lain.";
                     const sellerDoc = await transaction.get(sellerRef);
                     transaction.update(buyerRef, { gold: buyerDoc.data().gold - price, inventory: [...buyerDoc.data().inventory, iName] });
-                    if(sellerDoc.exists()) transaction.update(sellerRef, { gold: sellerDoc.data().gold + price, bankGold: (sellerDoc.data().bankGold || 0) });
+                    if(sellerDoc.exists()) transaction.update(sellerRef, { bankGold: (sellerDoc.data().bankGold || 0) + price }); // Masuk ke bank seller agar aman
                     transaction.delete(marketRef);
-                }); addLog(`Membeli ${iName}!`, "loot");
-            } catch(e) { alert("Gagal: " + e); if(btn) btn.disabled = false; }
+                }); addLog(`MARKET: Berhasil membeli [${iName}]!`, "loot");
+            } catch(e) { alert("Transaksi Gagal: " + e); if(btn) btn.disabled = false; }
         }
     </script>
 </body>
