@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfect World: Web Idle MMO v19</title>
+    <title>Perfect World: Web Idle MMO v20</title>
     <style>
         /* Modern PC UI, Dark Theme & Animations */
         :root {
@@ -52,7 +52,7 @@
         .btn-warning { background: linear-gradient(135deg, #ff9100, #ffea00); color: #111; box-shadow: 0 4px 15px rgba(255, 234, 0, 0.2); }
         .btn-success { background: linear-gradient(135deg, #00b359, #00e676); }
         .btn-mystic { background: linear-gradient(135deg, #512da8, #7c4dff); box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3); }
-        .btn-boss { background: linear-gradient(135deg, #b71c1c, #ff3d00); box-shadow: 0 4px 20px rgba(255, 61, 0, 0.6); animation: pulseBoss 1.5s infinite;}
+        .btn-boss { background: linear-gradient(135deg, #b71c1c, #ff3d00); box-shadow: 0 4px 20px rgba(255, 61, 0, 0.6); }
         .btn-small { padding: 6px 12px; font-size: 12px; width: auto; margin: 0; }
 
         .hotkey-badge { background: rgba(0,0,0,0.8); color: #fff; font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-left: 5px; border: 1px solid #555; }
@@ -87,7 +87,7 @@
         .inv-slot.filled:hover { border-color: var(--primary); background: rgba(0, 229, 255, 0.15); transform: translateY(-3px) scale(1.05); box-shadow: 0 5px 15px rgba(0,229,255,0.3); z-index: 2;}
         .inv-slot.filled { border-color: rgba(224, 64, 251, 0.5); background: rgba(224, 64, 251, 0.08); font-weight: bold;}
 
-        .log-box { background: rgba(5, 8, 15, 0.8); padding: 15px; border-radius: 8px; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #ccc; border: 1px solid #222; border-left: 4px solid var(--primary); margin-top: 15px; font-family: 'Consolas', monospace; box-shadow: inset 0 0 10px #000; min-height: 150px;}
+        .log-box { background: rgba(5, 8, 15, 0.8); padding: 15px; border-radius: 8px; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #ccc; border: 1px solid #222; border-left: 4px solid var(--primary); margin-top: 15px; font-family: 'Consolas', monospace; box-shadow: inset 0 0 10px #000; min-height: 120px;}
         .log-box::-webkit-scrollbar { width: 6px; }
         .log-box::-webkit-scrollbar-thumb { background: #444; border-radius: 5px; }
         .log-entry { animation: fadeIn 0.2s ease; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 4px;}
@@ -98,10 +98,9 @@
         .log-entry.error { color: var(--secondary); font-weight: bold; }
 
         .dungeon-panel { background: rgba(255, 0, 85, 0.05); border: 1px solid rgba(255, 0, 85, 0.2); padding: 15px; border-radius: 8px; margin-top: 15px; }
-        .chat-box { flex-grow: 1; background: rgba(0,0,0,0.5); border-radius: 8px; margin-bottom: 15px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); height: 250px;}
+        .chat-box { flex-grow: 1; background: rgba(0,0,0,0.5); border-radius: 8px; margin-bottom: 15px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); height: 180px;}
         .chat-msg { font-size: 13px; line-height: 1.5; animation: fadeIn 0.3s ease; word-break: break-word;}
         .chat-name { font-weight: bold; color: var(--warning); }
-        .chat-title { color: #e040fb; font-weight: bold; font-size: 11px; border: 1px solid #e040fb; padding: 2px 5px; border-radius: 4px; margin-right: 5px;}
         
         .rebirth-stars { color: var(--gold); letter-spacing: 2px; text-shadow: 0 0 8px rgba(255,215,0,0.8); }
         
@@ -116,12 +115,23 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
         .auto-active { border: 2px solid var(--success) !important; background: rgba(0, 230, 118, 0.15) !important; box-shadow: 0 0 15px rgba(0,230,118,0.4) !important; color: var(--success) !important; text-shadow: 0 0 5px rgba(0,230,118,0.5);}
+        .leaderboard-row { display: flex; justify-content: space-between; padding: 6px 10px; margin-bottom: 5px; background: rgba(255,255,255,0.03); border-radius: 4px; border-left: 3px solid var(--primary); font-size: 13px;}
     </style>
 </head>
 <body>
 
     <div class="modal-overlay" id="modalOverlay"></div>
     
+    <!-- BUG FIX: ELEMEN HTML WORLD BOSS YANG HILANG SEBELUMNYA -->
+    <div class="world-boss-floating" id="worldBossUi">
+        <h4 class="boss-title-fx" id="wbName">THE WORLD BOSS</h4>
+        <div class="boss-hp-bar-bg">
+            <div class="boss-hp-bar-fill" id="wbHpFill"></div>
+            <div class="boss-hp-text" id="wbHpText">0 / 0</div>
+        </div>
+        <button class="btn btn-boss btn-small" id="btnAttackWorldBoss">⚔️ SERANG WORLD BOSS SEMUA PEMAIN ⚔️</button>
+    </div>
+
     <!-- Item Modal -->
     <div class="modal" id="itemModal">
         <h3 id="modalItemName" style="color: var(--primary); margin-top:0; font-size:18px; text-transform:none;">Nama Item</h3>
@@ -136,13 +146,13 @@
         <h3 style="color: var(--secondary); margin-top:0;">⚡ PANEL GOD MODE</h3>
         <button class="btn btn-warning" id="btnAdminGold">💳 Injeksi 10,000 Gold</button>
         <button class="btn btn-mystic" id="btnAdminDust">✨ Injeksi 1,000 Soul Dust</button>
-        <button class="btn btn-boss" id="btnAdminSpawnBoss" style="animation:none;">🔥 SPAWN WORLD BOSS</button>
+        <button class="btn btn-boss" id="btnAdminSpawnBoss">🔥 SPAWN WORLD BOSS</button>
         <button class="btn btn-danger" onclick="document.getElementById('modalOverlay').style.display='none'; document.getElementById('adminModal').style.display='none';" style="margin-top: 15px; background: transparent; border: 1px solid var(--secondary); box-shadow:none;">Tutup Panel</button>
     </div>
 
     <!-- AUTH & CHAR CREATE -->
     <div class="glass-panel single-container" id="authScreen">
-        <h2 style="text-align: center; border:none; text-shadow: 0 0 20px var(--mystic); font-size: 28px;">Perfect World <span style="color:var(--primary)">v19</span><br><span style="font-size: 14px; color:var(--gold); letter-spacing: 3px;">ERA REBIRTH</span></h2>
+        <h2 style="text-align: center; border:none; text-shadow: 0 0 20px var(--mystic); font-size: 28px;">Perfect World <span style="color:var(--primary)">v20</span><br><span style="font-size: 14px; color:var(--gold); letter-spacing: 3px;">LEADERBOARD UPDATE</span></h2>
         <input type="email" id="email" placeholder="Alamat Email">
         <input type="password" id="password" placeholder="Kata Sandi">
         <button class="btn" id="btnLogin">Masuk Server</button>
@@ -168,7 +178,7 @@
         <div class="glass-panel" id="leftPanel">
             <h2>Status Karakter <span id="adminTrigger" style="float:right; cursor:pointer; color:#333;" title="Secret God Mode">⚙️</span></h2>
             <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align:center;">
-                <p style="margin: 0 0 8px 0;"><span id="uiTitle" class="chat-title">Pemula</span> <strong id="uiName" style="color: #fff; font-size:18px;">-</strong></p>
+                <p style="margin: 0 0 8px 0;"><span id="uiTitle" style="color: #e040fb; font-weight: bold; font-size: 11px; border: 1px solid #e040fb; padding: 2px 5px; border-radius: 4px; margin-right: 5px;">Pemula</span> <strong id="uiName" style="color: #fff; font-size:18px;">-</strong></p>
                 <p style="margin: 0 0 8px 0;"><span id="uiRebirth" class="rebirth-stars"></span></p>
                 <p style="margin: 0;">Class: <strong id="uiClass" style="color: var(--primary);">-</strong></p>
             </div>
@@ -240,7 +250,6 @@
                 <button class="btn" id="btnAutoCultivate" style="flex:1; background: transparent; border: 1px solid var(--success); color: var(--success); box-shadow:none;">⚙️ Auto-Meditasi (Off) <span class="hotkey-badge">A</span></button>
             </div>
             
-            <!-- FITUR BARU: TOMBOL REBIRTH -->
             <button class="btn btn-warning" id="btnRebirth" style="margin-bottom: 15px; display: none;">🌟 LAKUKAN REBIRTH (Butuh Level 100) 🌟</button>
 
             <div class="dungeon-panel">
@@ -267,17 +276,27 @@
 
             <h3 style="margin-top:20px; border-bottom:1px solid #333; padding-bottom:5px;">Sistem Log</h3>
             <div class="log-box" id="gameLog">
-                <div class="log-entry system">> Sistem v19 (Era Rebirth) dimuat... Dungeon Hunt & Brankas aktif.</div>
+                <div class="log-entry system">> Sistem v20 dimuat... Semua Bug tombol diperbaiki & Leaderboard Aktif.</div>
             </div>
         </div>
 
-        <!-- PANEL KANAN: SOSIAL & PVP -->
-        <div class="glass-panel">
-            <h2>Saluran Global</h2>
-            <div class="chat-box" id="chatBox"></div>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="chatInput" placeholder="Ketik pesan..." style="margin-bottom:0;" maxlength="100">
-                <button class="btn btn-primary" id="btnSendChat" style="width:auto; margin-bottom:0;">Kirim</button>
+        <!-- PANEL KANAN: CHAT & LEADERBOARD GLOBAL -->
+        <div class="glass-panel" style="gap: 20px;">
+            <div style="display: flex; flex-direction: column; height: 50%;">
+                <h2>Saluran Global</h2>
+                <div class="chat-box" id="chatBox" style="height: auto; flex-grow: 1;"></div>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="chatInput" placeholder="Ketik pesan..." style="margin-bottom:0;" maxlength="100">
+                    <button class="btn btn-primary" id="btnSendChat" style="width:auto; margin-bottom:0;">Kirim</button>
+                </div>
+            </div>
+            
+            <!-- FITUR BARU: PANEL LEADERBOARD -->
+            <div style="display: flex; flex-direction: column; height: 45%; border-top: 1px solid rgba(0, 229, 255, 0.2); padding-top: 15px;">
+                <h2>🏆 Top 5 Pendekar Terkuat</h2>
+                <div id="leaderboardContent" style="flex-grow: 1; overflow-y: auto;">
+                    <div style="text-align:center; color:#666; margin-top:20px;">Memuat papan peringkat...</div>
+                </div>
             </div>
         </div>
 
@@ -287,7 +306,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, serverTimestamp, runTransaction, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyB3RgNUF7fsjxGbp8Wy9oI4zIljVXtwpY4", authDomain: "idle-pefectworld.firebaseapp.com", projectId: "idle-pefectworld" };
         const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
@@ -336,7 +355,7 @@
             const upgMult = 1 + ((data.equipUpgrade || 0) * 0.2);
             if(data.equippedItem && itemStats[data.equippedItem]) { tAtk += Math.floor(itemStats[data.equippedItem].atk * upgMult); tDef += Math.floor(itemStats[data.equippedItem].def * upgMult); tHp += Math.floor(itemStats[data.equippedItem].hp * upgMult); }
             const pLv = data.petLevel || 0; if(data.pet && data.pet !== "None") { tAtk += pLv * 5; tDef += pLv * 3; tHp += pLv * 15; }
-            let rMult = 1 + ((data.rebirth || 0) * 0.5); // REBIRTH MULTIPLIER (50% Per Star)
+            let rMult = 1 + ((data.rebirth || 0) * 0.5);
             let wingMult = 1; if(data.equippedWing && wingStats[data.equippedWing]) wingMult += wingStats[data.equippedWing].mult;
             return { totalHp: Math.floor(tHp * rMult * wingMult), totalAtk: Math.floor(tAtk * rMult * wingMult), totalDef: Math.floor(tDef * rMult * wingMult) };
         }
@@ -344,11 +363,31 @@
         function calculatePower(data) { let stats = getCalculatedStats(data); return Math.floor(stats.totalAtk + (stats.totalDef * 0.5) + (stats.totalHp * 0.1)); }
 
         document.getElementById('btnLogin').addEventListener('click', async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { document.getElementById('authError').innerText = "Gagal Masuk."; } });
+        document.getElementById('btnRegister').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { document.getElementById('authError').innerText = "Gagal Registrasi."; } });
         document.getElementById('btnLogout').addEventListener('click', () => { if(autoTimer) clearInterval(autoTimer); signOut(auth); });
+
+        // BUG FIX: LOGIKA PEMBUATAN KARAKTER BARU YANG SEBELUMNYA HILANG/MATI
+        document.getElementById('btnCreateChar').addEventListener('click', async () => {
+            const name = document.getElementById('newCharName').value.trim();
+            const charClass = document.getElementById('newCharClass').value;
+            if(!name) return alert("Nama pahlawan tidak boleh kosong!");
+            
+            let bHp = 1000, bAtk = 100, bDef = 50;
+            if(charClass === "Blademaster") { bHp = 1500; bDef = 80; }
+            else if(charClass === "Archer") { bAtk = 150; }
+            
+            await setDoc(doc(db, "users", currentUser.uid), {
+                name: name, class: charClass, level: 1, gold: 500, chi: 0, dust: 0, rebirth: 0,
+                hp: bHp, atk: bAtk, def: bDef, bank: 0,
+                equippedItem: "None", equipUpgrade: 0, pet: "None", petLevel: 0, equippedWing: "None",
+                inventory: []
+            });
+            showScreen('gameScreen');
+        });
 
         onAuthStateChanged(auth, async (user) => {
             if (user) { currentUser = user; const docSnap = await getDoc(doc(db, "users", user.uid));
-                if (docSnap.exists()) { showScreen('gameScreen'); startRealtimeSync(user.uid); initGlobalChat(); } else { showScreen('charCreateScreen'); }
+                if (docSnap.exists()) { showScreen('gameScreen'); startRealtimeSync(user.uid); initGlobalChat(); initLeaderboard(); initWorldBoss(); } else { showScreen('charCreateScreen'); }
             } else { currentUser = null; showScreen('authScreen'); }
         });
 
@@ -365,17 +404,16 @@
                     document.getElementById('uiChi').innerText = `${data.chi}/100`; 
                     document.getElementById('uiPower').innerText = calculatePower(data).toLocaleString();
                     document.getElementById('uiBank').innerText = (data.bank || 0).toLocaleString();
+                    document.getElementById('uiDust').innerText = (data.dust || 0).toLocaleString();
                     
-                    // REBIRTH RENDER
                     let rebirthCount = data.rebirth || 0;
                     document.getElementById('uiRebirth').innerText = "⭐".repeat(rebirthCount);
-                    if(rebirthCount > 0) { document.getElementById('uiTitle').innerText = "Dewa"; document.getElementById('uiTitle').style.borderColor = "var(--gold)"; document.getElementById('uiTitle').style.color = "var(--gold)"; }
+                    if(rebirthCount > 0) { document.getElementById('uiTitle').innerText = `Dewa R${rebirthCount}`; document.getElementById('uiTitle').style.borderColor = "var(--gold)"; document.getElementById('uiTitle').style.color = "var(--gold)"; }
                     
-                    // REBIRTH BUTTON LOGIC
                     if(data.level >= 100) { document.getElementById('btnRebirth').style.display = 'block'; } 
                     else { document.getElementById('btnRebirth').style.display = 'none'; }
 
-                    const upgLv = data.equipUpgrade || 0; document.getElementById('uiEquip').innerText = data.equippedItem || "Kosong"; document.getElementById('uiEquipLevel').innerText = (data.equippedItem && upgLv > 0) ? `[+${upgLv}]` : "";
+                    const upgLv = data.equipUpgrade || 0; document.getElementById('uiEquip').innerText = data.equippedItem || "Kosong"; document.getElementById('uiEquipLevel').innerText = (data.equippedItem && data.equippedItem !== "None" && upgLv > 0) ? `[+${upgLv}]` : "";
                     const pLv = data.petLevel || 0; document.getElementById('uiPet').innerText = (data.pet && data.pet !== "None") ? data.pet : "Kosong"; document.getElementById('uiPetLevel').innerText = (data.pet && data.pet !== "None") ? `Lv. ${pLv}` : "";
                     document.getElementById('uiWing').innerText = data.equippedWing || "Tidak Ada"; document.getElementById('uiWingEffect').innerText = data.equippedWing ? wingStats[data.equippedWing].desc : "";
                     
@@ -388,80 +426,95 @@
             });
         }
 
-        // --- BUG FIX: LOGIKA BANK ---
+        // BUG FIX: MENYAMBUNGKAN TOMBOL-TOMBOL AKTIVITAS YANG SEBELUMNYA MATI
+        document.getElementById('btnEnhance').onclick = async () => {
+            if(!localPlayerData.equippedItem || localPlayerData.equippedItem === "None") return alert("Tidak ada perlengkapan aktif untuk ditempa!");
+            let cost = ((localPlayerData.equipUpgrade || 0) + 1) * 300;
+            if(localPlayerData.gold < cost) return alert(`Gold kurang! Butuh ${cost} G.`);
+            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - cost, equipUpgrade: (localPlayerData.equipUpgrade || 0) + 1 });
+            addLog(`✨ Sukses Menempa ${localPlayerData.equippedItem} menjadi +${localPlayerData.equipUpgrade + 1}!`, "mystic");
+        };
+
+        document.getElementById('btnGachaPet').onclick = async () => {
+            if(localPlayerData.gold < 500) return alert("Gold tidak cukup untuk membeli telur!");
+            let pet = petPool[Math.floor(Math.random() * petPool.length)];
+            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 500, pet: pet, petLevel: 1 });
+            addLog(`🥚 Telur menetas! Anda mendapatkan pet Spirit: [${pet}] Lv.1`, "loot");
+        };
+
+        document.getElementById('btnFeedPet').onclick = async () => {
+            if(!localPlayerData.pet || localPlayerData.pet === "None") return alert("Pelihara pet terlebih dahulu!");
+            if(localPlayerData.chi < 50) return alert("Butuh 50 Chi untuk memberi makan Pet!");
+            await updateDoc(doc(db, "users", currentUser.uid), { chi: localPlayerData.chi - 50, petLevel: (localPlayerData.petLevel || 1) + 1 });
+            addLog(`🍖 Pet memakan energi Chi Anda. Kekuatannya naik ke Level ${(localPlayerData.petLevel || 1) + 1}!`, "system");
+        };
+
+        document.getElementById('btnGachaWing').onclick = async () => {
+            if(localPlayerData.gold < 10000) return alert("Gold tidak cukup!");
+            let inv = localPlayerData.inventory || []; if(inv.length >= 10) return alert("Tas Penuh!");
+            let wing = wingPool[Math.floor(Math.random() * wingPool.length)]; inv.push(wing);
+            await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 10000, inventory: inv });
+            addLog(`🪶 Membuka Kotak Sayap Kuno... Mendapat [${wing}]! Pasang melalui Tas.`, "loot");
+        };
+
+        document.getElementById('btnBlackMarket').onclick = async () => {
+            let currentDust = localPlayerData.dust || 0;
+            if(currentDust < 100) return alert("Soul Dust tidak cukup!");
+            let inv = localPlayerData.inventory || []; if(inv.length >= 10) return alert("Tas Penuh!");
+            let godItems = ["Frostbite Dagger", "Titanium Armor", "Aegis Shield"];
+            let drop = godItems[Math.floor(Math.random() * godItems.length)]; inv.push(drop);
+            await updateDoc(doc(db, "users", currentUser.uid), { dust: currentDust - 100, inventory: inv });
+            addLog(`🌌 Menukar Soul Dust di Pasar Gelap... Berhasil Membawa Pulang [${drop}]!`, "mystic");
+        };
+
+        // Logika Finansial Bank
         document.getElementById('btnBankDeposit').addEventListener('click', async () => {
-            if (!localPlayerData || localPlayerData.gold <= 0) return alert("Tidak ada Gold di dompet untuk ditabung!");
+            if (!localPlayerData || localPlayerData.gold <= 0) return alert("Dompet kosong!");
             let newBank = (localPlayerData.bank || 0) + localPlayerData.gold;
             await updateDoc(doc(db, "users", currentUser.uid), { bank: newBank, gold: 0 });
-            addLog(`🏦 Berhasil menabung seluruh Gold ke brankas.`, "system");
+            addLog(`🏦 Berhasil mengamankan semua Gold ke dalam Brankas.`, "system");
         });
-
         document.getElementById('btnBankWithdraw').addEventListener('click', async () => {
             if (!localPlayerData || (localPlayerData.bank || 0) <= 0) return alert("Brankas kosong!");
             let newGold = localPlayerData.gold + localPlayerData.bank;
             await updateDoc(doc(db, "users", currentUser.uid), { gold: newGold, bank: 0 });
-            addLog(`🏦 Berhasil menarik seluruh Gold dari brankas.`, "system");
+            addLog(`🏦 Berhasil menarik semua kekayaan dari Brankas.`, "system");
         });
 
-        // --- BUG FIX: LOGIKA PERBURUAN (HUNTING DUNGEON) ---
+        // Logika Dungeon Pertarungan Solo
         document.getElementById('btnHunt').addEventListener('click', async () => {
-            if(!localPlayerData) return;
-            const mapObj = worldMaps[mapSelect.value];
-            const mob = mapObj[monsterSelect.value];
-            
-            if (localPlayerData.chi < mob.penaltyChi) return alert(`Chi tidak cukup! Butuh ${mob.penaltyChi} Chi untuk masuk ke dungeon ini.`);
-            
+            if(!localPlayerData) return; const mapObj = worldMaps[mapSelect.value]; const mob = mapObj[monsterSelect.value];
+            if (localPlayerData.chi < mob.penaltyChi) return alert(`Chi tidak cukup! Butuh ${mob.penaltyChi} Chi.`);
             let pwr = calculatePower(localPlayerData);
-            
-            // Logika Kalah
             if (pwr < mob.reqPower) {
                 await updateDoc(doc(db, "users", currentUser.uid), { chi: localPlayerData.chi - mob.penaltyChi });
-                addLog(`💀 KEKALAHAN! Kekuatanmu (${pwr}) belum cukup untuk melawan [${mob.name}]. Kamu terluka dan kehilangan ${mob.penaltyChi} Chi!`, "error");
-                return;
+                addLog(`💀 KALAH! Kekuatanmu (${pwr}) terlalu lemah untuk melawan [${mob.name}]. Kehilangan ${mob.penaltyChi} Chi!`, "error"); return;
             }
-            
-            // Logika Menang
-            let newGold = localPlayerData.gold + mob.rewardGold;
-            let inv = localPlayerData.inventory || [];
-            let dropMsg = "";
-            
-            // Peluang Drop Item 30%
+            let newGold = localPlayerData.gold + mob.rewardGold; let inv = localPlayerData.inventory || []; let dropMsg = "";
             if (mob.drops && Math.random() < 0.3) {
-                if (inv.length < 10) {
-                    let dropItem = mob.drops[Math.floor(Math.random() * mob.drops.length)];
-                    inv.push(dropItem);
-                    dropMsg = ` 🎁 MENDAPATKAN LOOT: [${dropItem}]!`;
-                } else {
-                    dropMsg = ` ❌ Item drop hangus karena Tas Penuh!`;
-                }
+                if (inv.length < 10) { let dropItem = mob.drops[Math.floor(Math.random() * mob.drops.length)]; inv.push(dropItem); dropMsg = ` 🎁 LOOT BERHASIL: [${dropItem}]!`; } 
+                else { dropMsg = ` ❌ Tas penuh, item drop hangus!`; }
             }
-            
             await updateDoc(doc(db, "users", currentUser.uid), { gold: newGold, chi: localPlayerData.chi - mob.penaltyChi, inventory: inv });
-            addLog(`⚔️ MENANG! Mengalahkan [${mob.name}] memberikan +${mob.rewardGold} Gold.${dropMsg}`, "combat");
+            addLog(`⚔️ MENANG! Menghancurkan [${mob.name}] +${mob.rewardGold} Gold.${dropMsg}`, "combat");
         });
 
-        // --- FITUR BARU: LOGIKA REBIRTH ---
+        // Logika Rebirth
         document.getElementById('btnRebirth').addEventListener('click', async () => {
-            if (localPlayerData.level < 100) return alert("Anda belum mencapai batas kefanaan (Level 100).");
-            let konfirmasi = confirm("Apakah Anda yakin ingin melakukan Rebirth? Level Anda akan kembali ke 1, tetapi Anda akan mendapatkan Bintang Rebirth (+50% Semua Stats permanen).");
-            if(konfirmasi) {
+            if (localPlayerData.level < 100) return alert("Butuh Level 100!");
+            if(confirm("Lakukan Rebirth? Level Anda di-reset ke 1 namun mendapatkan status bonus ⭐ +50% permanen!")) {
                 let currentRebirth = localPlayerData.rebirth || 0;
-                await updateDoc(doc(db, "users", currentUser.uid), { 
-                    level: 1, 
-                    rebirth: currentRebirth + 1,
-                    chi: 0 // Reset Chi juga sebagai syarat kultivasi ulang
-                });
-                addLog(`🌟 REINKARNASI BERHASIL! Anda telah berevolusi menjadi Dewa tingkat ${currentRebirth + 1}. Kekuatan dasar Anda berlipat ganda!`, "mystic");
+                await updateDoc(doc(db, "users", currentUser.uid), { level: 1, rebirth: currentRebirth + 1, chi: 0 });
+                addLog(`🌟 REBIRTH BERHASIL! Jiwa Anda bereinkarnasi menjadi tingkat ke-${currentRebirth + 1}!`, "mystic");
             }
         });
 
-        // Kultivasi Manual & Auto (Disingkat untuk fokus ke fitur baru)
+        // Meditasi Inti
         document.getElementById('btnAutoCultivate').onclick = () => {
             isAutoCultivating = !isAutoCultivating; const btn = document.getElementById('btnAutoCultivate');
-            if(isAutoCultivating) { btn.classList.add("auto-active"); autoTimer = setInterval(() => { if(!isProcessingCultivate) document.getElementById('btnCultivate').click(); }, 2500); } 
-            else { btn.classList.remove("auto-active"); clearInterval(autoTimer); }
+            if(isAutoCultivating) { btn.classList.add("auto-active"); btn.innerText = "⚙️ Auto-Meditasi (On) A"; autoTimer = setInterval(() => { if(!isProcessingCultivate) document.getElementById('btnCultivate').click(); }, 2500); } 
+            else { btn.classList.remove("auto-active"); btn.innerText = "⚙️ Auto-Meditasi (Off) A"; clearInterval(autoTimer); }
         };
-
         document.getElementById('btnCultivate').addEventListener('click', async () => {
             if(isProcessingCultivate) return; isProcessingCultivate = true;
             try {
@@ -472,7 +525,7 @@
             } catch(e) {} finally { isProcessingCultivate = false; }
         });
 
-        // Inventory Render
+        // Manajemen Inventori
         function renderInventory(items = []) {
             const grid = document.getElementById('inventoryGrid'); grid.innerHTML = "";
             for (let i = 0; i < 10; i++) {
@@ -481,58 +534,126 @@
                 else { slot.innerText = "Kosong"; } grid.appendChild(slot);
             }
         }
-        
         function openItemModal(itemName, index) {
             selectedInventoryIndex = index; document.getElementById('modalItemName').innerText = itemName;
             const btnEq = document.getElementById('btnModalEquip'); const btnWg = document.getElementById('btnModalEquipWing');
             if(wingStats[itemName]) { document.getElementById('modalItemDesc').innerHTML = `<strong style="color:var(--wing)">Efek: ${wingStats[itemName].desc}</strong>`; btnEq.style.display = 'none'; btnWg.style.display = 'block'; }
             else if(itemStats[itemName]) { let s = itemStats[itemName]; document.getElementById('modalItemDesc').innerHTML = `<strong style="color:var(--warning)">Attack +${s.atk}</strong> | <strong style="color:#00e5ff">Defense +${s.def}</strong> | <strong style="color:var(--success)">HP +${s.hp}</strong>`; btnEq.style.display = 'block'; btnWg.style.display = 'none'; }
-            else { document.getElementById('modalItemDesc').innerText = "Relik."; btnEq.style.display = 'block'; btnWg.style.display = 'none';  }
+            else { document.getElementById('modalItemDesc').innerText = "Relik legendaris."; btnEq.style.display = 'block'; btnWg.style.display = 'none';  }
             document.getElementById('modalOverlay').style.display = 'block'; document.getElementById('itemModal').style.display = 'block';
         }
-        
         document.getElementById('btnModalClose').onclick = () => { document.getElementById('modalOverlay').style.display = 'none'; document.getElementById('itemModal').style.display = 'none'; }
-        document.getElementById('btnModalEquip').onclick = async () => { await updateDoc(doc(db, "users", currentUser.uid), { equippedItem: document.getElementById('modalItemName').innerText, equipUpgrade: 0 }); document.getElementById('btnModalClose').click(); }
-        document.getElementById('btnModalEquipWing').onclick = async () => { await updateDoc(doc(db, "users", currentUser.uid), { equippedWing: document.getElementById('modalItemName').innerText }); document.getElementById('btnModalClose').click(); }
+        
+        document.getElementById('btnModalEquip').onclick = async () => {
+            let inv = localPlayerData.inventory || []; const item = inv[selectedInventoryIndex];
+            inv.splice(selectedInventoryIndex, 1);
+            if(localPlayerData.equippedItem && localPlayerData.equippedItem !== "None") inv.push(localPlayerData.equippedItem);
+            await updateDoc(doc(db, "users", currentUser.uid), { equippedItem: item, equipUpgrade: 0, inventory: inv });
+            document.getElementById('btnModalClose').click();
+        };
+        document.getElementById('btnModalEquipWing').onclick = async () => {
+            let inv = localPlayerData.inventory || []; const wing = inv[selectedInventoryIndex];
+            inv.splice(selectedInventoryIndex, 1);
+            if(localPlayerData.equippedWing && localPlayerData.equippedWing !== "None") inv.push(localPlayerData.equippedWing);
+            await updateDoc(doc(db, "users", currentUser.uid), { equippedWing: wing, inventory: inv });
+            document.getElementById('btnModalClose').click();
+        };
 
-        // Gacha (Simplified)
+        // Gacha Standard
         document.getElementById('btnGacha').addEventListener('click', async () => {
             if(localPlayerData.gold < 50) return alert("Gold tidak cukup!");
             let inv = localPlayerData.inventory || []; if(inv.length >= 10) return alert("Tas Penuh!");
             let item = itemPool[Math.floor(Math.random() * itemPool.length)]; inv.push(item);
             await updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold - 50, inventory: inv });
-            addLog(`Membuka Peti... Mendapat [${item}]!`, "loot");
+            addLog(`Membuka Peti Gacha... Mendapat [${item}]!`, "loot");
         });
 
-        // Global Chat Init
+        // FITUR BARU: INITIALIZE LEADERBOARD GLOBAL (TOP 5)
+        function initLeaderboard() {
+            const q = query(collection(db, "users"), orderBy("level", "desc"), limit(5));
+            onSnapshot(q, (snapshot) => {
+                const lbContent = document.getElementById('leaderboardContent'); lbContent.innerHTML = "";
+                let rank = 1;
+                snapshot.forEach((doc) => {
+                    let d = doc.data();
+                    let stats = getCalculatedStats(d);
+                    let pwr = Math.floor(stats.totalAtk + (stats.totalDef * 0.5) + (stats.totalHp * 0.1));
+                    lbContent.innerHTML += `
+                        <div class="leaderboard-row">
+                            <span><strong>#${rank++}</strong> ${d.name} (Lv.${d.level})</span>
+                            <span style="color:var(--warning)">⚡ ${pwr.toLocaleString()} Pwr</span>
+                        </div>`;
+                });
+            });
+        }
+
+        // BUG FIX: SINKRONISASI CO-OP WORLD BOSS REAL-TIME YANG SEBELUMNYA SEMPAT HILANG
+        function initWorldBoss() {
+            onSnapshot(doc(db, "server", "world_boss"), (docSnap) => {
+                const wbUi = document.getElementById('worldBossUi');
+                if(docSnap.exists() && docSnap.data().active) {
+                    let data = docSnap.data(); wbUi.style.display = "block";
+                    document.getElementById('wbName').innerText = data.name;
+                    let pct = (data.currentHp / data.maxHp) * 100;
+                    document.getElementById('wbHpFill').style.width = `${pct}%`;
+                    document.getElementById('wbHpText').innerText = `${data.currentHp.toLocaleString()} / ${data.maxHp.toLocaleString()} HP`;
+                } else { wbUi.style.display = "none"; }
+            });
+        }
+
+        document.getElementById('btnAttackWorldBoss').onclick = async () => {
+            if(!localPlayerData) return; let pwr = calculatePower(localPlayerData);
+            const bossRef = doc(db, "server", "world_boss");
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(bossRef); if (!sfDoc.exists() || !sfDoc.data().active) return;
+                    let newHp = sfDoc.data().currentHp - pwr;
+                    if(newHp <= 0) {
+                        transaction.update(bossRef, { currentHp: 0, active: false });
+                        let cDust = localPlayerData.dust || 0;
+                        transaction.update(doc(db, "users", currentUser.uid), { dust: cDust + 500 });
+                        addLog(`🔥 BERHASIL MENUMPAS WORLD BOSS! Anda mendapatkan hadiah +500 Soul Dust!`, "mystic");
+                    } else { transaction.update(bossRef, { currentHp: newHp }); }
+                });
+                addLog(`⚔️ Menyerang World Boss! Memberikan ${pwr.toLocaleString()} kerusakan global.`, "combat");
+            } catch(e) {}
+        };
+
+        // Obrolan Global MMO
         function initGlobalChat() {
             const chatBox = document.getElementById('chatBox');
             onSnapshot(collection(db, "global_chat"), (snapshot) => {
                 chatBox.innerHTML = "";
                 snapshot.forEach((doc) => {
-                    let d = doc.data();
-                    let div = document.createElement('div'); div.className = "chat-msg";
-                    div.innerHTML = `<span class="chat-name">${d.sender}:</span> <span style="color:${d.isGod ? '#ff0055' : '#fff'}">${d.text}</span>`;
+                    let d = doc.data(); let div = document.createElement('div'); div.className = "chat-msg";
+                    div.innerHTML = `<span class="chat-name">${d.sender}:</span> <span style="color:#fff">${d.text}</span>`;
                     chatBox.appendChild(div);
-                });
-                chatBox.scrollTop = chatBox.scrollHeight;
+                }); chatBox.scrollTop = chatBox.scrollHeight;
             });
         }
-        
         document.getElementById('btnSendChat').onclick = async () => {
             let text = document.getElementById('chatInput').value; if(!text) return;
             await addDoc(collection(db, "global_chat"), { sender: localPlayerData.name, text: text, timestamp: serverTimestamp() });
             document.getElementById('chatInput').value = "";
         };
 
-        // Admin Panel
+        // Modul Admin
         document.getElementById('adminTrigger').onclick = () => { document.getElementById('modalOverlay').style.display='block'; document.getElementById('adminModal').style.display='block'; };
         document.getElementById('btnAdminGold').onclick = () => updateDoc(doc(db, "users", currentUser.uid), { gold: localPlayerData.gold + 10000 });
+        document.getElementById('btnAdminDust').onclick = () => updateDoc(doc(db, "users", currentUser.uid), { dust: (localPlayerData.dust || 0) + 1000 });
         document.getElementById('btnAdminSpawnBoss').onclick = async () => {
-            await setDoc(doc(db, "server", "world_boss"), { name: "The Calamity Dragon", maxHp: 10000000, currentHp: 10000000, active: true, spawnTime: serverTimestamp() });
+            await setDoc(doc(db, "server", "world_boss"), { name: "The Calamity Dragon (Raid)", maxHp: 1000000, currentHp: 1000000, active: true, spawnTime: serverTimestamp() });
             document.getElementById('adminModal').style.display = 'none'; document.getElementById('modalOverlay').style.display = 'none';
         };
 
+        // Hotkeys Pengoperasian Cepat
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT') return;
+            if(e.key.toLowerCase() === 'c') document.getElementById('btnCultivate').click();
+            if(e.key.toLowerCase() === 'a') document.getElementById('btnAutoCultivate').click();
+            if(e.key.toLowerCase() === 'h') document.getElementById('btnHunt').click();
+            if(e.key === 'Escape') document.getElementById('btnModalClose').click();
+        });
     </script>
 </body>
 </html>
