@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfect World: Web Idle MMO v21</title>
+    <title>Perfect World: Web Idle MMO v22</title>
     <style>
         /* Modern PC UI, Dark Theme & Animations */
         :root {
@@ -98,7 +98,7 @@
         .log-entry.error { color: var(--secondary); font-weight: bold; }
 
         .dungeon-panel { background: rgba(255, 0, 85, 0.05); border: 1px solid rgba(255, 0, 85, 0.2); padding: 15px; border-radius: 8px; margin-top: 15px; }
-        .chat-box { flex-grow: 1; background: rgba(0,0,0,0.5); border-radius: 8px; margin-bottom: 15px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); height: 180px;}
+        .chat-box { flex-grow: 1; background: rgba(0,0,0,0.5); border-radius: 8px; margin-bottom: 15px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--glass-border); height: 160px;}
         .chat-msg { font-size: 13px; line-height: 1.5; animation: fadeIn 0.3s ease; word-break: break-word;}
         .chat-name { font-weight: bold; color: var(--warning); }
         
@@ -117,7 +117,6 @@
         .auto-active { border: 2px solid var(--success) !important; background: rgba(0, 230, 118, 0.15) !important; box-shadow: 0 0 15px rgba(0,230,118,0.4) !important; color: var(--success) !important; text-shadow: 0 0 5px rgba(0,230,118,0.5);}
         .leaderboard-row { display: flex; justify-content: space-between; padding: 8px 10px; margin-bottom: 5px; background: rgba(255,255,255,0.03); border-radius: 4px; border-left: 3px solid var(--primary); font-size: 13px; transition: all 0.2s; border-right: 1px solid transparent;}
         
-        /* EFEK HOVER PVP DI LEADERBOARD */
         .leaderboard-row:hover { background: rgba(255, 0, 85, 0.15); border-left-color: var(--secondary); border-right: 1px solid var(--secondary); transform: translateX(5px); box-shadow: 0 0 10px rgba(255,0,85,0.3); }
         .pvp-badge { font-size: 10px; background: var(--secondary); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 8px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -153,7 +152,7 @@
     </div>
 
     <div class="glass-panel single-container" id="authScreen">
-        <h2 style="text-align: center; border:none; text-shadow: 0 0 20px var(--mystic); font-size: 28px;">Perfect World <span style="color:var(--primary)">v21</span><br><span style="font-size: 14px; color:var(--secondary); letter-spacing: 3px;">PvP ARENA UPDATE</span></h2>
+        <h2 style="text-align: center; border:none; text-shadow: 0 0 20px var(--mystic); font-size: 28px;">Perfect World <span style="color:var(--primary)">v22</span><br><span style="font-size: 14px; color:var(--secondary); letter-spacing: 3px;">PvP HISTORY UPDATE</span></h2>
         <input type="email" id="email" placeholder="Alamat Email">
         <input type="password" id="password" placeholder="Kata Sandi">
         <button class="btn" id="btnLogin">Masuk Server</button>
@@ -271,12 +270,12 @@
 
             <h3 style="margin-top:20px; border-bottom:1px solid #333; padding-bottom:5px;">Sistem Log</h3>
             <div class="log-box" id="gameLog">
-                <div class="log-entry system">> Sistem v21 dimuat... Update Keamanan & Arena PvP Aktif.</div>
+                <div class="log-entry system">> Sistem v22 dimuat... Sinkronisasi Chat & Log Arena PvP diperbarui.</div>
             </div>
         </div>
 
-        <div class="glass-panel" style="gap: 20px;">
-            <div style="display: flex; flex-direction: column; height: 50%;">
+        <div class="glass-panel" style="gap: 15px;">
+            <div style="display: flex; flex-direction: column; height: 38%;">
                 <h2>Saluran Global</h2>
                 <div class="chat-box" id="chatBox" style="height: auto; flex-grow: 1;"></div>
                 <div style="display:flex; gap:10px;">
@@ -285,10 +284,17 @@
                 </div>
             </div>
             
-            <div style="display: flex; flex-direction: column; height: 45%; border-top: 1px solid rgba(0, 229, 255, 0.2); padding-top: 15px;">
-                <h2 style="font-size: 16px;">🏆 Papan Peringkat <span style="font-size:11px; color:#aaa; font-weight:normal; text-transform:none;">(Klik nama untuk PvP!)</span></h2>
+            <div style="display: flex; flex-direction: column; height: 32%; border-top: 1px solid rgba(0, 229, 255, 0.2); padding-top: 10px;">
+                <h2 style="font-size: 15px; margin-bottom: 10px;">🏆 Papan Peringkat <span style="font-size:11px; color:#aaa; font-weight:normal; text-transform:none;">(Klik untuk PvP)</span></h2>
                 <div id="leaderboardContent" style="flex-grow: 1; overflow-y: auto;">
-                    <div style="text-align:center; color:#666; margin-top:20px;">Memuat papan peringkat...</div>
+                    <div style="text-align:center; color:#666; margin-top:10px;">Memuat papan peringkat...</div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; height: 26%; border-top: 1px solid rgba(255, 0, 85, 0.3); padding-top: 10px;">
+                <h2 style="font-size: 14px; color: var(--secondary); margin-bottom: 8px;">📜 Pesan Perang Arena</h2>
+                <div class="log-box" id="pvpLogBox" style="margin-top:0; min-height:0; flex-grow:1; border-left-color: var(--secondary); background: rgba(15,5,10,0.8);">
+                    <div style="color:#555; font-style:italic;">Belum ada riwayat duel...</div>
                 </div>
             </div>
         </div>
@@ -305,6 +311,7 @@
         
         let currentUser = null; let localPlayerData = null; let selectedInventoryIndex = null;
         let isAutoCultivating = false; let autoTimer = null; let isProcessingCultivate = false;
+        let isProcessingPvP = false; // BUG FIX: Mencegah spam klik Arena
         
         const itemStats = { "Mirage Sword": { atk: 50, def: 0, hp: 0 }, "Celestial Wing": { atk: 0, def: 30, hp: 0 }, "Soulgem Ring": { atk: 0, def: 0, hp: 100 }, "Frostbite Dagger": { atk: 85, def: 10, hp: 0 }, "Titanium Armor": { atk: 0, def: 120, hp: 300 }, "Aegis Shield": { atk: 20, def: 150, hp: 500 } };
         const wingStats = { "Sayap Peri Api": { mult: 0.05, desc: "+5% Semua Stats" }, "Sayap Malaikat Hitam": { mult: 0.10, desc: "+10% Semua Stats" }, "Sayap Naga Langit": { mult: 0.20, desc: "+20% Semua Stats" }, "Sayap Dewa Kiamat": { mult: 0.35, desc: "+35% Semua Stats" } };
@@ -330,7 +337,6 @@
             logBox.appendChild(entry); if (logBox.children.length > 60) logBox.removeChild(logBox.firstChild); logBox.scrollTop = logBox.scrollHeight; 
         }
 
-        // BUG FIX: Memastikan status pet tidak NaN jika petLevel kosong
         function getCalculatedStats(data) {
             let tHp = data.hp || 0, tAtk = data.atk || 0, tDef = data.def || 0; 
             const upgMult = 1 + ((data.equipUpgrade || 0) * 0.2);
@@ -343,13 +349,11 @@
 
         function calculatePower(data) { let stats = getCalculatedStats(data); return Math.floor(stats.totalAtk + (stats.totalDef * 0.5) + (stats.totalHp * 0.1)); }
 
-        // Event Listener untuk menutup Modal jika area gelap di-klik (BUG FIX)
         document.getElementById('modalOverlay').addEventListener('click', () => { document.getElementById('btnModalClose').click(); document.getElementById('adminModal').style.display='none'; });
 
         document.getElementById('btnLogin').addEventListener('click', async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { document.getElementById('authError').innerText = "Gagal Masuk."; } });
         document.getElementById('btnRegister').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { document.getElementById('authError').innerText = "Gagal Registrasi."; } });
         
-        // BUG FIX: Hentikan interval otomatis sebelum keluar agar tidak error di background
         document.getElementById('btnLogout').addEventListener('click', () => { 
             if(autoTimer) { clearInterval(autoTimer); isAutoCultivating = false; document.getElementById('btnAutoCultivate').classList.remove("auto-active"); document.getElementById('btnAutoCultivate').innerText = "⚙️ Auto-Meditasi (Off) A"; }
             signOut(auth); 
@@ -359,7 +363,7 @@
             const name = document.getElementById('newCharName').value.trim(); const charClass = document.getElementById('newCharClass').value;
             if(!name) return alert("Nama pahlawan tidak boleh kosong!");
             let bHp = 1000, bAtk = 100, bDef = 50; if(charClass === "Blademaster") { bHp = 1500; bDef = 80; } else if(charClass === "Archer") { bAtk = 150; }
-            await setDoc(doc(db, "users", currentUser.uid), { name: name, class: charClass, level: 1, gold: 500, chi: 0, dust: 0, rebirth: 0, hp: bHp, atk: bAtk, def: bDef, bank: 0, equippedItem: "None", equipUpgrade: 0, pet: "None", petLevel: 0, equippedWing: "None", inventory: [] });
+            await setDoc(doc(db, "users", currentUser.uid), { name: name, class: charClass, level: 1, gold: 500, chi: 0, dust: 0, rebirth: 0, hp: bHp, atk: bAtk, def: bDef, bank: 0, equippedItem: "None", equipUpgrade: 0, pet: "None", petLevel: 0, equippedWing: "None", inventory: [], pvpLogs: [] });
             showScreen('gameScreen');
         });
 
@@ -387,6 +391,20 @@
                     
                     document.getElementById('uiTotalHp').innerText = cStats.totalHp.toLocaleString(); document.getElementById('uiTotalAtk').innerText = cStats.totalAtk.toLocaleString(); document.getElementById('uiTotalDef').innerText = cStats.totalDef.toLocaleString();
                     renderInventory(data.inventory);
+                    
+                    // RENDER FITUR RIWAYAT PVP
+                    const pvpBox = document.getElementById('pvpLogBox');
+                    const logs = data.pvpLogs || [];
+                    if(logs.length === 0) { pvpBox.innerHTML = `<div style="color:#555; font-style:italic;">Belum ada riwayat duel...</div>`; }
+                    else {
+                        pvpBox.innerHTML = "";
+                        // Tampilkan yang terbaru di paling atas
+                        for(let i = logs.length - 1; i >= 0; i--) {
+                            let isWin = logs[i].includes("MENANG");
+                            let color = isWin ? "var(--success)" : "var(--secondary)";
+                            pvpBox.innerHTML += `<div class="log-entry" style="color:${color}">> ${logs[i]}</div>`;
+                        }
+                    }
                 }
             });
         }
@@ -446,7 +464,6 @@
                 snapshot.forEach((doc) => {
                     let d = doc.data(); let stats = getCalculatedStats(d);
                     let pwr = Math.floor(stats.totalAtk + (stats.totalDef * 0.5) + (stats.totalHp * 0.1));
-                    // HTML BARU: Menambahkan Event klik untuk memicu duel PvP
                     lbContent.innerHTML += `
                         <div class="leaderboard-row" style="cursor:pointer;" onclick="triggerPvP('${doc.id}', '${d.name}', ${pwr})" title="Tantang ${d.name} Berduel!">
                             <span><strong>#${rank++}</strong> ${d.name} (Lv.${d.level}) <span class="pvp-badge">⚔️ PvP</span></span>
@@ -456,32 +473,62 @@
             });
         }
 
-        // SISTEM INTI PVP ARENA
+        // SISTEM INTI PVP ARENA + LOG RIWAYAT
         window.triggerPvP = async (targetUid, targetName, targetPwr) => {
-            if(!localPlayerData) return;
+            if(!localPlayerData || isProcessingPvP) return;
             if(targetUid === currentUser.uid) return alert("Sistem menolak: Anda tidak bisa menantang diri sendiri!");
             if(localPlayerData.chi < 20) return alert("Sistem menolak: Butuh minimal 20 Chi untuk memasuki Arena PvP.");
             
+            isProcessingPvP = true; // BUG FIX: Mengunci tombol aksi PvP
+            
             let myPwr = calculatePower(localPlayerData);
-            // Faktor RNG (Random Number Generator) membuat pertarungan tidak selalu pasti. Rentang kekuatan: 85% hingga 115%
             let myRoll = myPwr * (0.85 + (Math.random() * 0.3));
             let targetRoll = targetPwr * (0.85 + (Math.random() * 0.3));
             
+            let currentLogs = localPlayerData.pvpLogs || [];
+            let timeStr = new Date().toLocaleTimeString('id-ID', { hour12: false });
+            let logText = "";
+            
+            let finalGold = localPlayerData.gold;
+            let finalChi = localPlayerData.chi - 20;
+
             if(myRoll > targetRoll) {
-                // Menang: Dapat 500 Gold dari Bank Arena (Sistem)
-                await updateDoc(doc(db, "users", currentUser.uid), { chi: localPlayerData.chi - 20, gold: localPlayerData.gold + 500 });
+                finalGold += 500;
+                logText = `[${timeStr}] MENANG vs ${targetName} (+500 G)`;
                 addLog(`⚔️ ARENA PVP: Pukulan Telak! Anda MENGALAHKAN [${targetName}] dan menjarah +500 Gold dari arena!`, "combat");
             } else {
-                // Kalah: Kehilangan 20 Chi
-                await updateDoc(doc(db, "users", currentUser.uid), { chi: localPlayerData.chi - 20 });
+                logText = `[${timeStr}] KALAH vs ${targetName} (-20 Chi)`;
                 addLog(`💀 ARENA PVP: Anda KALAH dalam adu kekuatan melawan [${targetName}]. Terluka, kehilangan 20 Chi.`, "error");
+            }
+            
+            currentLogs.push(logText);
+            // BUG FIX: Batasi array log maksimal hanya menyimpan 5 baris terakhir
+            if(currentLogs.length > 5) currentLogs = currentLogs.slice(-5);
+
+            try {
+                await updateDoc(doc(db, "users", currentUser.uid), { chi: finalChi, gold: finalGold, pvpLogs: currentLogs });
+            } catch(e) {} finally {
+                isProcessingPvP = false; // Membuka kembali kunci aksi
             }
         };
 
         function initWorldBoss() { onSnapshot(doc(db, "server", "world_boss"), (docSnap) => { const wbUi = document.getElementById('worldBossUi'); if(docSnap.exists() && docSnap.data().active) { let data = docSnap.data(); wbUi.style.display = "block"; document.getElementById('wbName').innerText = data.name; let pct = (data.currentHp / data.maxHp) * 100; document.getElementById('wbHpFill').style.width = `${pct}%`; document.getElementById('wbHpText').innerText = `${data.currentHp.toLocaleString()} / ${data.maxHp.toLocaleString()} HP`; } else { wbUi.style.display = "none"; } }); }
         document.getElementById('btnAttackWorldBoss').onclick = async () => { if(!localPlayerData) return; let pwr = calculatePower(localPlayerData); const bossRef = doc(db, "server", "world_boss"); try { await runTransaction(db, async (transaction) => { const sfDoc = await transaction.get(bossRef); if (!sfDoc.exists() || !sfDoc.data().active) return; let newHp = sfDoc.data().currentHp - pwr; if(newHp <= 0) { transaction.update(bossRef, { currentHp: 0, active: false }); let cDust = localPlayerData.dust || 0; transaction.update(doc(db, "users", currentUser.uid), { dust: cDust + 500 }); addLog(`🔥 BERHASIL MENUMPAS WORLD BOSS! Anda mendapatkan hadiah +500 Soul Dust!`, "mystic"); } else { transaction.update(bossRef, { currentHp: newHp }); } }); addLog(`⚔️ Menyerang World Boss! Memberikan ${pwr.toLocaleString()} kerusakan global.`, "combat"); } catch(e) {} };
 
-        function initGlobalChat() { const chatBox = document.getElementById('chatBox'); onSnapshot(collection(db, "global_chat"), (snapshot) => { chatBox.innerHTML = ""; snapshot.forEach((doc) => { let d = doc.data(); let div = document.createElement('div'); div.className = "chat-msg"; div.innerHTML = `<span class="chat-name">${d.sender}:</span> <span style="color:#fff">${d.text}</span>`; chatBox.appendChild(div); }); chatBox.scrollTop = chatBox.scrollHeight; }); }
+        // BUG FIX: Menambahkan Query pengurutan waktu (timestamp) agar chat runtut
+        function initGlobalChat() { 
+            const chatBox = document.getElementById('chatBox'); 
+            const qChat = query(collection(db, "global_chat"), orderBy("timestamp", "asc"), limit(30));
+            onSnapshot(qChat, (snapshot) => { 
+                chatBox.innerHTML = ""; 
+                snapshot.forEach((doc) => { 
+                    let d = doc.data(); let div = document.createElement('div'); div.className = "chat-msg"; 
+                    div.innerHTML = `<span class="chat-name">${d.sender}:</span> <span style="color:#fff">${d.text}</span>`; 
+                    chatBox.appendChild(div); 
+                }); 
+                chatBox.scrollTop = chatBox.scrollHeight; 
+            }); 
+        }
         document.getElementById('btnSendChat').onclick = async () => { let text = document.getElementById('chatInput').value; if(!text) return; await addDoc(collection(db, "global_chat"), { sender: localPlayerData.name, text: text, timestamp: serverTimestamp() }); document.getElementById('chatInput').value = ""; };
 
         document.getElementById('adminTrigger').onclick = () => { document.getElementById('modalOverlay').style.display='block'; document.getElementById('adminModal').style.display='block'; };
