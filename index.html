@@ -25,7 +25,7 @@
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9em; border-bottom: 1px solid #333; padding-bottom: 3px; }
         .stat-val { font-weight: bold; color: var(--accent); }
         
-        .inv-slot { background: #222; border: 1px solid #444; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 0.8em; cursor: pointer; border-radius: 4px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .inv-slot { background: #222; border: 1px solid #444; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 0.75em; cursor: pointer; border-radius: 4px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 4px; }
         .inv-slot.filled { border-color: var(--gold); color: var(--gold); }
         #inventoryGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
 
@@ -51,8 +51,14 @@
         
         #adminTrigger { position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: pointer; opacity: 0; }
         
-        .market-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #444; background: #222; margin-bottom: 5px; border-radius: 4px; }
+        .market-item, .quest-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #444; background: #222; margin-bottom: 5px; border-radius: 4px; }
         .market-item:hover { background: #333; }
+        
+        .btn-unequip { background: transparent; border: 1px solid var(--secondary); color: var(--secondary); padding: 2px 6px; font-size: 0.7em; cursor: pointer; border-radius: 3px; margin-left: 5px; }
+        .btn-unequip:hover { background: var(--secondary); color: white; }
+        
+        .quest-progress { font-weight: bold; color: var(--warning); }
+        .quest-done { color: var(--success); text-decoration: line-through; }
     </style>
 </head>
 <body>
@@ -102,10 +108,11 @@
             <hr style="border-color: #333; margin: 15px 0;">
             <h3 style="font-size: 1em;">Perlengkapan</h3>
             <div style="font-size: 0.85em;">
-                <div>⚔️ Senjata/Armor: <span id="uiEquip" style="color:var(--gold)">Kosong</span> <span id="uiEquipLevel" style="color:var(--warning)"></span></div>
+                <div>⚔️ Senjata/Armor: <span id="uiEquip" style="color:var(--gold)">Kosong</span> <span id="uiEquipLevel" style="color:var(--warning)"></span> <button id="btnUnEquipItem" class="btn-unequip" style="display:none;">Lepas</button></div>
                 <div>🐾 Pet: <span id="uiPet" style="color:var(--success)">Kosong</span> <span id="uiPetLevel"></span></div>
-                <div>🪶 Sayap: <span id="uiWing" style="color:var(--wing)">Tidak Ada</span></div>
-                <div id="uiWingEffect" style="font-size:0.9em; color:#888; font-style:italic;"></div>
+                <div style="margin-bottom: 5px;">🪶 Sayap: <span id="uiWing" style="color:var(--wing)">Tidak Ada</span> <span id="uiWingRefine" style="color:var(--accent)"></span> <button id="btnUnEquipWing" class="btn-unequip" style="display:none;">Lepas</button></div>
+                <div id="uiWingEffect" style="font-size:0.9em; color:#888; font-style:italic; margin-bottom: 5px;"></div>
+                <button id="btnRefineWing" style="width:100%; background:linear-gradient(45deg, #441144, #114444); border-color:var(--wing); font-size:0.85em; display:none; font-weight:bold;">✨ Pemurnian Sayap</button>
             </div>
 
             <button id="btnRebirth" style="width:100%; margin-top:15px; background:var(--gold); color:black; font-weight:bold; display:none;">✨ Lakukan Rebirth</button>
@@ -128,6 +135,7 @@
 
             <h3 style="margin-top: 20px;">Fasilitas Kota</h3>
             <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                <button id="btnDailyQuest" style="background: #2b5c2b; color: white; font-weight: bold; border-color: var(--success);">📜 Misi Harian</button>
                 <button id="btnMarket" style="background: var(--accent); color: black; font-weight: bold;">⚖️ Pasar Global</button>
                 <button id="btnEnhance">⚒️ Tempa Equip (300G/Lv)</button>
                 <button id="btnFeedPet">🍖 Beri Makan Pet (50 Chi)</button>
@@ -171,17 +179,16 @@
     </div>
 
     <div id="modalOverlay"></div>
+    
     <div id="itemModal" class="modal">
         <h2 id="modalItemName">Item Name</h2>
         <p id="modalItemDesc" style="margin-bottom: 20px;"></p>
-        
         <div class="modal-action-grid">
             <button id="btnModalEquip" style="background: var(--success); color: black;">Gunakan Equip</button>
             <button id="btnModalEquipWing" style="background: var(--wing); color: white;">Gunakan Sayap</button>
             <button id="btnModalSell" style="background: var(--warning); color: black;">🛒 Jual (Pasar)</button>
             <button id="btnModalDismantle" style="background: #555; color: white;">🔨 Lebur (Soul Dust)</button>
         </div>
-        
         <button id="btnModalClose" style="width: 100%; background: #222;">Tutup</button>
     </div>
 
@@ -190,6 +197,27 @@
         <p style="font-size: 0.8em; color: #888;">Beli perlengkapan dari pemain lain. Hasil penjualan masuk ke Bank penjual.</p>
         <div id="marketList" style="max-height: 300px; overflow-y:auto; margin-bottom:15px; text-align: left;"></div>
         <button id="btnMarketClose" style="width: 100%; background: #222;">Tutup Pasar</button>
+    </div>
+
+    <div id="questModal" class="modal" style="width: 80%; max-width: 400px;">
+        <h2 style="color:var(--success)">Papan Misi Harian</h2>
+        <p style="font-size: 0.8em; color: #888;">Selesaikan misi sebelum tengah malam untuk mendapatkan Daily Chest.</p>
+        
+        <div class="quest-item">
+            <span>⚔️ Kalahkan 10 Monster</span>
+            <span id="qHuntText" class="quest-progress">0/10</span>
+        </div>
+        <div class="quest-item">
+            <span>🧘‍♂️ Meditasi 20 Kali</span>
+            <span id="qCultText" class="quest-progress">0/20</span>
+        </div>
+        <div class="quest-item">
+            <span>🏆 Menang PvP 1 Kali</span>
+            <span id="qPvpText" class="quest-progress">0/1</span>
+        </div>
+        
+        <button id="btnClaimQuest" style="width: 100%; margin-top: 15px; background: var(--gold); color: black; font-weight: bold;" disabled>🎁 Klaim Daily Chest</button>
+        <button id="btnQuestClose" style="width: 100%; background: #222; margin-top: 5px;">Tutup</button>
     </div>
 
     <div id="adminModal" class="modal">
@@ -212,6 +240,7 @@
         let isAutoCultivating = false; let autoTimer = null; 
         
         let isProcessingCultivate = false; let isProcessingPvP = false; let isProcessingAction = false; let isProcessingBoss = false; 
+        let lastManualCultivate = 0; // Cooldown Anti-Spam
         
         const itemStats = { "Mirage Sword": { atk: 50, def: 0, hp: 0 }, "Celestial Wing": { atk: 0, def: 30, hp: 0 }, "Soulgem Ring": { atk: 0, def: 0, hp: 100 }, "Frostbite Dagger": { atk: 85, def: 10, hp: 0 }, "Titanium Armor": { atk: 0, def: 120, hp: 300 }, "Aegis Shield": { atk: 20, def: 150, hp: 500 } };
         const wingStats = { "Sayap Peri Api": { mult: 0.05, desc: "+5% Semua Stats" }, "Sayap Malaikat Hitam": { mult: 0.10, desc: "+10% Semua Stats" }, "Sayap Naga Langit": { mult: 0.20, desc: "+20% Semua Stats" }, "Sayap Dewa Kiamat": { mult: 0.35, desc: "+35% Semua Stats" } };
@@ -223,8 +252,8 @@
             "map3": { "1": { name: "Ice Wraith", reqPower: 2500, rewardGold: 400, penaltyChi: 30 }, "boss": { name: "Shiva, The Frost Queen", reqPower: 8000, rewardGold: 10000, penaltyChi: 100, drops: ["Sayap Peri Api"] } }
         };
 
-        // Utility: Sanitizer for XSS Protection
         function sanitizeText(str) { return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+        function getTodayDate() { return new Date().toLocaleDateString('en-CA'); } // Format YYYY-MM-DD
 
         const mapSelect = document.getElementById('mapSelector'); const monsterSelect = document.getElementById('dungeonTarget');
         function updateMonsterList() { const currentMap = worldMaps[mapSelect.value] || worldMaps["map1"]; monsterSelect.innerHTML = ""; for(let key in currentMap) { let m = currentMap[key]; monsterSelect.innerHTML += `<option value="${key}">${key === "boss" ? "💀 " : ""}${m.name} (Pwr Req: ${m.reqPower})</option>`; } }
@@ -238,31 +267,41 @@
             const upgMult = 1 + ((data.equipUpgrade || 0) * 0.2);
             if(data.equippedItem && itemStats[data.equippedItem]) { tAtk += Math.floor(itemStats[data.equippedItem].atk * upgMult); tDef += Math.floor(itemStats[data.equippedItem].def * upgMult); tHp += Math.floor(itemStats[data.equippedItem].hp * upgMult); }
             const pLv = data.petLevel || 0; if(data.pet && data.pet !== "None") { tAtk += pLv * 5; tDef += pLv * 3; tHp += pLv * 15; }
-            let rMult = 1 + ((data.rebirth || 0) * 0.5); let wingMult = 1; if(data.equippedWing && wingStats[data.equippedWing]) wingMult += wingStats[data.equippedWing].mult;
+            let rMult = 1 + ((data.rebirth || 0) * 0.5); 
+            let wingMult = 1; 
+            if(data.equippedWing && wingStats[data.equippedWing]) { wingMult += wingStats[data.equippedWing].mult + ((data.wingRefineLevel || 0) * 0.05); }
             return { totalHp: Math.floor(tHp * rMult * wingMult), totalAtk: Math.floor(tAtk * rMult * wingMult), totalDef: Math.floor(tDef * rMult * wingMult) };
         }
 
         function calculatePower(data) { let stats = getCalculatedStats(data); return Math.floor(stats.totalAtk + (stats.totalDef * 0.5) + (stats.totalHp * 0.1)); }
 
-        // Modal closers
+        // --- MANAJEMEN QUEST HARIAN ---
+        function getDailyQuestData(data) {
+            let today = getTodayDate();
+            let dq = data.dailyQuest || { date: today, hunt: 0, cult: 0, pvp: 0, claimed: false };
+            if(dq.date !== today) { dq = { date: today, hunt: 0, cult: 0, pvp: 0, claimed: false }; }
+            return dq;
+        }
+
         document.getElementById('modalOverlay').addEventListener('click', () => { 
             document.getElementById('btnModalClose').click(); 
             document.getElementById('btnMarketClose').click(); 
+            document.getElementById('btnQuestClose').click();
             document.getElementById('adminModal').style.display='none'; 
         });
 
         document.getElementById('btnLogin').addEventListener('click', async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { document.getElementById('authError').innerText = "Gagal Masuk. Periksa kembali kredensial Anda."; } });
         document.getElementById('btnRegister').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch (error) { document.getElementById('authError').innerText = "Gagal Registrasi. Email mungkin sudah digunakan."; } });
-        
         document.getElementById('btnLogout').addEventListener('click', () => { clearInterval(autoTimer); isAutoCultivating = false; document.getElementById('btnAutoCultivate').classList.remove("auto-active"); document.getElementById('btnAutoCultivate').innerText = "⚙️ Auto-Meditasi (Off) A"; signOut(auth); });
 
         document.getElementById('btnCreateChar').addEventListener('click', async () => {
             const name = document.getElementById('newCharName').value.trim(); const charClass = document.getElementById('newCharClass').value;
             const nameRegex = /^[a-zA-Z0-9 ]+$/;
             if(!name || !nameRegex.test(name)) return alert("Nama pahlawan tidak boleh kosong dan hanya boleh berisi huruf atau angka (Mencegah XSS)!");
-            
             let bHp = 1000, bAtk = 100, bDef = 50; if(charClass === "Blademaster") { bHp = 1500; bDef = 80; } else if(charClass === "Archer") { bAtk = 150; }
-            await setDoc(doc(db, "users", currentUser.uid), { name: sanitizeText(name), class: charClass, level: 1, gold: 500, chi: 0, dust: 0, rebirth: 0, hp: bHp, atk: bAtk, def: bDef, bank: 0, equippedItem: "None", equipUpgrade: 0, pet: "None", petLevel: 0, equippedWing: "None", inventory: [], pvpLogs: [] });
+            
+            let initQuest = { date: getTodayDate(), hunt: 0, cult: 0, pvp: 0, claimed: false };
+            await setDoc(doc(db, "users", currentUser.uid), { name: sanitizeText(name), class: charClass, level: 1, gold: 500, chi: 0, dust: 0, rebirth: 0, hp: bHp, atk: bAtk, def: bDef, bank: 0, equippedItem: "None", equipUpgrade: 0, pet: "None", petLevel: 0, equippedWing: "None", wingRefineLevel: 0, inventory: [], pvpLogs: [], dailyQuest: initQuest });
             showScreen('gameScreen');
         });
 
@@ -278,17 +317,33 @@
             onSnapshot(doc(db, "users", uid), (docSnap) => {
                 if (docSnap.exists()) {
                     localPlayerData = docSnap.data(); const data = localPlayerData; let cStats = getCalculatedStats(data); 
-                    
                     let maxChi = 100 + (data.level * 10);
                     
                     document.getElementById('uiName').innerText = sanitizeText(data.name); document.getElementById('uiClass').innerText = data.class; document.getElementById('uiLevel').innerText = data.level; document.getElementById('uiGold').innerText = parseInt(data.gold).toLocaleString(); document.getElementById('uiChi').innerText = `${data.chi}/${maxChi}`; document.getElementById('uiPower').innerText = calculatePower(data).toLocaleString(); document.getElementById('uiBank').innerText = parseInt(data.bank || 0).toLocaleString(); document.getElementById('uiDust').innerText = parseInt(data.dust || 0).toLocaleString();
+                    
                     let rebirthCount = data.rebirth || 0; document.getElementById('uiRebirth').innerText = "⭐".repeat(rebirthCount);
                     if(rebirthCount > 0) { document.getElementById('uiTitle').innerText = `Dewa R${rebirthCount}`; document.getElementById('uiTitle').style.borderColor = "var(--gold)"; document.getElementById('uiTitle').style.color = "var(--gold)"; }
-                    if(data.level >= 100) { document.getElementById('btnRebirth').style.display = 'block'; } else { document.getElementById('btnRebirth').style.display = 'none'; }
+                    if(data.level >= 100) document.getElementById('btnRebirth').style.display = 'block'; else document.getElementById('btnRebirth').style.display = 'none';
 
-                    const upgLv = data.equipUpgrade || 0; document.getElementById('uiEquip').innerText = data.equippedItem || "Kosong"; document.getElementById('uiEquipLevel').innerText = (data.equippedItem && data.equippedItem !== "None" && upgLv > 0) ? `[+${upgLv}]` : "";
+                    const upgLv = data.equipUpgrade || 0; 
+                    const isItemEquipped = (data.equippedItem && data.equippedItem !== "None");
+                    document.getElementById('uiEquip').innerText = isItemEquipped ? data.equippedItem : "Kosong"; 
+                    document.getElementById('uiEquipLevel').innerText = (isItemEquipped && upgLv > 0) ? `[+${upgLv}]` : "";
+                    document.getElementById('btnUnEquipItem').style.display = isItemEquipped ? "inline-block" : "none";
+
                     const pLv = data.petLevel || 0; document.getElementById('uiPet').innerText = (data.pet && data.pet !== "None") ? data.pet : "Kosong"; document.getElementById('uiPetLevel').innerText = (data.pet && data.pet !== "None") ? `Lv. ${pLv}` : "";
-                    document.getElementById('uiWing').innerText = data.equippedWing || "Tidak Ada"; document.getElementById('uiWingEffect').innerText = data.equippedWing ? wingStats[data.equippedWing].desc : "";
+                    
+                    const isWingEquipped = (data.equippedWing && data.equippedWing !== "None");
+                    document.getElementById('uiWing').innerText = isWingEquipped ? data.equippedWing : "Tidak Ada"; 
+                    const wRefine = data.wingRefineLevel || 0;
+                    document.getElementById('uiWingRefine').innerText = (isWingEquipped && wRefine > 0) ? `[+${wRefine}]` : "";
+                    document.getElementById('uiWingEffect').innerText = isWingEquipped && wingStats[data.equippedWing] ? `${wingStats[data.equippedWing].desc} (Refine: +${wRefine * 5}%)` : "";
+                    document.getElementById('btnUnEquipWing').style.display = isWingEquipped ? "inline-block" : "none";
+                    
+                    if(isWingEquipped) {
+                        document.getElementById('btnRefineWing').style.display = "block";
+                        document.getElementById('btnRefineWing').innerText = `✨ Murnikan Sayap (${50 + (wRefine * 25)} Dust)`;
+                    } else { document.getElementById('btnRefineWing').style.display = "none"; }
                     
                     document.getElementById('uiTotalHp').innerText = cStats.totalHp.toLocaleString(); document.getElementById('uiTotalAtk').innerText = cStats.totalAtk.toLocaleString(); document.getElementById('uiTotalDef').innerText = cStats.totalDef.toLocaleString();
                     renderInventory(data.inventory);
@@ -300,6 +355,72 @@
             });
         }
 
+        // --- SISTEM LEPAS EQUIP (UNEQUIP) ---
+        document.getElementById('btnUnEquipItem').onclick = async () => {
+            if(isProcessingAction || !localPlayerData || !localPlayerData.equippedItem || localPlayerData.equippedItem === "None") return;
+            let inv = localPlayerData.inventory || [];
+            if(inv.length >= 10) return alert("Tas penuh! Kosongkan ruang untuk melepas equip.");
+            isProcessingAction = true;
+            try {
+                inv.push(localPlayerData.equippedItem);
+                await updateDoc(doc(db, "users", currentUser.uid), { equippedItem: "None", equipUpgrade: 0, inventory: inv });
+                addLog("Melepas perlengkapan senjata/armor.", "system");
+            } finally { isProcessingAction = false; }
+        };
+
+        document.getElementById('btnUnEquipWing').onclick = async () => {
+            if(isProcessingAction || !localPlayerData || !localPlayerData.equippedWing || localPlayerData.equippedWing === "None") return;
+            let inv = localPlayerData.inventory || [];
+            if(inv.length >= 10) return alert("Tas penuh! Kosongkan ruang untuk melepas sayap.");
+            isProcessingAction = true;
+            try {
+                inv.push(localPlayerData.equippedWing);
+                await updateDoc(doc(db, "users", currentUser.uid), { equippedWing: "None", wingRefineLevel: 0, inventory: inv });
+                addLog("Melepas perlengkapan sayap.", "system");
+            } finally { isProcessingAction = false; }
+        };
+
+        document.getElementById('btnRefineWing').onclick = async () => {
+            if(isProcessingAction || !localPlayerData) return; if(!localPlayerData.equippedWing || localPlayerData.equippedWing === "None") return alert("Gunakan sayap terlebih dahulu!");
+            const wRefine = localPlayerData.wingRefineLevel || 0; const cost = 50 + (wRefine * 25); const currentDust = parseInt(localPlayerData.dust || 0);
+            if(currentDust < cost) return alert(`Soul Dust tidak mencukupi! Butuh ${cost} Dust.`);
+            isProcessingAction = true; try { await updateDoc(doc(db, "users", currentUser.uid), { dust: currentDust - cost, wingRefineLevel: wRefine + 1 }); addLog(`🪶 Sukses Memurnikan [${localPlayerData.equippedWing}] menjadi +${wRefine + 1}!`, "mystic"); } catch(e) { alert("Gagal pemurnian."); } finally { isProcessingAction = false; }
+        };
+
+        // --- SISTEM MISI HARIAN (DAILY QUEST) ---
+        document.getElementById('btnDailyQuest').onclick = () => {
+            if(!localPlayerData) return;
+            let dq = getDailyQuestData(localPlayerData);
+            
+            let qH = document.getElementById('qHuntText'); qH.innerText = `${Math.min(dq.hunt, 10)}/10`; qH.className = dq.hunt >= 10 ? "quest-done" : "quest-progress";
+            let qC = document.getElementById('qCultText'); qC.innerText = `${Math.min(dq.cult, 20)}/20`; qC.className = dq.cult >= 20 ? "quest-done" : "quest-progress";
+            let qP = document.getElementById('qPvpText'); qP.innerText = `${Math.min(dq.pvp, 1)}/1`; qP.className = dq.pvp >= 1 ? "quest-done" : "quest-progress";
+            
+            const btnClaim = document.getElementById('btnClaimQuest');
+            if (dq.claimed) { btnClaim.innerText = "✅ Sudah Diklaim"; btnClaim.disabled = true; btnClaim.style.background = "#555"; } 
+            else if (dq.hunt >= 10 && dq.cult >= 20 && dq.pvp >= 1) { btnClaim.innerText = "🎁 Klaim Daily Chest"; btnClaim.disabled = false; btnClaim.style.background = "var(--gold)"; } 
+            else { btnClaim.innerText = "Belum Selesai"; btnClaim.disabled = true; btnClaim.style.background = "#555"; }
+            
+            document.getElementById('modalOverlay').style.display='block'; document.getElementById('questModal').style.display='block';
+        };
+        
+        document.getElementById('btnQuestClose').onclick = () => { document.getElementById('modalOverlay').style.display='none'; document.getElementById('questModal').style.display='none'; };
+        
+        document.getElementById('btnClaimQuest').onclick = async () => {
+            if(isProcessingAction || !localPlayerData) return;
+            let dq = getDailyQuestData(localPlayerData);
+            if(dq.claimed || dq.hunt < 10 || dq.cult < 20 || dq.pvp < 1) return;
+            isProcessingAction = true;
+            try {
+                dq.claimed = true;
+                let finalGold = parseInt(localPlayerData.gold) + 1500;
+                let finalDust = parseInt(localPlayerData.dust || 0) + 50;
+                await updateDoc(doc(db, "users", currentUser.uid), { dailyQuest: dq, gold: finalGold, dust: finalDust });
+                addLog("🎁 KLAIM DAILY QUEST! Anda mendapatkan 1.500 Gold dan 50 Soul Dust!", "loot");
+                document.getElementById('btnQuestClose').click();
+            } finally { isProcessingAction = false; }
+        };
+
         // --- MARKET LOGIC ---
         document.getElementById('btnMarket').onclick = () => { document.getElementById('modalOverlay').style.display='block'; document.getElementById('marketModal').style.display='block'; };
         document.getElementById('btnMarketClose').onclick = () => { document.getElementById('modalOverlay').style.display='none'; document.getElementById('marketModal').style.display='none'; };
@@ -309,8 +430,7 @@
                 const ml = document.getElementById('marketList'); ml.innerHTML = "";
                 if(snapshot.empty) { ml.innerHTML = "<p style='text-align:center; color:#666;'>Pasar sedang kosong.</p>"; return; }
                 snapshot.forEach(docSnap => {
-                    let d = docSnap.data(); let div = document.createElement('div'); div.className = "market-item";
-                    let sName = sanitizeText(d.sellerName);
+                    let d = docSnap.data(); let div = document.createElement('div'); div.className = "market-item"; let sName = sanitizeText(d.sellerName);
                     div.innerHTML = `<div><strong style="color:var(--gold)">${d.itemName}</strong><br><small style="color:#888;">Penjual: ${sName}</small></div>
                                      <div><span style="color:var(--accent); font-weight:bold;">${parseInt(d.price).toLocaleString()} G</span>
                                      <button onclick="buyMarketItem('${docSnap.id}', '${d.sellerUid}', '${d.itemName}', ${d.price})" style="background:var(--success); color:black; font-weight:bold; padding:4px 8px;">Beli</button></div>`;
@@ -320,8 +440,7 @@
         }
 
         window.buyMarketItem = async (marketId, sellerUid, itemName, price) => {
-            if(!localPlayerData || isProcessingAction) return;
-            let itemPrice = parseInt(price);
+            if(!localPlayerData || isProcessingAction) return; let itemPrice = parseInt(price);
             if(sellerUid === currentUser.uid) return alert("Tidak bisa membeli barang sendiri!");
             if(parseInt(localPlayerData.gold) < itemPrice) return alert("Gold tidak cukup!");
             if((localPlayerData.inventory || []).length >= 10) return alert("Tas penuh!");
@@ -333,21 +452,20 @@
                     if(!marketDoc.exists()) throw "Item sudah terjual!";
                     const sellerRef = doc(db, "users", sellerUid); const sellerDoc = await transaction.get(sellerRef);
                     const buyerRef = doc(db, "users", currentUser.uid);
+                    if (sellerDoc.exists() && sellerDoc.id === buyerRef.id) throw "Eksploitasi terdeteksi: Tidak bisa membeli dari diri sendiri di level transaksi!";
                     
                     let buyerInv = localPlayerData.inventory || []; buyerInv.push(itemName);
                     transaction.update(buyerRef, { gold: parseInt(localPlayerData.gold) - itemPrice, inventory: buyerInv });
-                    
                     if(sellerDoc.exists()) { let sData = sellerDoc.data(); transaction.update(sellerRef, { bank: parseInt(sData.bank || 0) + itemPrice }); }
                     transaction.delete(marketRef);
                 });
                 addLog(`🛒 Berhasil membeli [${itemName}] seharga ${itemPrice} G dari Pasar.`, "loot");
-            } catch(e) { alert(e === "Item sudah terjual!" ? e : "Transaksi gagal."); } finally { isProcessingAction = false; }
+            } catch(e) { alert(typeof e === 'string' ? e : "Transaksi gagal."); } finally { isProcessingAction = false; }
         };
 
         // --- KOTA & BANK ---
         document.getElementById('btnBankDeposit').addEventListener('click', async () => { if (isProcessingAction || !localPlayerData || parseInt(localPlayerData.gold) <= 0) return; isProcessingAction=true; try { await updateDoc(doc(db, "users", currentUser.uid), { bank: parseInt(localPlayerData.bank || 0) + parseInt(localPlayerData.gold), gold: 0 }); addLog("🏦 Menyimpan seluruh Gold ke Bank.", "system"); } finally { isProcessingAction=false; } });
-        document.getElementById('btnBankWithdraw').addEventListener('click', async () => { if (isProcessingAction || !localPlayerData || parseInt(localPlayerData.bank || 0) <= 0) return; isProcessingAction=true; try { await updateDoc(doc(db, "users", currentUser.uid), { gold: parseInt(localPlayerData.gold) + parseInt(localPlayerData.bank), bank: 0 }); addLog("🏦 Menarik seluruh Gold dari Bank.", "system"); } finally { isProcessingAction=false; }});
-
+        document.getElementById('btnBankWithdraw').addEventListener('click', async () => { if (isProcessingAction || !localPlayerData || parseInt(localPlayerData.bank || 0) <= 0) return; isProcessingAction=true; try { await updateDoc(doc(db, "users", currentUser.uid), { gold: parseInt(localPlayerData.gold) + parseInt(localPlayerData.bank), bank: 0 }); addLog("🏦 Menarik seluruh Gold dari Bank.", "system"); } finally { isProcessingAction=false; } });
         document.getElementById('btnEnhance').onclick = async () => { if(isProcessingAction) return; if(!localPlayerData.equippedItem || localPlayerData.equippedItem === "None") return alert("Tidak ada perlengkapan aktif!"); let cost = ((localPlayerData.equipUpgrade || 0) + 1) * 300; if(parseInt(localPlayerData.gold) < cost) return alert(`Gold kurang! Butuh ${cost} G.`); isProcessingAction = true; try { await updateDoc(doc(db, "users", currentUser.uid), { gold: parseInt(localPlayerData.gold) - cost, equipUpgrade: (localPlayerData.equipUpgrade || 0) + 1 }); addLog(`✨ Sukses Menempa ${localPlayerData.equippedItem} menjadi +${localPlayerData.equipUpgrade + 1}!`, "mystic"); } finally { isProcessingAction = false; } };
         document.getElementById('btnFeedPet').onclick = async () => { if(isProcessingAction) return; if(!localPlayerData.pet || localPlayerData.pet === "None") return alert("Pelihara pet dulu!"); if(localPlayerData.chi < 50) return alert("Butuh 50 Chi!"); isProcessingAction = true; try { await updateDoc(doc(db, "users", currentUser.uid), { chi: localPlayerData.chi - 50, petLevel: (localPlayerData.petLevel || 1) + 1 }); addLog(`🍖 Pet naik Level ke ${(localPlayerData.petLevel || 1) + 1}!`, "system"); } finally { isProcessingAction = false; } };
         document.getElementById('btnGachaPet').onclick = async () => { if(isProcessingAction) return; if(localPlayerData.pet && localPlayerData.pet !== "None" && localPlayerData.petLevel > 1) { if(!confirm(`⚠️ Peringatan: Anda memiliki ${localPlayerData.pet} Lv.${localPlayerData.petLevel}. Jika Gacha, Pet lama akan hilang permanen! Lanjutkan?`)) return; } if(parseInt(localPlayerData.gold) < 500) return alert("Gold kurang!"); let pet = petPool[Math.floor(Math.random() * petPool.length)]; isProcessingAction=true; try { await updateDoc(doc(db, "users", currentUser.uid), { gold: parseInt(localPlayerData.gold) - 500, pet: pet, petLevel: 1 }); addLog(`🥚 Pet baru menetas: [${pet}] Lv.1`, "loot"); } finally { isProcessingAction=false; } };
@@ -356,15 +474,24 @@
         
         // --- DUNGEON ---
         document.getElementById('btnHunt').addEventListener('click', async () => {
-            if(!localPlayerData || isProcessingAction) return; const mapObj = worldMaps[mapSelect.value]; const mob = mapObj[monsterSelect.value];
+            if(!localPlayerData || isProcessingAction) return; 
+            if(isAutoCultivating) document.getElementById('btnAutoCultivate').click(); // Matikan auto-cultivate
+            
+            const mapObj = worldMaps[mapSelect.value]; const mob = mapObj[monsterSelect.value];
             if (localPlayerData.chi < mob.penaltyChi) return alert(`Chi tidak cukup! Butuh ${mob.penaltyChi} Chi.`);
+            
             isProcessingAction = true;
             try {
                 let pwr = calculatePower(localPlayerData);
                 if (pwr < mob.reqPower) { await updateDoc(doc(db, "users", currentUser.uid), { chi: localPlayerData.chi - mob.penaltyChi }); addLog(`💀 KALAH! Kekuatanmu (${pwr}) terlalu lemah. Kehilangan ${mob.penaltyChi} Chi!`, "error"); return; }
+                
                 let newGold = parseInt(localPlayerData.gold) + mob.rewardGold; let inv = localPlayerData.inventory || []; let dropMsg = "";
                 if (mob.drops && Math.random() < 0.3) { if (inv.length < 10) { let dropItem = mob.drops[Math.floor(Math.random() * mob.drops.length)]; inv.push(dropItem); dropMsg = ` 🎁 LOOT: [${dropItem}]!`; } else { dropMsg = ` ❌ Tas penuh!`; } }
-                await updateDoc(doc(db, "users", currentUser.uid), { gold: newGold, chi: localPlayerData.chi - mob.penaltyChi, inventory: inv }); addLog(`⚔️ MENANG melawan [${mob.name}] +${mob.rewardGold} Gold.${dropMsg}`, "combat");
+                
+                let dq = getDailyQuestData(localPlayerData); dq.hunt++; // Quest Update
+                
+                await updateDoc(doc(db, "users", currentUser.uid), { gold: newGold, chi: localPlayerData.chi - mob.penaltyChi, inventory: inv, dailyQuest: dq }); 
+                addLog(`⚔️ MENANG melawan [${mob.name}] +${mob.rewardGold} Gold.${dropMsg}`, "combat");
             } finally { isProcessingAction = false; }
         });
 
@@ -378,13 +505,22 @@
         };
         
         document.getElementById('btnCultivate').addEventListener('click', async () => {
-            if(isProcessingCultivate) return; isProcessingCultivate = true;
+            let now = Date.now();
+            if(!isAutoCultivating && (now - lastManualCultivate < 1000)) {
+                return; // Perlindungan anti-clicker spam (hanya jalankan jika jeda > 1 detik untuk manual klik)
+            }
+            if(isProcessingCultivate) return; 
+            isProcessingCultivate = true;
+            lastManualCultivate = now;
+            
             try {
                 let newChi = localPlayerData.chi + 15, newLevel = localPlayerData.level, newGold = parseInt(localPlayerData.gold) + 15;
                 let maxChi = 100 + (newLevel * 10);
                 if(!isAutoCultivating) addLog("Meditasi Manual... (+15 Chi, +15 Gold)", "system");
                 if(newChi >= maxChi) { newChi = newChi - maxChi; newLevel += 1; newGold += 150; addLog(`🌟 Level Karakter naik ke ${newLevel}!`, "system"); }
-                await updateDoc(doc(db, "users", currentUser.uid), { chi: newChi, level: newLevel, gold: newGold });
+                
+                let dq = getDailyQuestData(localPlayerData); dq.cult++; // Quest Update
+                await updateDoc(doc(db, "users", currentUser.uid), { chi: newChi, level: newLevel, gold: newGold, dailyQuest: dq });
             } catch(e) {} finally { isProcessingCultivate = false; }
         });
 
@@ -394,47 +530,26 @@
         function openItemModal(itemName, index) {
             selectedInventoryIndex = index; document.getElementById('modalItemName').innerText = itemName;
             const btnEq = document.getElementById('btnModalEquip'); const btnWg = document.getElementById('btnModalEquipWing');
-            
-            if(wingStats[itemName]) { document.getElementById('modalItemDesc').innerHTML = `<strong style="color:var(--wing)">Efek: ${wingStats[itemName].desc}</strong>`; btnEq.style.display = 'none'; btnWg.style.display = 'inline-block'; }
+            if(wingStats[itemName]) { document.getElementById('modalItemDesc').innerHTML = `<strong style="color:var(--wing)">Efek Base: ${wingStats[itemName].desc}</strong>`; btnEq.style.display = 'none'; btnWg.style.display = 'inline-block'; }
             else if(itemStats[itemName]) { let s = itemStats[itemName]; document.getElementById('modalItemDesc').innerHTML = `<strong style="color:var(--warning)">Attack +${s.atk}</strong> | <strong style="color:#00e5ff">Defense +${s.def}</strong> | <strong style="color:var(--success)">HP +${s.hp}</strong>`; btnEq.style.display = 'inline-block'; btnWg.style.display = 'none'; }
             else { document.getElementById('modalItemDesc').innerText = "Relik langka."; btnEq.style.display = 'inline-block'; btnWg.style.display = 'none';  }
-            
             document.getElementById('modalOverlay').style.display = 'block'; document.getElementById('itemModal').style.display = 'block';
         }
         
         document.getElementById('btnModalClose').onclick = () => { document.getElementById('modalOverlay').style.display = 'none'; document.getElementById('itemModal').style.display = 'none'; }
         
         document.getElementById('btnModalEquip').onclick = async () => { if(isProcessingAction) return; isProcessingAction=true; try { let inv = localPlayerData.inventory || []; const item = inv[selectedInventoryIndex]; inv.splice(selectedInventoryIndex, 1); if(localPlayerData.equippedItem && localPlayerData.equippedItem !== "None") { if(inv.length >= 10) return alert("Tas penuh, tidak bisa melepas perlengkapan lama!"); inv.push(localPlayerData.equippedItem); } await updateDoc(doc(db, "users", currentUser.uid), { equippedItem: item, equipUpgrade: 0, inventory: inv }); document.getElementById('btnModalClose').click(); } finally { isProcessingAction=false; } };
-        document.getElementById('btnModalEquipWing').onclick = async () => { if(isProcessingAction) return; isProcessingAction=true; try { let inv = localPlayerData.inventory || []; const wing = inv[selectedInventoryIndex]; inv.splice(selectedInventoryIndex, 1); if(localPlayerData.equippedWing && localPlayerData.equippedWing !== "None") { if(inv.length >= 10) return alert("Tas penuh, tidak bisa melepas sayap lama!"); inv.push(localPlayerData.equippedWing); } await updateDoc(doc(db, "users", currentUser.uid), { equippedWing: wing, inventory: inv }); document.getElementById('btnModalClose').click(); } finally { isProcessingAction=false;} };
+        document.getElementById('btnModalEquipWing').onclick = async () => { if(isProcessingAction) return; isProcessingAction=true; try { let inv = localPlayerData.inventory || []; const wing = inv[selectedInventoryIndex]; inv.splice(selectedInventoryIndex, 1); if(localPlayerData.equippedWing && localPlayerData.equippedWing !== "None") { if(inv.length >= 10) return alert("Tas penuh, tidak bisa melepas sayap lama!"); inv.push(localPlayerData.equippedWing); } await updateDoc(doc(db, "users", currentUser.uid), { equippedWing: wing, wingRefineLevel: 0, inventory: inv }); document.getElementById('btnModalClose').click(); } finally { isProcessingAction=false;} };
         
-        // Fitur Baru: Dismantle (Peleburan)
         document.getElementById('btnModalDismantle').onclick = async () => {
-            if(isProcessingAction) return;
-            if(!confirm("Lebur item ini menjadi 20 Soul Dust? Item akan hancur permanen.")) return;
-            isProcessingAction = true;
-            try {
-                let inv = localPlayerData.inventory || [];
-                inv.splice(selectedInventoryIndex, 1);
-                let currentDust = parseInt(localPlayerData.dust || 0);
-                await updateDoc(doc(db, "users", currentUser.uid), { inventory: inv, dust: currentDust + 20 });
-                addLog(`🔨 Berhasil melebur item menjadi +20 Soul Dust.`, "mystic");
-                document.getElementById('btnModalClose').click();
-            } finally {
-                isProcessingAction = false;
-            }
+            if(isProcessingAction) return; if(!confirm("Lebur item ini menjadi 20 Soul Dust? Item akan hancur permanen.")) return;
+            isProcessingAction = true; try { let inv = localPlayerData.inventory || []; inv.splice(selectedInventoryIndex, 1); let currentDust = parseInt(localPlayerData.dust || 0); await updateDoc(doc(db, "users", currentUser.uid), { inventory: inv, dust: currentDust + 20 }); addLog(`🔨 Berhasil melebur item menjadi +20 Soul Dust.`, "mystic"); document.getElementById('btnModalClose').click(); } finally { isProcessingAction = false; }
         };
 
-        // Modal Jual Pasar
         document.getElementById('btnModalSell').onclick = async () => {
-            let price = parseInt(prompt("Masukkan harga jual (Gold):", "1000"));
-            if(isNaN(price) || price <= 0) return alert("Harga tidak valid!");
+            let price = parseInt(prompt("Masukkan harga jual (Gold):", "1000")); if(isNaN(price) || price <= 0) return alert("Harga tidak valid!");
             if(isProcessingAction) return; isProcessingAction=true;
-            try {
-                let inv = localPlayerData.inventory || []; const item = inv[selectedInventoryIndex]; inv.splice(selectedInventoryIndex, 1);
-                await updateDoc(doc(db, "users", currentUser.uid), { inventory: inv });
-                await addDoc(collection(db, "market"), { sellerUid: currentUser.uid, sellerName: localPlayerData.name, itemName: item, price: price, timestamp: serverTimestamp() });
-                document.getElementById('btnModalClose').click(); addLog(`⚖️ Item [${item}] dipasang di Pasar seharga ${price} G.`, "system");
-            } finally { isProcessingAction=false; }
+            try { let inv = localPlayerData.inventory || []; const item = inv[selectedInventoryIndex]; inv.splice(selectedInventoryIndex, 1); await updateDoc(doc(db, "users", currentUser.uid), { inventory: inv }); await addDoc(collection(db, "market"), { sellerUid: currentUser.uid, sellerName: localPlayerData.name, itemName: item, price: price, timestamp: serverTimestamp() }); document.getElementById('btnModalClose').click(); addLog(`⚖️ Item [${item}] dipasang di Pasar seharga ${price} G.`, "system"); } finally { isProcessingAction=false; }
         };
 
         document.getElementById('btnGacha').addEventListener('click', async () => { if(isProcessingAction) return; if(parseInt(localPlayerData.gold) < 50) return alert("Gold kurang!"); let inv = localPlayerData.inventory || []; if(inv.length >= 10) return alert("Tas Penuh!"); let item = itemPool[Math.floor(Math.random() * itemPool.length)]; inv.push(item); isProcessingAction=true; try { await updateDoc(doc(db, "users", currentUser.uid), { gold: parseInt(localPlayerData.gold) - 50, inventory: inv }); addLog(`Mendapat [${item}] dari Peti!`, "loot"); } finally { isProcessingAction=false; } });
@@ -445,8 +560,7 @@
             onSnapshot(q, (snapshot) => {
                 const lbContent = document.getElementById('leaderboardContent'); lbContent.innerHTML = ""; let rank = 1;
                 snapshot.forEach((doc) => {
-                    let d = doc.data(); let stats = getCalculatedStats(d); let pwr = Math.floor(stats.totalAtk + (stats.totalDef * 0.5) + (stats.totalHp * 0.1));
-                    let safeName = sanitizeText(d.name);
+                    let d = doc.data(); let stats = getCalculatedStats(d); let pwr = Math.floor(stats.totalAtk + (stats.totalDef * 0.5) + (stats.totalHp * 0.1)); let safeName = sanitizeText(d.name);
                     lbContent.innerHTML += `<div class="leaderboard-row" style="cursor:pointer;" onclick="triggerPvP('${doc.id}', '${safeName}', ${pwr})" title="Tantang ${safeName} Berduel!"><span><strong>#${rank++}</strong> ${safeName} (Lv.${d.level}) <span class="pvp-badge">⚔️ PvP</span></span><span style="color:var(--warning)">⚡ ${pwr.toLocaleString()} Pwr</span></div>`;
                 });
             });
@@ -456,16 +570,29 @@
             if(!localPlayerData || isProcessingPvP) return;
             if(targetUid === currentUser.uid) return alert("Sistem menolak: Anda tidak bisa menantang diri sendiri!");
             if(localPlayerData.chi < 20) return alert("Sistem menolak: Butuh minimal 20 Chi untuk memasuki Arena PvP.");
-            isProcessingPvP = true; 
-            let myPwr = calculatePower(localPlayerData); let myRoll = myPwr * (0.85 + (Math.random() * 0.3)); let targetRoll = targetPwr * (0.85 + (Math.random() * 0.3));
-            let currentLogs = localPlayerData.pvpLogs || []; let timeStr = new Date().toLocaleTimeString('id-ID', { hour12: false });
-            let logText = ""; let finalGold = parseInt(localPlayerData.gold); let finalChi = localPlayerData.chi - 20;
-
-            if(myRoll > targetRoll) { finalGold += 300; logText = `[${timeStr}] MENANG vs ${targetName} (+300 G)`; addLog(`⚔️ ARENA PVP: Pukulan Telak! Anda MENGALAHKAN [${targetName}] dan meraih Bounty Sistem +300 Gold!`, "combat"); } 
-            else { logText = `[${timeStr}] KALAH vs ${targetName} (-20 Chi)`; addLog(`💀 ARENA PVP: Anda KALAH dalam adu kekuatan melawan [${targetName}]. Terluka, kehilangan 20 Chi.`, "error"); }
+            isProcessingPvP = true; let combatResult = null; let dqUpdated = null;
             
-            currentLogs.push(logText); if(currentLogs.length > 5) currentLogs = currentLogs.slice(-5);
-            try { await updateDoc(doc(db, "users", currentUser.uid), { chi: finalChi, gold: finalGold, pvpLogs: currentLogs }); } catch(e) {} finally { isProcessingPvP = false; }
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const myRef = doc(db, "users", currentUser.uid); const myDoc = await transaction.get(myRef);
+                    if(!myDoc.exists()) return; let myData = myDoc.data();
+                    let currentChi = parseInt(myData.chi || 0); if(currentChi < 20) throw "Chi mendadak tidak cukup!";
+                    
+                    let myPwr = calculatePower(myData); let myRoll = myPwr * (0.85 + (Math.random() * 0.3)); let targetRoll = targetPwr * (0.85 + (Math.random() * 0.3));
+                    let currentLogs = myData.pvpLogs || []; let timeStr = new Date().toLocaleTimeString('id-ID', { hour12: false });
+                    let logText = ""; let finalGold = parseInt(myData.gold || 0); let finalChi = currentChi - 20;
+                    
+                    dqUpdated = getDailyQuestData(myData);
+
+                    if(myRoll > targetRoll) { finalGold += 300; logText = `[${timeStr}] MENANG vs ${targetName} (+300 G)`; combatResult = { win: true, name: targetName }; dqUpdated.pvp++; } 
+                    else { logText = `[${timeStr}] KALAH vs ${targetName} (-20 Chi)`; combatResult = { win: false, name: targetName }; }
+                    
+                    currentLogs.push(logText); if(currentLogs.length > 5) currentLogs = currentLogs.slice(-5);
+                    transaction.update(myRef, { chi: finalChi, gold: finalGold, pvpLogs: currentLogs, dailyQuest: dqUpdated });
+                });
+                
+                if(combatResult) { if(combatResult.win) addLog(`⚔️ ARENA PVP: Pukulan Telak! Anda MENGALAHKAN [${combatResult.name}] dan meraih Bounty +300 Gold!`, "combat"); else addLog(`💀 ARENA PVP: Anda KALAH dalam adu kekuatan melawan [${combatResult.name}]. Terluka, kehilangan 20 Chi.`, "error"); }
+            } catch(e) { alert(typeof e === 'string' ? e : "Gagal memproses PvP. Transaksi aman dibatalkan."); } finally { isProcessingPvP = false; }
         };
 
         // --- WORLD BOSS ---
@@ -476,13 +603,15 @@
             let pwr = calculatePower(localPlayerData); const bossRef = doc(db, "server", "world_boss"); 
             try { 
                 await runTransaction(db, async (transaction) => { 
-                    const sfDoc = await transaction.get(bossRef); if (!sfDoc.exists() || !sfDoc.data().active) return; 
+                    const sfDoc = await transaction.get(bossRef); 
+                    if (!sfDoc.exists() || !sfDoc.data().active || sfDoc.data().currentHp <= 0) throw "Boss sudah mati ditumbangkan pahlawan lain!";
+                    
                     let newHp = sfDoc.data().currentHp - pwr; 
                     if(newHp <= 0) { transaction.update(bossRef, { currentHp: 0, active: false }); let cDust = parseInt(localPlayerData.dust || 0); transaction.update(doc(db, "users", currentUser.uid), { dust: cDust + 500 }); addLog(`🔥 BERHASIL MENUMPAS WORLD BOSS! Anda mendapatkan hadiah +500 Soul Dust!`, "mystic"); } 
                     else { transaction.update(bossRef, { currentHp: newHp }); } 
                 }); 
                 addLog(`⚔️ Menyerang World Boss! Memberikan ${pwr.toLocaleString()} kerusakan global.`, "combat"); 
-            } catch(e) {} finally { isProcessingBoss = false; }
+            } catch(e) { if(typeof e === 'string') addLog(e, "system"); } finally { isProcessingBoss = false; }
         };
 
         // --- CHAT & ADMIN ---
@@ -499,7 +628,7 @@
             if(e.key.toLowerCase() === 'c') document.getElementById('btnCultivate').click();
             if(e.key.toLowerCase() === 'a') document.getElementById('btnAutoCultivate').click();
             if(e.key.toLowerCase() === 'h') document.getElementById('btnHunt').click();
-            if(e.key === 'Escape') document.getElementById('modalOverlay').click();
+            if(e.key === 'Escape') { document.getElementById('modalOverlay').click(); }
         });
     </script>
 </body>
