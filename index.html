@@ -724,10 +724,15 @@
         document.getElementById('btnAdminSpawnBoss').onclick = async () => { await setDoc(doc(db, "server", "world_boss"), { name: "The Calamity Dragon (Raid)", maxHp: 1000000, currentHp: 1000000, active: true, spawnTime: serverTimestamp() }); document.getElementById('adminModal').style.display = 'none'; document.getElementById('modalOverlay').style.display = 'none'; };
 
         window.addEventListener('keydown', (e) => {
-            if (document.activeElement.tagName === 'INPUT') return;
-            if(e.key.toLowerCase() === 'c') document.getElementById('btnCultivate').click();
-            if(e.key.toLowerCase() === 'a') document.getElementById('btnAutoCultivate').click();
-            if(e.key.toLowerCase() === 'h') document.getElementById('btnHunt').click();
+            // Pengaman: Jika targetnya adalah input teks ATAU e.key tidak terdeteksi, hentikan proses
+            if (document.activeElement.tagName === 'INPUT' || !e.key) return;
+            
+            // Menggunakan optional chaining (?.) untuk keamanan tambahan
+            let keyPress = e.key.toLowerCase();
+            
+            if(keyPress === 'c') document.getElementById('btnCultivate').click();
+            if(keyPress === 'a') document.getElementById('btnAutoCultivate').click();
+            if(keyPress === 'h') document.getElementById('btnHunt').click();
             if(e.key === 'Escape') { document.getElementById('modalOverlay').click(); }
         });
     </script>
