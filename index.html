@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Idle Perfect World - Web MMO</title>
+    <link rel="icon" href="data:,">
     <style>
         :root {
             --bg-dark: #121212; --bg-panel: #1e1e1e; --text-main: #e0e0e0;
@@ -273,7 +274,8 @@
         let isProcessingAction = false; 
         let lastManualCultivate = 0; let lastChatSent = 0; let lastHuntTime = 0; 
         
-        let unsubUser = null; unsubMarket = null; let unsubLeaderboard = null; let unsubBoss = null; let unsubChat = null;
+        // BUG FIX TAHAP 16: Penambahan 'let' pada deklarasi variabel untuk menyelesaikan ReferenceError
+        let unsubUser = null; let unsubMarket = null; let unsubLeaderboard = null; let unsubBoss = null; let unsubChat = null;
 
         const itemStats = { "Mirage Sword": { atk: 50, def: 0, hp: 0 }, "Celestial Wing": { atk: 0, def: 30, hp: 0 }, "Soulgem Ring": { atk: 0, def: 0, hp: 100 }, "Frostbite Dagger": { atk: 85, def: 10, hp: 0 }, "Titanium Armor": { atk: 0, def: 120, hp: 300 }, "Aegis Shield": { atk: 20, def: 150, hp: 500 } };
         const wingStats = { "Sayap Peri Api": { mult: 0.05, desc: "+5% Semua Stats" }, "Sayap Malaikat Hitam": { mult: 0.10, desc: "+10% Semua Stats" }, "Sayap Naga Langit": { mult: 0.20, desc: "+20% Semua Stats" }, "Sayap Dewa Kiamat": { mult: 0.35, desc: "+35% Semua Stats" } };
