@@ -3,175 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giga RPG Web - Final v9.0</title>
+    <title>Giga RPG Web - v10.0 (Stats & Dungeons)</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #1e1e24; color: #fff; margin: 0; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .panel { background: #2a2a35; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-bottom: 20px; }
-        h2 { border-bottom: 2px solid #3f3f52; padding-bottom: 8px; margin-top: 0; color: #00d2ff; }
-        button { padding: 10px 15px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; font-weight: bold; transition: 0.2s; }
-        button:hover { filter: brightness(1.1); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; background-color: #121216; color: #fff; margin: 0; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; } /* Diubah menjadi 3 Kolom */
+        .panel { background: #1f1f27; padding: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); margin-bottom: 15px; border: 1px solid #2a2a35; }
+        h2 { border-bottom: 2px solid #3f3f52; padding-bottom: 5px; margin-top: 0; color: #00d2ff; font-size: 1.2em; }
+        button { padding: 8px 12px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; font-size: 13px; }
+        button:hover { filter: brightness(1.2); }
         button:disabled { background: #555; cursor: not-allowed; }
-        input { background: #1a1a22; border: 1px solid #3f3f52; padding: 10px; color: #fff; border-radius: 4px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+        input { background: #121216; border: 1px solid #3f3f52; padding: 8px; color: #fff; border-radius: 4px; width: 100%; box-sizing: border-box; margin-bottom: 8px; }
         
-        /* Screen Management */
         .screen { display: none; }
         .auth-box { max-width: 400px; margin: 100px auto; }
-        .char-card { background: #1a1a22; border: 2px solid #3f3f52; padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .char-card:hover { border-color: #00d2ff; background: #222230; }
+        .char-card { background: #121216; border: 2px solid #3f3f52; padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .char-card:hover { border-color: #00d2ff; }
 
-        /* Bars & UI Components */
-        .bar-container { background: #555; width: 100%; height: 20px; border-radius: 5px; margin-bottom: 10px; position: relative; overflow: hidden; }
-        .bar-fill-hp { background: #dc3545; width: 100%; height: 100%; transition: width 0.3s; }
-        .bar-fill-exp { background: #28a745; width: 0%; height: 100%; transition: width 0.3s; }
-        .bar-text { position: absolute; width: 100%; text-align: center; font-size: 13px; font-weight: bold; top: 1px; color: #fff; text-shadow: 1px 1px 2px #000; }
-        .chat-box { height: 150px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+        .bar-container { background: #333; width: 100%; height: 16px; border-radius: 4px; margin-bottom: 8px; position: relative; overflow: hidden; }
+        .bar-fill-hp { background: #dc3545; width: 100%; height: 100%; transition: 0.3s; }
+        .bar-fill-exp { background: #28a745; width: 0%; height: 100%; transition: 0.3s; }
+        .bar-text { position: absolute; width: 100%; text-align: center; font-size: 11px; font-weight: bold; top: 1px; color: #fff; text-shadow: 1px 1px 2px #000; }
+        
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 13px; color: #ccc; background: #121216; padding: 10px; border-radius: 5px; }
+        .stat-val { color: #fff; font-weight: bold; float: right; }
+        
+        .chat-box { height: 150px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; margin-bottom: 10px; font-size: 13px; }
         .chat-name { color: #ffca28; font-weight: bold; }
-        .leaderboard-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #3f3f52; }
+        
+        .inv-item { display: inline-block; background: #3f3f52; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- =================LAYAR 1: LOGIN & REGISTER =================-->
+        <!-- LAYAR AUTH -->
         <div id="screen-auth" class="screen" style="display: block;">
             <div class="panel auth-box">
                 <h2 id="auth-title" style="text-align: center;">Masuk Gerbang RPG</h2>
-                <div style="margin-top: 15px;">
-                    <label>Alamat Email</label>
-                    <input type="email" id="auth-email" placeholder="nama@email.com">
-                    
-                    <label>Kata Sandi</label>
-                    <input type="password" id="auth-password" placeholder="******">
-                    
-                    <button id="btn-primary-auth" style="width: 100%; margin-top: 10px;">MASUK</button>
-                    <p style="text-align: center; font-size: 14px; margin-top: 15px;">
-                        <span id="auth-toggle-text">Belum punya akun?</span> 
-                        <a href="#" id="link-toggle-auth" style="color: #00d2ff; text-decoration: none;">Daftar Sekarang</a>
-                    </p>
-                </div>
+                <input type="email" id="auth-email" placeholder="Email">
+                <input type="password" id="auth-password" placeholder="Password">
+                <button id="btn-primary-auth" style="width: 100%; margin-top: 10px;">MASUK</button>
+                <p style="text-align: center; font-size: 13px; margin-top: 15px;">
+                    <span id="auth-toggle-text">Belum punya akun?</span> 
+                    <a href="#" id="link-toggle-auth" style="color: #00d2ff;">Daftar Sekarang</a>
+                </p>
             </div>
         </div>
 
-        <!-- =================LAYAR 2: PILIH KARAKTER =================-->
+        <!-- LAYAR PILIH KARAKTER -->
         <div id="screen-char-select" class="screen">
             <div class="panel" style="max-width: 600px; margin: 50px auto;">
-                <h2 style="text-align: center;">Pilih Kelas Karakter Anda</h2>
-                <p style="text-align: center; color: #aaa;">Pilihan ini menentukan atribut pertarungan Anda.</p>
+                <h2 style="text-align: center;">Pilih Kelas Karakter</h2>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
                     <div class="char-card" id="class-warrior">
-                        <h3 style="color: #ff4a4a; margin: 0;">⚔️ Warrior</h3>
-                        <p style="font-size: 13px; color: #ccc;">HP Tebal & Pertahanan Kokoh. Cocok untuk barisan depan.</p>
+                        <h3 style="color: #ff4a4a;">⚔️ Warrior</h3>
+                        <p style="font-size: 12px; color: #aaa;">STR: 15 | CON: 20<br>DEX: 5 | INT: 2</p>
                     </div>
                     <div class="char-card" id="class-mage">
-                        <h3 style="color: #4ae3ff; margin: 0;">🔮 Mage</h3>
-                        <p style="font-size: 13px; color: #ccc;">MP Tinggi & Damage Besar. Ahli sihir berelemen.</p>
+                        <h3 style="color: #4ae3ff;">🔮 Mage</h3>
+                        <p style="font-size: 12px; color: #aaa;">STR: 2 | CON: 8<br>DEX: 10 | INT: 25</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- =================LAYAR 3: DASHBOARD UTAMA GAME =================-->
+        <!-- LAYAR DASHBOARD GAME -->
         <div id="screen-game" class="screen">
-            <!-- Header -->
-            <div class="panel" style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h1 style="margin: 0; font-size: 24px;">🎮 Giga RPG Dashboard</h1>
-                    <span style="font-size: 13px; color: #aaa;">ID Akun: <span id="player-uid">...</span></span>
-                </div>
-                <button id="btn-logout" style="background: #dc3545;">🚪 Keluar</button>
+            <div class="panel" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+                <h1 style="margin: 0; font-size: 20px;">🎮 Giga RPG Web</h1>
+                <button id="btn-logout" style="background: #dc3545;">Keluar</button>
             </div>
             
-            <!-- Info Pemain -->
-            <div class="panel">
-                <h2>Status Karakter</h2>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <div>Nama: <strong id="player-name" style="color: #ffca28;">...</strong></div>
-                    <div>Kelas: <strong id="player-class" style="color: #e040fb;">...</strong></div>
-                    <div>Level: <strong id="player-level" style="color: #00d2ff; font-size: 1.2em;">1</strong></div>
-                    <div>Saldo: <strong id="player-gold" style="color: #ffd700;">0</strong> Gold</div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                    <!-- EXP BAR -->
-                    <div class="bar-container" style="height: 15px; margin: 0;">
-                        <div id="exp-bar" class="bar-fill-exp"></div>
-                        <div id="exp-text" class="bar-text" style="font-size: 11px;">0 / 100 EXP</div>
-                    </div>
-                    <!-- HP BAR -->
-                    <div class="bar-container" style="height: 15px; margin: 0;">
-                        <div id="char-hp-bar" class="bar-fill-hp"></div>
-                        <div id="char-hp-text" class="bar-text" style="font-size: 11px;">0 / 0 HP</div>
-                    </div>
-                    <!-- MP BAR -->
-                    <div class="bar-container" style="height: 15px; margin: 0;">
-                        <div id="char-mp-bar" style="background: #007bff; width: 0%; height: 100%; transition: 0.3s;"></div>
-                        <div id="char-mp-text" class="bar-text" style="font-size: 11px;">0 / 0 MP</div>
-                    </div>
-                </div>
-            </div>
-
             <div class="grid">
-                <!-- KIRI: KONTEN GAME -->
+                <!-- KOLOM 1: STATUS & INVENTARIS -->
                 <div>
-                    <!-- WORLD BOSS -->
                     <div class="panel">
-                        <h2>👹 WORLD BOSS: <span id="boss-name">Memuat...</span></h2>
-                        <div class="bar-container">
-                            <div id="hp-bar" class="bar-fill-hp"></div>
-                            <div id="hp-text" class="bar-text">0 / 0 HP</div>
+                        <h2>Profil Karakter</h2>
+                        <div style="margin-bottom: 10px; font-size: 14px;">
+                            <strong id="player-name" style="color: #ffca28; font-size: 18px;">...</strong><br>
+                            <span id="player-class" style="color: #e040fb;">...</span> | Level <strong id="player-level" style="color:#00d2ff;">1</strong>
                         </div>
-                        <button id="btn-attack" style="background: #e67e22;">⚔️ SERANG BOSS!</button>
-                    </div>
-
-                    <!-- TOKO ALKEMIS -->
-                    <div class="panel">
-                        <h2>🧪 Toko Alkemis</h2>
-                        <div style="display: flex; gap: 10px;">
-                            <button id="btn-buy-hp" style="flex: 1; background: #dc3545;">Beli HP Potion<br><span style="font-size:11px">(500 Gold | +500 HP)</span></button>
-                            <button id="btn-buy-mp" style="flex: 1; background: #007bff;">Beli MP Potion<br><span style="font-size:11px">(500 Gold | +300 MP)</span></button>
-                        </div>
-                    </div>
-
-                    <!-- PENGATURAN -->
-                    <div class="panel">
-                        <h2>⚙️ Pengaturan Akun</h2>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="input-new-name" placeholder="Nama Baru..." style="margin:0;">
-                            <button id="btn-change-name" style="white-space: nowrap; background: #6c757d;">Ganti Nama (2k Gold)</button>
+                        
+                        <div class="bar-container"><div id="exp-bar" class="bar-fill-exp"></div><div id="exp-text" class="bar-text">EXP</div></div>
+                        <div class="bar-container"><div id="char-hp-bar" class="bar-fill-hp"></div><div id="char-hp-text" class="bar-text">HP</div></div>
+                        <div class="bar-container"><div id="char-mp-bar" style="background: #007bff; width:0%; height:100%;"></div><div id="char-mp-text" class="bar-text">MP</div></div>
+                        
+                        <div class="stat-grid" style="margin-top: 10px;">
+                            <div>STR: <span id="stat-str" class="stat-val">0</span></div>
+                            <div>CON: <span id="stat-con" class="stat-val">0</span></div>
+                            <div>DEX: <span id="stat-dex" class="stat-val">0</span></div>
+                            <div>INT: <span id="stat-int" class="stat-val">0</span></div>
+                            <div style="grid-column: span 2; border-top: 1px solid #333; margin-top:5px; padding-top:5px;"></div>
+                            <div>ATK: <span id="stat-atk" class="stat-val" style="color:#ff4a4a;">0</span></div>
+                            <div>Crit: <span id="stat-crit" class="stat-val" style="color:#ffd700;">0%</span></div>
+                            <div>Hindaran: <span id="stat-eva" class="stat-val">0%</span></div>
+                            <div>Akurasi: <span id="stat-acc" class="stat-val">0%</span></div>
                         </div>
                     </div>
 
-                    <!-- DAFTAR SEKTE -->
                     <div class="panel">
-                        <h2>🛡️ Daftar Sekte (Guild)</h2>
-                        <div id="guild-list" style="margin-bottom: 15px; max-height: 120px; overflow-y: auto;">Memuat sekte...</div>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="guild-input" placeholder="Nama Sekte Baru" style="margin:0;">
-                            <button id="btn-create-guild" style="white-space: nowrap; background: #28a745;">Buat Sekte (10k)</button>
+                        <h2>🎒 Inventaris</h2>
+                        <div id="inventory-list" style="min-height: 50px; background: #121216; padding: 10px; border-radius: 5px;">Memuat...</div>
+                    </div>
+                </div>
+
+                <!-- KOLOM 2: BATTLE & DUNGEON -->
+                <div>
+                    <div class="panel">
+                        <h2>👹 WORLD BOSS</h2>
+                        <h3 id="boss-name" style="margin-top:0; color:#ff4a4a;">Memuat...</h3>
+                        <div class="bar-container"><div id="hp-bar" class="bar-fill-hp"></div><div id="hp-text" class="bar-text">0 / 0 HP</div></div>
+                        <button id="btn-attack" style="width:100%; background: #e67e22; padding: 12px; font-size:15px;">⚔️ SERANG BOSS!</button>
+                    </div>
+
+                    <div class="panel">
+                        <h2>🦇 Dungeon Gelap</h2>
+                        <p style="font-size: 12px; color: #aaa;">Jelajahi dungeon untuk mencari Gold, EXP, dan material. Membutuhkan konsentrasi (MP).</p>
+                        <button id="btn-dungeon" style="width:100%; background: #6f42c1; padding: 12px; font-size:15px;">🔦 Masuk Dungeon (20 MP)</button>
+                    </div>
+
+                    <div class="panel">
+                        <h2>⚖️ Bankir & Keuangan</h2>
+                        <div class="stat-grid" style="margin-bottom: 10px;">
+                            <div>Dompet: <span id="player-gold" class="stat-val" style="color:#ffd700;">0 G</span></div>
+                            <div>Brankas: <span id="player-bank" class="stat-val" style="color:#00d2ff;">0 G</span></div>
+                        </div>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="number" id="input-bank" placeholder="Jumlah..." style="margin:0;">
+                            <button id="btn-deposit" style="background: #28a745;">Simpan</button>
+                            <button id="btn-withdraw" style="background: #dc3545;">Tarik</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- KANAN: SOSIAL & KOMUNITAS -->
+                <!-- KOLOM 3: KOTA & KOMUNITAS -->
                 <div>
                     <div class="panel">
-                        <h2>🏆 Papan Peringkat (Top 10)</h2>
-                        <div id="leaderboard-list">Memuat peringkat...</div>
+                        <h2>🧪 Toko Ahli Obat</h2>
+                        <div style="display: flex; gap: 5px;">
+                            <button id="btn-buy-hp" style="flex:1; background:#dc3545;">Beli HP Pot<br><small>500 G</small></button>
+                            <button id="btn-buy-mp" style="flex:1; background:#007bff;">Beli MP Pot<br><small>500 G</small></button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2>🏆 Papan Peringkat</h2>
+                        <div id="leaderboard-list" style="font-size: 13px;">Memuat peringkat...</div>
                     </div>
 
                     <div class="panel">
                         <h2>💬 Chat Global</h2>
                         <div id="chat-box" class="chat-box"></div>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="chat-input" placeholder="Kirim pesan ke seluruh dunia..." style="margin:0;">
+                        <div style="display: flex; gap: 5px;">
+                            <input type="text" id="chat-input" placeholder="Pesan..." style="margin:0;">
                             <button id="btn-send-chat">Kirim</button>
                         </div>
-                    </div>
-
-                    <div class="panel">
-                        <h2>📬 Kotak Masuk (Mailbox)</h2>
-                        <div id="mailbox-list" style="max-height: 200px; overflow-y: auto;">Memuat surat...</div>
                     </div>
                 </div>
             </div>
