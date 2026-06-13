@@ -3,64 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPG Web Game - Full Features</title>
+    <title>Giga RPG Web - v7.0 Leveling</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #1e1e24; color: #fff; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #1e1e24; color: #fff; margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .panel { background: #2a2a35; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .panel { background: #2a2a35; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-bottom: 20px; }
         h2 { border-bottom: 2px solid #3f3f52; padding-bottom: 8px; margin-top: 0; color: #00d2ff; }
         button { padding: 10px 15px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; font-weight: bold; }
         button:hover { background: #0056b3; }
         button:disabled { background: #555; cursor: not-allowed; }
-        /* Chat Box Style */
-        #chat-box { height: 150px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
-        .chat-msg { margin-bottom: 5px; font-size: 14px; }
+        input[type="text"] { background: #1a1a22; border: 1px solid #3f3f52; padding: 8px; color: #fff; border-radius: 4px; }
+        
+        /* Bar EXP & HP */
+        .bar-container { background: #555; width: 100%; height: 20px; border-radius: 5px; margin-bottom: 10px; position: relative; overflow: hidden; }
+        .bar-fill-hp { background: #dc3545; width: 100%; height: 100%; transition: width 0.3s; }
+        .bar-fill-exp { background: #28a745; width: 0%; height: 100%; transition: width 0.3s; }
+        .bar-text { position: absolute; width: 100%; text-align: center; font-size: 13px; font-weight: bold; top: 1px; color: #fff; text-shadow: 1px 1px 2px #000; }
+
+        .chat-box { height: 150px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
         .chat-name { color: #ffca28; font-weight: bold; }
-        /* HP Bar Style */
-        .hp-container { background: #555; width: 100%; height: 25px; border-radius: 5px; margin-bottom: 10px; position: relative; }
-        #hp-bar { background: #dc3545; width: 100%; height: 100%; border-radius: 5px; transition: width 0.3s; }
-        #hp-text { position: absolute; width: 100%; text-align: center; font-weight: bold; top: 2px; color: #fff; }
+        .leaderboard-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #3f3f52; }
     </style>
 </head>
 <body>
 
-    <h1>🎮 Giga RPG Dashboard (GitHub Pages Edition)</h1>
-    
-    <div class="panel" style="margin-bottom: 20px;">
-        <h2>Status Karakter</h2>
-        <p>UID: <span id="player-uid">Menghubungkan...</span> | Gold: <strong id="player-gold" style="color: #ffd700;">0</strong></p>
-    </div>
-
-    <div class="grid">
-        <div>
-            <div class="panel" style="margin-bottom: 20px;">
-                <h2>👹 WORLD BOSS: <span id="boss-name">Memuat...</span></h2>
-                <div class="hp-container">
-                    <div id="hp-bar"></div>
-                    <div id="hp-text">0 / 0 HP</div>
-                </div>
-                <button id="btn-attack">⚔️ SERANG BOSS!</button>
+    <div class="container">
+        <h1>🎮 Giga RPG Dashboard (v7.0)</h1>
+        
+        <div class="panel">
+            <h2>Status Karakter</h2>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span>UID: <span id="player-uid" style="color:#aaa;">Menghubungkan...</span></span>
+                <span>Level: <strong id="player-level" style="color: #00d2ff; font-size: 1.2em;">1</strong></span>
+                <span>Saldo: <strong id="player-gold" style="color: #ffd700;">0</strong> Gold</span>
             </div>
-
-            <div class="panel">
-                <h2>⚖️ Pasar Global</h2>
-                <div id="market-list">Memuat barang dagangan...</div>
-                <br>
-                <button id="btn-buy-sample">Beli Pedang Sampel (15,000 Gold)</button>
+            <div class="bar-container" style="height: 15px;">
+                <div id="exp-bar" class="bar-fill-exp"></div>
+                <div id="exp-text" class="bar-text" style="font-size: 11px;">0 / 100 EXP</div>
             </div>
         </div>
 
-        <div>
-            <div class="panel" style="margin-bottom: 20px;">
-                <h2>💬 Chat Global Real-Time</h2>
-                <div id="chat-box"></div>
-                <input type="text" id="chat-input" placeholder="Tulis pesan..." style="width: 70%; padding: 8px; border-radius: 4px; border: none;">
-                <button id="btn-send-chat" style="width: 25%;">Kirim</button>
+        <div class="grid">
+            <div>
+                <div class="panel">
+                    <h2>👹 WORLD BOSS: <span id="boss-name">Memuat...</span></h2>
+                    <div class="bar-container">
+                        <div id="hp-bar" class="bar-fill-hp"></div>
+                        <div id="hp-text" class="bar-text">0 / 0 HP</div>
+                    </div>
+                    <button id="btn-attack">⚔️ SERANG BOSS!</button>
+                    <p style="font-size: 12px; color: #aaa; margin-top: 10px;">Info: Serang bos untuk mendapatkan EXP.</p>
+                </div>
+
+                <div class="panel">
+                    <h2>🏆 Papan Peringkat (Top 10 Level)</h2>
+                    <div id="leaderboard-list">Memuat peringkat...</div>
+                </div>
+
+                <div class="panel">
+                    <h2>🛡️ Daftar Sekte (Guild)</h2>
+                    <div id="guild-list" style="margin-bottom: 15px; max-height: 120px; overflow-y: auto;">Memuat sekte...</div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="guild-input" placeholder="Nama Sekte Baru" style="flex: 1;">
+                        <button id="btn-create-guild">Buat Sekte (10k Gold)</button>
+                    </div>
+                </div>
             </div>
 
-            <div class="panel">
-                <h2>📬 Kotak Masuk</h2>
-                <div id="mailbox-list">Memuat surat...</div>
+            <div>
+                <div class="panel">
+                    <h2>💬 Chat Global</h2>
+                    <div id="chat-box" class="chat-box"></div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="chat-input" placeholder="Tulis pesan..." style="flex: 1;">
+                        <button id="btn-send-chat">Kirim</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>⚖️ Pasar Global</h2>
+                    <div id="market-list">Memuat barang dagangan...</div>
+                    <br><button id="btn-buy-sample">Beli Pedang (15k Gold)</button>
+                </div>
+
+                <div class="panel">
+                    <h2>📬 Kotak Masuk</h2>
+                    <div id="mailbox-list">Memuat surat...</div>
+                </div>
             </div>
         </div>
     </div>
