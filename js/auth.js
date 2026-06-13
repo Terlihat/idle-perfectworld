@@ -1,40 +1,24 @@
 import { auth } from './firebase-config.js';
-import { 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    signOut 
-} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-// Fungsi Pendaftaran Akun Baru
 export async function registerWithEmail(email, password) {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         return userCredential.user;
-    } catch (error) {
-        throw getReadableAuthError(error.code);
-    }
+    } catch (error) { throw getReadableAuthError(error.code); }
 }
 
-// Fungsi Masuk Akun
 export async function loginWithEmail(email, password) {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         return userCredential.user;
-    } catch (error) {
-        throw getReadableAuthError(error.code);
-    }
+    } catch (error) { throw getReadableAuthError(error.code); }
 }
 
-// Fungsi Keluar Akun
 export async function logoutUser() {
-    try {
-        await signOut(auth);
-    } catch (error) {
-        console.error("Gagal Logout:", error);
-    }
+    try { await signOut(auth); } catch (error) { console.error("Gagal Logout:", error); }
 }
 
-// Terjemahan Error Firebase agar mudah dibaca pemain
 function getReadableAuthError(code) {
     switch (code) {
         case 'auth/email-already-in-use': return 'Email sudah terdaftar!';
