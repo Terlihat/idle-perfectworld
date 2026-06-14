@@ -11,6 +11,9 @@ import { listenToChat, sendChat } from './modules/chat.js';
 import { buyPotion, listenToMailbox } from './modules/apothecary.js';
 import { buyGachaBox } from './modules/mall.js';
 
+// BARU: Import Modul Manajemen Bank
+import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
+
 // ==========================================
 // 2. VARIABEL GLOBAL & DATABASE ITEM
 // ==========================================
@@ -18,10 +21,9 @@ let currentUserUid = null;
 let isCooldown = false;
 let activeUnsubscribeListeners = [];
 let currentAccuracy = 0;
-let inventoryMode = "EQUIP"; 
-let playerUsername = "Hero Anonim"; // Variabel global untuk menampung nama di chat
+let inventoryMode = "EQUIP"; // Variasi mode klik tas: EQUIP, SELL, atau BANK
+let playerUsername = "Hero Anonim";
 
-// Database lokal untuk stat perlengkapan & drop dungeon
 const ITEM_DB = {
     "Pedang Besi": { type: "weapon", patk: 30, sellValue: 1000 },
     "Tongkat Sihir": { type: "weapon", matk: 30, sellValue: 1000 },
@@ -75,13 +77,11 @@ onAuthStateChanged(auth, async (user) => {
 // ==========================================
 function startLiveGameSync() {
     listenToPlayerData(); 
-    listenToWorldBoss(); // Pastikan Anda memiliki fungsi ini jika boss aktif
+    listenToWorldBoss();
     
-    // Integrasi Modul Chat Global
     const unsubChat = listenToChat(db, (messages) => {
         const chatBox = document.getElementById('chat-box');
         chatBox.innerHTML = "";
-        
         messages.forEach(m => {
             const safeName = escapeHTML(m.username);
             const safeText = escapeHTML(m.text);
@@ -90,7 +90,6 @@ function startLiveGameSync() {
         chatBox.scrollTop = chatBox.scrollHeight;
     });
 
-    // Integrasi Modul Mailbox (Surat)
     const unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
         const mailDiv = document.getElementById('mailbox-list');
         mailDiv.innerHTML = mails.length === 0 ? "Tidak ada surat baru." : "";
@@ -103,14 +102,13 @@ function startLiveGameSync() {
 }
 
 // ==========================================
-// 5. RENDERING DATA PEMAIN & STATISTIK
+// 5. RENDERING DATA PEMAIN & GRID BANK 4x8
 // ==========================================
 function listenToPlayerData() {
     const unsub = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
         if (!docSnap.exists()) return;
         const d = docSnap.data();
         
-        // Simpan username untuk digunakan saat mengirim chat
         playerUsername = d.username || "Hero Anonim";
 
         document.getElementById('player-name').innerText = d.username;
@@ -118,6 +116,8 @@ function listenToPlayerData() {
         document.getElementById('player-level').innerText = d.level || 1;
         document.getElementById('header-gold').innerText = (d.gold || 0).toLocaleString();
         document.getElementById('header-coin').innerText = (d.coin || 0).toLocaleString();
+        
+        // FIX BUG: Tampilan penampung saldo bank emas kini terhubung secara realtime
         document.getElementById('player-bank').innerText = (d.bankGold || 0).toLocaleString();
         
         const maxExp = (d.level || 1) * 100;
@@ -133,8 +133,8 @@ function listenToPlayerData() {
         document.getElementById('stat-dex').innerText = d.dex;
         document.getElementById('stat-int').innerText = d.int;
 
+        // --- Perhitungan Equipment ---
         const eq = d.equipment || {};
-        
         const wRefine = eq.weapon?.refine ? ` (+${eq.weapon.refine})` : "";
         const aRefine = eq.armor?.refine ? ` (+${eq.armor.refine})` : "";
         const cRefine = eq.accessory?.refine ? ` (+${eq.accessory.refine})` : "";
@@ -166,10 +166,10 @@ function listenToPlayerData() {
         document.getElementById('stat-eva').innerText = eva + "%"; 
         document.getElementById('stat-acc').innerText = currentAccuracy.toFixed(1) + "%";
 
+        // --- Render Tas Utama Pemain (20 Slot) ---
         const invGrid = document.getElementById('inventory-grid');
         invGrid.innerHTML = "";
         let items = Object.entries(d.inventory || {});
-        
         for (let i = 0; i < 20; i++) {
             if (i < items.length) {
                 const [name, qty] = items[i];
@@ -179,18 +179,48 @@ function listenToPlayerData() {
                 invGrid.innerHTML += `<div class="inv-slot">Kosong</div>`;
             }
         }
+
+        // --- BARU: Render Grid Brankas Item Ala Perfect World (4x8 = 32 Slot) ---
+        const bankGrid = document.getElementById('bank-grid');
+        if (bankGrid) {
+            bankGrid.innerHTML = "";
+            let bankItems = Object.entries(d.bankInventory || {});
+            for (let i = 0; i < 32; i++) {
+                if (i < bankItems.length) {
+                    const [name, qty] = bankItems[i];
+                    bankGrid.innerHTML += `<div class="bank-slot filled" onclick="window.handleBankClick('${escapeHTML(name)}')">
+                        <span>${escapeHTML(name)}</span><span class="inv-qty">x${qty}</span></div>`;
+                } else {
+                    bankGrid.innerHTML += `<div class="bank-slot">Kosong</div>`;
+                }
+            }
+        }
     });
     activeUnsubscribeListeners.push(unsub);
 }
 
 // ==========================================
-// 6. MEKANIK INVENTARIS & DUNGEON
+// 6. INTERAKSI KLIK TAS & BRANKAS
 // ==========================================
 window.handleInventoryClick = function(itemName) {
-    if (inventoryMode === "EQUIP") { equipFromInventory(itemName); } 
-    else if (inventoryMode === "SELL") { sellItemFromInventory(itemName); }
+    if (inventoryMode === "EQUIP") { 
+        equipFromInventory(itemName); 
+    } else if (inventoryMode === "SELL") { 
+        sellItemFromInventory(itemName); 
+    } else if (inventoryMode === "BANK") { 
+        // Mode Brankas: Mengirim item dari tas menuju Bank
+        depositItem(db, currentUserUid, itemName); 
+    }
 };
 
+window.handleBankClick = function(itemName) {
+    // Mengklik item di dalam Brankas akan menariknya kembali ke tas utama
+    withdrawItem(db, currentUserUid, itemName);
+};
+
+// ==========================================
+// 7. MEKANIK DASAR GAME (DUNGEON / SELL / EQUIP)
+// ==========================================
 async function equipFromInventory(itemName) {
     if (!currentUserUid || !ITEM_DB[itemName]) return;
     const itemData = ITEM_DB[itemName];
@@ -269,13 +299,9 @@ async function exploreDungeon() {
     setTimeout(() => { document.getElementById('btn-dungeon').disabled = false; isCooldown = false; }, 2000);
 }
 
-// ==========================================
-// 7. SISTEM TEMPA (REFINE)
-// ==========================================
 async function refineEquipment(slotType) {
     if (!currentUserUid) return;
     const userRef = doc(db, "users", currentUserUid);
-
     try {
         await runTransaction(db, async (ts) => {
             const data = (await ts.get(userRef)).data();
@@ -311,15 +337,12 @@ async function refineEquipment(slotType) {
                     alert(`❌ TEMPA GAGAL! Beruntung tingkat tempa [${eq[slotType].name}] tidak turun.`);
                 }
             }
-
             ts.update(userRef, { inventory: inv, equipment: eq, gold: gold });
         });
     } catch (err) { alert(err); }
 }
 
-// Placeholder untuk World Boss (Mencegah Error jika elemen HTML dipanggil)
 function listenToWorldBoss() {
-    // Fungsi ini dapat Anda kembangkan nanti atau gunakan modul terpisah
     const bossNameEl = document.getElementById('boss-name');
     if (bossNameEl && bossNameEl.innerText === "Memuat...") {
         bossNameEl.innerText = "Naga Hitam (Menunggu Update)";
@@ -329,23 +352,32 @@ function listenToWorldBoss() {
 // ==========================================
 // 8. BINDING EVENT LISTENERS (UI & MODUL)
 // ==========================================
+function clearActiveModeClasses() {
+    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.className = "";
+    });
+}
 
-// Mode Inventaris
 document.getElementById('btn-mode-equip')?.addEventListener('click', () => {
     inventoryMode = "EQUIP";
+    clearActiveModeClasses();
     document.getElementById('btn-mode-equip').className = "mode-active";
-    document.getElementById('btn-mode-sell').className = "";
-    document.getElementById('btn-mode-sell').style.backgroundColor = "#495057";
 });
 
 document.getElementById('btn-mode-sell')?.addEventListener('click', () => {
     inventoryMode = "SELL";
+    clearActiveModeClasses();
     document.getElementById('btn-mode-sell').className = "mode-sell-active";
-    document.getElementById('btn-mode-equip').className = "";
-    document.getElementById('btn-mode-equip').style.backgroundColor = "#495057";
 });
 
-// Aksi Pemain Lokal
+// BARU: Aktifkan mode interaksi penyimpanan Bank ketika menu Bank dibuka
+document.getElementById('btn-mode-bank')?.addEventListener('click', () => {
+    inventoryMode = "BANK";
+    clearActiveModeClasses();
+    document.getElementById('btn-mode-bank').className = "mode-active";
+});
+
 document.getElementById('btn-dungeon')?.addEventListener('click', exploreDungeon);
 document.getElementById('btn-refine-weapon')?.addEventListener('click', () => refineEquipment('weapon'));
 document.getElementById('btn-refine-armor')?.addEventListener('click', () => refineEquipment('armor'));
@@ -364,7 +396,24 @@ document.getElementById('btn-buy-mp')?.addEventListener('click', () => buyPotion
 // Event Modul: Item Mall
 document.getElementById('btn-mall-gacha')?.addEventListener('click', () => buyGachaBox(db, currentUserUid));
 
-// Event Modul: Chat Global (Eksekusi Kirim)
+// BARU: Event Listener Aksi Transaksi Emas Bank (Deposit & Withdraw)
+document.getElementById('btn-bank-deposit-gold')?.addEventListener('click', () => {
+    const goldAmount = parseInt(document.getElementById('bank-gold-input')?.value || 0);
+    if (goldAmount > 0) {
+        depositGold(db, currentUserUid, goldAmount);
+        document.getElementById('bank-gold-input').value = "";
+    }
+});
+
+document.getElementById('btn-bank-withdraw-gold')?.addEventListener('click', () => {
+    const goldAmount = parseInt(document.getElementById('bank-gold-input')?.value || 0);
+    if (goldAmount > 0) {
+        withdrawGold(db, currentUserUid, goldAmount);
+        document.getElementById('bank-gold-input').value = "";
+    }
+});
+
+// Event Modul: Chat Global
 const chatInput = document.getElementById('chat-input');
 const btnSendChat = document.getElementById('btn-send-chat');
 
