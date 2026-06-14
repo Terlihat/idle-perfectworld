@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro MMORPG Web Project (v1.1.0)</title>
+    
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+    <div id="screen-auth" class="screen" style="display: block;">
+        <div class="version-label">Versi Code: 1.1.0</div>
+        <h2>🔐 Masuk Dunia Hero</h2>
+        <p>Silakan gunakan Firebase Auth Anda untuk memuat karakter game.</p>
+        <div style="margin-bottom: 20px;">
+            <p style="font-size: 12px; color: #888;">*Sistem otomatis mendeteksi status login akun.*</p>
+        </div>
+    </div>
+
+    <div id="screen-char-select" class="screen">
+        <div class="version-label">Versi Code: 1.1.0</div>
+        <h2>⚔️ Pilih Kelas Karakter Anda</h2>
+        <p>Tentukan takdir perjuangan Anda hari ini.</p>
+        </div>
+
+    <div id="screen-game" class="screen">
+        <div class="version-label">Versi Code: 1.1.0</div>
+        
+        <div class="game-header">
+            <div>
+                <strong id="player-name">Memuat...</strong> 
+                <span style="color:#888;">[</span><span id="player-class" style="color:#ffcc00;">-</span><span style="color:#888;">]</span>
+                <span style="margin-left: 15px;">Lv. <span id="player-level" style="color:#00ffcc; font-weight:bold;">1</span></span>
+            </div>
+            <div style="display: flex; gap: 20px;">
+                <div>💰 Dompet: <span id="header-gold" style="color:#ffcc00; font-weight:bold;">0</span> Gold</div>
+                <div>💎 Koin Mall: <span id="header-coin" style="color:#00ffcc; font-weight:bold;">0</span> COIN</div>
+                <div>🏦 Brankas: <span id="player-bank" style="color:#e0e0e0; font-weight:bold;">0</span> Gold</div>
+            </div>
+        </div>
+
+        <div class="game-container">
+            
+            <div class="panel">
+                <h3>📊 Statistik Pahlawan</h3>
+                <div style="margin-bottom: 15px;">
+                    <span style="font-size: 12px;">Pengalaman (EXP):</span>
+                    <div class="bar-container">
+                        <div id="exp-text" class="bar-text">0 / 100</div>
+                        <div id="exp-bar" class="exp-bar"></div>
+                    </div>
+                    <span style="font-size: 12px;">Poin Kesehatan (HP):</span>
+                    <div class="bar-container">
+                        <div id="char-hp-text" class="bar-text">0 / 0</div>
+                        <div id="char-hp-bar" class="hp-bar"></div>
+                    </div>
+                    <span style="font-size: 12px;">Poin Sihir (MP):</span>
+                    <div class="bar-container">
+                        <div id="char-mp-text" class="bar-text">0 / 0</div>
+                        <div id="char-mp-bar" class="mp-bar"></div>
+                    </div>
+                </div>
+
+                <table style="width:100%; font-size:13px; margin-bottom:15px; border-collapse:collapse;">
+                    <tr><td>STR (Kekuatan)</td><td id="stat-str" style="text-align:right; color:#ffcc00;">0</td></tr>
+                    <tr><td>CON (Ketahanan)</td><td id="stat-con" style="text-align:right; color:#ffcc00;">0</td></tr>
+                    <tr><td>DEX (Kelincahan)</td><td id="stat-dex" style="text-align:right; color:#ffcc00;">0</td></tr>
+                    <tr><td>INT (Kecerdasan)</td><td id="stat-int" style="text-align:right; color:#ffcc00;">0</td></tr>
+                    <tr style="border-top:1px solid #333;"><td colspan="2" style="height:5px;"></td></tr>
+                    <tr><td>P. ATK (Fisik)</td><td id="stat-patk" style="text-align:right; color:#ff4444;">0</td></tr>
+                    <tr><td>MA. ATK (Sihir)</td><td id="stat-matk" style="text-align:right; color:#4488ff;">0</td></tr>
+                    <tr><td>DEF (Pertahanan)</td><td id="stat-def" style="text-align:right; color:#00ff66;">0</td></tr>
+                    <tr><td>CRIT Rate</td><td id="stat-crit" style="text-align:right;">0%</td></tr>
+                    <tr><td>Evasion (Hindaran)</td><td id="stat-eva" style="text-align:right;">0%</td></tr>
+                    <tr><td>Accuracy (Akurasi)</td><td id="stat-acc" style="text-align:right;">0%</td></tr>
+                </table>
+
+                <h3>🛡️ Perlengkapan Badan</h3>
+                <div class="equipment-list">
+                    <div>⚔️ Senjata: <strong id="eq-weapon" style="color:#ffcc00;">Kosong</strong></div>
+                    <div>👕 Zirah: <strong id="eq-armor" style="color:#ffcc00;">Kosong</strong></div>
+                    <div>📿 Aksesoris: <strong id="eq-acc" style="color:#ffcc00;">Kosong</strong></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>🗺️ Papan Petualangan</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button id="btn-dungeon" style="background-color: #8b0000; flex: 1; padding: 12px;">⚔️ Jelajahi Dungeon (Biaya: 20 MP)</button>
+                </div>
+
+                <h3>🔨 Bengkel Tempa Peralatan</h3>
+                <div style="display: flex; gap: 5px; margin-bottom: 20px;">
+                    <button id="btn-refine-weapon" style="font-size:11px; flex:1;">Tempa Senjata</button>
+                    <button id="btn-refine-armor" style="font-size:11px; flex:1;">Tempa Zirah</button>
+                    <button id="btn-refine-accessory" style="font-size:11px; flex:1;">Tempa Aksesoris</button>
+                </div>
+
+                <div class="bank-container">
+                    <h3>🏦 Bank Penyimpanan (Grid 4x8)</h3>
+                    <p style="font-size: 11px; color:#aaa; margin: -5px 0 10px 0;">
+                        *Aktifkan <strong>Mode Brankas</strong> pada tas di sebelah kanan, lalu klik item untuk menyimpannya ke Bank. Klik item di dalam Bank untuk mengambilnya kembali.*
+                    </p>
+                    
+                    <div class="bank-management">
+                        <input type="number" id="bank-gold-input" min="1" placeholder="Jumlah nominal Gold...">
+                        <button id="btn-bank-deposit-gold" style="background-color: #28a745;">Simpan</button>
+                        <button id="btn-bank-withdraw-gold" style="background-color: #007bff;">Tarik</button>
+                    </div>
+
+                    <div id="bank-grid">
+                        </div>
+                </div>
+            </div>
+
+            <div class="panel inventory-section">
+                <h3>🎒 Tas Utama (20 Slot)</h3>
+                
+                <div class="mode-buttons">
+                    <button id="btn-mode-equip" class="mode-active">Gunakan/Pakai</button>
+                    <button id="btn-mode-sell">Jual (Emas)</button>
+                    <button id="btn-mode-bank">Mode Brankas</button>
+                </div>
+
+                <div id="inventory-grid">
+                    </div>
+
+                <div style="margin-top: 10px; padding-top:10px; border-top:1px solid #333; font-size:12px;">
+                    <span style="color:#aaa;">Beli Cepat:</span>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px; margin-top:5px;">
+                        <button id="btn-buy-sword" style="font-size:10px; padding:3px;">Pedang Besi</button>
+                        <button id="btn-buy-staff" style="font-size:10px; padding:3px;">Tongkat Sihir</button>
+                        <button id="btn-buy-armor" style="font-size:10px; padding:3px;">Zirah Kulit</button>
+                        <button id="btn-buy-ring" style="font-size:10px; padding:3px;">Cincin Akurat</button>
+                        <button id="btn-buy-hp" style="font-size:10px; padding:3px; color:#ff6666;">Ramuan HP</button>
+                        <button id="btn-buy-mp" style="font-size:10px; padding:3px; color:#66a3ff;">Ramuan MP</button>
+                    </div>
+                    <button id="btn-mall-gacha" style="width:100%; margin-top:5px; font-size:11px; background-color:#6f42c1;">🎁 Beli Gacha Box (5,000 Coin)</button>
+                </div>
+
+                <div style="margin-top: 10px; background:#111; padding:8px; border-radius:4px;">
+                    <strong style="font-size:12px; color:#ffcc00;">📬 Kotak Surat Masuk</strong>
+                    <div id="mailbox-list" style="font-size:11px; max-height:60px; overflow-y:auto; margin-top:4px; color:#ccc;">
+                        Tidak ada surat baru.
+                    </div>
+                </div>
+
+                <div class="chat-section">
+                    <strong style="font-size:12px; color:#ffcc00;">💬 Obrolan Global Dunia</strong>
+                    <div id="chat-box"></div>
+                    <div class="chat-controls">
+                        <input type="text" id="chat-input" placeholder="Ketik pesan obrolan..." maxlength="100">
+                        <button id="btn-send-chat">Kirim</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./js/game.js"></script>
+</body>
+</html>
