@@ -45,23 +45,21 @@ onAuthStateChanged(auth, async (user) => {
 function startLiveGameSync() {
     listenToPlayerData();
     listenToWorldBoss();
-    listenToLeaderboard();
     listenToChat();
+    loadMailbox(); // Fitur Mailbox dipanggil kembali
 }
 
 // ==========================================
-// INISIALISASI ATRIBUT KARAKTER (BARU)
+// INISIALISASI ATRIBUT (DENGAN COIN & MAILBOX)
 // ==========================================
 async function selectCharacterClass(className) {
     if (!currentUserUid) return;
     const userRef = doc(db, "users", currentUserUid);
     
-    // Penetapan Base Stats
     let stats = { str: 0, con: 0, dex: 0, int: 0 };
     if (className === 'Warrior') { stats = { str: 15, con: 20, dex: 5, int: 2 }; } 
     else if (className === 'Mage') { stats = { str: 2, con: 8, dex: 10, int: 25 }; }
 
-    // Formula Batas HP & MP Awal
     const maxHp = 1000 + (stats.con * 50);
     const maxMp = 200 + (stats.int * 30);
 
@@ -72,34 +70,44 @@ async function selectCharacterClass(className) {
             level: 1,
             exp: 0,
             gold: 5000, 
-            bankGold: 0, // Fitur Bankir
-            inventory: { "Roti Keras": 5 }, // Fitur Inventaris
+            coin: 50, // Modal awal Mata Uang Premium
+            bankGold: 0, 
+            inventory: { "Roti Keras": 5 }, 
             ...stats,
             maxHp: maxHp, currentHp: maxHp,
             maxMp: maxMp, currentMp: maxMp,
             lastAction: 0
         });
+
+        // Kirim surat selamat datang
+        await addDoc(collection(db, "mailbox", currentUserUid, "messages"), {
+            title: "Selamat Datang Pahlawan!",
+            body: "Terima kasih telah bergabung. Ini sedikit Gold tambahan untukmu.",
+            attachments: { gold: 10000 },
+            isClaimed: false,
+            timestamp: serverTimestamp()
+        });
+
         showScreen('screen-game');
         startLiveGameSync();
     } catch (err) { alert("Error: " + err); }
 }
 
 // ==========================================
-// SINKRONISASI DATA & KALKULASI STATUS REALTIME
+// SINKRONISASI DATA & KALKULASI ATRIBUT BARU
 // ==========================================
 function listenToPlayerData() {
     const unsub = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
         if (!docSnap.exists()) return;
         const d = docSnap.data();
         
-        // Render Info Dasar
         document.getElementById('player-name').innerText = d.username;
         document.getElementById('player-class').innerText = d.characterClass;
         document.getElementById('player-level').innerText = d.level || 1;
-        document.getElementById('player-gold').innerText = (d.gold || 0).toLocaleString() + " G";
-        document.getElementById('player-bank').innerText = (d.bankGold || 0).toLocaleString() + " G";
+        document.getElementById('header-gold').innerText = (d.gold || 0).toLocaleString();
+        document.getElementById('header-coin').innerText = (d.coin || 0).toLocaleString();
+        document.getElementById('player-bank').innerText = (d.bankGold || 0).toLocaleString();
         
-        // Render Bar
         const maxExp = (d.level || 1) * 100;
         document.getElementById('exp-text').innerText = `${d.exp || 0} / ${maxExp}`;
         document.getElementById('exp-bar').style.width = `${Math.min(((d.exp || 0) / maxExp) * 100, 100)}%`;
@@ -110,25 +118,26 @@ function listenToPlayerData() {
         document.getElementById('char-mp-text').innerText = `${d.currentMp} / ${d.maxMp}`;
         document.getElementById('char-mp-bar').style.width = `${Math.min((d.currentMp / d.maxMp) * 100, 100)}%`;
 
-        // Render Stats Atribut
         document.getElementById('stat-str').innerText = d.str;
         document.getElementById('stat-con').innerText = d.con;
         document.getElementById('stat-dex').innerText = d.dex;
         document.getElementById('stat-int').innerText = d.int;
 
-        // Formula Turunan Stat
-        const isWarrior = d.characterClass === 'Warrior';
-        const atk = 50 + (isWarrior ? (d.str * 10) : (d.int * 10));
+        // Kalkulasi Turunan Atribut
+        const patk = 50 + (d.str * 10);
+        const matk = 50 + (d.int * 10);
+        const def = 10 + (d.con * 5);
         const crit = (d.dex * 0.5).toFixed(1);
         const eva = (d.dex * 0.2).toFixed(1);
         const acc = (80 + (d.dex * 0.2)).toFixed(1);
 
-        document.getElementById('stat-atk').innerText = atk;
+        document.getElementById('stat-patk').innerText = patk;
+        document.getElementById('stat-matk').innerText = matk;
+        document.getElementById('stat-def').innerText = def;
         document.getElementById('stat-crit').innerText = crit + "%";
         document.getElementById('stat-eva').innerText = eva + "%";
         document.getElementById('stat-acc').innerText = acc + "%";
 
-        // Render Inventaris
         const invBox = document.getElementById('inventory-list');
         invBox.innerHTML = "";
         if (d.inventory) {
@@ -143,24 +152,57 @@ function listenToPlayerData() {
 }
 
 // ==========================================
-// FITUR BARU: BANKIR
+// ITEM MALL (PREMIUM)
+// ==========================================
+async function buyMallGacha() {
+    if (!currentUserUid) return;
+    const userRef = doc(db, "users", currentUserUid);
+    try {
+        await runTransaction(db, async (ts) => {
+            const data = (await ts.get(userRef)).data();
+            if ((data.coin || 0) < 20) throw "COIN Premium tidak cukup!";
+            
+            const randomGold = Math.floor(Math.random() * 5000) + 1000;
+            ts.update(userRef, { 
+                coin: data.coin - 20, 
+                gold: (data.gold || 0) + randomGold 
+            });
+            alert(`Gacha berhasil! Anda mendapatkan ${randomGold} GOLD!`);
+        });
+    } catch (err) { alert(err); }
+}
+
+async function buyMallName() {
+    const newName = prompt("Masukkan Nama Baru:");
+    if (!newName || newName.length > 15) return alert("Nama tidak valid atau terlalu panjang!");
+    
+    const userRef = doc(db, "users", currentUserUid);
+    try {
+        await runTransaction(db, async (ts) => {
+            const data = (await ts.get(userRef)).data();
+            if ((data.coin || 0) < 50) throw "COIN Premium tidak cukup!";
+            ts.update(userRef, { coin: data.coin - 50, username: newName });
+        });
+        alert("Nama berhasil diubah!");
+    } catch (err) { alert(err); }
+}
+
+// ==========================================
+// MEKANIK LAINNYA (TETAP SAMA)
 // ==========================================
 async function bankTransaction(type) {
     const inputVal = parseInt(document.getElementById('input-bank').value);
-    if (!inputVal || inputVal <= 0 || !currentUserUid) return alert("Masukkan jumlah yang valid!");
-
+    if (!inputVal || inputVal <= 0 || !currentUserUid) return;
     const userRef = doc(db, "users", currentUserUid);
     try {
         await runTransaction(db, async (ts) => {
             const docData = (await ts.get(userRef)).data();
-            let wallet = docData.gold || 0;
-            let bank = docData.bankGold || 0;
-
+            let wallet = docData.gold || 0; let bank = docData.bankGold || 0;
             if (type === 'DEPOSIT') {
-                if (wallet < inputVal) throw "Uang di dompet tidak cukup!";
+                if (wallet < inputVal) throw "Gold tidak cukup!";
                 ts.update(userRef, { gold: wallet - inputVal, bankGold: bank + inputVal });
             } else {
-                if (bank < inputVal) throw "Uang di brankas tidak cukup!";
+                if (bank < inputVal) throw "Brankas tidak cukup!";
                 ts.update(userRef, { gold: wallet + inputVal, bankGold: bank - inputVal });
             }
         });
@@ -168,59 +210,38 @@ async function bankTransaction(type) {
     } catch (err) { alert(err); }
 }
 
-// ==========================================
-// FITUR BARU: EKSPLORASI DUNGEON
-// ==========================================
 async function exploreDungeon() {
     if (!currentUserUid || isCooldown) return;
-    
-    document.getElementById('btn-dungeon').disabled = true;
-    isCooldown = true;
+    document.getElementById('btn-dungeon').disabled = true; isCooldown = true;
     const userRef = doc(db, "users", currentUserUid);
 
     try {
         await runTransaction(db, async (ts) => {
             const data = (await ts.get(userRef)).data();
-            const now = Date.now();
-            
-            if (now - (data.lastAction || 0) < 2000) throw "Sedang memulihkan nafas (Cooldown)!";
-            if (data.currentMp < 20) throw "MP tidak cukup untuk konsentrasi di Dungeon!";
+            if (Date.now() - (data.lastAction || 0) < 2000) throw "Sedang memulihkan nafas!";
+            if (data.currentMp < 20) throw "MP tidak cukup!";
 
-            // Reward Gacha
             const expGained = Math.floor(Math.random() * 50) + 20;
             const goldGained = Math.floor(Math.random() * 300) + 100;
             
-            let updates = {
-                currentMp: data.currentMp - 20,
-                gold: (data.gold || 0) + goldGained,
-                lastAction: now
-            };
+            let updates = { currentMp: data.currentMp - 20, gold: (data.gold || 0) + goldGained, lastAction: Date.now() };
 
-            // Logic Naik Level
-            let cLvl = data.level || 1;
-            let cExp = (data.exp || 0) + expGained;
+            let cLvl = data.level || 1; let cExp = (data.exp || 0) + expGained;
             if (cExp >= (cLvl * 100)) { cLvl++; cExp -= ((cLvl-1)*100); updates.level = cLvl; }
             updates.exp = cExp;
 
-            // Logic Drop Item Inventaris (30% Chance)
             if (Math.random() < 0.3) {
-                const drops = ["Kristal Gelap", "Tulang Monster", "Koin Kuno"];
-                const dropItem = drops[Math.floor(Math.random() * drops.length)];
+                const dropItem = "Batu Dungeon";
                 let currentInv = data.inventory || {};
                 currentInv[dropItem] = (currentInv[dropItem] || 0) + 1;
                 updates.inventory = currentInv;
             }
-
             ts.update(userRef, updates);
         });
     } catch (err) { alert(err); }
-
     setTimeout(() => { document.getElementById('btn-dungeon').disabled = false; isCooldown = false; }, 2000);
 }
 
-// ==========================================
-// TOKO AHLI OBAT (DULU ALKEMIS)
-// ==========================================
 async function buyPotion(type) {
     if (!currentUserUid) return;
     const userRef = doc(db, "users", currentUserUid);
@@ -231,22 +252,17 @@ async function buyPotion(type) {
             let updates = { gold: data.gold - 500 };
 
             if (type === 'HP') {
-                const newHp = Math.min((data.currentHp || 0) + 500, data.maxHp);
-                if (data.currentHp === newHp) throw "HP sudah penuh!";
-                updates.currentHp = newHp;
+                updates.currentHp = Math.min((data.currentHp || 0) + 500, data.maxHp);
+                if (data.currentHp === updates.currentHp) throw "HP penuh!";
             } else if (type === 'MP') {
-                const newMp = Math.min((data.currentMp || 0) + 300, data.maxMp);
-                if (data.currentMp === newMp) throw "MP sudah penuh!";
-                updates.currentMp = newMp;
+                updates.currentMp = Math.min((data.currentMp || 0) + 300, data.maxMp);
+                if (data.currentMp === updates.currentMp) throw "MP penuh!";
             }
             ts.update(userRef, updates);
         });
     } catch (err) { alert(err); }
 }
 
-// ==========================================
-// WORLD BOSS (DENGAN HITUNGAN STATS)
-// ==========================================
 function listenToWorldBoss() {
     const unsub = onSnapshot(doc(db, "server", "world_boss"), (docSnap) => {
         if (!docSnap.exists()) return;
@@ -260,34 +276,31 @@ function listenToWorldBoss() {
 
 async function attackWorldBoss() {
     if (!currentUserUid || isCooldown) return;
-    document.getElementById('btn-attack').disabled = true;
-    isCooldown = true;
+    document.getElementById('btn-attack').disabled = true; isCooldown = true;
 
-    const bossRef = doc(db, "server", "world_boss");
-    const userRef = doc(db, "users", currentUserUid);
-
+    const bossRef = doc(db, "server", "world_boss"); const userRef = doc(db, "users", currentUserUid);
     try {
         await runTransaction(db, async (ts) => {
-            const bossDoc = await ts.get(bossRef);
-            const userDoc = await ts.get(userRef);
+            const bossDoc = await ts.get(bossRef); const userDoc = await ts.get(userRef);
             if (!bossDoc.exists()) throw "Boss tidak ditemukan!";
             
             const data = userDoc.data();
-            const now = Date.now();
-            if (now - (data.lastAction || 0) < 2000) throw "Cooldown menyerang!";
+            if (Date.now() - (data.lastAction || 0) < 2000) throw "Cooldown!";
 
-            // Kalkulasi Damage berdasarkan Stat + Critical Chance
-            const isWarrior = data.characterClass === 'Warrior';
-            let baseDamage = 50 + (isWarrior ? (data.str * 10) : (data.int * 10));
-            const isCrit = (Math.random() * 100) < (data.dex * 0.5); // DEX menentukan Crit
+            // Hitung base damage berdasarkan Class
+            let baseDamage = 0;
+            if (data.characterClass === 'Warrior') {
+                baseDamage = 50 + (data.str * 10); // P.ATK
+            } else {
+                baseDamage = 50 + (data.int * 10); // M.ATK
+            }
             
-            if (isCrit) baseDamage *= 2; // Damage ganda jika critical
+            const isCrit = (Math.random() * 100) < (data.dex * 0.5);
+            if (isCrit) baseDamage *= 2; 
             
-            let updates = { lastAction: now };
+            let updates = { lastAction: Date.now() };
 
-            // Logic Naik Level dari nyerang boss
-            let cLvl = data.level || 1;
-            let cExp = (data.exp || 0) + 30; // Boss beri EXP flat
+            let cLvl = data.level || 1; let cExp = (data.exp || 0) + 30;
             if (cExp >= (cLvl * 100)) { cLvl++; cExp -= ((cLvl-1)*100); updates.level = cLvl; }
             updates.exp = cExp;
 
@@ -295,27 +308,54 @@ async function attackWorldBoss() {
             ts.update(bossRef, { hp: newHp < 0 ? 0 : newHp });
             ts.update(userRef, updates);
         });
-    } catch (err) { console.log(err); }
-
+    } catch (err) {}
     setTimeout(() => { document.getElementById('btn-attack').disabled = false; isCooldown = false; }, 2000);
 }
 
 // ==========================================
-// FITUR SOSIAL
+// KOTAK SURAT (MAILBOX) KEMBALI
 // ==========================================
-function listenToLeaderboard() {
-    const q = query(collection(db, "users"), orderBy("level", "desc"), limit(5));
+function loadMailbox() {
+    const q = query(collection(db, "mailbox", currentUserUid, "messages"), orderBy("timestamp", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
-        const lbList = document.getElementById('leaderboard-list'); lbList.innerHTML = "";
-        let rank = 1;
+        const list = document.getElementById('mailbox-list'); list.innerHTML = "";
+        if (snapshot.empty) { list.innerHTML = "<p style='color:#777'>Tidak ada surat.</p>"; return; }
+        
         snapshot.forEach((docSnap) => {
-            const p = docSnap.data();
-            lbList.innerHTML += `<div style="border-bottom:1px solid #333; padding:5px 0; display:flex; justify-content:space-between;"><span>#${rank} ${escapeHTML(p.username)}</span> <span style="color:#00d2ff;">Lv.${p.level}</span></div>`;
-            rank++;
+            const msg = docSnap.data();
+            let btnKlaim = '';
+            if (!msg.isClaimed && msg.attachments) {
+                let attachmentText = msg.attachments.gold ? `${msg.attachments.gold} Gold` : "Item";
+                btnKlaim = `<button onclick="window.claimMailItem('${docSnap.id}')" style="margin-top: 5px; font-size: 11px; padding: 3px 8px; background: #28a745;">Klaim ${attachmentText}</button>`;
+            } else if (msg.isClaimed) {
+                btnKlaim = `<br><span style="color:#777; font-size: 11px;">(Diklaim)</span>`;
+            }
+            list.innerHTML += `<div style="border-bottom:1px solid #333; padding:8px 0;">
+                <strong style="color:#00d2ff;">${escapeHTML(msg.title)}</strong><br>
+                <span style="color:#aaa;">${escapeHTML(msg.body)}</span><br>${btnKlaim}
+            </div>`;
         });
     });
     activeUnsubscribeListeners.push(unsub);
 }
+
+window.claimMailItem = async function(msgId) {
+    if (!currentUserUid) return;
+    const mailRef = doc(db, "mailbox", currentUserUid, "messages", msgId);
+    const userRef = doc(db, "users", currentUserUid);
+    try {
+        await runTransaction(db, async (ts) => {
+            const mailDoc = await ts.get(mailRef); const userDoc = await ts.get(userRef);
+            if (!mailDoc.exists()) throw "Surat tidak ditemukan!";
+            if (mailDoc.data().isClaimed) throw "Sudah diklaim!";
+            
+            const goldReward = mailDoc.data().attachments.gold || 0;
+            ts.update(mailRef, { isClaimed: true });
+            ts.update(userRef, { gold: (userDoc.data().gold || 0) + goldReward });
+        });
+        alert("Hadiah diklaim!");
+    } catch (err) { alert(err); }
+};
 
 function listenToChat() {
     const q = query(collection(db, "global_chat"), orderBy("timestamp", "asc"), limit(20));
@@ -338,25 +378,22 @@ async function sendChatMessage() {
         const d = (await getDoc(doc(db, "users", currentUserUid))).data();
         await addDoc(collection(db, "global_chat"), { senderName: d.username, message: text, timestamp: serverTimestamp() });
         input.value = "";
-    } catch (err) { console.error(err); }
+    } catch (err) {}
 }
 
 // ==========================================
-// PENGIKAT EVENT LISTENER
+// EVENT LISTENER
 // ==========================================
 document.getElementById('link-toggle-auth')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    isLoginMode = !isLoginMode;
-    document.getElementById('auth-title').innerText = isLoginMode ? "Masuk Gerbang RPG" : "Daftar Akun Baru";
-    document.getElementById('btn-primary-auth').innerText = isLoginMode ? "MASUK" : "DAFTAR SEKARANG";
-    document.getElementById('auth-toggle-text').innerText = isLoginMode ? "Belum punya akun?" : "Sudah punya akun?";
-    document.getElementById('link-toggle-auth').innerText = isLoginMode ? "Daftar" : "Masuk";
+    e.preventDefault(); isLoginMode = !isLoginMode;
+    document.getElementById('auth-title').innerText = isLoginMode ? "Masuk" : "Daftar";
+    document.getElementById('btn-primary-auth').innerText = isLoginMode ? "MASUK" : "DAFTAR";
 });
 
 document.getElementById('btn-primary-auth')?.addEventListener('click', async () => {
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
-    if (!email || !password) return alert("Isi email dan password!");
+    if (!email || !password) return alert("Isi form!");
     try { isLoginMode ? await loginWithEmail(email, password) : await registerWithEmail(email, password); } 
     catch (err) { alert(err); }
 });
@@ -373,6 +410,9 @@ document.getElementById('btn-withdraw')?.addEventListener('click', () => bankTra
 
 document.getElementById('btn-buy-hp')?.addEventListener('click', () => buyPotion('HP'));
 document.getElementById('btn-buy-mp')?.addEventListener('click', () => buyPotion('MP'));
+
+document.getElementById('btn-mall-gacha')?.addEventListener('click', buyMallGacha);
+document.getElementById('btn-mall-name')?.addEventListener('click', buyMallName);
 
 document.getElementById('btn-send-chat')?.addEventListener('click', sendChatMessage);
 document.getElementById('chat-input')?.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendChatMessage(); });
