@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giga RPG Web - v10.0 (Stats & Dungeons)</title>
+    <title>Giga RPG Web - v11.0 (Item Mall & Advanced Stats)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; background-color: #121216; color: #fff; margin: 0; }
         .container { max-width: 1300px; margin: 0 auto; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; } /* Diubah menjadi 3 Kolom */
+        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; } 
         .panel { background: #1f1f27; padding: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); margin-bottom: 15px; border: 1px solid #2a2a35; }
+        .panel-mall { border: 1px solid #ffcc00; background: #262211; } /* Warna khusus Item Mall */
         h2 { border-bottom: 2px solid #3f3f52; padding-bottom: 5px; margin-top: 0; color: #00d2ff; font-size: 1.2em; }
+        h2.gold-title { color: #ffcc00; border-bottom: 2px solid #665500; }
         button { padding: 8px 12px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; font-size: 13px; }
         button:hover { filter: brightness(1.2); }
         button:disabled { background: #555; cursor: not-allowed; }
@@ -30,13 +32,11 @@
         
         .chat-box { height: 150px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; margin-bottom: 10px; font-size: 13px; }
         .chat-name { color: #ffca28; font-weight: bold; }
-        
         .inv-item { display: inline-block; background: #3f3f52; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- LAYAR AUTH -->
         <div id="screen-auth" class="screen" style="display: block;">
             <div class="panel auth-box">
                 <h2 id="auth-title" style="text-align: center;">Masuk Gerbang RPG</h2>
@@ -50,32 +50,33 @@
             </div>
         </div>
 
-        <!-- LAYAR PILIH KARAKTER -->
         <div id="screen-char-select" class="screen">
             <div class="panel" style="max-width: 600px; margin: 50px auto;">
                 <h2 style="text-align: center;">Pilih Kelas Karakter</h2>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
                     <div class="char-card" id="class-warrior">
                         <h3 style="color: #ff4a4a;">⚔️ Warrior</h3>
-                        <p style="font-size: 12px; color: #aaa;">STR: 15 | CON: 20<br>DEX: 5 | INT: 2</p>
+                        <p style="font-size: 12px; color: #aaa;">Ahli fisik. STR dan CON tinggi.<br>Serangan bergantung pada P.ATK.</p>
                     </div>
                     <div class="char-card" id="class-mage">
                         <h3 style="color: #4ae3ff;">🔮 Mage</h3>
-                        <p style="font-size: 12px; color: #aaa;">STR: 2 | CON: 8<br>DEX: 10 | INT: 25</p>
+                        <p style="font-size: 12px; color: #aaa;">Ahli sihir. INT dan DEX tinggi.<br>Serangan bergantung pada M.ATK.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- LAYAR DASHBOARD GAME -->
         <div id="screen-game" class="screen">
             <div class="panel" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
                 <h1 style="margin: 0; font-size: 20px;">🎮 Giga RPG Web</h1>
+                <div style="display: flex; gap: 15px; font-weight: bold;">
+                    <span>🪙 <span id="header-coin" style="color: #ffcc00;">0</span> COIN</span>
+                    <span>💰 <span id="header-gold" style="color: #ffd700;">0</span> GOLD</span>
+                </div>
                 <button id="btn-logout" style="background: #dc3545;">Keluar</button>
             </div>
             
             <div class="grid">
-                <!-- KOLOM 1: STATUS & INVENTARIS -->
                 <div>
                     <div class="panel">
                         <h2>Profil Karakter</h2>
@@ -94,8 +95,10 @@
                             <div>DEX: <span id="stat-dex" class="stat-val">0</span></div>
                             <div>INT: <span id="stat-int" class="stat-val">0</span></div>
                             <div style="grid-column: span 2; border-top: 1px solid #333; margin-top:5px; padding-top:5px;"></div>
-                            <div>ATK: <span id="stat-atk" class="stat-val" style="color:#ff4a4a;">0</span></div>
-                            <div>Crit: <span id="stat-crit" class="stat-val" style="color:#ffd700;">0%</span></div>
+                            <div>P.ATK: <span id="stat-patk" class="stat-val" style="color:#ff4a4a;">0</span></div>
+                            <div>M.ATK: <span id="stat-matk" class="stat-val" style="color:#4ae3ff;">0</span></div>
+                            <div>DEF: <span id="stat-def" class="stat-val" style="color:#a8b2b8;">0</span></div>
+                            <div>Crit Rate: <span id="stat-crit" class="stat-val" style="color:#ffd700;">0%</span></div>
                             <div>Hindaran: <span id="stat-eva" class="stat-val">0%</span></div>
                             <div>Akurasi: <span id="stat-acc" class="stat-val">0%</span></div>
                         </div>
@@ -107,7 +110,6 @@
                     </div>
                 </div>
 
-                <!-- KOLOM 2: BATTLE & DUNGEON -->
                 <div>
                     <div class="panel">
                         <h2>👹 WORLD BOSS</h2>
@@ -118,37 +120,41 @@
 
                     <div class="panel">
                         <h2>🦇 Dungeon Gelap</h2>
-                        <p style="font-size: 12px; color: #aaa;">Jelajahi dungeon untuk mencari Gold, EXP, dan material. Membutuhkan konsentrasi (MP).</p>
                         <button id="btn-dungeon" style="width:100%; background: #6f42c1; padding: 12px; font-size:15px;">🔦 Masuk Dungeon (20 MP)</button>
                     </div>
 
                     <div class="panel">
-                        <h2>⚖️ Bankir & Keuangan</h2>
-                        <div class="stat-grid" style="margin-bottom: 10px;">
-                            <div>Dompet: <span id="player-gold" class="stat-val" style="color:#ffd700;">0 G</span></div>
-                            <div>Brankas: <span id="player-bank" class="stat-val" style="color:#00d2ff;">0 G</span></div>
-                        </div>
+                        <h2>📬 Kotak Surat (Sistem & Admin)</h2>
+                        <div id="mailbox-list" style="max-height: 180px; overflow-y: auto; background: #121216; padding: 10px; border-radius: 5px; font-size: 13px;">Memuat surat...</div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="panel panel-mall">
+                        <h2 class="gold-title">💎 Item Mall (Premium)</h2>
+                        <p style="font-size: 12px; color: #ccc;">Gunakan COIN untuk membeli item eksklusif.</p>
                         <div style="display: flex; gap: 5px;">
-                            <input type="number" id="input-bank" placeholder="Jumlah..." style="margin:0;">
+                            <button id="btn-mall-gacha" style="flex:1; background:#b8860b;">🎁 Beli Gacha Box<br><small>20 COIN</small></button>
+                            <button id="btn-mall-name" style="flex:1; background:#4b0082;">📝 Ganti Nama<br><small>50 COIN</small></button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2>⚖️ Bankir</h2>
+                        <div style="font-size: 13px; margin-bottom: 5px;">Brankas: <strong id="player-bank" style="color:#00d2ff;">0</strong> G</div>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="number" id="input-bank" placeholder="Jumlah G" style="margin:0;">
                             <button id="btn-deposit" style="background: #28a745;">Simpan</button>
                             <button id="btn-withdraw" style="background: #dc3545;">Tarik</button>
                         </div>
                     </div>
-                </div>
 
-                <!-- KOLOM 3: KOTA & KOMUNITAS -->
-                <div>
                     <div class="panel">
                         <h2>🧪 Toko Ahli Obat</h2>
                         <div style="display: flex; gap: 5px;">
                             <button id="btn-buy-hp" style="flex:1; background:#dc3545;">Beli HP Pot<br><small>500 G</small></button>
                             <button id="btn-buy-mp" style="flex:1; background:#007bff;">Beli MP Pot<br><small>500 G</small></button>
                         </div>
-                    </div>
-
-                    <div class="panel">
-                        <h2>🏆 Papan Peringkat</h2>
-                        <div id="leaderboard-list" style="font-size: 13px;">Memuat peringkat...</div>
                     </div>
 
                     <div class="panel">
