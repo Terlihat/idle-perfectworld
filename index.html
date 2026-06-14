@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giga RPG Web</title>
-	<link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
     <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
     <div class="container">
-        <!-- LAYAR AUTH & CHAR SELECT ... (Tetap Sama) -->
         <div id="screen-auth" class="screen" style="display: block;">
             <div class="panel auth-box">
                 <h2 id="auth-title" style="text-align: center;">Masuk Gerbang RPG</h2>
@@ -39,19 +38,20 @@
             </div>
         </div>
 
-        <!-- LAYAR DASHBOARD UTAMA -->
         <div id="screen-game" class="screen">
             <div class="game-header">
                 <h1 style="margin: 0; font-size: 20px;"> Giga RPG Web</h1>
-                <div style="display: flex; gap: 20px; font-weight: bold; font-size: 14px;">
+                <div style="display: flex; gap: 15px; font-weight: bold; font-size: 14px; align-items: center;">
                     <span>🪙 <span id="header-coin" style="color: #ffcc00;">0</span> COIN</span>
                     <span>💰 <span id="header-gold" style="color: #ffd700;">0</span> Gold</span>
+                    
+                    <button id="btn-admin-panel" style="display: none; background: #28a745;">⚙️ Panel Admin</button>
+                    
+                    <button id="btn-logout" style="background: #dc3545;">Keluar</button>
                 </div>
-                <button id="btn-logout" style="background: #dc3545;">Keluar</button>
             </div>
             
             <div class="game-container">
-                <!-- KOLOM 1 -->
                 <div>
                     <div class="panel">
                         <h2>Profil & Perlengkapan</h2>
@@ -95,7 +95,6 @@
                     </div>
                 </div>
 
-                <!-- KOLOM 2 -->
                 <div>
                     <div class="panel">
                         <h2>👹 WORLD BOSS</h2>
@@ -124,7 +123,6 @@
                         </div>
                     </div>
 
-                    <!-- PANEL PASAR LELANG BARU -->
                     <div class="panel">
                         <h2>⚖️ Pasar Lelang</h2>
                         <p style="font-size: 11px; color:#aaa; margin-top:0; margin-bottom:8px;">*Gunakan mode <strong>LELANG</strong> di tas untuk menjual item.</p>
@@ -134,7 +132,6 @@
                     </div>
                 </div>
 
-                <!-- KOLOM 3 -->
                 <div>
                     <div class="panel panel-mall">
                         <h2 class="gold-title">💎 Item Mall Premium</h2>

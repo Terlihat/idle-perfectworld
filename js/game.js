@@ -62,45 +62,55 @@ function startLiveGameSync() {
         const d = docSnap.data();
         playerUsername = d.username || "Hero Anonim";
 
-        document.getElementById('player-name').innerText = d.username;
-        document.getElementById('player-class').innerText = d.characterClass;
-        document.getElementById('player-level').innerText = d.level || 1;
-        document.getElementById('header-gold').innerText = (d.gold || 0).toLocaleString();
-        document.getElementById('header-coin').innerText = (d.coin || 0).toLocaleString();
-        document.getElementById('player-bank').innerText = (d.bankGold || 0).toLocaleString();
-        
-        const maxExp = (d.level || 1) * 100;
-        document.getElementById('exp-text').innerText = `${d.exp || 0} / ${maxExp}`;
-        document.getElementById('exp-bar').style.width = `${Math.min(((d.exp || 0) / maxExp) * 100, 100)}%`;
-        document.getElementById('char-hp-text').innerText = `${d.currentHp} / ${d.maxHp}`;
-        document.getElementById('char-hp-bar').style.width = `${Math.min((d.currentHp / d.maxHp) * 100, 100)}%`;
-        document.getElementById('char-mp-text').innerText = `${d.currentMp} / ${d.maxMp}`;
-        document.getElementById('char-mp-bar').style.width = `${Math.min((d.currentMp / d.maxMp) * 100, 100)}%`;
+        // LOGIKA PENAMPILAN TOMBOL ADMIN PANEL
+        const btnAdmin = document.getElementById('btn-admin-panel');
+        if (btnAdmin) {
+            btnAdmin.style.display = (d.role === 'admin') ? 'inline-block' : 'none';
+        }
 
-        document.getElementById('stat-str').innerText = d.str;
-        document.getElementById('stat-con').innerText = d.con;
-        document.getElementById('stat-dex').innerText = d.dex;
-        document.getElementById('stat-int').innerText = d.int;
+        // GEMBOK KEAMANAN: Pastikan UI ada sebelum memperbarui teks
+        const elPlayerName = document.getElementById('player-name');
+        if (elPlayerName) {
+            elPlayerName.innerText = d.username;
+            document.getElementById('player-class').innerText = d.characterClass;
+            document.getElementById('player-level').innerText = d.level || 1;
+            document.getElementById('header-gold').innerText = (d.gold || 0).toLocaleString();
+            document.getElementById('header-coin').innerText = (d.coin || 0).toLocaleString();
+            document.getElementById('player-bank').innerText = (d.bankGold || 0).toLocaleString();
+            
+            const maxExp = (d.level || 1) * 100;
+            document.getElementById('exp-text').innerText = `${d.exp || 0} / ${maxExp}`;
+            document.getElementById('exp-bar').style.width = `${Math.min(((d.exp || 0) / maxExp) * 100, 100)}%`;
+            document.getElementById('char-hp-text').innerText = `${d.currentHp} / ${d.maxHp}`;
+            document.getElementById('char-hp-bar').style.width = `${Math.min((d.currentHp / d.maxHp) * 100, 100)}%`;
+            document.getElementById('char-mp-text').innerText = `${d.currentMp} / ${d.maxMp}`;
+            document.getElementById('char-mp-bar').style.width = `${Math.min((d.currentMp / d.maxMp) * 100, 100)}%`;
 
-        const eq = d.equipment || {};
-        document.getElementById('eq-weapon').innerText = eq.weapon ? `${eq.weapon.name}${eq.weapon.refine ? ` (+${eq.weapon.refine})` : ""}` : "Kosong";
-        document.getElementById('eq-armor').innerText = eq.armor ? `${eq.armor.name}${eq.armor.refine ? ` (+${eq.armor.refine})` : ""}` : "Kosong";
-        document.getElementById('eq-acc').innerText = eq.accessory ? `${eq.accessory.name}${eq.accessory.refine ? ` (+${eq.accessory.refine})` : ""}` : "Kosong";
+            document.getElementById('stat-str').innerText = d.str;
+            document.getElementById('stat-con').innerText = d.con;
+            document.getElementById('stat-dex').innerText = d.dex;
+            document.getElementById('stat-int').innerText = d.int;
 
-        // Perhitungan Bonus Atribut Stat Fisik & Magic
-        let wBonus = 1 + (eq.weapon?.refine || 0) * 0.15; 
-        let aBonus = 1 + (eq.armor?.refine || 0) * 0.15;
-        let cBonus = 1 + (eq.accessory?.refine || 0) * 0.10;
-        const patk = 50 + (d.str * 10) + Math.floor((eq.weapon?.patk || 0) * wBonus); 
-        const matk = 50 + (d.int * 10) + Math.floor((eq.weapon?.matk || 0) * wBonus);
-        const def = 10 + (d.con * 5) + Math.floor((eq.armor?.def || 0) * aBonus); 
-        
-        document.getElementById('stat-patk').innerText = patk; 
-        document.getElementById('stat-matk').innerText = matk;
-        document.getElementById('stat-def').innerText = def; 
-        document.getElementById('stat-crit').innerText = (d.dex * 0.5).toFixed(1) + "%";
-        document.getElementById('stat-eva').innerText = (d.dex * 0.2).toFixed(1) + "%"; 
-        document.getElementById('stat-acc').innerText = (80 + (d.dex * 0.5) + Math.floor((eq.accessory?.accBonus || 0) * cBonus)).toFixed(1) + "%";
+            const eq = d.equipment || {};
+            document.getElementById('eq-weapon').innerText = eq.weapon ? `${eq.weapon.name}${eq.weapon.refine ? ` (+${eq.weapon.refine})` : ""}` : "Kosong";
+            document.getElementById('eq-armor').innerText = eq.armor ? `${eq.armor.name}${eq.armor.refine ? ` (+${eq.armor.refine})` : ""}` : "Kosong";
+            document.getElementById('eq-acc').innerText = eq.accessory ? `${eq.accessory.name}${eq.accessory.refine ? ` (+${eq.accessory.refine})` : ""}` : "Kosong";
+
+            // Perhitungan Bonus Atribut Stat Fisik & Magic
+            let wBonus = 1 + (eq.weapon?.refine || 0) * 0.15; 
+            let aBonus = 1 + (eq.armor?.refine || 0) * 0.15;
+            let cBonus = 1 + (eq.accessory?.refine || 0) * 0.10;
+            const patk = 50 + (d.str * 10) + Math.floor((eq.weapon?.patk || 0) * wBonus); 
+            const matk = 50 + (d.int * 10) + Math.floor((eq.weapon?.matk || 0) * wBonus);
+            const def = 10 + (d.con * 5) + Math.floor((eq.armor?.def || 0) * aBonus); 
+            
+            document.getElementById('stat-patk').innerText = patk; 
+            document.getElementById('stat-matk').innerText = matk;
+            document.getElementById('stat-def').innerText = def; 
+            document.getElementById('stat-crit').innerText = (d.dex * 0.5).toFixed(1) + "%";
+            document.getElementById('stat-eva').innerText = (d.dex * 0.2).toFixed(1) + "%"; 
+            document.getElementById('stat-acc').innerText = (80 + (d.dex * 0.5) + Math.floor((eq.accessory?.accBonus || 0) * cBonus)).toFixed(1) + "%";
+        }
 
         // Render Inventory Grid (4x5 = 20)
         const invGrid = document.getElementById('inventory-grid');
@@ -132,27 +142,33 @@ function startLiveGameSync() {
     // 2. Chat Realtime
     const unsubChat = listenToChat(db, (messages) => {
         const chatBox = document.getElementById('chat-box');
-        chatBox.innerHTML = "";
-        messages.forEach(m => { chatBox.innerHTML += `<div><span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`; });
-        chatBox.scrollTop = chatBox.scrollHeight;
+        if (chatBox) { // GEMBOK KEAMANAN
+            chatBox.innerHTML = "";
+            messages.forEach(m => { chatBox.innerHTML += `<div><span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`; });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
     });
 
     // 3. Mailbox Realtime
     const unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
         const mailDiv = document.getElementById('mailbox-list');
-        mailDiv.innerHTML = mails.length === 0 ? "Tidak ada surat." : "";
-        mails.forEach(mail => { mailDiv.innerHTML += `<div style="border-bottom:1px solid #333; padding:2px 0;">📬 ${escapeHTML(mail.title)}</div>`; });
+        if (mailDiv) { // GEMBOK KEAMANAN
+            mailDiv.innerHTML = mails.length === 0 ? "Tidak ada surat." : "";
+            mails.forEach(mail => { mailDiv.innerHTML += `<div style="border-bottom:1px solid #333; padding:2px 0;">📬 ${escapeHTML(mail.title)}</div>`; });
+        }
     });
 
     // 4. Auction Realtime
     const unsubAuction = listenToAuction(db, (items) => {
         const auctionList = document.getElementById('auction-list');
-        auctionList.innerHTML = items.length === 0 ? "Belum ada item lelang." : "";
-        items.forEach(item => {
-            const isMine = item.sellerId === currentUserUid;
-            const btn = isMine ? `<span style="color:#777; font-size:10px;">[Milik Anda]</span>` : `<button onclick="window.buyFromAuction('${item.id}', '${escapeHTML(item.itemName)}', ${item.price}, '${item.sellerId}')" style="padding: 2px 6px; font-size: 10px; background: #e0a800;">Beli</button>`;
-            auctionList.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding: 4px 0;"><div><strong style="color:#00d2ff;">${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: ${escapeHTML(item.sellerName)} | 💰 ${item.price.toLocaleString()} G</span></div><div>${btn}</div></div>`;
-        });
+        if (auctionList) { // GEMBOK KEAMANAN
+            auctionList.innerHTML = items.length === 0 ? "Belum ada item lelang." : "";
+            items.forEach(item => {
+                const isMine = item.sellerId === currentUserUid;
+                const btn = isMine ? `<span style="color:#777; font-size:10px;">[Milik Anda]</span>` : `<button onclick="window.buyFromAuction('${item.id}', '${escapeHTML(item.itemName)}', ${item.price}, '${item.sellerId}')" style="padding: 2px 6px; font-size: 10px; background: #e0a800;">Beli</button>`;
+                auctionList.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding: 4px 0;"><div><strong style="color:#00d2ff;">${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: ${escapeHTML(item.sellerName)} | 💰 ${item.price.toLocaleString()} G</span></div><div>${btn}</div></div>`;
+            });
+        }
     });
 
     activeUnsubscribeListeners.push(unsubData, unsubChat, unsubMail, unsubAuction);
@@ -226,3 +242,8 @@ document.getElementById('btn-mall-underworld')?.addEventListener('click', () => 
 document.getElementById('btn-mall-universal')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Universal Stone', 50));
 document.getElementById('btn-mall-name')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ganti Nama', 50));
 document.getElementById('btn-mall-job')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ubah Job', 100));
+
+// Navigasi Pindah ke Admin Panel
+document.getElementById('btn-admin-panel')?.addEventListener('click', () => {
+    window.location.href = './admin/index.html';
+});

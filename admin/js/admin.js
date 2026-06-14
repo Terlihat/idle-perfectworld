@@ -113,3 +113,7 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
         btnSend.innerText = "Kirim Surat Sekarang";
     }
 });
+
+document.getElementById('btn-home')?.addEventListener('click', () => {
+    window.location.href = '../index.html';
+});
