@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giga RPG Web - v12.0 (Equipment & 4x5 Inventory)</title>
+    <title>Giga RPG Web - v14.0 (Inventory Mode Toggle & Sell System)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; background-color: #121216; color: #fff; margin: 0; }
         .container { max-width: 1300px; margin: 0 auto; }
@@ -34,20 +34,24 @@
         .chat-name { color: #ffca28; font-weight: bold; }
         
         /* Grid Inventaris 4x5 */
-        .inv-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, 40px); gap: 4px; background: #121216; padding: 10px; border-radius: 5px; }
-        .inv-slot { background: #2a2a35; border: 1px solid #3f3f52; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; text-align: center; color: #777; overflow: hidden; flex-direction: column; }
-        .inv-slot.filled { background: #3f3f52; border-color: #00d2ff; color: #fff; }
+        .inv-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, 45px); gap: 4px; background: #121216; padding: 10px; border-radius: 5px; }
+        .inv-slot { background: #2a2a35; border: 1px solid #3f3f52; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; text-align: center; color: #777; overflow: hidden; flex-direction: column; cursor: default; transition: 0.2s; user-select: none; }
+        .inv-slot.filled { background: #3f3f52; border-color: #00d2ff; color: #fff; cursor: pointer; }
+        .inv-slot.filled:hover { background: #4a4a5a; filter: brightness(1.1); }
         .inv-qty { color: #ffca28; font-weight: bold; font-size: 11px; }
 
         /* Equipment Box */
         .equip-box { background: #121216; padding: 8px; border-radius: 5px; margin-top: 10px; font-size: 12px; }
         .equip-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #333; padding: 4px 0; }
         .equip-item span:last-child { color: #00d2ff; }
+        
+        /* Mode Indicator Styles */
+        .mode-active { border: 2px solid #28a745 !important; background-color: #19692c !important; }
+        .mode-sell-active { border: 2px solid #dc3545 !important; background-color: #bd2130 !important; }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- LAYAR AUTH -->
         <div id="screen-auth" class="screen" style="display: block;">
             <div class="panel auth-box">
                 <h2 id="auth-title" style="text-align: center;">Masuk Gerbang RPG</h2>
@@ -61,7 +65,6 @@
             </div>
         </div>
 
-        <!-- LAYAR PILIH KARAKTER -->
         <div id="screen-char-select" class="screen">
             <div class="panel" style="max-width: 600px; margin: 50px auto;">
                 <h2 style="text-align: center;">Pilih Kelas Karakter</h2>
@@ -78,7 +81,6 @@
             </div>
         </div>
 
-        <!-- LAYAR DASHBOARD GAME -->
         <div id="screen-game" class="screen">
             <div class="panel" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
                 <h1 style="margin: 0; font-size: 20px;">🎮 Giga RPG Web</h1>
@@ -90,7 +92,6 @@
             </div>
             
             <div class="grid">
-                <!-- KOLOM 1: STATUS & INVENTARIS -->
                 <div>
                     <div class="panel">
                         <h2>Profil & Perlengkapan</h2>
@@ -103,7 +104,6 @@
                         <div class="bar-container"><div id="char-hp-bar" class="bar-fill-hp"></div><div id="char-hp-text" class="bar-text">HP</div></div>
                         <div class="bar-container"><div id="char-mp-bar" style="background: #007bff; width:0%; height:100%;"></div><div id="char-mp-text" class="bar-text">MP</div></div>
                         
-                        <!-- Panel Equipment -->
                         <div class="equip-box">
                             <div class="equip-item">🗡️ Senjata: <span id="eq-weapon">Kosong</span></div>
                             <div class="equip-item">🛡️ Armor: <span id="eq-armor">Kosong</span></div>
@@ -127,13 +127,16 @@
 
                     <div class="panel">
                         <h2>🎒 Inventaris (Tas 4x5)</h2>
-                        <div id="inventory-grid" class="inv-grid">
-                            <!-- 20 Slot digenerate dari JS -->
+                        <div style="margin-bottom: 12px; display: flex; gap: 6px; align-items: center; background:#121216; padding: 6px; border-radius: 5px;">
+                            <span style="font-size: 11px; color:#aaa; margin-right:5px;">Aksi Klik:</span>
+                            <button id="btn-mode-equip" class="mode-active" style="padding: 4px 10px; font-size: 11px;">🛡️ PASANG</button>
+                            <button id="btn-mode-sell" style="padding: 4px 10px; font-size: 11px; background:#495057;">💰 JUAL</button>
                         </div>
+                        <div id="inventory-grid" class="inv-grid">
+                            </div>
                     </div>
                 </div>
 
-                <!-- KOLOM 2: BATTLE, DUNGEON, TOKO PERLENGKAPAN -->
                 <div>
                     <div class="panel">
                         <h2>👹 WORLD BOSS</h2>
@@ -144,22 +147,21 @@
 
                     <div class="panel">
                         <h2>🦇 Dungeon Gelap</h2>
+                        <p style="font-size: 12px; color:#aaa;">(Peluang drop *Equipment* Langka!)</p>
                         <button id="btn-dungeon" style="width:100%; background: #6f42c1; padding: 12px; font-size:15px;">🔦 Masuk Dungeon (20 MP)</button>
                     </div>
 
-                    <!-- FITUR BARU: TOKO PERLENGKAPAN -->
                     <div class="panel">
                         <h2>⚒️ Toko Perlengkapan</h2>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
                             <button id="btn-buy-sword" style="background:#495057;">Pedang Besi<br><small>2k G (+30 P.ATK)</small></button>
                             <button id="btn-buy-staff" style="background:#495057;">Tongkat Sihir<br><small>2k G (+30 M.ATK)</small></button>
                             <button id="btn-buy-armor" style="background:#495057;">Zirah Kulit<br><small>2k G (+20 DEF)</small></button>
-                            <button id="btn-buy-ring" style="background:#495057;">Cincin Akurat<br><small>3k G (+10% Akurasi)</small></button>
+                            <button id="btn-buy-ring" style="background:#495057;">Cincin Akurat<br><small>3k G (+10% ACC)</small></button>
                         </div>
                     </div>
                 </div>
 
-                <!-- KOLOM 3: ITEM MALL, KOTA & KOMUNITAS -->
                 <div>
                     <div class="panel panel-mall">
                         <h2 class="gold-title">💎 Item Mall (Premium)</h2>
