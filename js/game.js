@@ -102,7 +102,7 @@ function startLiveGameSync() {
 }
 
 // ==========================================
-// 5. RENDERING DATA PEMAIN & GRID BANK 4x8
+// 5. RENDERING DATA PEMAIN & GRID BANK 4x4
 // ==========================================
 function listenToPlayerData() {
     const unsub = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
@@ -180,12 +180,12 @@ function listenToPlayerData() {
             }
         }
 
-        // --- BARU: Render Grid Brankas Item Ala Perfect World (4x8 = 32 Slot) ---
         const bankGrid = document.getElementById('bank-grid');
         if (bankGrid) {
             bankGrid.innerHTML = "";
             let bankItems = Object.entries(d.bankInventory || {});
-            for (let i = 0; i < 32; i++) {
+            
+            for (let i = 0; i < 16; i++) { 
                 if (i < bankItems.length) {
                     const [name, qty] = bankItems[i];
                     bankGrid.innerHTML += `<div class="bank-slot filled" onclick="window.handleBankClick('${escapeHTML(name)}')">
