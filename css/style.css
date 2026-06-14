@@ -28,6 +28,7 @@ button {
     font-weight: bold;
     transition: 0.2s;
     font-size: 13px;
+    white-space: nowrap;
 }
 button:hover {
     filter: brightness(1.2);
@@ -36,7 +37,7 @@ button:disabled {
     background: #555;
     cursor: not-allowed;
 }
-input[type="text"], input[type="number"], input[type="password"] {
+input[type="text"], input[type="number"], input[type="password"], input[type="email"] {
     background-color: #121216;
     border: 1px solid #3f3f52;
     padding: 8px;
@@ -47,9 +48,6 @@ input[type="text"], input[type="number"], input[type="password"] {
     margin-bottom: 8px;
 }
 
-/* ===================================================
-   2. MANAJEMEN LAYAR (SCREENS)
-   =================================================== */
 .screen {
     display: none;
     max-width: 1300px;
@@ -73,13 +71,11 @@ input[type="text"], input[type="number"], input[type="password"] {
     border-color: #00d2ff;
 }
 
-/* ===================================================
-   3. TATA LETAK UTAMA TIGA KOLOM KLASIK
-   =================================================== */
 .game-container {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 15px;
+    align-items: start;
 }
 .panel {
     background: #1f1f27;
@@ -94,7 +90,6 @@ input[type="text"], input[type="number"], input[type="password"] {
     background: #262211;
 }
 
-/* Header Status Atas */
 .game-header {
     display: flex;
     justify-content: space-between;
@@ -144,7 +139,6 @@ input[type="text"], input[type="number"], input[type="password"] {
     float: right;
 }
 
-/* Equipment Box */
 .equip-box {
     background: #121216;
     padding: 8px;
@@ -156,27 +150,38 @@ input[type="text"], input[type="number"], input[type="password"] {
     display: flex;
     justify-content: space-between;
     border-bottom: 1px dashed #333;
-    padding: 4px 0;
+    padding: 6px 0;
 }
 .equip-item span:last-child {
     color: #00d2ff;
     font-weight: bold;
 }
 
-/* ===================================================
-   4. SISTEM SLOT INVENTARIS & BANK (4x4 COMPACT)
-   =================================================== */
-/* Tas Utama (4x5 = 20 Slot) */
-.inv-grid {
+.mode-buttons {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+.mode-buttons button {
+    flex: 1;
+    padding: 6px;
+    font-size: 11px;
+}
+.mode-active { border: 2px solid #28a745 !important; background-color: #19692c !important; }
+.mode-sell-active { border: 2px solid #dc3545 !important; background-color: #bd2130 !important; }
+
+.inv-grid, #bank-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(5, 45px);
-    gap: 4px;
+    gap: 5px;
     background: #121216;
     padding: 10px;
     border-radius: 5px;
+    border: 1px solid #3f3f52;
 }
-.inv-slot {
+
+.inv-slot, .bank-slot {
+    aspect-ratio: 1;
     background: #2a2a35;
     border: 1px solid #3f3f52;
     border-radius: 4px;
@@ -186,79 +191,45 @@ input[type="text"], input[type="number"], input[type="password"] {
     font-size: 10px;
     text-align: center;
     color: #777;
-    overflow: hidden;
+    position: relative;
+    padding: 2px;
     flex-direction: column;
-    cursor: default;
-    transition: 0.2s;
+    cursor: pointer;
     user-select: none;
+    overflow: hidden;
 }
-.inv-slot.filled {
-    background: #3f3f52;
+.inv-slot:hover, .bank-slot:hover {
+    border-color: #007bff;
+    background-color: #252a30;
+}
+.inv-slot.filled, .bank-slot.filled {
+    background-color: #3f3f52;
     border-color: #00d2ff;
     color: #fff;
-    cursor: pointer;
 }
-.inv-slot.filled:hover {
-    background: #4a4a5a;
-    filter: brightness(1.1);
+.bank-slot.filled {
+    background-color: #1b2e24;
+    border-color: #28a745;
 }
 .inv-qty {
     color: #ffca28;
     font-weight: bold;
     font-size: 11px;
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
 }
 
-/* Brankas Bank Item Kompak (4x4 = 16 Slot) */
 .bank-management {
     display: flex;
     gap: 5px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 .bank-management input {
+    flex: 1;
     margin: 0;
 }
-#bank-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr); /* Kembalikan ke format 4 kolom */
-    grid-template-rows: repeat(4, 45px);   /* 4 baris tinggi */
-    gap: 4px;
-    background-color: #121216;
-    padding: 10px;
-    border: 1px solid #3f3f52;
-    border-radius: 5px;
-}
-.bank-slot {
-    background: #2a2a35;
-    border: 1px solid #3f3f52;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    text-align: center;
-    color: #777;
-    overflow: hidden;
-    flex-direction: column;
-    cursor: pointer;
-    user-select: none;
-}
-.bank-slot:hover {
-    border-color: #007bff;
-    background-color: #252a30;
-}
-.bank-slot.filled {
-    background-color: #1b2e24;
-    border-color: #28a745;
-    color: #fff;
-}
 
-/* Mode Indicator Styles */
-.mode-active { border: 2px solid #28a745 !important; background-color: #19692c !important; }
-.mode-sell-active { border: 2px solid #dc3545 !important; background-color: #bd2130 !important; }
-
-/* ===================================================
-   5. CHAT GLOBAL BLOCK
-   =================================================== */
 .chat-box {
     height: 150px;
     overflow-y: auto;
@@ -267,10 +238,19 @@ input[type="text"], input[type="number"], input[type="password"] {
     border-radius: 5px;
     margin-bottom: 10px;
     font-size: 13px;
+    border: 1px solid #3f3f52;
 }
 .chat-name {
     color: #ffca28;
     font-weight: bold;
+}
+.chat-controls {
+    display: flex;
+    gap: 5px;
+}
+.chat-controls input {
+    flex: 1;
+    margin: 0;
 }
 
 .version-label {
