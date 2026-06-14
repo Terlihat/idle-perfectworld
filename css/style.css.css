@@ -1,0 +1,283 @@
+body {
+    background-color: #121216;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 15px;
+}
+h1, h2, h3 {
+    margin-top: 0;
+}
+h2 {
+    border-bottom: 2px solid #3f3f52;
+    padding-bottom: 5px;
+    color: #00d2ff;
+    font-size: 1.2em;
+}
+h2.gold-title {
+    color: #ffcc00;
+    border-bottom: 2px solid #665500;
+}
+button {
+    padding: 8px 12px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: 0.2s;
+    font-size: 13px;
+}
+button:hover {
+    filter: brightness(1.2);
+}
+button:disabled {
+    background: #555;
+    cursor: not-allowed;
+}
+input[type="text"], input[type="number"], input[type="password"] {
+    background-color: #121216;
+    border: 1px solid #3f3f52;
+    padding: 8px;
+    color: #fff;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 8px;
+}
+
+/* ===================================================
+   2. MANAJEMEN LAYAR (SCREENS)
+   =================================================== */
+.screen {
+    display: none;
+    max-width: 1300px;
+    margin: 0 auto;
+    position: relative;
+}
+.auth-box {
+    max-width: 400px;
+    margin: 100px auto;
+}
+.char-card {
+    background: #121216;
+    border: 2px solid #3f3f52;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.char-card:hover {
+    border-color: #00d2ff;
+}
+
+/* ===================================================
+   3. TATA LETAK UTAMA TIGA KOLOM KLASIK
+   =================================================== */
+.game-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
+}
+.panel {
+    background: #1f1f27;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    margin-bottom: 15px;
+    border: 1px solid #2a2a35;
+}
+.panel-mall {
+    border: 1px solid #ffcc00;
+    background: #262211;
+}
+
+/* Header Status Atas */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #1f1f27;
+    border: 1px solid #2a2a35;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+.bar-container {
+    background: #333;
+    width: 100%;
+    height: 16px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
+}
+.bar-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+    top: 1px;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
+}
+.bar-fill-hp { background: #dc3545; width: 100%; height: 100%; transition: 0.3s; }
+.bar-fill-mp { background: #007bff; width: 0%; height: 100%; transition: 0.3s; }
+.bar-fill-exp { background: #28a745; width: 0%; height: 100%; transition: 0.3s; }
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    font-size: 13px;
+    color: #ccc;
+    background: #121216;
+    padding: 10px;
+    border-radius: 5px;
+}
+.stat-val {
+    color: #fff;
+    font-weight: bold;
+    float: right;
+}
+
+/* Equipment Box */
+.equip-box {
+    background: #121216;
+    padding: 8px;
+    border-radius: 5px;
+    margin-top: 10px;
+    font-size: 12px;
+}
+.equip-item {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dashed #333;
+    padding: 4px 0;
+}
+.equip-item span:last-child {
+    color: #00d2ff;
+    font-weight: bold;
+}
+
+/* ===================================================
+   4. SISTEM SLOT INVENTARIS & BANK (4x4 COMPACT)
+   =================================================== */
+/* Tas Utama (4x5 = 20 Slot) */
+.inv-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(5, 45px);
+    gap: 4px;
+    background: #121216;
+    padding: 10px;
+    border-radius: 5px;
+}
+.inv-slot {
+    background: #2a2a35;
+    border: 1px solid #3f3f52;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    text-align: center;
+    color: #777;
+    overflow: hidden;
+    flex-direction: column;
+    cursor: default;
+    transition: 0.2s;
+    user-select: none;
+}
+.inv-slot.filled {
+    background: #3f3f52;
+    border-color: #00d2ff;
+    color: #fff;
+    cursor: pointer;
+}
+.inv-slot.filled:hover {
+    background: #4a4a5a;
+    filter: brightness(1.1);
+}
+.inv-qty {
+    color: #ffca28;
+    font-weight: bold;
+    font-size: 11px;
+}
+
+/* Brankas Bank Item Kompak (4x4 = 16 Slot) */
+.bank-management {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+.bank-management input {
+    margin: 0;
+}
+#bank-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Kembalikan ke format 4 kolom */
+    grid-template-rows: repeat(4, 45px);   /* 4 baris tinggi */
+    gap: 4px;
+    background-color: #121216;
+    padding: 10px;
+    border: 1px solid #3f3f52;
+    border-radius: 5px;
+}
+.bank-slot {
+    background: #2a2a35;
+    border: 1px solid #3f3f52;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    text-align: center;
+    color: #777;
+    overflow: hidden;
+    flex-direction: column;
+    cursor: pointer;
+    user-select: none;
+}
+.bank-slot:hover {
+    border-color: #007bff;
+    background-color: #252a30;
+}
+.bank-slot.filled {
+    background-color: #1b2e24;
+    border-color: #28a745;
+    color: #fff;
+}
+
+/* Mode Indicator Styles */
+.mode-active { border: 2px solid #28a745 !important; background-color: #19692c !important; }
+.mode-sell-active { border: 2px solid #dc3545 !important; background-color: #bd2130 !important; }
+
+/* ===================================================
+   5. CHAT GLOBAL BLOCK
+   =================================================== */
+.chat-box {
+    height: 150px;
+    overflow-y: auto;
+    background: #111;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+.chat-name {
+    color: #ffca28;
+    font-weight: bold;
+}
+
+.version-label {
+    position: absolute;
+    top: 5px;
+    right: 15px;
+    font-size: 11px;
+    color: #555;
+    font-family: monospace;
+}
