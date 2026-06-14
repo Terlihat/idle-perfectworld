@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Admin Dashboard</title>
+    <link rel="stylesheet" href="./css/admin.css">
+</head>
+<body>
+    <div class="container" id="admin-content" style="display: none;">
+        <h1>⚙️ Admin Control Panel</h1>
+        
+        <h2>📊 Server Analytics</h2>
+        <div class="grid-stats">
+            <div class="stat-card">
+                <h3>Total Pemain Terdaftar</h3>
+                <div class="value" id="stat-total-players">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Gold Beredar (Ekonomi)</h3>
+                <div class="value" id="stat-total-gold" style="color: #ffd700;">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total COIN Beredar</h3>
+                <div class="value" id="stat-total-coin" style="color: #00d2ff;">0</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>📬 Kirim Surat & Hadiah (Mailbox System)</h2>
+            <div id="mail-alert" class="alert"></div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>UID Pemain Penerima (Kosongkan untuk Broadcast ke Semua)</label>
+                    <input type="text" id="mail-target-uid" placeholder="Contoh: aB3cD5eF...">
+                </div>
+                <div class="form-group">
+                    <label>Judul Surat</label>
+                    <input type="text" id="mail-title" placeholder="Kompensasi Maintenance">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Pesan Surat</label>
+                <input type="text" id="mail-message" placeholder="Terima kasih telah bermain...">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Kirim Gold</label>
+                    <input type="number" id="mail-gold" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Kirim COIN</label>
+                    <input type="number" id="mail-coin" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Kirim Item Tambahan</label>
+                    <select id="mail-item-name">
+                        <option value="">-- Tidak Kirim Item --</option>
+                        <option value="Mirage Stone">Mirage Stone</option>
+                        <option value="Heaven Stone">Heaven Stone</option>
+                        <option value="Universal Stone">Universal Stone</option>
+                        <option value="Batu Dungeon">Batu Dungeon</option>
+                        <option value="Gacha Box Premium">Gacha Box Premium</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="btn-send-mail">Kirim Surat Sekarang</button>
+        </div>
+    </div>
+
+    <div id="loading-screen" style="text-align: center; margin-top: 100px; color: #fff;">
+        <h2>Memverifikasi Akses Admin...</h2>
+    </div>
+
+    <script type="module" src="./js/admin.js"></script>
+</body>
+</html>
