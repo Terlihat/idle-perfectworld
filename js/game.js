@@ -1,14 +1,11 @@
-// ==========================================
-// 1. IMPORT FIREBASE & MODUL KUSTOM
-// ==========================================
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { doc, getDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, getDoc, setDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 import { buyEquipment } from './modules/shop.js';
 import { listenToChat, sendChat } from './modules/chat.js';
 import { buyPotion, listenToMailbox } from './modules/apothecary.js';
-import { buyMallItem } from './modules/mall.js'; // Menggunakan fungsi universal mall
+import { buyMallItem } from './modules/mall.js'; 
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
 
 let currentUserUid = null;
@@ -18,9 +15,6 @@ let currentAccuracy = 0;
 let inventoryMode = "EQUIP"; 
 let playerUsername = "Hero Anonim";
 
-// ==========================================
-// 2. DATABASE ITEM
-// ==========================================
 const ITEM_DB = {
     "Pedang Besi": { type: "weapon", patk: 30, sellValue: 1000 },
     "Tongkat Sihir": { type: "weapon", matk: 30, sellValue: 1000 },
@@ -36,7 +30,6 @@ const ITEM_DB = {
     "Ramuan MP": { type: "consumable", sellValue: 250 },
     "Batu Dungeon": { type: "loot", sellValue: 300 },
     
-    // ITEM MALL & BATU TEMPA (PERFECT WORLD)
     "Mirage Stone": { type: "catalyst", sellValue: 0 },
     "Heaven Stone": { type: "catalyst", sellValue: 0 },
     "Underworld Stone": { type: "catalyst", sellValue: 0 },
@@ -45,18 +38,13 @@ const ITEM_DB = {
     "Tiket Ganti Nama": { type: "special", sellValue: 0 }
 };
 
-// Tabel Probabilitas Tempa Perfect World (+1 hingga +10)
 const REFINE_RATES = {
-    // Array Index [0] adalah peluang dari +0 menuju +1. Index [7] adalah peluang dari +7 ke +8
     "Mirage Stone":     [0.500, 0.300, 0.300, 0.300, 0.300, 0.300, 0.300, 0.300, 0.150, 0.050],
     "Heaven Stone":     [0.650, 0.450, 0.450, 0.450, 0.450, 0.450, 0.450, 0.450, 0.200, 0.100],
     "Underworld Stone": [0.533, 0.335, 0.335, 0.335, 0.335, 0.335, 0.335, 0.335, 0.150, 0.050],
     "Universal Stone":  [1.000, 0.250, 0.100, 0.040, 0.020, 0.008, 0.005, 0.003, 0.001, 0.000]
 };
 
-// ==========================================
-// 3. UTILITAS DASAR
-// ==========================================
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
     document.getElementById(screenId).style.display = 'block';
@@ -66,6 +54,9 @@ function escapeHTML(str) {
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : "";
 }
 
+// ==========================================
+// INISIALISASI & PILIH KARAKTER AWAL
+// ==========================================
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUid = user.uid;
@@ -83,6 +74,34 @@ onAuthStateChanged(auth, async (user) => {
         showScreen('screen-auth');
     }
 });
+
+async function selectCharacterClass(className) {
+    if (!currentUserUid) return;
+    const userRef = doc(db, "users", currentUserUid);
+    let stats = { str: 0, con: 0, dex: 0, int: 0 };
+    
+    if (className === 'Warrior') { stats = { str: 15, con: 20, dex: 5, int: 2 }; } 
+    else if (className === 'Mage') { stats = { str: 2, con: 8, dex: 10, int: 25 }; }
+
+    const maxHp = 1000 + (stats.con * 50); 
+    const maxMp = 200 + (stats.int * 30);
+
+    try {
+        await setDoc(userRef, {
+            username: "Hero_" + currentUserUid.substring(0, 4), 
+            characterClass: className,
+            level: 1, exp: 0, gold: 5000, coin: 50, bankGold: 0, 
+            inventory: { "Roti Keras": 5, "Batu Dungeon": 2 }, 
+            equipment: { weapon: null, armor: null, accessory: null },
+            ...stats, maxHp: maxHp, currentHp: maxHp, maxMp: maxMp, currentMp: maxMp, lastAction: 0
+        });
+        showScreen('screen-game'); 
+        startLiveGameSync();
+    } catch (err) { alert("Pendaftaran Gagal: " + err); }
+}
+
+document.getElementById('class-warrior')?.addEventListener('click', () => selectCharacterClass('Warrior'));
+document.getElementById('class-mage')?.addEventListener('click', () => selectCharacterClass('Mage'));
 
 function startLiveGameSync() {
     listenToPlayerData(); 
@@ -108,7 +127,7 @@ function startLiveGameSync() {
 }
 
 // ==========================================
-// 4. RENDERING DATA
+// RENDERING DATA & UI GAMEPLAY
 // ==========================================
 function listenToPlayerData() {
     const unsub = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
@@ -203,27 +222,19 @@ function listenToPlayerData() {
 }
 
 // ==========================================
-// 5. INTERAKSI KLIK TAS & TIKET SPESIAL
+// TAS & MEKANISME ITEM
 // ==========================================
 window.handleInventoryClick = function(itemName) {
-    if (inventoryMode === "EQUIP") { 
-        equipFromInventory(itemName); 
-    } else if (inventoryMode === "SELL") { 
-        sellItemFromInventory(itemName); 
-    } else if (inventoryMode === "BANK") { 
-        depositItem(db, currentUserUid, itemName); 
-    }
+    if (inventoryMode === "EQUIP") { equipFromInventory(itemName); } 
+    else if (inventoryMode === "SELL") { sellItemFromInventory(itemName); } 
+    else if (inventoryMode === "BANK") { depositItem(db, currentUserUid, itemName); }
 };
-
-window.handleBankClick = function(itemName) {
-    withdrawItem(db, currentUserUid, itemName);
-};
+window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, itemName); };
 
 async function equipFromInventory(itemName) {
     if (!currentUserUid || !ITEM_DB[itemName]) return;
     const itemData = ITEM_DB[itemName];
 
-    // Penanganan Item Spesial (Tiket Mall)
     let specialInput = null;
     if (itemData.type === "special") {
         if (itemName === "Tiket Ganti Nama") {
@@ -248,7 +259,6 @@ async function equipFromInventory(itemName) {
             
             if (!inv[itemName] || inv[itemName] <= 0) throw "Item tidak ditemukan!";
             
-            // Eksekusi Item Spesial
             if (itemData.type === "special") {
                 inv[itemName] -= 1;
                 if (inv[itemName] === 0) delete inv[itemName];
@@ -258,7 +268,6 @@ async function equipFromInventory(itemName) {
                     updates.username = specialInput;
                 } else if (itemName === "Tiket Ubah Job") {
                     updates.characterClass = specialInput;
-                    // Reset Stat ke dasar job baru
                     if (specialInput === 'Warrior') { updates.str = 15; updates.con = 20; updates.dex = 5; updates.int = 2; }
                     else { updates.str = 2; updates.con = 8; updates.dex = 10; updates.int = 25; }
                 }
@@ -266,7 +275,6 @@ async function equipFromInventory(itemName) {
                 return;
             }
 
-            // Eksekusi Pemasangan Equipment (Armor/Senjata)
             const slotType = itemData.type;
             if (eq[slotType] && eq[slotType].name) {
                 const oldItem = eq[slotType];
@@ -305,7 +313,7 @@ async function sellItemFromInventory(itemName) {
 }
 
 // ==========================================
-// 6. SISTEM TEMPA PW-STYLE
+// SISTEM TEMPA PW-STYLE
 // ==========================================
 async function refineEquipment(slotType) {
     if (!currentUserUid) return;
@@ -327,42 +335,35 @@ async function refineEquipment(slotType) {
             let currentRefine = eq[slotType].refine || 0;
             if (currentRefine >= 10) throw "Tingkat tempa perlengkapan ini sudah maksimal (+10)!";
 
-            // Konsumsi Katalis & Gold
             inv[stoneType] -= 1;
             if (inv[stoneType] === 0) delete inv[stoneType];
             gold -= 1000;
 
-            // Baca Probabilitas (Jika level di atas +8, gunakan peluang paling akhir [9])
             const indexRate = currentRefine > 9 ? 9 : currentRefine;
             const successRate = REFINE_RATES[stoneType][indexRate]; 
 
             const roll = Math.random();
             if (roll <= successRate) {
-                // Tempa Berhasil
                 eq[slotType].refine = currentRefine + 1;
                 alert(`🎉 LUAR BIASA! Tempa Sukses! [${eq[slotType].name}] meningkat ke (+${eq[slotType].refine})`);
             } else {
-                // Tempa Gagal & Mekanik Penalti Stone
                 if (stoneType === 'Underworld Stone') {
                     eq[slotType].refine = Math.max(0, currentRefine - 1);
                     alert(`💥 GAGAL! Efek Underworld: Tingkat tempa turun -1 menjadi (+${eq[slotType].refine})`);
                 } else if (stoneType === 'Universal Stone') {
-                    // Chienkun = Aman
                     alert(`❌ GAGAL! Efek Universal: Tingkat tempa dipertahankan di (+${eq[slotType].refine})`);
                 } else {
-                    // Mirage & Heaven = Hancur ke 0
                     eq[slotType].refine = 0;
                     alert(`💔 HANCUR! Tempa Gagal total. Tingkat tempa kembali ke (+0)`);
                 }
             }
-
             ts.update(userRef, { inventory: inv, equipment: eq, gold: gold });
         });
     } catch (err) { alert(err); }
 }
 
 // ==========================================
-// 7. BINDING EVENT LISTENERS UI
+// BINDING EVENT LISTENERS UI
 // ==========================================
 function clearActiveModeClasses() {
     ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank'].forEach(id => {
@@ -380,12 +381,10 @@ document.getElementById('btn-mode-bank')?.addEventListener('click', () => {
     inventoryMode = "BANK"; clearActiveModeClasses(); document.getElementById('btn-mode-bank').className = "mode-active";
 });
 
-// Aksi Pandai Besi
 document.getElementById('btn-refine-weapon')?.addEventListener('click', () => refineEquipment('weapon'));
 document.getElementById('btn-refine-armor')?.addEventListener('click', () => refineEquipment('armor'));
 document.getElementById('btn-refine-accessory')?.addEventListener('click', () => refineEquipment('accessory'));
 
-// Event Belanja UI Standar
 document.getElementById('btn-buy-sword')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Pedang Besi'));
 document.getElementById('btn-buy-staff')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Tongkat Sihir'));
 document.getElementById('btn-buy-armor')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Zirah Kulit'));
@@ -393,7 +392,6 @@ document.getElementById('btn-buy-ring')?.addEventListener('click', () => buyEqui
 document.getElementById('btn-buy-hp')?.addEventListener('click', () => buyPotion(db, currentUserUid, 'HP'));
 document.getElementById('btn-buy-mp')?.addEventListener('click', () => buyPotion(db, currentUserUid, 'MP'));
 
-// Transaksi Bank Gold
 document.getElementById('btn-bank-deposit-gold')?.addEventListener('click', () => {
     const goldAmount = parseInt(document.getElementById('bank-gold-input')?.value || 0);
     if (goldAmount > 0) { depositGold(db, currentUserUid, goldAmount); document.getElementById('bank-gold-input').value = ""; }
@@ -403,7 +401,6 @@ document.getElementById('btn-bank-withdraw-gold')?.addEventListener('click', () 
     if (goldAmount > 0) { withdrawGold(db, currentUserUid, goldAmount); document.getElementById('bank-gold-input').value = ""; }
 });
 
-// Event Kirim Chat
 const chatInput = document.getElementById('chat-input');
 const btnSendChat = document.getElementById('btn-send-chat');
 function executeSendingChat() {
@@ -416,7 +413,6 @@ chatInput?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); executeSendingChat(); }
 });
 
-// EVENT BELANJA ITEM MALL PREMIUM BARU
 document.getElementById('btn-mall-mirage')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Mirage Stone', 5));
 document.getElementById('btn-mall-heaven')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Heaven Stone', 15));
 document.getElementById('btn-mall-underworld')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Underworld Stone', 15));

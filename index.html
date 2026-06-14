@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giga RPG Web - v1.3.1</title>
+    <title>Giga RPG Web</title>
     <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
     <div class="container">
-        <!-- LAYAR AUTH -->
         <div id="screen-auth" class="screen" style="display: block;">
-            <div class="version-label">v1.3.1</div>
             <div class="panel auth-box">
                 <h2 id="auth-title" style="text-align: center;">Masuk Gerbang RPG</h2>
                 <input type="email" id="auth-email" placeholder="Email">
@@ -23,9 +21,7 @@
             </div>
         </div>
 
-        <!-- LAYAR PILIH KARAKTER -->
         <div id="screen-char-select" class="screen">
-            <div class="version-label">v1.3.1</div>
             <div class="panel" style="max-width: 600px; margin: 50px auto;">
                 <h2 style="text-align: center;">Pilih Kelas Karakter</h2>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
@@ -41,11 +37,7 @@
             </div>
         </div>
 
-        <!-- LAYAR DASHBOARD UTAMA GAME -->
         <div id="screen-game" class="screen">
-            <div class="version-label">v1.3.1</div>
-            
-            <!-- STATUS HEADER BAR -->
             <div class="game-header">
                 <h1 style="margin: 0; font-size: 20px;"> Giga RPG Web</h1>
                 <div style="display: flex; gap: 20px; font-weight: bold; font-size: 14px;">
@@ -55,10 +47,8 @@
                 <button id="btn-logout" style="background: #dc3545;">Keluar</button>
             </div>
             
-            <!-- FORMASI 3 KOLOM -->
             <div class="game-container">
                 
-                <!-- KOLOM 1: PROFIL STATUS & TAS UTAMA -->
                 <div>
                     <div class="panel">
                         <h2>Profil & Perlengkapan</h2>
@@ -94,7 +84,6 @@
 
                     <div class="panel">
                         <h2>🎒 Inventaris Tas (4x5)</h2>
-                        <!-- Penggunaan flexbox class mode-buttons agar rapi -->
                         <div class="mode-buttons">
                             <button id="btn-mode-equip" class="mode-active">🛡️ PAKAI</button>
                             <button id="btn-mode-sell" style="background:#495057;">💰 JUAL</button>
@@ -104,7 +93,6 @@
                     </div>
                 </div>
 
-                <!-- KOLOM 2: BATTLE ARENA, DUNGEON, & PANDAI BESI -->
                 <div>
                     <div class="panel">
                         <h2>👹 WORLD BOSS</h2>
@@ -136,7 +124,6 @@
                             <option value="Underworld Stone">Underworld Stone (Peluang+ | Gagal = Turun 1)</option>
                             <option value="Universal Stone">Universal Stone (Aman | Gagal = Tidak Turun)</option>
                         </select>
-
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <button id="btn-refine-weapon" style="background:#28a745; text-align: left;">🗡️ Tempa Senjata Anda</button>
                             <button id="btn-refine-armor" style="background:#28a745; text-align: left;">👕 Tempa Armor Anda</button>
@@ -145,7 +132,6 @@
                     </div>
                 </div>
 
-                <!-- KOLOM 3: ITEM MALL, BRANKAS BANK (4x4 COMPACT), OBAT & CHAT -->
                 <div>
                     <div class="panel panel-mall">
                         <h2 class="gold-title">💎 Item Mall Premium</h2>
@@ -159,18 +145,14 @@
                         </div>
                     </div>
 
-                    <!-- BRANKAS ITEM COMPACT 4x4 -->
                     <div class="panel">
                         <h2>🏦 Brankas Bank (4x4)</h2>
                         <div style="font-size: 13px; margin-bottom: 5px;">Saldo Bank: <strong id="player-bank" style="color:#00d2ff;">0</strong> Gold</div>
-                        
-                        <!-- Input transaksi sudah dipasang class flexbox .bank-management -->
                         <div class="bank-management">
                             <input type="number" id="bank-gold-input" placeholder="Nominal Gold">
                             <button id="btn-bank-deposit-gold" style="background: #28a745;">Simpan</button>
                             <button id="btn-bank-withdraw-gold" style="background: #dc3545;">Tarik</button>
                         </div>
-                        
                         <div id="bank-grid"></div>
                     </div>
 
@@ -186,8 +168,6 @@
                     <div class="panel">
                         <h2>💬 Obrolan Dunia</h2>
                         <div id="chat-box" class="chat-box"></div>
-                        
-                        <!-- Input chat sudah dipasang class flexbox .chat-controls -->
                         <div class="chat-controls">
                             <input type="text" id="chat-input" placeholder="Tulis Pesan...">
                             <button id="btn-send-chat">Kirim</button>
