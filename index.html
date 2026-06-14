@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giga RPG Web - v11.0 (Item Mall & Advanced Stats)</title>
+    <title>Giga RPG Web - v12.0 (Equipment & 4x5 Inventory)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; background-color: #121216; color: #fff; margin: 0; }
         .container { max-width: 1300px; margin: 0 auto; }
         .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; } 
         .panel { background: #1f1f27; padding: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); margin-bottom: 15px; border: 1px solid #2a2a35; }
-        .panel-mall { border: 1px solid #ffcc00; background: #262211; } /* Warna khusus Item Mall */
+        .panel-mall { border: 1px solid #ffcc00; background: #262211; }
         h2 { border-bottom: 2px solid #3f3f52; padding-bottom: 5px; margin-top: 0; color: #00d2ff; font-size: 1.2em; }
         h2.gold-title { color: #ffcc00; border-bottom: 2px solid #665500; }
         button { padding: 8px 12px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; font-size: 13px; }
@@ -32,11 +32,22 @@
         
         .chat-box { height: 150px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; margin-bottom: 10px; font-size: 13px; }
         .chat-name { color: #ffca28; font-weight: bold; }
-        .inv-item { display: inline-block; background: #3f3f52; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
+        
+        /* Grid Inventaris 4x5 */
+        .inv-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, 40px); gap: 4px; background: #121216; padding: 10px; border-radius: 5px; }
+        .inv-slot { background: #2a2a35; border: 1px solid #3f3f52; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; text-align: center; color: #777; overflow: hidden; flex-direction: column; }
+        .inv-slot.filled { background: #3f3f52; border-color: #00d2ff; color: #fff; }
+        .inv-qty { color: #ffca28; font-weight: bold; font-size: 11px; }
+
+        /* Equipment Box */
+        .equip-box { background: #121216; padding: 8px; border-radius: 5px; margin-top: 10px; font-size: 12px; }
+        .equip-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #333; padding: 4px 0; }
+        .equip-item span:last-child { color: #00d2ff; }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- LAYAR AUTH -->
         <div id="screen-auth" class="screen" style="display: block;">
             <div class="panel auth-box">
                 <h2 id="auth-title" style="text-align: center;">Masuk Gerbang RPG</h2>
@@ -50,22 +61,24 @@
             </div>
         </div>
 
+        <!-- LAYAR PILIH KARAKTER -->
         <div id="screen-char-select" class="screen">
             <div class="panel" style="max-width: 600px; margin: 50px auto;">
                 <h2 style="text-align: center;">Pilih Kelas Karakter</h2>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
                     <div class="char-card" id="class-warrior">
                         <h3 style="color: #ff4a4a;">⚔️ Warrior</h3>
-                        <p style="font-size: 12px; color: #aaa;">Ahli fisik. STR dan CON tinggi.<br>Serangan bergantung pada P.ATK.</p>
+                        <p style="font-size: 12px; color: #aaa;">Ahli fisik. STR dan CON tinggi.</p>
                     </div>
                     <div class="char-card" id="class-mage">
                         <h3 style="color: #4ae3ff;">🔮 Mage</h3>
-                        <p style="font-size: 12px; color: #aaa;">Ahli sihir. INT dan DEX tinggi.<br>Serangan bergantung pada M.ATK.</p>
+                        <p style="font-size: 12px; color: #aaa;">Ahli sihir. INT dan DEX tinggi.</p>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- LAYAR DASHBOARD GAME -->
         <div id="screen-game" class="screen">
             <div class="panel" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
                 <h1 style="margin: 0; font-size: 20px;">🎮 Giga RPG Web</h1>
@@ -77,9 +90,10 @@
             </div>
             
             <div class="grid">
+                <!-- KOLOM 1: STATUS & INVENTARIS -->
                 <div>
                     <div class="panel">
-                        <h2>Profil Karakter</h2>
+                        <h2>Profil & Perlengkapan</h2>
                         <div style="margin-bottom: 10px; font-size: 14px;">
                             <strong id="player-name" style="color: #ffca28; font-size: 18px;">...</strong><br>
                             <span id="player-class" style="color: #e040fb;">...</span> | Level <strong id="player-level" style="color:#00d2ff;">1</strong>
@@ -89,6 +103,13 @@
                         <div class="bar-container"><div id="char-hp-bar" class="bar-fill-hp"></div><div id="char-hp-text" class="bar-text">HP</div></div>
                         <div class="bar-container"><div id="char-mp-bar" style="background: #007bff; width:0%; height:100%;"></div><div id="char-mp-text" class="bar-text">MP</div></div>
                         
+                        <!-- Panel Equipment -->
+                        <div class="equip-box">
+                            <div class="equip-item">🗡️ Senjata: <span id="eq-weapon">Kosong</span></div>
+                            <div class="equip-item">🛡️ Armor: <span id="eq-armor">Kosong</span></div>
+                            <div class="equip-item">💍 Aksesoris: <span id="eq-acc">Kosong</span></div>
+                        </div>
+
                         <div class="stat-grid" style="margin-top: 10px;">
                             <div>STR: <span id="stat-str" class="stat-val">0</span></div>
                             <div>CON: <span id="stat-con" class="stat-val">0</span></div>
@@ -105,11 +126,14 @@
                     </div>
 
                     <div class="panel">
-                        <h2>🎒 Inventaris</h2>
-                        <div id="inventory-list" style="min-height: 50px; background: #121216; padding: 10px; border-radius: 5px;">Memuat...</div>
+                        <h2>🎒 Inventaris (Tas 4x5)</h2>
+                        <div id="inventory-grid" class="inv-grid">
+                            <!-- 20 Slot digenerate dari JS -->
+                        </div>
                     </div>
                 </div>
 
+                <!-- KOLOM 2: BATTLE, DUNGEON, TOKO PERLENGKAPAN -->
                 <div>
                     <div class="panel">
                         <h2>👹 WORLD BOSS</h2>
@@ -123,16 +147,22 @@
                         <button id="btn-dungeon" style="width:100%; background: #6f42c1; padding: 12px; font-size:15px;">🔦 Masuk Dungeon (20 MP)</button>
                     </div>
 
+                    <!-- FITUR BARU: TOKO PERLENGKAPAN -->
                     <div class="panel">
-                        <h2>📬 Kotak Surat (Sistem & Admin)</h2>
-                        <div id="mailbox-list" style="max-height: 180px; overflow-y: auto; background: #121216; padding: 10px; border-radius: 5px; font-size: 13px;">Memuat surat...</div>
+                        <h2>⚒️ Toko Perlengkapan</h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                            <button id="btn-buy-sword" style="background:#495057;">Pedang Besi<br><small>2k G (+30 P.ATK)</small></button>
+                            <button id="btn-buy-staff" style="background:#495057;">Tongkat Sihir<br><small>2k G (+30 M.ATK)</small></button>
+                            <button id="btn-buy-armor" style="background:#495057;">Zirah Kulit<br><small>2k G (+20 DEF)</small></button>
+                            <button id="btn-buy-ring" style="background:#495057;">Cincin Akurat<br><small>3k G (+10% Akurasi)</small></button>
+                        </div>
                     </div>
                 </div>
 
+                <!-- KOLOM 3: ITEM MALL, KOTA & KOMUNITAS -->
                 <div>
                     <div class="panel panel-mall">
                         <h2 class="gold-title">💎 Item Mall (Premium)</h2>
-                        <p style="font-size: 12px; color: #ccc;">Gunakan COIN untuk membeli item eksklusif.</p>
                         <div style="display: flex; gap: 5px;">
                             <button id="btn-mall-gacha" style="flex:1; background:#b8860b;">🎁 Beli Gacha Box<br><small>20 COIN</small></button>
                             <button id="btn-mall-name" style="flex:1; background:#4b0082;">📝 Ganti Nama<br><small>50 COIN</small></button>
@@ -150,11 +180,12 @@
                     </div>
 
                     <div class="panel">
-                        <h2>🧪 Toko Ahli Obat</h2>
-                        <div style="display: flex; gap: 5px;">
+                        <h2>🧪 Toko Ahli Obat & Surat</h2>
+                        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                             <button id="btn-buy-hp" style="flex:1; background:#dc3545;">Beli HP Pot<br><small>500 G</small></button>
                             <button id="btn-buy-mp" style="flex:1; background:#007bff;">Beli MP Pot<br><small>500 G</small></button>
                         </div>
+                        <div id="mailbox-list" style="max-height: 100px; overflow-y: auto; background: #121216; padding: 10px; border-radius: 5px; font-size: 12px;">Memuat surat...</div>
                     </div>
 
                     <div class="panel">
