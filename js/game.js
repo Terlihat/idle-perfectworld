@@ -1,6 +1,6 @@
 /* ===================================================
    PUSAT KENDALI UTAMA (UI CONTROLLER)
-   Versi Code: 2.0.1 (Auction Compatibility Fix)
+   Versi Code: 2.0.2 (UID Copy Enabled)
    =================================================== */
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -16,8 +16,6 @@ import { buyPotion } from './modules/apothecary.js';
 import { listenToMailbox, claimMailReward } from './modules/mailbox.js'; 
 import { buyMallItem } from './modules/mall.js'; 
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
-
-// IMPORT AUCTION SYSTEM
 import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, rejectBid, cancelAuction } from './modules/auction.js';
 
 let currentUserUid = null;
@@ -91,6 +89,10 @@ function startLiveGameSync() {
             document.getElementById('header-coin').innerText = (d.coin || 0).toLocaleString();
             document.getElementById('player-bank').innerText = (d.bankGold || 0).toLocaleString();
             
+            // RENDERING TEKS UID KE LAYAR
+            const elUid = document.getElementById('player-uid');
+            if (elUid) elUid.innerText = currentUserUid;
+
             const maxExp = (d.level || 1) * 100;
             document.getElementById('exp-text').innerText = `${d.exp || 0} / ${maxExp}`;
             document.getElementById('exp-bar').style.width = `${Math.min(((d.exp || 0) / maxExp) * 100, 100)}%`;
@@ -184,7 +186,6 @@ function startLiveGameSync() {
         }
     });
 
-    // E. SINKRONISASI PASAR LELANG (Dengan Fallback untuk barang lama)
     const unsubAuction = listenToAuction(db, (items) => {
         const auctionList = document.getElementById('auction-list');
         if (auctionList) { 
@@ -194,8 +195,6 @@ function startLiveGameSync() {
             items.forEach(item => {
                 const isExpired = (item.expiresAt || 0) < now;
                 const isMine = item.sellerId === currentUserUid;
-                
-                // PERBAIKAN: Mengambil buyoutPrice atau price (untuk barang peninggalan lama)
                 const itemPrice = item.buyoutPrice || item.price || 0; 
                 let btnHtml = "";
 
@@ -233,9 +232,7 @@ function startLiveGameSync() {
     activeUnsubscribeListeners.push(unsubData, unsubChat, unsubMail, unsubAuction);
 }
 
-// -------------------------------------------
-// 3. WINDOW ROUTING LOGIC (UI INTERAKSI)
-// -------------------------------------------
+// BINDING KE WINDOW
 window.handleInventoryClick = function(itemName) {
     if (inventoryMode === "EQUIP") {
         if (itemName === "Tiket Ganti Nama") {
@@ -258,7 +255,6 @@ window.handleInventoryClick = function(itemName) {
 
 window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, itemName); };
 window.claimReward = function(mailId) { claimMailReward(db, currentUserUid, mailId); };
-
 window.buyFromAuction = function(id, name, price, sellerId) { if (confirm(`Beli Langsung ${name} seharga ${price} Gold?`)) buyAuctionItem(db, currentUserUid, id, name, price, sellerId); };
 window.cancelAuction = function(id) { if (confirm("Tarik barang dari pasar?")) cancelAuction(db, currentUserUid, id); };
 
@@ -278,11 +274,13 @@ window.actionBid = function(id, action) {
     if (action === 'reject' && confirm("Tolak tawaran ini? Uang akan dikembalikan ke penawar.")) rejectBid(db, currentUserUid, id);
 };
 
-// -------------------------------------------
-// 4. BINDING HANDLER BUTTONS EVENT LISTENERS
-// -------------------------------------------
-document.getElementById('class-warrior')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Warrior', () => showScreen('screen-game')));
-document.getElementById('class-mage')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Mage', () => showScreen('screen-game')));
+// EVENT LISTENER KLIK UNTUK MENYALIN UID OTOMATIS
+document.getElementById('btn-copy-uid')?.addEventListener('click', () => {
+    if (currentUserUid) {
+        navigator.clipboard.writeText(currentUserUid);
+        alert("📋 UID berhasil disalin ke clipboard!");
+    }
+});
 
 function clearActiveModeClasses() {
     ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction'].forEach(id => {
@@ -296,18 +294,11 @@ document.getElementById('btn-mode-sell')?.addEventListener('click', () => { inve
 document.getElementById('btn-mode-bank')?.addEventListener('click', () => { inventoryMode = "BANK"; clearActiveModeClasses(); document.getElementById('btn-mode-bank').className = "mode-active"; });
 document.getElementById('btn-mode-auction')?.addEventListener('click', () => { inventoryMode = "AUCTION"; clearActiveModeClasses(); document.getElementById('btn-mode-auction').className = "mode-auction-active"; });
 
-// Battle Arena Dungeon Click
-document.getElementById('btn-attack-dungeon')?.addEventListener('click', () => {
-    const selectedMonster = document.getElementById('dungeon-select').value;
-    attackMonster(db, currentUserUid, selectedMonster, currentPlayerStats);
-});
-
-// Blacksmith Refine Click
+document.getElementById('btn-attack-dungeon')?.addEventListener('click', () => attackMonster(db, currentUserUid, document.getElementById('dungeon-select').value, currentPlayerStats));
 document.getElementById('btn-refine-weapon')?.addEventListener('click', () => refineEquipment(db, currentUserUid, 'weapon', document.getElementById('refine-catalyst').value));
 document.getElementById('btn-refine-armor')?.addEventListener('click', () => refineEquipment(db, currentUserUid, 'armor', document.getElementById('refine-catalyst').value));
 document.getElementById('btn-refine-accessory')?.addEventListener('click', () => refineEquipment(db, currentUserUid, 'accessory', document.getElementById('refine-catalyst').value));
 
-// Shop Normal Click
 document.getElementById('btn-buy-sword')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Pedang Besi'));
 document.getElementById('btn-buy-staff')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Tongkat Sihir'));
 document.getElementById('btn-buy-armor')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Zirah Kulit'));
@@ -315,11 +306,9 @@ document.getElementById('btn-buy-ring')?.addEventListener('click', () => buyEqui
 document.getElementById('btn-buy-hp')?.addEventListener('click', () => buyPotion(db, currentUserUid, 'HP'));
 document.getElementById('btn-buy-mp')?.addEventListener('click', () => buyPotion(db, currentUserUid, 'MP'));
 
-// Bank Gold Action Click
 document.getElementById('btn-bank-deposit-gold')?.addEventListener('click', () => { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { depositGold(db, currentUserUid, val); el.value = ""; } });
 document.getElementById('btn-bank-withdraw-gold')?.addEventListener('click', () => { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { withdrawGold(db, currentUserUid, val); el.value = ""; } });
 
-// Premium Item Mall Click
 document.getElementById('btn-mall-mirage')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Mirage Stone', 5));
 document.getElementById('btn-mall-heaven')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Heaven Stone', 15));
 document.getElementById('btn-mall-underworld')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Underworld Stone', 15));
@@ -328,12 +317,10 @@ document.getElementById('btn-mall-name')?.addEventListener('click', () => buyMal
 document.getElementById('btn-mall-job')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ubah Job', 100));
 document.getElementById('btn-mall-stamina')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Ramuan Stamina', 10));
 
-// Chat Action
 const chatInput = document.getElementById('chat-input');
 const btnSendChat = document.getElementById('btn-send-chat');
 function executeSendingChat() { if (chatInput && chatInput.value.trim()) { sendChat(db, currentUserUid, playerUsername, chatInput.value); chatInput.value = ""; } }
 btnSendChat?.addEventListener('click', executeSendingChat);
 chatInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); executeSendingChat(); } });
 
-// Admin Control Panel Redirect
 document.getElementById('btn-admin-panel')?.addEventListener('click', () => window.location.href = './admin/index.html');
