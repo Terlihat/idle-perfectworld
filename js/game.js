@@ -1,6 +1,6 @@
 /* ===================================================
    PUSAT KENDALI UTAMA (UI CONTROLLER)
-   Versi Code: 2.0.2 (UID Copy Enabled)
+   Versi Code: 2.1.0 (Manual Stat Allocation)
    =================================================== */
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -89,9 +89,18 @@ function startLiveGameSync() {
             document.getElementById('header-coin').innerText = (d.coin || 0).toLocaleString();
             document.getElementById('player-bank').innerText = (d.bankGold || 0).toLocaleString();
             
-            // RENDERING TEKS UID KE LAYAR
             const elUid = document.getElementById('player-uid');
             if (elUid) elUid.innerText = currentUserUid;
+
+            // RENDER POIN STAT
+            const statPoints = d.statPoints || 0;
+            document.getElementById('player-stat-points').innerText = statPoints;
+
+            // Tampilkan atau sembunyikan tombol [+] berdasarkan Poin Stat
+            const addStatBtns = document.querySelectorAll('.btn-add-stat');
+            addStatBtns.forEach(btn => {
+                btn.style.display = statPoints > 0 ? 'inline-block' : 'none';
+            });
 
             const maxExp = (d.level || 1) * 100;
             document.getElementById('exp-text').innerText = `${d.exp || 0} / ${maxExp}`;
@@ -232,7 +241,9 @@ function startLiveGameSync() {
     activeUnsubscribeListeners.push(unsubData, unsubChat, unsubMail, unsubAuction);
 }
 
-// BINDING KE WINDOW
+// -------------------------------------------
+// 3. WINDOW ROUTING LOGIC (UI INTERAKSI)
+// -------------------------------------------
 window.handleInventoryClick = function(itemName) {
     if (inventoryMode === "EQUIP") {
         if (itemName === "Tiket Ganti Nama") {
@@ -274,13 +285,47 @@ window.actionBid = function(id, action) {
     if (action === 'reject' && confirm("Tolak tawaran ini? Uang akan dikembalikan ke penawar.")) rejectBid(db, currentUserUid, id);
 };
 
-// EVENT LISTENER KLIK UNTUK MENYALIN UID OTOMATIS
+// FUNGSI BARU: MENAMBAHKAN STATUS MANUAL
+window.addStat = async function(statName) {
+    if (!currentUserUid) return;
+    const userRef = doc(db, "users", currentUserUid);
+    try {
+        await runTransaction(db, async (ts) => {
+            const snap = await ts.get(userRef);
+            if (!snap.exists()) return;
+            const data = snap.data();
+            
+            if ((data.statPoints || 0) <= 0) throw "Tidak ada Poin Stat tersisa!";
+            
+            let updates = { statPoints: data.statPoints - 1 };
+            updates[statName] = (data[statName] || 0) + 1;
+            
+            // Tambahkan HP maksimal jika CON naik, MP maksimal jika INT naik
+            if (statName === 'con') {
+                updates.maxHp = (data.maxHp || 1000) + 50;
+                updates.currentHp = (data.currentHp || 1000) + 50;
+            } else if (statName === 'int') {
+                updates.maxMp = (data.maxMp || 200) + 30;
+                updates.currentMp = (data.currentMp || 200) + 30;
+            }
+            
+            ts.update(userRef, updates);
+        });
+    } catch(err) { alert(err); }
+};
+
+// -------------------------------------------
+// 4. BINDING HANDLER BUTTONS EVENT LISTENERS
+// -------------------------------------------
 document.getElementById('btn-copy-uid')?.addEventListener('click', () => {
     if (currentUserUid) {
         navigator.clipboard.writeText(currentUserUid);
         alert("📋 UID berhasil disalin ke clipboard!");
     }
 });
+
+document.getElementById('class-warrior')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Warrior', () => showScreen('screen-game')));
+document.getElementById('class-mage')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Mage', () => showScreen('screen-game')));
 
 function clearActiveModeClasses() {
     ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction'].forEach(id => {

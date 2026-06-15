@@ -1,5 +1,6 @@
 /* ===================================================
    MODUL KARAKTER & STARTER PACK
+   Versi Code: 2.1.0
    =================================================== */
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -20,14 +21,15 @@ export async function selectCharacterClass(db, uid, className, callbackSuccess) 
             characterClass: className,
             level: 1, 
             exp: 0, 
-            gold: 2000,           // PERBAIKAN: Set ke 2,000 Gold untuk pemain baru
-            coin: 0,              // PERBAIKAN: Set ke 0 Coin untuk pemain baru
+            gold: 2000,           
+            coin: 0,              
             bankGold: 0, 
             inventory: { 
-                "Tiket Ganti Nama": 1 // PERBAIKAN: Hadiah awal Tiket Ganti Nama wajib
+                "Tiket Ganti Nama": 1 
             }, 
             equipment: { weapon: null, armor: null, accessory: null },
             ...stats, 
+            statPoints: 0,         // PERBAIKAN: Menambahkan inisiasi 0 Poin Stat untuk char baru
             maxHp: maxHp, 
             currentHp: maxHp, 
             maxMp: maxMp, 
