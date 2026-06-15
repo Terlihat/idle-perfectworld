@@ -1,6 +1,6 @@
 /* ===================================================
    PUSAT KENDALI UTAMA (UI CONTROLLER)
-   Versi Code: 2.0.0 (Bidding System)
+   Versi Code: 2.0.1 (Auction Compatibility Fix)
    =================================================== */
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -17,7 +17,7 @@ import { listenToMailbox, claimMailReward } from './modules/mailbox.js';
 import { buyMallItem } from './modules/mall.js'; 
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
 
-// IMPORT AUCTION SYSTEM BARU
+// IMPORT AUCTION SYSTEM
 import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, rejectBid, cancelAuction } from './modules/auction.js';
 
 let currentUserUid = null;
@@ -184,7 +184,7 @@ function startLiveGameSync() {
         }
     });
 
-    // E. SINKRONISASI PASAR LELANG TERBARU (UI Tawar / Tolak / Kedaluwarsa)
+    // E. SINKRONISASI PASAR LELANG (Dengan Fallback untuk barang lama)
     const unsubAuction = listenToAuction(db, (items) => {
         const auctionList = document.getElementById('auction-list');
         if (auctionList) { 
@@ -194,10 +194,12 @@ function startLiveGameSync() {
             items.forEach(item => {
                 const isExpired = (item.expiresAt || 0) < now;
                 const isMine = item.sellerId === currentUserUid;
+                
+                // PERBAIKAN: Mengambil buyoutPrice atau price (untuk barang peninggalan lama)
+                const itemPrice = item.buyoutPrice || item.price || 0; 
                 let btnHtml = "";
 
                 if (isMine) {
-                    // TAMPILAN UNTUK PENJUAL
                     if (item.highestBid) {
                         btnHtml += `<div style="margin-bottom:4px; font-size:10px;">Bid: <strong style="color:#00d2ff">${item.highestBid.amount}G</strong> (${escapeHTML(item.highestBid.buyerName)})</div>`;
                         btnHtml += `<button onclick="window.actionBid('${item.id}', 'accept')" style="padding:2px 5px; font-size:9px; background:#28a745;">Terima</button> `;
@@ -209,12 +211,11 @@ function startLiveGameSync() {
                         btnHtml += `<button onclick="window.cancelAuction('${item.id}')" style="padding:2px 5px; font-size:9px; background:#555;">Tarik Barang</button>`;
                     }
                 } else {
-                    // TAMPILAN UNTUK PEMBELI
                     const currentBid = item.highestBid ? item.highestBid.amount : 0;
                     if (!isExpired) {
                         btnHtml += `<div style="font-size:9px; margin-bottom:4px;">Bid Tertinggi: ${currentBid > 0 ? currentBid + 'G' : '-'}</div>`;
                         btnHtml += `<button onclick="window.placeBid('${item.id}', '${escapeHTML(item.itemName)}', ${currentBid})" style="padding:2px 5px; font-size:9px; background:#007bff;">Tawar</button> `;
-                        btnHtml += `<button onclick="window.buyFromAuction('${item.id}', '${escapeHTML(item.itemName)}', ${item.buyoutPrice}, '${item.sellerId}')" style="padding:2px 5px; font-size:9px; background:#e0a800;">Beli ${item.buyoutPrice}G</button>`;
+                        btnHtml += `<button onclick="window.buyFromAuction('${item.id}', '${escapeHTML(item.itemName)}', ${itemPrice}, '${item.sellerId}')" style="padding:2px 5px; font-size:9px; background:#e0a800;">Beli ${itemPrice}G</button>`;
                     } else {
                         btnHtml += `<span style="color:#dc3545; font-size:10px;">Lelang Telah Berakhir</span>`;
                     }
@@ -222,7 +223,7 @@ function startLiveGameSync() {
 
                 auctionList.innerHTML += `
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding: 6px 0;">
-                    <div><strong style="color:#00d2ff;">${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: ${escapeHTML(item.sellerName)} | Langsung: 💰 ${item.buyoutPrice.toLocaleString()}G</span></div>
+                    <div><strong style="color:#00d2ff;">${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: ${escapeHTML(item.sellerName)} | Langsung: 💰 ${itemPrice.toLocaleString()}G</span></div>
                     <div style="text-align: right;">${btnHtml}</div>
                 </div>`;
             });
@@ -258,7 +259,6 @@ window.handleInventoryClick = function(itemName) {
 window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, itemName); };
 window.claimReward = function(mailId) { claimMailReward(db, currentUserUid, mailId); };
 
-// FUNGSI ROUTING LELANG (AUCTION) BARU
 window.buyFromAuction = function(id, name, price, sellerId) { if (confirm(`Beli Langsung ${name} seharga ${price} Gold?`)) buyAuctionItem(db, currentUserUid, id, name, price, sellerId); };
 window.cancelAuction = function(id) { if (confirm("Tarik barang dari pasar?")) cancelAuction(db, currentUserUid, id); };
 
