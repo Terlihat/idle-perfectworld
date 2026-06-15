@@ -1,12 +1,13 @@
 /* ===================================================
    PUSAT KENDALI UTAMA (UI CONTROLLER)
-   Versi Code: 2.1.0 (Manual Stat Allocation)
+   Versi Code: 2.1.1 (Clean Architecture)
    =================================================== */
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { doc, getDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-import { selectCharacterClass } from './modules/character.js';
+// IMPORT SEMUA MODUL LOGIKA (Kini addCharacterStat & startStaminaRegeneration ada di sini)
+import { selectCharacterClass, addCharacterStat, startStaminaRegeneration } from './modules/character.js';
 import { equipFromInventory, sellItemToNPC } from './modules/inventory.js';
 import { refineEquipment } from './modules/blacksmith.js';
 import { attackMonster } from './modules/battle.js'; 
@@ -23,7 +24,7 @@ let activeUnsubscribeListeners = [];
 let inventoryMode = "EQUIP"; 
 let playerUsername = "Hero Anonim";
 let currentPlayerStats = {}; 
-let staminaRegenInterval = null;
+let staminaRegenInterval = null; // Menyimpan ID putaran timer
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
@@ -34,24 +35,9 @@ function escapeHTML(str) {
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : "";
 }
 
-function startStaminaRegen() {
-    if (staminaRegenInterval) clearInterval(staminaRegenInterval);
-    staminaRegenInterval = setInterval(async () => {
-        if (!currentUserUid) return;
-        const userRef = doc(db, "users", currentUserUid);
-        try {
-            await runTransaction(db, async (ts) => {
-                const snap = await ts.get(userRef);
-                if (!snap.exists()) return;
-                const d = snap.data();
-                if ((d.currentStamina || 0) < (d.maxStamina || 100)) {
-                    ts.update(userRef, { currentStamina: (d.currentStamina || 0) + 1 });
-                }
-            });
-        } catch (err) { console.error("Regen stamina error:", err); }
-    }, 60000); 
-}
-
+// -------------------------------------------
+// 1. AUTENTIKASI STATUS PEMANTAU STATE
+// -------------------------------------------
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUid = user.uid;
@@ -61,7 +47,9 @@ onAuthStateChanged(auth, async (user) => {
         } else {
             showScreen('screen-game');
             startLiveGameSync();
-            startStaminaRegen(); 
+            // Panggil fungsi dari character.js
+            if (staminaRegenInterval) clearInterval(staminaRegenInterval);
+            staminaRegenInterval = startStaminaRegeneration(db, currentUserUid); 
         }
     } else {
         currentUserUid = null;
@@ -72,6 +60,9 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+// -------------------------------------------
+// 2. REALTIME SERVER LISTENER & UI RENDER
+// -------------------------------------------
 function startLiveGameSync() {
     const unsubData = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
         if (!docSnap.exists()) return;
@@ -92,15 +83,11 @@ function startLiveGameSync() {
             const elUid = document.getElementById('player-uid');
             if (elUid) elUid.innerText = currentUserUid;
 
-            // RENDER POIN STAT
             const statPoints = d.statPoints || 0;
             document.getElementById('player-stat-points').innerText = statPoints;
 
-            // Tampilkan atau sembunyikan tombol [+] berdasarkan Poin Stat
             const addStatBtns = document.querySelectorAll('.btn-add-stat');
-            addStatBtns.forEach(btn => {
-                btn.style.display = statPoints > 0 ? 'inline-block' : 'none';
-            });
+            addStatBtns.forEach(btn => { btn.style.display = statPoints > 0 ? 'inline-block' : 'none'; });
 
             const maxExp = (d.level || 1) * 100;
             document.getElementById('exp-text').innerText = `${d.exp || 0} / ${maxExp}`;
@@ -285,34 +272,8 @@ window.actionBid = function(id, action) {
     if (action === 'reject' && confirm("Tolak tawaran ini? Uang akan dikembalikan ke penawar.")) rejectBid(db, currentUserUid, id);
 };
 
-// FUNGSI BARU: MENAMBAHKAN STATUS MANUAL
-window.addStat = async function(statName) {
-    if (!currentUserUid) return;
-    const userRef = doc(db, "users", currentUserUid);
-    try {
-        await runTransaction(db, async (ts) => {
-            const snap = await ts.get(userRef);
-            if (!snap.exists()) return;
-            const data = snap.data();
-            
-            if ((data.statPoints || 0) <= 0) throw "Tidak ada Poin Stat tersisa!";
-            
-            let updates = { statPoints: data.statPoints - 1 };
-            updates[statName] = (data[statName] || 0) + 1;
-            
-            // Tambahkan HP maksimal jika CON naik, MP maksimal jika INT naik
-            if (statName === 'con') {
-                updates.maxHp = (data.maxHp || 1000) + 50;
-                updates.currentHp = (data.currentHp || 1000) + 50;
-            } else if (statName === 'int') {
-                updates.maxMp = (data.maxMp || 200) + 30;
-                updates.currentMp = (data.currentMp || 200) + 30;
-            }
-            
-            ts.update(userRef, updates);
-        });
-    } catch(err) { alert(err); }
-};
+// Dialihkan ke modul character.js
+window.addStat = function(statName) { addCharacterStat(db, currentUserUid, statName); };
 
 // -------------------------------------------
 // 4. BINDING HANDLER BUTTONS EVENT LISTENERS
