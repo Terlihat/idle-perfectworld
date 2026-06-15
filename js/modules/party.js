@@ -1,5 +1,9 @@
+/* ===================================================
+   MODUL PARTY DUNGEON (Dengan Tracker Bounty)
+   =================================================== */
 import { collection, doc, runTransaction, query, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { FB_BOSSES } from '../data/monsters.js';
+import { getUpdatedQuests } from './quest.js'; // IMPORT LOGIKA QUEST
 
 export function listenToParties(db, callbackRender) {
     const q = query(collection(db, "parties"));
@@ -16,10 +20,8 @@ export async function createOrJoinParty(db, fbKey, playerStats) {
     if (!boss) return alert("Dungeon tidak valid!");
     if (playerStats.level < boss.levelReq) return alert(`Level Anda belum cukup! Butuh Level ${boss.levelReq}.`);
     
-    // Cek Tiket Masuk Mount
     const mount = playerStats.equipment?.mount || null;
     const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
-    
     if (playerStats.currentStamina < stamReq) return alert(`Butuh minimal ${stamReq} Stamina (Efek Mount) untuk masuk FB!`);
 
     const partyRef = doc(collection(db, "parties"));
@@ -132,12 +134,19 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     let inv = md.inventory || {};
                     let dropMsg = "";
 
+                    // --- PENGHITUNGAN PROGRESS BOUNTY HUNTER (PARTY) ---
+                    let newQuests = getUpdatedQuests(md, 'bounty', party.fbKey, 1);
+
                     if (Math.random() <= boss.drop.chance) {
                         inv[boss.drop.item] = (inv[boss.drop.item] || 0) + 1;
                         dropMsg = ` | 🎁 Drop: ${boss.drop.item}`;
                     }
 
-                    ts.update(mRef, { exp: newExp, gold: newGold, inventory: inv, currentHp: newHp, currentStamina: newStamina });
+                    ts.update(mRef, { 
+                        exp: newExp, gold: newGold, inventory: inv, 
+                        currentHp: newHp, currentStamina: newStamina,
+                        quests: newQuests // Update Misi
+                    });
                     log += `🛡️ [${md.username}] BERTAHAN! Sisa HP: ${newHp} | +${rewardGoldAkhir} Gold${dropMsg}\n`;
                 }
             });

@@ -15,6 +15,9 @@ import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/
 import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, rejectBid, cancelAuction } from './modules/auction.js';
 import { listenToParties, createOrJoinParty, leaveParty, startFbBattle } from './modules/party.js';
 
+// IMPORT MODUL QUEST BARU
+import { assignRandomQuests, claimQuestReward } from './modules/quest.js';
+
 let currentUserUid = null;
 let activeUnsubscribeListeners = [];
 let inventoryMode = "EQUIP"; 
@@ -100,7 +103,6 @@ function startLiveGameSync() {
             document.getElementById('eq-weapon').innerText = eq.weapon ? `${eq.weapon.name}${eq.weapon.refine ? ` (+${eq.weapon.refine})` : ""}` : "Kosong";
             document.getElementById('eq-armor').innerText = eq.armor ? `${eq.armor.name}${eq.armor.refine ? ` (+${eq.armor.refine})` : ""}` : "Kosong";
             document.getElementById('eq-acc').innerText = eq.accessory ? `${eq.accessory.name}${eq.accessory.refine ? ` (+${eq.accessory.refine})` : ""}` : "Kosong";
-            
             document.getElementById('eq-mount').innerText = eq.mount ? `${eq.mount.name}` : "Jalan Kaki";
 
             let wBonus = 1 + (eq.weapon?.refine || 0) * 0.15; 
@@ -124,6 +126,49 @@ function startLiveGameSync() {
             document.getElementById('stat-crit').innerText = (d.dex * 0.5).toFixed(1) + "%";
             document.getElementById('stat-eva').innerText = (d.dex * 0.2).toFixed(1) + "%"; 
             document.getElementById('stat-acc').innerText = (80 + (d.dex * 0.5) + Math.floor((eq.accessory?.accBonus || 0) * cBonus)).toFixed(1) + "%";
+            
+            // --- RENDER SISTEM MISI (QUEST) ---
+            const q = d.quests || {};
+            const today = new Date().toLocaleDateString('id-ID');
+            const btnTake = document.getElementById('btn-take-quest');
+            
+            if (q.lastReset !== today) {
+                // Hari berganti atau belum ada misi, minta user klik tombol
+                btnTake.style.display = 'block';
+                document.getElementById('quest-daily-title').innerText = "Belum Diambil";
+                document.getElementById('quest-daily-prog').innerText = "0/0";
+                document.getElementById('quest-bounty-title').innerText = "Belum Diambil";
+                document.getElementById('quest-bounty-prog').innerText = "0/0";
+                document.getElementById('btn-claim-daily').style.display = 'none';
+                document.getElementById('btn-claim-bounty').style.display = 'none';
+            } else {
+                // Render Misi yang sedang aktif
+                btnTake.style.display = 'none';
+                
+                // Misi Daily (Solo)
+                document.getElementById('quest-daily-title').innerText = q.daily.title;
+                document.getElementById('quest-daily-prog').innerText = `${q.daily.progress}/${q.daily.target}`;
+                if (q.daily.isClaimed) {
+                    document.getElementById('quest-daily-prog').innerText = "✅ Selesai";
+                    document.getElementById('btn-claim-daily').style.display = 'none';
+                } else if (q.daily.progress >= q.daily.target) {
+                    document.getElementById('btn-claim-daily').style.display = 'inline-block';
+                } else {
+                    document.getElementById('btn-claim-daily').style.display = 'none';
+                }
+
+                // Misi Bounty (Party FB)
+                document.getElementById('quest-bounty-title').innerText = q.bounty.title;
+                document.getElementById('quest-bounty-prog').innerText = `${q.bounty.progress}/${q.bounty.target}`;
+                if (q.bounty.isClaimed) {
+                    document.getElementById('quest-bounty-prog').innerText = "✅ Selesai";
+                    document.getElementById('btn-claim-bounty').style.display = 'none';
+                } else if (q.bounty.progress >= q.bounty.target) {
+                    document.getElementById('btn-claim-bounty').style.display = 'inline-block';
+                } else {
+                    document.getElementById('btn-claim-bounty').style.display = 'none';
+                }
+            }
         }
 
         const invGrid = document.getElementById('inventory-grid');
@@ -269,7 +314,11 @@ window.addStat = function(statName) { addCharacterStat(db, currentUserUid, statN
 window.leaveParty = function(partyId) { leaveParty(db, partyId, currentUserUid); };
 window.startFb = function(partyId) { startFbBattle(db, currentUserUid, partyId); };
 
-// BUTTON BINDINGS
+// BUTTON BINDINGS (DENGAN TOMBOL QUEST BARU)
+document.getElementById('btn-take-quest')?.addEventListener('click', () => assignRandomQuests(db, currentUserUid));
+document.getElementById('btn-claim-daily')?.addEventListener('click', () => claimQuestReward(db, currentUserUid, 'daily'));
+document.getElementById('btn-claim-bounty')?.addEventListener('click', () => claimQuestReward(db, currentUserUid, 'bounty'));
+
 document.getElementById('btn-copy-uid')?.addEventListener('click', () => { if (currentUserUid) { navigator.clipboard.writeText(currentUserUid); alert("📋 UID disalin!"); } });
 document.getElementById('class-warrior')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Warrior', () => showScreen('screen-game')));
 document.getElementById('class-mage')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Mage', () => showScreen('screen-game')));
@@ -300,7 +349,6 @@ document.getElementById('btn-mall-dragon')?.addEventListener('click', () => buyM
 document.getElementById('btn-bank-deposit-gold')?.addEventListener('click', () => { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { depositGold(db, currentUserUid, val); el.value = ""; } });
 document.getElementById('btn-bank-withdraw-gold')?.addEventListener('click', () => { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { withdrawGold(db, currentUserUid, val); el.value = ""; } });
 
-// MENGEMBALIKAN EVENT LISTENER UNTUK SEMUA STONE ITEM MALL
 document.getElementById('btn-mall-mirage')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Mirage Stone', 5));
 document.getElementById('btn-mall-heaven')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Heaven Stone', 15));
 document.getElementById('btn-mall-underworld')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Underworld Stone', 15));

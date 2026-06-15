@@ -1,5 +1,9 @@
+/* ===================================================
+   MODUL BATTLE DUNGEON (Dengan Tracker Quest)
+   =================================================== */
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { MONSTER_DB } from '../data/monsters.js';
+import { getUpdatedQuests } from './quest.js'; // IMPORT LOGIKA QUEST
 
 export async function attackMonster(db, uid, monsterKey, playerStats) {
     if (!uid) return;
@@ -20,10 +24,9 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
             const maxStam = data.maxStamina !== undefined ? data.maxStamina : 100;
             const currentHealth = data.currentHp !== undefined ? data.currentHp : (data.maxHp || 1000);
 
-            // LOGIKA MOUNT
             const mount = playerStats.equipment?.mount || null;
-            const stamReq = Math.max(1, 10 - (mount?.stamDiscount || 0)); // Diskon Stamina
-            const goldMult = 1 + (mount?.goldBonus || 0); // Multiplier Gold
+            const stamReq = Math.max(1, 10 - (mount?.stamDiscount || 0)); 
+            const goldMult = 1 + (mount?.goldBonus || 0); 
 
             if (currentHealth <= 0) throw "Anda sudah mati! Pulihkan HP Anda di Apotek sebelum bertarung.";
             if (currentStam < stamReq) throw `Stamina tidak cukup! Butuh ${stamReq} Stamina (Efek Mount).`;
@@ -48,6 +51,9 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                 let newLevel = data.level || 1;
                 let maxExp = newLevel * 100;
                 let inv = data.inventory || {};
+                
+                // --- PENGHITUNGAN PROGRESS MISI HARIAN (SOLO) ---
+                let newQuests = getUpdatedQuests(data, 'daily', monsterKey, 1);
 
                 logMessage = `⚔️ MENANG! Membunuh ${monster.name}. Kehilangan ${hpLost} HP. Mendapat ${monster.rewardExp} EXP & ${rewardGoldAkhir} Gold.`;
                 if (mount) logMessage += `\n🐴 [Efek Mount] Stamina hemat ${mount.stamDiscount}, Bonus Gold +${(mount.goldBonus*100)}%!`;
@@ -65,12 +71,14 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                     ts.update(userRef, {
                         level: newLevel, exp: newExp, gold: newGold, inventory: inv,
                         currentHp: data.maxHp || 1000, currentStamina: maxStam,
-                        statPoints: (data.statPoints || 0) + 5
+                        statPoints: (data.statPoints || 0) + 5,
+                        quests: newQuests // Update Misi
                     });
                 } else {
                     ts.update(userRef, {
                         exp: newExp, gold: newGold, inventory: inv,
-                        currentHp: newHp, currentStamina: Math.max(0, currentStam - stamReq)
+                        currentHp: newHp, currentStamina: Math.max(0, currentStam - stamReq),
+                        quests: newQuests // Update Misi
                     });
                 }
                 alert(logMessage);

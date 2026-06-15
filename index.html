@@ -134,6 +134,28 @@
                         <div id="party-list" style="max-height: 120px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 11px; border: 1px solid #3f3f52; margin-top: 5px;"></div>
                     </div>
 
+                    <div class="panel" style="border: 1px solid #28a745; background: #15201b;">
+                        <h2 style="color: #28a745;">📜 Misi Harian & Bounty</h2>
+                        
+                        <button id="btn-take-quest" style="width:100%; display:none; background:#28a745; margin-bottom:10px; padding:8px;">Ambil Misi Hari Ini</button>
+
+                        <div id="quest-daily-box" style="margin-bottom: 8px; padding: 6px; background: #121216; border: 1px solid #3f3f52; border-radius: 4px;">
+                            <strong style="color:#00d2ff; font-size:12px;">Misi Solo: <span id="quest-daily-title">-</span></strong><br>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top:4px;">
+                                <span style="font-size:11px; color:#aaa;">Progress: <strong id="quest-daily-prog" style="color:#fff;">0/0</strong></span>
+                                <button id="btn-claim-daily" style="display:none; padding:3px 8px; font-size:10px; background:#ffca28; color:#000; font-weight:bold;">Klaim Hadiah</button>
+                            </div>
+                        </div>
+
+                        <div id="quest-bounty-box" style="padding: 6px; background: #121216; border: 1px solid #3f3f52; border-radius: 4px;">
+                            <strong style="color:#d8b4fe; font-size:12px;">Bounty Fuben: <span id="quest-bounty-title">-</span></strong><br>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top:4px;">
+                                <span style="font-size:11px; color:#aaa;">Progress: <strong id="quest-bounty-prog" style="color:#fff;">0/0</strong></span>
+                                <button id="btn-claim-bounty" style="display:none; padding:3px 8px; font-size:10px; background:#ffca28; color:#000; font-weight:bold;">Klaim Hadiah</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="panel" style="border: 1px solid #00d2ff; background: #16222f;">
                         <h2>🔥 Pandai Besi (+10)</h2>
                         <select id="refine-catalyst" style="width: 100%; padding: 6px; margin-bottom: 8px; background: #121216; color: #ffcc00; border: 1px solid #3f3f52;">
