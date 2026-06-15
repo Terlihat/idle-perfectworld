@@ -1,18 +1,20 @@
 /* ===================================================
    PUSAAT KENDALI UTAMA (UI CONTROLLER)
-   Versi Code: 1.6.0 (Full Modular)
+   Versi 1.9.0
    =================================================== */
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// Import Semua Modul Logika Fitur
+// IMPORT SEMUA MODUL
 import { selectCharacterClass } from './modules/character.js';
 import { equipFromInventory, sellItemToNPC } from './modules/inventory.js';
 import { refineEquipment } from './modules/blacksmith.js';
+import { attackMonster } from './modules/battle.js'; 
 import { buyEquipment } from './modules/shop.js';
 import { listenToChat, sendChat } from './modules/chat.js';
-import { buyPotion, listenToMailbox } from './modules/apothecary.js';
+import { buyPotion } from './modules/apothecary.js';
+import { listenToMailbox } from './modules/mailbox.js'; 
 import { buyMallItem } from './modules/mall.js'; 
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
 import { listenToAuction, listAuctionItem, buyAuctionItem } from './modules/auction.js';
@@ -21,6 +23,7 @@ let currentUserUid = null;
 let activeUnsubscribeListeners = [];
 let inventoryMode = "EQUIP"; 
 let playerUsername = "Hero Anonim";
+let currentPlayerStats = {}; 
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
@@ -31,7 +34,9 @@ function escapeHTML(str) {
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : "";
 }
 
-// Autentikasi Pemantau State
+// -------------------------------------------
+// 1. AUTENTIKASI & PILIH KELAS
+// -------------------------------------------
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUid = user.uid;
@@ -50,25 +55,23 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// Pemilihan Class Pembuat Akun Baru
 document.getElementById('class-warrior')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Warrior', () => showScreen('screen-game')));
 document.getElementById('class-mage')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Mage', () => showScreen('screen-game')));
 
-// Realtime Listener Server Sync
+// -------------------------------------------
+// 2. SINKRONISASI DATA REALTIME
+// -------------------------------------------
 function startLiveGameSync() {
-    // 1. Data Pemain
+    
+    // A. Sinkronisasi Data Pemain
     const unsubData = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
         if (!docSnap.exists()) return;
         const d = docSnap.data();
         playerUsername = d.username || "Hero Anonim";
 
-        // LOGIKA PENAMPILAN TOMBOL ADMIN PANEL
         const btnAdmin = document.getElementById('btn-admin-panel');
-        if (btnAdmin) {
-            btnAdmin.style.display = (d.role === 'admin') ? 'inline-block' : 'none';
-        }
+        if (btnAdmin) btnAdmin.style.display = (d.role === 'admin') ? 'inline-block' : 'none';
 
-        // GEMBOK KEAMANAN: Pastikan UI ada sebelum memperbarui teks
         const elPlayerName = document.getElementById('player-name');
         if (elPlayerName) {
             elPlayerName.innerText = d.username;
@@ -85,6 +88,11 @@ function startLiveGameSync() {
             document.getElementById('char-hp-bar').style.width = `${Math.min((d.currentHp / d.maxHp) * 100, 100)}%`;
             document.getElementById('char-mp-text').innerText = `${d.currentMp} / ${d.maxMp}`;
             document.getElementById('char-mp-bar').style.width = `${Math.min((d.currentMp / d.maxMp) * 100, 100)}%`;
+            
+            const curStam = d.currentStamina || 0;
+            const maxStam = d.maxStamina || 100;
+            document.getElementById('char-stam-text').innerText = `${curStam} / ${maxStam}`;
+            document.getElementById('char-stam-bar').style.width = `${Math.min((curStam / maxStam) * 100, 100)}%`;
 
             document.getElementById('stat-str').innerText = d.str;
             document.getElementById('stat-con').innerText = d.con;
@@ -96,14 +104,16 @@ function startLiveGameSync() {
             document.getElementById('eq-armor').innerText = eq.armor ? `${eq.armor.name}${eq.armor.refine ? ` (+${eq.armor.refine})` : ""}` : "Kosong";
             document.getElementById('eq-acc').innerText = eq.accessory ? `${eq.accessory.name}${eq.accessory.refine ? ` (+${eq.accessory.refine})` : ""}` : "Kosong";
 
-            // Perhitungan Bonus Atribut Stat Fisik & Magic
             let wBonus = 1 + (eq.weapon?.refine || 0) * 0.15; 
             let aBonus = 1 + (eq.armor?.refine || 0) * 0.15;
             let cBonus = 1 + (eq.accessory?.refine || 0) * 0.10;
+            
             const patk = 50 + (d.str * 10) + Math.floor((eq.weapon?.patk || 0) * wBonus); 
             const matk = 50 + (d.int * 10) + Math.floor((eq.weapon?.matk || 0) * wBonus);
             const def = 10 + (d.con * 5) + Math.floor((eq.armor?.def || 0) * aBonus); 
             
+            currentPlayerStats = { level: d.level, patk: patk, matk: matk, def: def };
+
             document.getElementById('stat-patk').innerText = patk; 
             document.getElementById('stat-matk').innerText = matk;
             document.getElementById('stat-def').innerText = def; 
@@ -112,7 +122,6 @@ function startLiveGameSync() {
             document.getElementById('stat-acc').innerText = (80 + (d.dex * 0.5) + Math.floor((eq.accessory?.accBonus || 0) * cBonus)).toFixed(1) + "%";
         }
 
-        // Render Inventory Grid (4x5 = 20)
         const invGrid = document.getElementById('inventory-grid');
         if (invGrid) {
             invGrid.innerHTML = "";
@@ -125,7 +134,6 @@ function startLiveGameSync() {
             }
         }
 
-        // Render Bank Grid (4x4 = 16)
         const bankGrid = document.getElementById('bank-grid');
         if (bankGrid) {
             bankGrid.innerHTML = "";
@@ -139,29 +147,33 @@ function startLiveGameSync() {
         }
     });
 
-    // 2. Chat Realtime
+    // B. Sinkronisasi Chat
     const unsubChat = listenToChat(db, (messages) => {
         const chatBox = document.getElementById('chat-box');
-        if (chatBox) { // GEMBOK KEAMANAN
+        if (chatBox) { 
             chatBox.innerHTML = "";
             messages.forEach(m => { chatBox.innerHTML += `<div><span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`; });
             chatBox.scrollTop = chatBox.scrollHeight;
         }
     });
 
-    // 3. Mailbox Realtime
+    // C. Sinkronisasi Mailbox Surat Admin
     const unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
         const mailDiv = document.getElementById('mailbox-list');
-        if (mailDiv) { // GEMBOK KEAMANAN
+        if (mailDiv) { 
             mailDiv.innerHTML = mails.length === 0 ? "Tidak ada surat." : "";
-            mails.forEach(mail => { mailDiv.innerHTML += `<div style="border-bottom:1px solid #333; padding:2px 0;">📬 ${escapeHTML(mail.title)}</div>`; });
+            mails.forEach(mail => { 
+                mailDiv.innerHTML += `<div style="border-bottom:1px solid #333; padding:4px 0;">
+                    <strong style="color:#ffcc00;">[Admin]</strong> ${escapeHTML(mail.title)}
+                </div>`; 
+            });
         }
     });
 
-    // 4. Auction Realtime
+    // D. Sinkronisasi Lelang
     const unsubAuction = listenToAuction(db, (items) => {
         const auctionList = document.getElementById('auction-list');
-        if (auctionList) { // GEMBOK KEAMANAN
+        if (auctionList) { 
             auctionList.innerHTML = items.length === 0 ? "Belum ada item lelang." : "";
             items.forEach(item => {
                 const isMine = item.sellerId === currentUserUid;
@@ -174,9 +186,9 @@ function startLiveGameSync() {
     activeUnsubscribeListeners.push(unsubData, unsubChat, unsubMail, unsubAuction);
 }
 
-// ==========================================
-// WINDOW EVENT ROUTING INTERACTION
-// ==========================================
+// -------------------------------------------
+// 3. WINDOW EVENT ROUTING (INVENTORY & BANK)
+// -------------------------------------------
 window.handleInventoryClick = function(itemName) {
     if (inventoryMode === "EQUIP") {
         if (itemName === "Tiket Ganti Nama") {
@@ -200,7 +212,9 @@ window.handleInventoryClick = function(itemName) {
 window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, itemName); };
 window.buyFromAuction = function(id, name, price, sellerId) { if (confirm(`Beli ${name} seharga ${price} Gold?`)) buyAuctionItem(db, currentUserUid, id, name, price, sellerId); };
 
-// UI Mode Buttons Triggers
+// -------------------------------------------
+// 4. EVENT LISTENERS (TOMBOL & UI)
+// -------------------------------------------
 function clearActiveModeClasses() {
     ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction'].forEach(id => {
         const el = document.getElementById(id);
@@ -213,11 +227,18 @@ document.getElementById('btn-mode-sell')?.addEventListener('click', () => { inve
 document.getElementById('btn-mode-bank')?.addEventListener('click', () => { inventoryMode = "BANK"; clearActiveModeClasses(); document.getElementById('btn-mode-bank').className = "mode-active"; });
 document.getElementById('btn-mode-auction')?.addEventListener('click', () => { inventoryMode = "AUCTION"; clearActiveModeClasses(); document.getElementById('btn-mode-auction').className = "mode-auction-active"; });
 
-// Action Buttons Event Listeners Binding
+// Battle System Dungeon
+document.getElementById('btn-attack-dungeon')?.addEventListener('click', () => {
+    const selectedMonster = document.getElementById('dungeon-select').value;
+    attackMonster(db, currentUserUid, selectedMonster, currentPlayerStats);
+});
+
+// Blacksmith Tempa
 document.getElementById('btn-refine-weapon')?.addEventListener('click', () => refineEquipment(db, currentUserUid, 'weapon', document.getElementById('refine-catalyst').value));
 document.getElementById('btn-refine-armor')?.addEventListener('click', () => refineEquipment(db, currentUserUid, 'armor', document.getElementById('refine-catalyst').value));
 document.getElementById('btn-refine-accessory')?.addEventListener('click', () => refineEquipment(db, currentUserUid, 'accessory', document.getElementById('refine-catalyst').value));
 
+// Toko Normal
 document.getElementById('btn-buy-sword')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Pedang Besi'));
 document.getElementById('btn-buy-staff')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Tongkat Sihir'));
 document.getElementById('btn-buy-armor')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Zirah Kulit'));
@@ -225,17 +246,11 @@ document.getElementById('btn-buy-ring')?.addEventListener('click', () => buyEqui
 document.getElementById('btn-buy-hp')?.addEventListener('click', () => buyPotion(db, currentUserUid, 'HP'));
 document.getElementById('btn-buy-mp')?.addEventListener('click', () => buyPotion(db, currentUserUid, 'MP'));
 
+// Bank Triggers
 document.getElementById('btn-bank-deposit-gold')?.addEventListener('click', () => { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { depositGold(db, currentUserUid, val); el.value = ""; } });
 document.getElementById('btn-bank-withdraw-gold')?.addEventListener('click', () => { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { withdrawGold(db, currentUserUid, val); el.value = ""; } });
 
-// Chat Triggers
-const chatInput = document.getElementById('chat-input');
-const btnSendChat = document.getElementById('btn-send-chat');
-function executeSendingChat() { if (chatInput && chatInput.value.trim()) { sendChat(db, currentUserUid, playerUsername, chatInput.value); chatInput.value = ""; } }
-btnSendChat?.addEventListener('click', executeSendingChat);
-chatInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); executeSendingChat(); } });
-
-// Premium Mall Buttons Trigger
+// Item Mall Premium Triggers
 document.getElementById('btn-mall-mirage')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Mirage Stone', 5));
 document.getElementById('btn-mall-heaven')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Heaven Stone', 15));
 document.getElementById('btn-mall-underworld')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Underworld Stone', 15));
@@ -243,7 +258,14 @@ document.getElementById('btn-mall-universal')?.addEventListener('click', () => b
 document.getElementById('btn-mall-name')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ganti Nama', 50));
 document.getElementById('btn-mall-job')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ubah Job', 100));
 
-// Navigasi Pindah ke Admin Panel
+// Chat Global
+const chatInput = document.getElementById('chat-input');
+const btnSendChat = document.getElementById('btn-send-chat');
+function executeSendingChat() { if (chatInput && chatInput.value.trim()) { sendChat(db, currentUserUid, playerUsername, chatInput.value); chatInput.value = ""; } }
+btnSendChat?.addEventListener('click', executeSendingChat);
+chatInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); executeSendingChat(); } });
+
+// Admin Navigation
 document.getElementById('btn-admin-panel')?.addEventListener('click', () => {
     window.location.href = './admin/index.html';
 });
