@@ -1,7 +1,3 @@
-/* ===================================================
-   PUSAT KENDALI UTAMA (UI CONTROLLER)
-   Versi Code: 3.0.0 (Fuben Multiplayer Integration)
-   =================================================== */
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -17,8 +13,6 @@ import { listenToMailbox, claimMailReward } from './modules/mailbox.js';
 import { buyMallItem } from './modules/mall.js'; 
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
 import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, rejectBid, cancelAuction } from './modules/auction.js';
-
-// IMPORT MODUL PARTY BARU
 import { listenToParties, createOrJoinParty, leaveParty, startFbBattle } from './modules/party.js';
 
 let currentUserUid = null;
@@ -106,6 +100,9 @@ function startLiveGameSync() {
             document.getElementById('eq-weapon').innerText = eq.weapon ? `${eq.weapon.name}${eq.weapon.refine ? ` (+${eq.weapon.refine})` : ""}` : "Kosong";
             document.getElementById('eq-armor').innerText = eq.armor ? `${eq.armor.name}${eq.armor.refine ? ` (+${eq.armor.refine})` : ""}` : "Kosong";
             document.getElementById('eq-acc').innerText = eq.accessory ? `${eq.accessory.name}${eq.accessory.refine ? ` (+${eq.accessory.refine})` : ""}` : "Kosong";
+            
+            // RENDERING MOUNT BARU
+            document.getElementById('eq-mount').innerText = eq.mount ? `${eq.mount.name}` : "Jalan Kaki";
 
             let wBonus = 1 + (eq.weapon?.refine || 0) * 0.15; 
             let aBonus = 1 + (eq.armor?.refine || 0) * 0.15;
@@ -115,7 +112,6 @@ function startLiveGameSync() {
             const matk = 50 + (d.int * 10) + Math.floor((eq.weapon?.matk || 0) * wBonus);
             const def = 10 + (d.con * 5) + Math.floor((eq.armor?.def || 0) * aBonus); 
             
-            // Simpan Stats Global (Ditambah Info Lengkap untuk FB)
             currentPlayerStats = { 
                 uid: currentUserUid, username: d.username, 
                 level: d.level, currentHp: d.currentHp, maxHp: d.maxHp, currentStamina: curStam,
@@ -171,14 +167,9 @@ function startLiveGameSync() {
             mailDiv.innerHTML = mails.length === 0 ? "Tidak ada surat." : "";
             mails.forEach(mail => { 
                 let attachHtml = "";
-                if (mail.attachments && !mail.isClaimed) {
-                    attachHtml = `<button onclick="window.claimReward('${mail.id}')" style="padding: 2px 8px; font-size: 10px; background: #28a745; float: right;">Klaim</button>`;
-                } else if (mail.isClaimed) {
-                    attachHtml = `<span style="font-size:9px; color:#555; float:right;">(Diklaim)</span>`;
-                }
-                mailDiv.innerHTML += `<div style="border-bottom:1px solid #333; padding:6px 0; overflow:hidden;">
-                    <strong style="color:#ffcc00; font-size: 12px;">[Admin]</strong> <span style="font-size: 12px;">${escapeHTML(mail.title)}</span> ${attachHtml}
-                </div>`; 
+                if (mail.attachments && !mail.isClaimed) { attachHtml = `<button onclick="window.claimReward('${mail.id}')" style="padding: 2px 8px; font-size: 10px; background: #28a745; float: right;">Klaim</button>`; } 
+                else if (mail.isClaimed) { attachHtml = `<span style="font-size:9px; color:#555; float:right;">(Diklaim)</span>`; }
+                mailDiv.innerHTML += `<div style="border-bottom:1px solid #333; padding:6px 0; overflow:hidden;"><strong style="color:#ffcc00; font-size: 12px;">[Admin]</strong> <span style="font-size: 12px;">${escapeHTML(mail.title)}</span> ${attachHtml}</div>`; 
             });
         }
     });
@@ -211,51 +202,30 @@ function startLiveGameSync() {
                         btnHtml += `<div style="font-size:9px; margin-bottom:4px;">Bid: ${currentBid > 0 ? currentBid + 'G' : '-'}</div>`;
                         btnHtml += `<button onclick="window.placeBid('${item.id}', '${escapeHTML(item.itemName)}', ${currentBid})" style="padding:2px 5px; font-size:9px; background:#007bff;">Tawar</button> `;
                         btnHtml += `<button onclick="window.buyFromAuction('${item.id}', '${escapeHTML(item.itemName)}', ${itemPrice}, '${item.sellerId}')" style="padding:2px 5px; font-size:9px; background:#e0a800;">Beli ${itemPrice}G</button>`;
-                    } else {
-                        btnHtml += `<span style="color:#dc3545; font-size:10px;">Selesai</span>`;
-                    }
+                    } else { btnHtml += `<span style="color:#dc3545; font-size:10px;">Selesai</span>`; }
                 }
 
-                auctionList.innerHTML += `
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding: 6px 0;">
-                    <div><strong style="color:#00d2ff;">${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: ${escapeHTML(item.sellerName)} | Langsung: 💰 ${itemPrice.toLocaleString()}G</span></div>
-                    <div style="text-align: right;">${btnHtml}</div>
-                </div>`;
+                auctionList.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding: 6px 0;"><div><strong style="color:#00d2ff;">${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: ${escapeHTML(item.sellerName)} | Langsung: 💰 ${itemPrice.toLocaleString()}G</span></div><div style="text-align: right;">${btnHtml}</div></div>`;
             });
         }
     });
 
-    // F. SINKRONISASI LOBBY PARTY FUBEN
     const unsubParties = listenToParties(db, (parties) => {
         const partyList = document.getElementById('party-list');
         if (partyList) {
             partyList.innerHTML = parties.length === 0 ? "Tidak ada party yang sedang mencari anggota." : "";
-            
             parties.forEach(p => {
                 const inParty = p.members.find(m => m.uid === currentUserUid);
                 const isLeader = p.leaderId === currentUserUid;
-                
                 let memberNames = p.members.map(m => `<span style="color:#a8b2b8;">${escapeHTML(m.username)} (Lv.${m.level})</span>`).join(", ");
                 let btnHtml = "";
 
                 if (inParty) {
-                    if (isLeader) {
-                        btnHtml += `<button onclick="window.startFb('${p.id}')" style="padding: 4px 8px; font-size: 10px; background: #28a745; margin-right:4px;">▶️ MULAI FB</button>`;
-                    }
+                    if (isLeader) { btnHtml += `<button onclick="window.startFb('${p.id}')" style="padding: 4px 8px; font-size: 10px; background: #28a745; margin-right:4px;">▶️ MULAI FB</button>`; }
                     btnHtml += `<button onclick="window.leaveParty('${p.id}')" style="padding: 4px 8px; font-size: 10px; background: #dc3545;">Keluar</button>`;
-                } else if (p.members.length < 4 && p.status === 'waiting') {
-                    // Tombol gabung hanya muncul jika kita menggunakan UI Gabung yang sudah diotomatisasi lewat Dropdown
                 }
 
-                partyList.innerHTML += `
-                <div style="border-bottom:1px solid #3f3f52; padding: 6px 0; display:flex; justify-content:space-between; align-items:center;">
-                    <div style="line-height:1.3;">
-                        <strong style="color:#d8b4fe; font-size:12px;">${p.fbName}</strong><br>
-                        <span style="font-size:10px; color:#aaa;">Leader: <span style="color:#ffca28;">${escapeHTML(p.leaderName)}</span> | Anggota (${p.members.length}/4)</span><br>
-                        <div style="font-size:9px; margin-top:2px;">[ ${memberNames} ]</div>
-                    </div>
-                    <div>${btnHtml}</div>
-                </div>`;
+                partyList.innerHTML += `<div style="border-bottom:1px solid #3f3f52; padding: 6px 0; display:flex; justify-content:space-between; align-items:center;"><div style="line-height:1.3;"><strong style="color:#d8b4fe; font-size:12px;">${p.fbName}</strong><br><span style="font-size:10px; color:#aaa;">Leader: <span style="color:#ffca28;">${escapeHTML(p.leaderName)}</span> | Anggota (${p.members.length}/4)</span><br><div style="font-size:9px; margin-top:2px;">[ ${memberNames} ]</div></div><div>${btnHtml}</div></div>`;
             });
         }
     });
@@ -263,23 +233,17 @@ function startLiveGameSync() {
     activeUnsubscribeListeners.push(unsubData, unsubChat, unsubMail, unsubAuction, unsubParties);
 }
 
-// -------------------------------------------
-// 3. WINDOW ROUTING LOGIC (UI INTERAKSI)
-// -------------------------------------------
+// ROUTING UI LOGIC
 window.handleInventoryClick = function(itemName) {
     if (inventoryMode === "EQUIP") {
-        if (itemName === "Tiket Ganti Nama") {
-            const inputName = prompt("Masukkan Nama Karakter Baru:");
-            if (inputName && inputName.trim() !== "") equipFromInventory(db, currentUserUid, itemName, inputName);
-        } else if (itemName === "Tiket Ubah Job") {
-            const inputJob = prompt("Pilih Job Baru (Ketik: Warrior atau Mage):");
-            if (inputJob === "Warrior" || inputJob === "Mage") equipFromInventory(db, currentUserUid, itemName, inputJob);
-        } else { equipFromInventory(db, currentUserUid, itemName, null); }
+        if (itemName === "Tiket Ganti Nama") { const inputName = prompt("Masukkan Nama Karakter Baru:"); if (inputName && inputName.trim() !== "") equipFromInventory(db, currentUserUid, itemName, inputName); } 
+        else if (itemName === "Tiket Ubah Job") { const inputJob = prompt("Pilih Job Baru (Ketik: Warrior atau Mage):"); if (inputJob === "Warrior" || inputJob === "Mage") equipFromInventory(db, currentUserUid, itemName, inputJob); } 
+        else { equipFromInventory(db, currentUserUid, itemName, null); }
     } 
     else if (inventoryMode === "SELL") { sellItemToNPC(db, currentUserUid, itemName); } 
     else if (inventoryMode === "BANK") { depositItem(db, currentUserUid, itemName); }
     else if (inventoryMode === "AUCTION") {
-        if (itemName.includes("Tiket") || itemName.includes("Ramuan Stamina")) return alert("Item mall premium tidak bisa dilelang.");
+        if (itemName.includes("Tiket") || itemName.includes("Ramuan Stamina") || itemName.includes("Naga Terbang")) return alert("Item premium tidak bisa dilelang.");
         const priceStr = prompt(`Masukkan Harga Beli Langsung (Gold) untuk 1x [${itemName}]:`);
         const price = parseInt(priceStr);
         if (price > 0) listAuctionItem(db, currentUserUid, itemName, price, playerUsername);
@@ -295,48 +259,29 @@ window.placeBid = function(id, name, currentBid) {
     const minBid = currentBid > 0 ? currentBid + 10 : 10;
     const bidStr = prompt(`Masukkan tawaran (Bid) untuk ${name}\n(Minimal: ${minBid} Gold):`);
     const bidAmt = parseInt(bidStr);
-    if (bidAmt >= minBid) { placeBid(db, currentUserUid, playerUsername, id, bidAmt); } 
-    else if (bidStr) { alert(`Tawaran terlalu rendah! Minimal tawaran adalah ${minBid} Gold.`); }
+    if (bidAmt >= minBid) { placeBid(db, currentUserUid, playerUsername, id, bidAmt); } else if (bidStr) { alert(`Tawaran terlalu rendah! Minimal tawaran adalah ${minBid} Gold.`); }
 };
-
 window.actionBid = function(id, action) {
-    if (action === 'accept' && confirm("Terima tawaran ini? Barang akan diberikan ke penawar dan uang masuk ke tas Anda.")) acceptBid(db, currentUserUid, id);
-    if (action === 'reject' && confirm("Tolak tawaran ini? Uang akan dikembalikan ke penawar.")) rejectBid(db, currentUserUid, id);
+    if (action === 'accept' && confirm("Terima tawaran ini?")) acceptBid(db, currentUserUid, id);
+    if (action === 'reject' && confirm("Tolak tawaran ini?")) rejectBid(db, currentUserUid, id);
 };
 
 window.addStat = function(statName) { addCharacterStat(db, currentUserUid, statName); };
-
-// FUNGSI ROUTING PARTY FB BARU
 window.leaveParty = function(partyId) { leaveParty(db, partyId, currentUserUid); };
 window.startFb = function(partyId) { startFbBattle(db, currentUserUid, partyId); };
 
-// -------------------------------------------
-// 4. BINDING HANDLER BUTTONS EVENT LISTENERS
-// -------------------------------------------
-document.getElementById('btn-copy-uid')?.addEventListener('click', () => {
-    if (currentUserUid) { navigator.clipboard.writeText(currentUserUid); alert("📋 UID berhasil disalin ke clipboard!"); }
-});
-
+// BUTTON BINDINGS
+document.getElementById('btn-copy-uid')?.addEventListener('click', () => { if (currentUserUid) { navigator.clipboard.writeText(currentUserUid); alert("📋 UID disalin!"); } });
 document.getElementById('class-warrior')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Warrior', () => showScreen('screen-game')));
 document.getElementById('class-mage')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Mage', () => showScreen('screen-game')));
 
-function clearActiveModeClasses() {
-    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.className = "";
-        if (el && id !== 'btn-mode-equip') el.style.backgroundColor = "#495057";
-    });
-}
+function clearActiveModeClasses() { ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction'].forEach(id => { const el = document.getElementById(id); if (el) el.className = ""; if (el && id !== 'btn-mode-equip') el.style.backgroundColor = "#495057"; }); }
 document.getElementById('btn-mode-equip')?.addEventListener('click', () => { inventoryMode = "EQUIP"; clearActiveModeClasses(); document.getElementById('btn-mode-equip').className = "mode-active"; });
 document.getElementById('btn-mode-sell')?.addEventListener('click', () => { inventoryMode = "SELL"; clearActiveModeClasses(); document.getElementById('btn-mode-sell').className = "mode-sell-active"; });
 document.getElementById('btn-mode-bank')?.addEventListener('click', () => { inventoryMode = "BANK"; clearActiveModeClasses(); document.getElementById('btn-mode-bank').className = "mode-active"; });
 document.getElementById('btn-mode-auction')?.addEventListener('click', () => { inventoryMode = "AUCTION"; clearActiveModeClasses(); document.getElementById('btn-mode-auction').className = "mode-auction-active"; });
 
-// Trigger Tombol Gabung Party
-document.getElementById('btn-create-party')?.addEventListener('click', () => {
-    createOrJoinParty(db, document.getElementById('fb-select').value, currentPlayerStats);
-});
-
+document.getElementById('btn-create-party')?.addEventListener('click', () => { createOrJoinParty(db, document.getElementById('fb-select').value, currentPlayerStats); });
 document.getElementById('btn-attack-dungeon')?.addEventListener('click', () => attackMonster(db, currentUserUid, document.getElementById('dungeon-select').value, currentPlayerStats));
 document.getElementById('btn-refine-weapon')?.addEventListener('click', () => refineEquipment(db, currentUserUid, 'weapon', document.getElementById('refine-catalyst').value));
 document.getElementById('btn-refine-armor')?.addEventListener('click', () => refineEquipment(db, currentUserUid, 'armor', document.getElementById('refine-catalyst').value));
@@ -349,12 +294,15 @@ document.getElementById('btn-buy-ring')?.addEventListener('click', () => buyEqui
 document.getElementById('btn-buy-hp')?.addEventListener('click', () => buyPotion(db, currentUserUid, 'HP'));
 document.getElementById('btn-buy-mp')?.addEventListener('click', () => buyPotion(db, currentUserUid, 'MP'));
 
+// PEMBELIAN MOUNT
+document.getElementById('btn-buy-horse')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Kuda Coklat'));
+document.getElementById('btn-buy-bear')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Beruang Kutub'));
+document.getElementById('btn-mall-dragon')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Naga Terbang', 200));
+
 document.getElementById('btn-bank-deposit-gold')?.addEventListener('click', () => { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { depositGold(db, currentUserUid, val); el.value = ""; } });
 document.getElementById('btn-bank-withdraw-gold')?.addEventListener('click', () => { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { withdrawGold(db, currentUserUid, val); el.value = ""; } });
 
 document.getElementById('btn-mall-mirage')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Mirage Stone', 5));
-document.getElementById('btn-mall-heaven')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Heaven Stone', 15));
-document.getElementById('btn-mall-underworld')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Underworld Stone', 15));
 document.getElementById('btn-mall-universal')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Universal Stone', 50));
 document.getElementById('btn-mall-name')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ganti Nama', 50));
 document.getElementById('btn-mall-job')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ubah Job', 100));
