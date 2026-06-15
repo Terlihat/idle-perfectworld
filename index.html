@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giga RPG Web</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
     <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
     <div class="container">
-        <!-- ==========================================
-             LAYAR 1: AUTENTIKASI (LOGIN/REGISTER)
-             ========================================== -->
         <div id="screen-auth" class="screen" style="display: block;">
             <div class="panel auth-box">
                 <h2 id="auth-title" style="text-align: center;">Masuk Gerbang RPG</h2>
@@ -25,9 +22,6 @@
             </div>
         </div>
 
-        <!-- ==========================================
-             LAYAR 2: PILIH KARAKTER BARU
-             ========================================== -->
         <div id="screen-char-select" class="screen">
             <div class="panel" style="max-width: 600px; margin: 50px auto;">
                 <h2 style="text-align: center;">Pilih Kelas Karakter</h2>
@@ -44,12 +38,8 @@
             </div>
         </div>
 
-        <!-- ==========================================
-             LAYAR 3: DASHBOARD UTAMA GAME
-             ========================================== -->
         <div id="screen-game" class="screen">
             
-            <!-- HEADER BAR -->
             <div class="game-header">
                 <h1 style="margin: 0; font-size: 20px;"> Giga RPG Web</h1>
                 <div style="display: flex; gap: 15px; font-weight: bold; font-size: 14px; align-items: center;">
@@ -60,10 +50,8 @@
                 </div>
             </div>
             
-            <!-- FORMASI 3 KOLOM -->
             <div class="game-container">
                 
-                <!-- KOLOM 1: PROFIL & TAS -->
                 <div>
                     <div class="panel">
                         <h2>Profil & Perlengkapan</h2>
@@ -110,7 +98,6 @@
                     </div>
                 </div>
 
-                <!-- KOLOM 2: BATTLE & TEMPA -->
                 <div>
                     <div class="panel" style="border: 1px solid #dc3545;">
                         <h2>🦇 Eksplorasi Dungeon</h2>
@@ -148,7 +135,6 @@
                     </div>
                 </div>
 
-                <!-- KOLOM 3: MALL, BANK, TOKO, OBROLAN -->
                 <div>
                     <div class="panel panel-mall">
                         <h2 class="gold-title">💎 Item Mall Premium</h2>
@@ -159,8 +145,7 @@
                             <button id="btn-mall-universal" style="background:#dc3545;">Universal Stone<br><small>50 COIN</small></button>
                             <button id="btn-mall-name" style="background:#007bff;">Tiket Ganti Nama<br><small>50 COIN</small></button>
                             <button id="btn-mall-job" style="background:#28a745;">Tiket Ubah Job<br><small>100 COIN</small></button>
-							
-							<button id="btn-mall-stamina" style="background:#fd7e14; grid-column: span 2;">⚡ Ramuan Stamina (+50 Stamina)<br><small>10 COIN</small></button>
+                            <button id="btn-mall-stamina" style="background:#fd7e14; grid-column: span 2;">⚡ Ramuan Stamina (+50 Stamina)<br><small>10 COIN</small></button>
                         </div>
                     </div>
 
@@ -176,8 +161,8 @@
                     </div>
 
                     <div class="panel">
-                        <h2>⚒️ Toko & Kotak Surat</h2>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px;">
+                        <h2>⚒️ Toko Perlengkapan</h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
                             <button id="btn-buy-sword" style="background:#495057;">Pedang Besi<br><small>2k G</small></button>
                             <button id="btn-buy-staff" style="background:#495057;">Tongkat Sihir<br><small>2k G</small></button>
                             <button id="btn-buy-armor" style="background:#495057;">Zirah Kulit<br><small>2k G</small></button>
@@ -185,8 +170,11 @@
                             <button id="btn-buy-hp" style="background:#dc3545;">Ramuan HP<br><small>500 G</small></button>
                             <button id="btn-buy-mp" style="background:#007bff;">Ramuan MP<br><small>500 G</small></button>
                         </div>
-                        <strong style="font-size: 12px; color: #ffcc00;">📬 Kotak Surat Masuk:</strong>
-                        <div id="mailbox-list" style="max-height: 80px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 12px; margin-top: 5px;">
+                    </div>
+
+                    <div class="panel" style="border: 1px solid #ffcc00;">
+                        <h2 style="color: #ffcc00;">📬 Kotak Surat</h2>
+                        <div id="mailbox-list" style="max-height: 120px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 12px; border: 1px solid #3f3f52;">
                             Memuat surat...
                         </div>
                     </div>
@@ -204,7 +192,6 @@
         </div>
     </div>
 
-    <!-- SCRIPT UTAMA -->
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/game.js"></script>
