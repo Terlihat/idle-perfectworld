@@ -1,12 +1,11 @@
 /* ===================================================
    PUSAT KENDALI UTAMA (UI CONTROLLER)
-   Versi Code: 2.1.1 (Clean Architecture)
+   Versi Code: 3.0.0 (Fuben Multiplayer Integration)
    =================================================== */
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// IMPORT SEMUA MODUL LOGIKA (Kini addCharacterStat & startStaminaRegeneration ada di sini)
 import { selectCharacterClass, addCharacterStat, startStaminaRegeneration } from './modules/character.js';
 import { equipFromInventory, sellItemToNPC } from './modules/inventory.js';
 import { refineEquipment } from './modules/blacksmith.js';
@@ -19,12 +18,15 @@ import { buyMallItem } from './modules/mall.js';
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
 import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, rejectBid, cancelAuction } from './modules/auction.js';
 
+// IMPORT MODUL PARTY BARU
+import { listenToParties, createOrJoinParty, leaveParty, startFbBattle } from './modules/party.js';
+
 let currentUserUid = null;
 let activeUnsubscribeListeners = [];
 let inventoryMode = "EQUIP"; 
 let playerUsername = "Hero Anonim";
 let currentPlayerStats = {}; 
-let staminaRegenInterval = null; // Menyimpan ID putaran timer
+let staminaRegenInterval = null;
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
@@ -35,9 +37,6 @@ function escapeHTML(str) {
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : "";
 }
 
-// -------------------------------------------
-// 1. AUTENTIKASI STATUS PEMANTAU STATE
-// -------------------------------------------
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUid = user.uid;
@@ -47,7 +46,6 @@ onAuthStateChanged(auth, async (user) => {
         } else {
             showScreen('screen-game');
             startLiveGameSync();
-            // Panggil fungsi dari character.js
             if (staminaRegenInterval) clearInterval(staminaRegenInterval);
             staminaRegenInterval = startStaminaRegeneration(db, currentUserUid); 
         }
@@ -60,9 +58,6 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// -------------------------------------------
-// 2. REALTIME SERVER LISTENER & UI RENDER
-// -------------------------------------------
 function startLiveGameSync() {
     const unsubData = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
         if (!docSnap.exists()) return;
@@ -120,7 +115,13 @@ function startLiveGameSync() {
             const matk = 50 + (d.int * 10) + Math.floor((eq.weapon?.matk || 0) * wBonus);
             const def = 10 + (d.con * 5) + Math.floor((eq.armor?.def || 0) * aBonus); 
             
-            currentPlayerStats = { level: d.level, patk: patk, matk: matk, def: def };
+            // Simpan Stats Global (Ditambah Info Lengkap untuk FB)
+            currentPlayerStats = { 
+                uid: currentUserUid, username: d.username, 
+                level: d.level, currentHp: d.currentHp, maxHp: d.maxHp, currentStamina: curStam,
+                str: d.str, con: d.con, int: d.int, dex: d.dex,
+                patk: patk, matk: matk, def: def, equipment: eq
+            };
 
             document.getElementById('stat-patk').innerText = patk; 
             document.getElementById('stat-matk').innerText = matk;
@@ -199,20 +200,19 @@ function startLiveGameSync() {
                         btnHtml += `<div style="margin-bottom:4px; font-size:10px;">Bid: <strong style="color:#00d2ff">${item.highestBid.amount}G</strong> (${escapeHTML(item.highestBid.buyerName)})</div>`;
                         btnHtml += `<button onclick="window.actionBid('${item.id}', 'accept')" style="padding:2px 5px; font-size:9px; background:#28a745;">Terima</button> `;
                         btnHtml += `<button onclick="window.actionBid('${item.id}', 'reject')" style="padding:2px 5px; font-size:9px; background:#dc3545;">Tolak</button>`;
-                        if (isExpired) btnHtml += `<div style="color:#dc3545; font-size:9px; margin-top:3px;">⏰ Waktu Habis! Segera ambil tindakan.</div>`;
+                        if (isExpired) btnHtml += `<div style="color:#dc3545; font-size:9px; margin-top:3px;">⏰ Habis!</div>`;
                     } else {
-                        const timeInfo = isExpired ? '<span style="color:#dc3545; font-size:9px;">⏰ Kadaluarsa</span>' : '<span style="color:#28a745; font-size:9px;">🟢 Aktif</span>';
-                        btnHtml += `<div style="margin-bottom:4px;">${timeInfo}</div>`;
+                        btnHtml += `<div style="margin-bottom:4px;">${isExpired ? '<span style="color:#dc3545; font-size:9px;">⏰ Kadaluarsa</span>' : '<span style="color:#28a745; font-size:9px;">🟢 Aktif</span>'}</div>`;
                         btnHtml += `<button onclick="window.cancelAuction('${item.id}')" style="padding:2px 5px; font-size:9px; background:#555;">Tarik Barang</button>`;
                     }
                 } else {
                     const currentBid = item.highestBid ? item.highestBid.amount : 0;
                     if (!isExpired) {
-                        btnHtml += `<div style="font-size:9px; margin-bottom:4px;">Bid Tertinggi: ${currentBid > 0 ? currentBid + 'G' : '-'}</div>`;
+                        btnHtml += `<div style="font-size:9px; margin-bottom:4px;">Bid: ${currentBid > 0 ? currentBid + 'G' : '-'}</div>`;
                         btnHtml += `<button onclick="window.placeBid('${item.id}', '${escapeHTML(item.itemName)}', ${currentBid})" style="padding:2px 5px; font-size:9px; background:#007bff;">Tawar</button> `;
                         btnHtml += `<button onclick="window.buyFromAuction('${item.id}', '${escapeHTML(item.itemName)}', ${itemPrice}, '${item.sellerId}')" style="padding:2px 5px; font-size:9px; background:#e0a800;">Beli ${itemPrice}G</button>`;
                     } else {
-                        btnHtml += `<span style="color:#dc3545; font-size:10px;">Lelang Telah Berakhir</span>`;
+                        btnHtml += `<span style="color:#dc3545; font-size:10px;">Selesai</span>`;
                     }
                 }
 
@@ -225,7 +225,42 @@ function startLiveGameSync() {
         }
     });
 
-    activeUnsubscribeListeners.push(unsubData, unsubChat, unsubMail, unsubAuction);
+    // F. SINKRONISASI LOBBY PARTY FUBEN
+    const unsubParties = listenToParties(db, (parties) => {
+        const partyList = document.getElementById('party-list');
+        if (partyList) {
+            partyList.innerHTML = parties.length === 0 ? "Tidak ada party yang sedang mencari anggota." : "";
+            
+            parties.forEach(p => {
+                const inParty = p.members.find(m => m.uid === currentUserUid);
+                const isLeader = p.leaderId === currentUserUid;
+                
+                let memberNames = p.members.map(m => `<span style="color:#a8b2b8;">${escapeHTML(m.username)} (Lv.${m.level})</span>`).join(", ");
+                let btnHtml = "";
+
+                if (inParty) {
+                    if (isLeader) {
+                        btnHtml += `<button onclick="window.startFb('${p.id}')" style="padding: 4px 8px; font-size: 10px; background: #28a745; margin-right:4px;">▶️ MULAI FB</button>`;
+                    }
+                    btnHtml += `<button onclick="window.leaveParty('${p.id}')" style="padding: 4px 8px; font-size: 10px; background: #dc3545;">Keluar</button>`;
+                } else if (p.members.length < 4 && p.status === 'waiting') {
+                    // Tombol gabung hanya muncul jika kita menggunakan UI Gabung yang sudah diotomatisasi lewat Dropdown
+                }
+
+                partyList.innerHTML += `
+                <div style="border-bottom:1px solid #3f3f52; padding: 6px 0; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="line-height:1.3;">
+                        <strong style="color:#d8b4fe; font-size:12px;">${p.fbName}</strong><br>
+                        <span style="font-size:10px; color:#aaa;">Leader: <span style="color:#ffca28;">${escapeHTML(p.leaderName)}</span> | Anggota (${p.members.length}/4)</span><br>
+                        <div style="font-size:9px; margin-top:2px;">[ ${memberNames} ]</div>
+                    </div>
+                    <div>${btnHtml}</div>
+                </div>`;
+            });
+        }
+    });
+
+    activeUnsubscribeListeners.push(unsubData, unsubChat, unsubMail, unsubAuction, unsubParties);
 }
 
 // -------------------------------------------
@@ -260,11 +295,8 @@ window.placeBid = function(id, name, currentBid) {
     const minBid = currentBid > 0 ? currentBid + 10 : 10;
     const bidStr = prompt(`Masukkan tawaran (Bid) untuk ${name}\n(Minimal: ${minBid} Gold):`);
     const bidAmt = parseInt(bidStr);
-    if (bidAmt >= minBid) {
-        placeBid(db, currentUserUid, playerUsername, id, bidAmt);
-    } else if (bidStr) {
-        alert(`Tawaran terlalu rendah! Minimal tawaran adalah ${minBid} Gold.`);
-    }
+    if (bidAmt >= minBid) { placeBid(db, currentUserUid, playerUsername, id, bidAmt); } 
+    else if (bidStr) { alert(`Tawaran terlalu rendah! Minimal tawaran adalah ${minBid} Gold.`); }
 };
 
 window.actionBid = function(id, action) {
@@ -272,17 +304,17 @@ window.actionBid = function(id, action) {
     if (action === 'reject' && confirm("Tolak tawaran ini? Uang akan dikembalikan ke penawar.")) rejectBid(db, currentUserUid, id);
 };
 
-// Dialihkan ke modul character.js
 window.addStat = function(statName) { addCharacterStat(db, currentUserUid, statName); };
+
+// FUNGSI ROUTING PARTY FB BARU
+window.leaveParty = function(partyId) { leaveParty(db, partyId, currentUserUid); };
+window.startFb = function(partyId) { startFbBattle(db, currentUserUid, partyId); };
 
 // -------------------------------------------
 // 4. BINDING HANDLER BUTTONS EVENT LISTENERS
 // -------------------------------------------
 document.getElementById('btn-copy-uid')?.addEventListener('click', () => {
-    if (currentUserUid) {
-        navigator.clipboard.writeText(currentUserUid);
-        alert("📋 UID berhasil disalin ke clipboard!");
-    }
+    if (currentUserUid) { navigator.clipboard.writeText(currentUserUid); alert("📋 UID berhasil disalin ke clipboard!"); }
 });
 
 document.getElementById('class-warrior')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Warrior', () => showScreen('screen-game')));
@@ -299,6 +331,11 @@ document.getElementById('btn-mode-equip')?.addEventListener('click', () => { inv
 document.getElementById('btn-mode-sell')?.addEventListener('click', () => { inventoryMode = "SELL"; clearActiveModeClasses(); document.getElementById('btn-mode-sell').className = "mode-sell-active"; });
 document.getElementById('btn-mode-bank')?.addEventListener('click', () => { inventoryMode = "BANK"; clearActiveModeClasses(); document.getElementById('btn-mode-bank').className = "mode-active"; });
 document.getElementById('btn-mode-auction')?.addEventListener('click', () => { inventoryMode = "AUCTION"; clearActiveModeClasses(); document.getElementById('btn-mode-auction').className = "mode-auction-active"; });
+
+// Trigger Tombol Gabung Party
+document.getElementById('btn-create-party')?.addEventListener('click', () => {
+    createOrJoinParty(db, document.getElementById('fb-select').value, currentPlayerStats);
+});
 
 document.getElementById('btn-attack-dungeon')?.addEventListener('click', () => attackMonster(db, currentUserUid, document.getElementById('dungeon-select').value, currentPlayerStats));
 document.getElementById('btn-refine-weapon')?.addEventListener('click', () => refineEquipment(db, currentUserUid, 'weapon', document.getElementById('refine-catalyst').value));

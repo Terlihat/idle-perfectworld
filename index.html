@@ -51,7 +51,6 @@
             </div>
             
             <div class="game-container">
-                
                 <div>
                     <div class="panel">
                         <h2>Profil & Perlengkapan</h2>
@@ -105,8 +104,8 @@
                 </div>
 
                 <div>
-                    <div class="panel" style="border: 1px solid #dc3545;">
-                        <h2>🦇 Eksplorasi Dungeon</h2>
+                    <div class="panel" style="border: 1px solid #dc3545; background: #241416;">
+                        <h2 style="color: #ff4a4a;">🦇 Solo Dungeon</h2>
                         <p style="font-size: 11px; color:#aaa; margin-top:0;">*Menyerang monster membutuhkan 10 Stamina.</p>
                         <select id="dungeon-select" style="width: 100%; padding: 8px; margin-bottom: 10px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
                             <option value="slime">💧 Slime Hijau (Lv. 1)</option>
@@ -114,7 +113,33 @@
                             <option value="orc">👹 Orc Warrior (Lv. 10)</option>
                             <option value="dragon">🐉 Anak Naga (Lv. 15)</option>
                         </select>
-                        <button id="btn-attack-dungeon" style="width:100%; background: #dc3545; padding: 12px; font-size:15px;">⚔️ SERANG MONSTER!</button>
+                        <button id="btn-attack-dungeon" style="width:100%; background: #dc3545; padding: 12px; font-size:15px;">⚔️ SERANG SENDIRIAN!</button>
+                    </div>
+
+                    <div class="panel" style="border: 1px solid #6f42c1; background: #1c152a;">
+                        <h2 style="color: #d8b4fe;">🏕️ Fuben Party (FB)</h2>
+                        <p style="font-size: 11px; color:#aaa; margin-top:0;">*Minimal 2 Orang. Butuh 20 Stamina.</p>
+                        
+                        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                            <select id="fb-select" style="flex: 1; padding: 6px; background: #121216; color: #d8b4fe; border: 1px solid #3f3f52;">
+                                <option value="fb19">🔥 FB19 (Roiling Terror)</option>
+                                <option value="fb29">👻 FB29 (Qingzi)</option>
+                                <option value="fb39">👁️ FB39 (Herculean)</option>
+                                <option value="fb51">🐉 FB51 (Wyvern)</option>
+                                <option value="fb59">🦍 FB59 (Gluttonix)</option>
+                                <option value="fb69">🐸 FB69 (Viperion)</option>
+                                <option value="fb79">🏴‍☠️ FB79 (Linus The Black)</option>
+                                <option value="fb89">👼 FB89 (Brahma/Behemoth)</option>
+                                <option value="fb99">👑 FB99 (Emperor of Heaven)</option>
+                                <option value="fb100">🌌 FB100 (Goddess of Perfect World)</option>
+                            </select>
+                            <button id="btn-create-party" style="background: #6f42c1;">Buat / Gabung</button>
+                        </div>
+                        
+                        <strong style="font-size: 11px; color:#d8b4fe;">Daftar Party Menunggu:</strong>
+                        <div id="party-list" style="max-height: 120px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 11px; border: 1px solid #3f3f52; margin-top: 5px;">
+                            Tidak ada party aktif.
+                        </div>
                     </div>
 
                     <div class="panel" style="border: 1px solid #00d2ff; background: #16222f;">
@@ -134,7 +159,6 @@
 
                     <div class="panel">
                         <h2>⚖️ Pasar Lelang</h2>
-                        <p style="font-size: 11px; color:#aaa; margin-top:0; margin-bottom:8px;">*Gunakan mode <strong>LELANG</strong> di tas untuk menjual item.</p>
                         <div id="auction-list" style="max-height: 150px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 12px; border: 1px solid #3f3f52;">
                             Memuat pasar lelang...
                         </div>
