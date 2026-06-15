@@ -15,12 +15,15 @@ export const ITEM_DB = {
     "Ramuan HP": { type: "consumable", sellValue: 250 },
     "Ramuan MP": { type: "consumable", sellValue: 250 },
     "Batu Dungeon": { type: "loot", sellValue: 300 },
+    
+    // ITEM MALL & SPECIAL
     "Mirage Stone": { type: "catalyst", sellValue: 0 },
     "Heaven Stone": { type: "catalyst", sellValue: 0 },
     "Underworld Stone": { type: "catalyst", sellValue: 0 },
     "Universal Stone": { type: "catalyst", sellValue: 0 },
     "Tiket Ubah Job": { type: "special", sellValue: 0 },
-    "Tiket Ganti Nama": { type: "special", sellValue: 0 }
+    "Tiket Ganti Nama": { type: "special", sellValue: 0 },
+    "Ramuan Stamina": { type: "special", sellValue: 0 } // <-- BARU: Memulihkan 50 Stamina
 };
 
 export const REFINE_RATES = {

@@ -1,5 +1,6 @@
 /* ===================================================
    CSS UTAMA - Retro MMORPG Web Project
+   Versi Code: 1.9.1 (Strict Proportional UI)
    =================================================== */
 
 body {
@@ -60,6 +61,7 @@ input[type="text"], input[type="number"], input[type="password"], input[type="em
 }
 .bar-fill-hp { background: #dc3545; width: 100%; height: 100%; transition: 0.3s; }
 .bar-fill-mp { background: #007bff; width: 0%; height: 100%; transition: 0.3s; }
+.bar-fill-stamina { background: #fd7e14; width: 100%; height: 100%; transition: 0.3s; }
 .bar-fill-exp { background: #28a745; width: 0%; height: 100%; transition: 0.3s; }
 
 .stat-grid {
@@ -72,6 +74,9 @@ input[type="text"], input[type="number"], input[type="password"], input[type="em
 .equip-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #333; padding: 6px 0; }
 .equip-item span:last-child { color: #00d2ff; font-weight: bold; }
 
+/* ===================================================
+   GRID INVENTARIS DAN BANK (PROPORSIONAL 65PX)
+   =================================================== */
 .mode-buttons { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
 .mode-buttons button { flex: 1; padding: 6px; font-size: 11px; }
 
@@ -79,30 +84,29 @@ input[type="text"], input[type="number"], input[type="password"], input[type="em
 .mode-sell-active { border: 2px solid #dc3545 !important; background-color: #bd2130 !important; }
 .mode-auction-active { border: 2px solid #e0a800 !important; background-color: #d39e00 !important; }
 
-.bar-container { background: #333; width: 100%; height: 16px; border-radius: 4px; margin-bottom: 8px; position: relative; overflow: hidden; }
-.bar-text { position: absolute; width: 100%; text-align: center; font-size: 11px; font-weight: bold; top: 1px; color: #fff; text-shadow: 1px 1px 2px #000; }
-.bar-fill-hp { background: #dc3545; width: 100%; height: 100%; transition: 0.3s; }
-.bar-fill-mp { background: #007bff; width: 100%; height: 100%; transition: 0.3s; }
-.bar-fill-stamina { background: #fd7e14; width: 100%; height: 100%; transition: 0.3s; }
-.bar-fill-exp { background: #28a745; width: 0%; height: 100%; transition: 0.3s; }
-
 .inv-grid, #bank-grid {
     display: grid;
-    grid-template-columns: repeat(4, 45px); 
-    gap: 5px;
-    background: #121216; padding: 10px; border-radius: 5px; border: 1px solid #3f3f52;
+    grid-template-columns: repeat(4, 65px);
+    grid-auto-rows: 65px;
+    gap: 6px;
+    background: #121216; padding: 15px; border-radius: 5px; border: 1px solid #3f3f52;
     justify-content: center;
 }
+
 .inv-slot, .bank-slot {
-    aspect-ratio: 1;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
     background: #2a2a35; border: 1px solid #3f3f52; border-radius: 4px;
-    display: flex; align-items: center; justify-content: center; font-size: 9px; text-align: center;
+    display: flex; align-items: center; justify-content: center; font-size: 10px; text-align: center;
     color: #777; position: relative; padding: 2px; flex-direction: column; cursor: pointer; user-select: none; overflow: hidden;
 }
+.inv-slot:hover, .bank-slot:hover { border-color: #007bff; background-color: #252a30; }
 .inv-slot.filled, .bank-slot.filled { background-color: #3f3f52; border-color: #00d2ff; color: #fff; }
 .bank-slot.filled { background-color: #1b2e24; border-color: #28a745; }
-.inv-qty { color: #ffca28; font-weight: bold; font-size: 10px; position: absolute; bottom: 2px; right: 4px; }
+.inv-qty { color: #ffca28; font-weight: bold; font-size: 11px; position: absolute; bottom: 3px; right: 5px; }
 
+/* Controls */
 .bank-management { display: flex; gap: 5px; margin-bottom: 10px; }
 .bank-management input { flex: 1; margin: 0; }
 

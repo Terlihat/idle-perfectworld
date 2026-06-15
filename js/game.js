@@ -1,12 +1,12 @@
 /* ===================================================
-   PUSAAT KENDALI UTAMA (UI CONTROLLER)
-   Versi 1.9.0
+   PUSAT KENDALI UTAMA (UI CONTROLLER)
+   Versi Code: 1.9.1 (Strict Proportional UI & Regen)
    =================================================== */
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, getDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// IMPORT SEMUA MODUL
+// IMPORT SEMUA MODUL LOGIKA FITUR
 import { selectCharacterClass } from './modules/character.js';
 import { equipFromInventory, sellItemToNPC } from './modules/inventory.js';
 import { refineEquipment } from './modules/blacksmith.js';
@@ -24,6 +24,7 @@ let activeUnsubscribeListeners = [];
 let inventoryMode = "EQUIP"; 
 let playerUsername = "Hero Anonim";
 let currentPlayerStats = {}; 
+let staminaRegenInterval = null;
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
@@ -34,8 +35,30 @@ function escapeHTML(str) {
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : "";
 }
 
+// FUNGSI REGENERASI STAMINA OTOMATIS (1 STAMINA / MENIT)
+function startStaminaRegen() {
+    if (staminaRegenInterval) clearInterval(staminaRegenInterval);
+    
+    staminaRegenInterval = setInterval(async () => {
+        if (!currentUserUid) return;
+        const userRef = doc(db, "users", currentUserUid);
+        try {
+            await runTransaction(db, async (ts) => {
+                const snap = await ts.get(userRef);
+                if (!snap.exists()) return;
+                const d = snap.data();
+                const cur = d.currentStamina || 0;
+                const max = d.maxStamina || 100;
+                if (cur < max) {
+                    ts.update(userRef, { currentStamina: cur + 1 });
+                }
+            });
+        } catch (err) { console.error("Regen stamina error:", err); }
+    }, 60000); 
+}
+
 // -------------------------------------------
-// 1. AUTENTIKASI & PILIH KELAS
+// 1. AUTENTIKASI STATUS PEMANTAU STATE
 // -------------------------------------------
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -46,9 +69,11 @@ onAuthStateChanged(auth, async (user) => {
         } else {
             showScreen('screen-game');
             startLiveGameSync();
+            startStaminaRegen(); 
         }
     } else {
         currentUserUid = null;
+        if (staminaRegenInterval) clearInterval(staminaRegenInterval);
         activeUnsubscribeListeners.forEach(unsub => unsub());
         activeUnsubscribeListeners = [];
         showScreen('screen-auth');
@@ -59,11 +84,10 @@ document.getElementById('class-warrior')?.addEventListener('click', () => select
 document.getElementById('class-mage')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Mage', () => showScreen('screen-game')));
 
 // -------------------------------------------
-// 2. SINKRONISASI DATA REALTIME
+// 2. REALTIME SERVER LISTENER & UI RENDER
 // -------------------------------------------
 function startLiveGameSync() {
-    
-    // A. Sinkronisasi Data Pemain
+    // A. Sinkronisasi Data Pemain & Status Bar
     const unsubData = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
         if (!docSnap.exists()) return;
         const d = docSnap.data();
@@ -122,6 +146,7 @@ function startLiveGameSync() {
             document.getElementById('stat-acc').innerText = (80 + (d.dex * 0.5) + Math.floor((eq.accessory?.accBonus || 0) * cBonus)).toFixed(1) + "%";
         }
 
+        // Render Inventory Grid
         const invGrid = document.getElementById('inventory-grid');
         if (invGrid) {
             invGrid.innerHTML = "";
@@ -134,6 +159,7 @@ function startLiveGameSync() {
             }
         }
 
+        // Render Bank Grid
         const bankGrid = document.getElementById('bank-grid');
         if (bankGrid) {
             bankGrid.innerHTML = "";
@@ -147,7 +173,7 @@ function startLiveGameSync() {
         }
     });
 
-    // B. Sinkronisasi Chat
+    // B. Sinkronisasi Chat Global Realtime
     const unsubChat = listenToChat(db, (messages) => {
         const chatBox = document.getElementById('chat-box');
         if (chatBox) { 
@@ -157,7 +183,7 @@ function startLiveGameSync() {
         }
     });
 
-    // C. Sinkronisasi Mailbox Surat Admin
+    // C. Sinkronisasi Mailbox Surat Masuk
     const unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
         const mailDiv = document.getElementById('mailbox-list');
         if (mailDiv) { 
@@ -170,7 +196,7 @@ function startLiveGameSync() {
         }
     });
 
-    // D. Sinkronisasi Lelang
+    // D. Sinkronisasi Pasar Lelang
     const unsubAuction = listenToAuction(db, (items) => {
         const auctionList = document.getElementById('auction-list');
         if (auctionList) { 
@@ -187,7 +213,7 @@ function startLiveGameSync() {
 }
 
 // -------------------------------------------
-// 3. WINDOW EVENT ROUTING (INVENTORY & BANK)
+// 3. WINDOW EVENT ROUTING (INTERAKSI KLIK TAS)
 // -------------------------------------------
 window.handleInventoryClick = function(itemName) {
     if (inventoryMode === "EQUIP") {
@@ -202,7 +228,7 @@ window.handleInventoryClick = function(itemName) {
     else if (inventoryMode === "SELL") { sellItemToNPC(db, currentUserUid, itemName); } 
     else if (inventoryMode === "BANK") { depositItem(db, currentUserUid, itemName); }
     else if (inventoryMode === "AUCTION") {
-        if (itemName.includes("Tiket")) return alert("Item spesial mall tidak bisa dilelang.");
+        if (itemName.includes("Tiket") || itemName.includes("Ramuan Stamina")) return alert("Item mall premium tidak bisa dilelang.");
         const priceStr = prompt(`Masukkan harga lelang (Gold) untuk 1x [${itemName}]:`);
         const price = parseInt(priceStr);
         if (price > 0) listAuctionItem(db, currentUserUid, itemName, price, playerUsername);
@@ -213,7 +239,7 @@ window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, i
 window.buyFromAuction = function(id, name, price, sellerId) { if (confirm(`Beli ${name} seharga ${price} Gold?`)) buyAuctionItem(db, currentUserUid, id, name, price, sellerId); };
 
 // -------------------------------------------
-// 4. EVENT LISTENERS (TOMBOL & UI)
+// 4. BINDING HANDLER BUTTONS EVENT LISTENERS
 // -------------------------------------------
 function clearActiveModeClasses() {
     ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction'].forEach(id => {
@@ -227,18 +253,18 @@ document.getElementById('btn-mode-sell')?.addEventListener('click', () => { inve
 document.getElementById('btn-mode-bank')?.addEventListener('click', () => { inventoryMode = "BANK"; clearActiveModeClasses(); document.getElementById('btn-mode-bank').className = "mode-active"; });
 document.getElementById('btn-mode-auction')?.addEventListener('click', () => { inventoryMode = "AUCTION"; clearActiveModeClasses(); document.getElementById('btn-mode-auction').className = "mode-auction-active"; });
 
-// Battle System Dungeon
+// Battle Arena Dungeon Click
 document.getElementById('btn-attack-dungeon')?.addEventListener('click', () => {
     const selectedMonster = document.getElementById('dungeon-select').value;
     attackMonster(db, currentUserUid, selectedMonster, currentPlayerStats);
 });
 
-// Blacksmith Tempa
+// Blacksmith Refine Click
 document.getElementById('btn-refine-weapon')?.addEventListener('click', () => refineEquipment(db, currentUserUid, 'weapon', document.getElementById('refine-catalyst').value));
 document.getElementById('btn-refine-armor')?.addEventListener('click', () => refineEquipment(db, currentUserUid, 'armor', document.getElementById('refine-catalyst').value));
 document.getElementById('btn-refine-accessory')?.addEventListener('click', () => refineEquipment(db, currentUserUid, 'accessory', document.getElementById('refine-catalyst').value));
 
-// Toko Normal
+// Shop Normal Click
 document.getElementById('btn-buy-sword')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Pedang Besi'));
 document.getElementById('btn-buy-staff')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Tongkat Sihir'));
 document.getElementById('btn-buy-armor')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Zirah Kulit'));
@@ -246,26 +272,27 @@ document.getElementById('btn-buy-ring')?.addEventListener('click', () => buyEqui
 document.getElementById('btn-buy-hp')?.addEventListener('click', () => buyPotion(db, currentUserUid, 'HP'));
 document.getElementById('btn-buy-mp')?.addEventListener('click', () => buyPotion(db, currentUserUid, 'MP'));
 
-// Bank Triggers
+// Bank Gold Action Click
 document.getElementById('btn-bank-deposit-gold')?.addEventListener('click', () => { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { depositGold(db, currentUserUid, val); el.value = ""; } });
 document.getElementById('btn-bank-withdraw-gold')?.addEventListener('click', () => { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { withdrawGold(db, currentUserUid, val); el.value = ""; } });
 
-// Item Mall Premium Triggers
+// Premium Item Mall Click
 document.getElementById('btn-mall-mirage')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Mirage Stone', 5));
 document.getElementById('btn-mall-heaven')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Heaven Stone', 15));
 document.getElementById('btn-mall-underworld')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Underworld Stone', 15));
 document.getElementById('btn-mall-universal')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Universal Stone', 50));
 document.getElementById('btn-mall-name')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ganti Nama', 50));
 document.getElementById('btn-mall-job')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ubah Job', 100));
+document.getElementById('btn-mall-stamina')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Ramuan Stamina', 10));
 
-// Chat Global
+// Sending Message Chat Action
 const chatInput = document.getElementById('chat-input');
 const btnSendChat = document.getElementById('btn-send-chat');
 function executeSendingChat() { if (chatInput && chatInput.value.trim()) { sendChat(db, currentUserUid, playerUsername, chatInput.value); chatInput.value = ""; } }
 btnSendChat?.addEventListener('click', executeSendingChat);
 chatInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); executeSendingChat(); } });
 
-// Admin Navigation
+// Admin Control Panel Redirect
 document.getElementById('btn-admin-panel')?.addEventListener('click', () => {
     window.location.href = './admin/index.html';
 });

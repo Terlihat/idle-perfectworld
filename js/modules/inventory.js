@@ -14,23 +14,31 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
             
             if (!inv[itemName] || inv[itemName] <= 0) throw "Item tidak ditemukan!";
             
-            // Logika Tiket Mall Spesial
+            // Logika Item Spesial (Mall)
             if (itemData.type === "special") {
                 inv[itemName] -= 1;
                 if (inv[itemName] === 0) delete inv[itemName];
                 let updates = { inventory: inv };
 
-                if (itemName === "Tiket Ganti Nama") { updates.username = specialInput; } 
-                else if (itemName === "Tiket Ubah Job") {
+                if (itemName === "Tiket Ganti Nama") { 
+                    updates.username = specialInput; 
+                } else if (itemName === "Tiket Ubah Job") {
                     updates.characterClass = specialInput;
                     if (specialInput === 'Warrior') { updates.str = 15; updates.con = 20; updates.dex = 5; updates.int = 2; }
                     else { updates.str = 2; updates.con = 8; updates.dex = 10; updates.int = 25; }
+                } else if (itemName === "Ramuan Stamina") {
+                    // BARU: Logika Pemulihan Stamina
+                    const maxStam = data.maxStamina || 100;
+                    const curStam = data.currentStamina || 0;
+                    if (curStam >= maxStam) throw "Stamina Anda sudah penuh!";
+                    updates.currentStamina = Math.min(maxStam, curStam + 50); // Memulihkan 50 Stamina
                 }
+
                 ts.update(userRef, updates);
                 return;
             }
 
-            // Logika Pemasangan Equipment Tempur
+            // Logika Pemasangan Equipment
             const slotType = itemData.type;
             if (eq[slotType] && eq[slotType].name) {
                 inv[eq[slotType].name] = (inv[eq[slotType].name] || 0) + 1; 
