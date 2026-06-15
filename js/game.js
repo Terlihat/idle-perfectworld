@@ -14,9 +14,8 @@ import { buyMallItem } from './modules/mall.js';
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
 import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, rejectBid, cancelAuction } from './modules/auction.js';
 import { listenToParties, createOrJoinParty, leaveParty, startFbBattle } from './modules/party.js';
-
-// IMPORT MODUL QUEST BARU
 import { assignRandomQuests, claimQuestReward } from './modules/quest.js';
+import { listenToGuilds, createGuild, joinGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, kickMember, disbandGuild } from './modules/guild.js';
 
 let currentUserUid = null;
 let activeUnsubscribeListeners = [];
@@ -25,14 +24,15 @@ let playerUsername = "Hero Anonim";
 let currentPlayerStats = {}; 
 let staminaRegenInterval = null;
 
+let globalGuilds = {}; // Menyimpan data seluruh guild aktif
+let guildUpgradesMap = {};
+
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
     document.getElementById(screenId).style.display = 'block';
 }
 
-function escapeHTML(str) {
-    return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : "";
-}
+function escapeHTML(str) { return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : ""; }
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -56,6 +56,14 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 function startLiveGameSync() {
+    // 1. SINKRONISASI DATA GUILDS GLOBAL DULU
+    const unsubGuilds = listenToGuilds(db, (guildsData, upgradesData) => {
+        globalGuilds = guildsData;
+        guildUpgradesMap = upgradesData;
+        renderGuildPanel(); 
+    });
+
+    // 2. SINKRONISASI DATA PLAYER
     const unsubData = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
         if (!docSnap.exists()) return;
         const d = docSnap.data();
@@ -81,11 +89,23 @@ function startLiveGameSync() {
             const addStatBtns = document.querySelectorAll('.btn-add-stat');
             addStatBtns.forEach(btn => { btn.style.display = statPoints > 0 ? 'inline-block' : 'none'; });
 
+            // MENGHITUNG EFEK BUFF GUILD SECARA REAL-TIME
+            let gBuff = { atk: 0, hp: 0, def: 0 };
+            if (d.guildId && globalGuilds[d.guildId]) {
+                const gLvl = globalGuilds[d.guildId].level;
+                gBuff = guildUpgradesMap[gLvl].buff;
+                document.getElementById('guild-buff-indicator').innerText = `🛡️ Guild Buff: +${gBuff.atk} ATK, +${gBuff.hp} HP, +${gBuff.def} DEF`;
+            } else {
+                document.getElementById('guild-buff-indicator').innerText = `🛡️ Guild Buff: Belum bergabung.`;
+            }
+
+            const effectiveMaxHp = (d.maxHp || 1000) + gBuff.hp;
+
             const maxExp = (d.level || 1) * 100;
             document.getElementById('exp-text').innerText = `${d.exp || 0} / ${maxExp}`;
             document.getElementById('exp-bar').style.width = `${Math.min(((d.exp || 0) / maxExp) * 100, 100)}%`;
-            document.getElementById('char-hp-text').innerText = `${d.currentHp} / ${d.maxHp}`;
-            document.getElementById('char-hp-bar').style.width = `${Math.min((d.currentHp / d.maxHp) * 100, 100)}%`;
+            document.getElementById('char-hp-text').innerText = `${d.currentHp} / ${effectiveMaxHp}`;
+            document.getElementById('char-hp-bar').style.width = `${Math.min((d.currentHp / effectiveMaxHp) * 100, 100)}%`;
             document.getElementById('char-mp-text').innerText = `${d.currentMp} / ${d.maxMp}`;
             document.getElementById('char-mp-bar').style.width = `${Math.min((d.currentMp / d.maxMp) * 100, 100)}%`;
             
@@ -109,15 +129,18 @@ function startLiveGameSync() {
             let aBonus = 1 + (eq.armor?.refine || 0) * 0.15;
             let cBonus = 1 + (eq.accessory?.refine || 0) * 0.10;
             
-            const patk = 50 + (d.str * 10) + Math.floor((eq.weapon?.patk || 0) * wBonus); 
-            const matk = 50 + (d.int * 10) + Math.floor((eq.weapon?.matk || 0) * wBonus);
-            const def = 10 + (d.con * 5) + Math.floor((eq.armor?.def || 0) * aBonus); 
+            // ATK & DEF Ditambah Buff Guild
+            const patk = 50 + (d.str * 10) + Math.floor((eq.weapon?.patk || 0) * wBonus) + gBuff.atk; 
+            const matk = 50 + (d.int * 10) + Math.floor((eq.weapon?.matk || 0) * wBonus) + gBuff.atk;
+            const def = 10 + (d.con * 5) + Math.floor((eq.armor?.def || 0) * aBonus) + gBuff.def; 
             
+            // Passing Stats Lengkap ke Modul Battle & Party FB
             currentPlayerStats = { 
                 uid: currentUserUid, username: d.username, 
-                level: d.level, currentHp: d.currentHp, maxHp: d.maxHp, currentStamina: curStam,
+                level: d.level, currentHp: d.currentHp, maxHp: effectiveMaxHp, currentStamina: curStam,
                 str: d.str, con: d.con, int: d.int, dex: d.dex,
-                patk: patk, matk: matk, def: def, equipment: eq
+                patk: patk, matk: matk, def: def, equipment: eq,
+                guildId: d.guildId, gold: d.gold
             };
 
             document.getElementById('stat-patk').innerText = patk; 
@@ -127,13 +150,12 @@ function startLiveGameSync() {
             document.getElementById('stat-eva').innerText = (d.dex * 0.2).toFixed(1) + "%"; 
             document.getElementById('stat-acc').innerText = (80 + (d.dex * 0.5) + Math.floor((eq.accessory?.accBonus || 0) * cBonus)).toFixed(1) + "%";
             
-            // --- RENDER SISTEM MISI (QUEST) ---
+            // Render Quest
             const q = d.quests || {};
             const today = new Date().toLocaleDateString('id-ID');
             const btnTake = document.getElementById('btn-take-quest');
             
             if (q.lastReset !== today) {
-                // Hari berganti atau belum ada misi, minta user klik tombol
                 btnTake.style.display = 'block';
                 document.getElementById('quest-daily-title').innerText = "Belum Diambil";
                 document.getElementById('quest-daily-prog').innerText = "0/0";
@@ -142,33 +164,21 @@ function startLiveGameSync() {
                 document.getElementById('btn-claim-daily').style.display = 'none';
                 document.getElementById('btn-claim-bounty').style.display = 'none';
             } else {
-                // Render Misi yang sedang aktif
                 btnTake.style.display = 'none';
-                
-                // Misi Daily (Solo)
                 document.getElementById('quest-daily-title').innerText = q.daily.title;
                 document.getElementById('quest-daily-prog').innerText = `${q.daily.progress}/${q.daily.target}`;
-                if (q.daily.isClaimed) {
-                    document.getElementById('quest-daily-prog').innerText = "✅ Selesai";
-                    document.getElementById('btn-claim-daily').style.display = 'none';
-                } else if (q.daily.progress >= q.daily.target) {
-                    document.getElementById('btn-claim-daily').style.display = 'inline-block';
-                } else {
-                    document.getElementById('btn-claim-daily').style.display = 'none';
-                }
+                if (q.daily.isClaimed) { document.getElementById('quest-daily-prog').innerText = "✅ Selesai"; document.getElementById('btn-claim-daily').style.display = 'none'; } 
+                else if (q.daily.progress >= q.daily.target) { document.getElementById('btn-claim-daily').style.display = 'inline-block'; } 
+                else { document.getElementById('btn-claim-daily').style.display = 'none'; }
 
-                // Misi Bounty (Party FB)
                 document.getElementById('quest-bounty-title').innerText = q.bounty.title;
                 document.getElementById('quest-bounty-prog').innerText = `${q.bounty.progress}/${q.bounty.target}`;
-                if (q.bounty.isClaimed) {
-                    document.getElementById('quest-bounty-prog').innerText = "✅ Selesai";
-                    document.getElementById('btn-claim-bounty').style.display = 'none';
-                } else if (q.bounty.progress >= q.bounty.target) {
-                    document.getElementById('btn-claim-bounty').style.display = 'inline-block';
-                } else {
-                    document.getElementById('btn-claim-bounty').style.display = 'none';
-                }
+                if (q.bounty.isClaimed) { document.getElementById('quest-bounty-prog').innerText = "✅ Selesai"; document.getElementById('btn-claim-bounty').style.display = 'none'; } 
+                else if (q.bounty.progress >= q.bounty.target) { document.getElementById('btn-claim-bounty').style.display = 'inline-block'; } 
+                else { document.getElementById('btn-claim-bounty').style.display = 'none'; }
             }
+
+            renderGuildPanel(); // Memastikan GUI Guild sinkron dengan status guildId player
         }
 
         const invGrid = document.getElementById('inventory-grid');
@@ -223,7 +233,6 @@ function startLiveGameSync() {
         if (auctionList) { 
             auctionList.innerHTML = items.length === 0 ? "Belum ada lelang." : "";
             const now = Date.now();
-
             items.forEach(item => {
                 const isExpired = (item.expiresAt || 0) < now;
                 const isMine = item.sellerId === currentUserUid;
@@ -248,7 +257,6 @@ function startLiveGameSync() {
                         btnHtml += `<button onclick="window.buyFromAuction('${item.id}', '${escapeHTML(item.itemName)}', ${itemPrice}, '${item.sellerId}')" style="padding:2px 5px; font-size:9px; background:#e0a800;">Beli ${itemPrice}G</button>`;
                     } else { btnHtml += `<span style="color:#dc3545; font-size:10px;">Selesai</span>`; }
                 }
-
                 auctionList.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding: 6px 0;"><div><strong style="color:#00d2ff;">${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: ${escapeHTML(item.sellerName)} | Langsung: 💰 ${itemPrice.toLocaleString()}G</span></div><div style="text-align: right;">${btnHtml}</div></div>`;
             });
         }
@@ -268,16 +276,84 @@ function startLiveGameSync() {
                     if (isLeader) { btnHtml += `<button onclick="window.startFb('${p.id}')" style="padding: 4px 8px; font-size: 10px; background: #28a745; margin-right:4px;">▶️ MULAI FB</button>`; }
                     btnHtml += `<button onclick="window.leaveParty('${p.id}')" style="padding: 4px 8px; font-size: 10px; background: #dc3545;">Keluar</button>`;
                 }
-
                 partyList.innerHTML += `<div style="border-bottom:1px solid #3f3f52; padding: 6px 0; display:flex; justify-content:space-between; align-items:center;"><div style="line-height:1.3;"><strong style="color:#d8b4fe; font-size:12px;">${p.fbName}</strong><br><span style="font-size:10px; color:#aaa;">Leader: <span style="color:#ffca28;">${escapeHTML(p.leaderName)}</span> | Anggota (${p.members.length}/4)</span><br><div style="font-size:9px; margin-top:2px;">[ ${memberNames} ]</div></div><div>${btnHtml}</div></div>`;
             });
         }
     });
 
-    activeUnsubscribeListeners.push(unsubData, unsubChat, unsubMail, unsubAuction, unsubParties);
+    activeUnsubscribeListeners.push(unsubData, unsubChat, unsubMail, unsubAuction, unsubParties, unsubGuilds);
 }
 
-// ROUTING UI LOGIC
+// LOGIKA RENDER GUI GUILD
+function renderGuildPanel() {
+    const unjoinedView = document.getElementById('guild-unjoined-view');
+    const joinedView = document.getElementById('guild-joined-view');
+    if (!currentPlayerStats.uid) return;
+
+    if (!currentPlayerStats.guildId || !globalGuilds[currentPlayerStats.guildId]) {
+        // BELUM PUNYA GUILD
+        unjoinedView.style.display = 'block';
+        joinedView.style.display = 'none';
+        
+        const listContainer = document.getElementById('guild-available-list');
+        listContainer.innerHTML = "";
+        
+        const gArray = Object.values(globalGuilds);
+        if (gArray.length === 0) { listContainer.innerHTML = "Belum ada klan di server."; }
+        else {
+            gArray.forEach(g => {
+                const maxCap = guildUpgradesMap[g.level].maxMembers;
+                const isFull = g.members.length >= maxCap;
+                const btn = isFull ? `<span style="color:#dc3545; font-size:10px;">Penuh</span>` : `<button onclick="window.joinGuildAction('${g.id}')" style="padding:2px 6px; font-size:9px; background:#007bff;">Gabung</button>`;
+                listContainer.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding:4px 0;">
+                    <div><strong style="color:#00d2ff;">${escapeHTML(g.name)}</strong> (Lv.${g.level})<br><span style="color:#aaa; font-size:9px;">Ketua: ${escapeHTML(g.leaderName)} | Anggota: ${g.members.length}/${maxCap}</span></div>
+                    <div>${btn}</div>
+                </div>`;
+            });
+        }
+    } else {
+        // SUDAH PUNYA GUILD
+        unjoinedView.style.display = 'none';
+        joinedView.style.display = 'block';
+
+        const myGuild = globalGuilds[currentPlayerStats.guildId];
+        const isLeader = myGuild.leaderId === currentPlayerStats.uid;
+        const b = guildUpgradesMap[myGuild.level].buff;
+
+        document.getElementById('guild-name-display').innerText = myGuild.name;
+        document.getElementById('guild-level-display').innerText = myGuild.level;
+        document.getElementById('guild-leader-display').innerText = myGuild.leaderName;
+        document.getElementById('guild-vault-display').innerText = (myGuild.vaultGold || 0).toLocaleString();
+        document.getElementById('guild-motd-display').innerText = escapeHTML(myGuild.announcement);
+        document.getElementById('guild-buff-display').innerText = `+${b.atk} ATK, +${b.hp} HP, +${b.def} DEF`;
+
+        // Kontrol Ketua
+        const controls = document.getElementById('guild-management-controls');
+        if (isLeader) {
+            controls.style.display = 'flex';
+            const costNext = myGuild.level < 5 ? guildUpgradesMap[myGuild.level + 1].cost.toLocaleString() + ' G' : 'MAX';
+            document.getElementById('btn-upgrade-guild').innerText = `⏫ Level Up (${costNext})`;
+        } else {
+            controls.style.display = 'none';
+        }
+
+        // Daftar Anggota
+        const memberList = document.getElementById('guild-member-list');
+        memberList.innerHTML = "";
+        myGuild.members.forEach(m => {
+            const isMe = m.uid === currentPlayerStats.uid;
+            const kickBtn = (isLeader && !isMe) ? `<button onclick="window.kickMemberAction('${m.uid}')" style="padding:1px 4px; font-size:8px; background:#dc3545; margin-left:5px;">Kick</button>` : '';
+            memberList.innerHTML += `
+            <div style="border-bottom:1px solid #333; padding:3px 0; display:flex; justify-content:space-between; align-items:center;">
+                <div><span style="color:${isMe ? '#ffca28' : '#fff'};">${escapeHTML(m.name)}</span> (Lv.${m.level}) ${kickBtn}</div>
+                <div style="color:#aaa;">Donasi: ${m.contribution.toLocaleString()} G</div>
+            </div>`;
+        });
+    }
+}
+
+// WINDOW ROUTING LOGIC
 window.handleInventoryClick = function(itemName) {
     if (inventoryMode === "EQUIP") {
         if (itemName === "Tiket Ganti Nama") { const inputName = prompt("Masukkan Nama Karakter Baru:"); if (inputName && inputName.trim() !== "") equipFromInventory(db, currentUserUid, itemName, inputName); } 
@@ -314,7 +390,31 @@ window.addStat = function(statName) { addCharacterStat(db, currentUserUid, statN
 window.leaveParty = function(partyId) { leaveParty(db, partyId, currentUserUid); };
 window.startFb = function(partyId) { startFbBattle(db, currentUserUid, partyId); };
 
-// BUTTON BINDINGS (DENGAN TOMBOL QUEST BARU)
+// ROUTING UI GUILD BARU
+window.joinGuildAction = function(guildId) { if (confirm("Bergabung dengan klan ini?")) joinGuild(db, currentUserUid, currentPlayerStats, guildId); };
+window.kickMemberAction = function(targetUid) { if (confirm("Keluarkan anggota ini dari klan?")) kickMember(db, currentUserUid, currentPlayerStats.guildId, targetUid); };
+
+// BUTTON BINDINGS PUSAT
+document.getElementById('btn-create-guild')?.addEventListener('click', () => {
+    const name = document.getElementById('input-guild-name').value;
+    if (confirm(`Dirikan Klan [${name}] seharga 100,000 Gold?`)) createGuild(db, currentUserUid, currentPlayerStats, name);
+});
+document.getElementById('btn-leave-guild')?.addEventListener('click', () => {
+    if (confirm("Yakin ingin keluar dari klan? Anda akan kehilangan semua Buff Guild!")) dbLeaveGuild(db, currentUserUid, currentPlayerStats.guildId);
+});
+document.getElementById('btn-donate-guild')?.addEventListener('click', () => {
+    const amt = parseInt(document.getElementById('input-donate-gold').value);
+    if (amt > 0) { donateGold(db, currentUserUid, currentPlayerStats.guildId, amt); document.getElementById('input-donate-gold').value = ""; }
+});
+document.getElementById('btn-upgrade-guild')?.addEventListener('click', () => { if (confirm("Gunakan kas Guild untuk naik level?")) upgradeGuild(db, currentUserUid, currentPlayerStats.guildId); });
+document.getElementById('btn-edit-motd')?.addEventListener('click', () => {
+    const txt = prompt("Masukkan pengumuman baru untuk anggota klan:");
+    if (txt) updateMotd(db, currentUserUid, currentPlayerStats.guildId, txt);
+});
+document.getElementById('btn-disband-guild')?.addEventListener('click', () => {
+    if (confirm("PERINGATAN KERAS: Yakin ingin membubarkan Klan ini selamanya? Kas akan hangus!")) disbandGuild(db, currentUserUid, currentPlayerStats.guildId);
+});
+
 document.getElementById('btn-take-quest')?.addEventListener('click', () => assignRandomQuests(db, currentUserUid));
 document.getElementById('btn-claim-daily')?.addEventListener('click', () => claimQuestReward(db, currentUserUid, 'daily'));
 document.getElementById('btn-claim-bounty')?.addEventListener('click', () => claimQuestReward(db, currentUserUid, 'bounty'));
@@ -353,7 +453,6 @@ document.getElementById('btn-mall-mirage')?.addEventListener('click', () => buyM
 document.getElementById('btn-mall-heaven')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Heaven Stone', 15));
 document.getElementById('btn-mall-underworld')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Underworld Stone', 15));
 document.getElementById('btn-mall-universal')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Universal Stone', 50));
-
 document.getElementById('btn-mall-name')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ganti Nama', 50));
 document.getElementById('btn-mall-job')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ubah Job', 100));
 document.getElementById('btn-mall-stamina')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Ramuan Stamina', 10));

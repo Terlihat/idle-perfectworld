@@ -1,9 +1,6 @@
-/* ===================================================
-   MODUL BATTLE DUNGEON (Dengan Tracker Quest)
-   =================================================== */
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { MONSTER_DB } from '../data/monsters.js';
-import { getUpdatedQuests } from './quest.js'; // IMPORT LOGIKA QUEST
+import { getUpdatedQuests } from './quest.js'; 
 
 export async function attackMonster(db, uid, monsterKey, playerStats) {
     if (!uid) return;
@@ -22,7 +19,9 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
             
             const currentStam = data.currentStamina !== undefined ? data.currentStamina : 100;
             const maxStam = data.maxStamina !== undefined ? data.maxStamina : 100;
-            const currentHealth = data.currentHp !== undefined ? data.currentHp : (data.maxHp || 1000);
+            
+            // Kita gunakan currentHp dari data, tapi maxHp kita limit ke effectiveMaxHp dari game.js
+            const currentHealth = data.currentHp !== undefined ? data.currentHp : playerStats.maxHp;
 
             const mount = playerStats.equipment?.mount || null;
             const stamReq = Math.max(1, 10 - (mount?.stamDiscount || 0)); 
@@ -31,6 +30,7 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
             if (currentHealth <= 0) throw "Anda sudah mati! Pulihkan HP Anda di Apotek sebelum bertarung.";
             if (currentStam < stamReq) throw `Stamina tidak cukup! Butuh ${stamReq} Stamina (Efek Mount).`;
 
+            // playerStats.patk & def sudah dikalkulasikan dengan Buff Guild dari game.js
             const playerDmg = Math.max(1, playerStats.patk - monster.def);
             const monsterDmg = Math.max(1, monster.atk - playerStats.def);
             
@@ -52,7 +52,6 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                 let maxExp = newLevel * 100;
                 let inv = data.inventory || {};
                 
-                // --- PENGHITUNGAN PROGRESS MISI HARIAN (SOLO) ---
                 let newQuests = getUpdatedQuests(data, 'daily', monsterKey, 1);
 
                 logMessage = `⚔️ MENANG! Membunuh ${monster.name}. Kehilangan ${hpLost} HP. Mendapat ${monster.rewardExp} EXP & ${rewardGoldAkhir} Gold.`;
@@ -70,15 +69,15 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                     
                     ts.update(userRef, {
                         level: newLevel, exp: newExp, gold: newGold, inventory: inv,
-                        currentHp: data.maxHp || 1000, currentStamina: maxStam,
+                        currentHp: playerStats.maxHp, currentStamina: maxStam,
                         statPoints: (data.statPoints || 0) + 5,
-                        quests: newQuests // Update Misi
+                        quests: newQuests 
                     });
                 } else {
                     ts.update(userRef, {
                         exp: newExp, gold: newGold, inventory: inv,
                         currentHp: newHp, currentStamina: Math.max(0, currentStam - stamReq),
-                        quests: newQuests // Update Misi
+                        quests: newQuests 
                     });
                 }
                 alert(logMessage);
