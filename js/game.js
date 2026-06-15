@@ -1,6 +1,6 @@
 /* ===================================================
    PUSAT KENDALI UTAMA (UI CONTROLLER)
-   Versi Code: 1.9.1 (Strict Proportional UI & Regen)
+   Versi Code: 1.9.2 (Full Source Code Final)
    =================================================== */
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -14,7 +14,7 @@ import { attackMonster } from './modules/battle.js';
 import { buyEquipment } from './modules/shop.js';
 import { listenToChat, sendChat } from './modules/chat.js';
 import { buyPotion } from './modules/apothecary.js';
-import { listenToMailbox } from './modules/mailbox.js'; 
+import { listenToMailbox, claimMailReward } from './modules/mailbox.js'; 
 import { buyMallItem } from './modules/mall.js'; 
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
 import { listenToAuction, listAuctionItem, buyAuctionItem } from './modules/auction.js';
@@ -26,6 +26,7 @@ let playerUsername = "Hero Anonim";
 let currentPlayerStats = {}; 
 let staminaRegenInterval = null;
 
+// FUNGSI UTILITIES TAMPILAN
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
     document.getElementById(screenId).style.display = 'block';
@@ -35,7 +36,7 @@ function escapeHTML(str) {
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : "";
 }
 
-// FUNGSI REGENERASI STAMINA OTOMATIS (1 STAMINA / MENIT)
+// FUNGSI REGENERASI STAMINA OTOMATIS
 function startStaminaRegen() {
     if (staminaRegenInterval) clearInterval(staminaRegenInterval);
     
@@ -80,6 +81,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+// Pendaftaran Karakter Baru
 document.getElementById('class-warrior')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Warrior', () => showScreen('screen-game')));
 document.getElementById('class-mage')?.addEventListener('click', () => selectCharacterClass(db, currentUserUid, 'Mage', () => showScreen('screen-game')));
 
@@ -189,8 +191,31 @@ function startLiveGameSync() {
         if (mailDiv) { 
             mailDiv.innerHTML = mails.length === 0 ? "Tidak ada surat." : "";
             mails.forEach(mail => { 
-                mailDiv.innerHTML += `<div style="border-bottom:1px solid #333; padding:4px 0;">
-                    <strong style="color:#ffcc00;">[Admin]</strong> ${escapeHTML(mail.title)}
+                let attachmentHtml = "";
+                
+                // Cek apakah ada hadiah dan belum diklaim
+                if (mail.attachments && !mail.isClaimed) {
+                    let attachText = [];
+                    if (mail.attachments.gold) attachText.push(`${mail.attachments.gold} Gold`);
+                    if (mail.attachments.coin) attachText.push(`${mail.attachments.coin} COIN`);
+                    if (mail.attachments.item) attachText.push(`${mail.attachments.item.qty}x ${mail.attachments.item.name}`);
+
+                    if (attachText.length > 0) {
+                        attachmentHtml = `
+                        <div style="margin-top: 5px; background: #1a1a24; padding: 4px; border-radius: 4px;">
+                            <span style="font-size: 10px; color: #a8b2b8;">🎁 Isi: ${attachText.join(', ')}</span>
+                            <button onclick="window.claimReward('${mail.id}')" style="padding: 2px 8px; font-size: 10px; background: #28a745; float: right; margin-top: -2px;">Klaim</button>
+                            <div style="clear:both;"></div>
+                        </div>`;
+                    }
+                } else if (mail.isClaimed) {
+                    attachmentHtml = `<div style="margin-top: 4px; font-size: 10px; color: #555;">(Hadiah sudah diklaim)</div>`;
+                }
+
+                mailDiv.innerHTML += `
+                <div style="border-bottom:1px solid #333; padding:8px 0;">
+                    <strong style="color:#ffcc00; font-size: 12px;">[Admin]</strong> <span style="font-size: 12px;">${escapeHTML(mail.title)}</span>
+                    ${attachmentHtml}
                 </div>`; 
             });
         }
@@ -213,7 +238,7 @@ function startLiveGameSync() {
 }
 
 // -------------------------------------------
-// 3. WINDOW EVENT ROUTING (INTERAKSI KLIK TAS)
+// 3. WINDOW EVENT ROUTING (INTERAKSI KLIK UI)
 // -------------------------------------------
 window.handleInventoryClick = function(itemName) {
     if (inventoryMode === "EQUIP") {
@@ -237,6 +262,7 @@ window.handleInventoryClick = function(itemName) {
 
 window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, itemName); };
 window.buyFromAuction = function(id, name, price, sellerId) { if (confirm(`Beli ${name} seharga ${price} Gold?`)) buyAuctionItem(db, currentUserUid, id, name, price, sellerId); };
+window.claimReward = function(mailId) { claimMailReward(db, currentUserUid, mailId); };
 
 // -------------------------------------------
 // 4. BINDING HANDLER BUTTONS EVENT LISTENERS
