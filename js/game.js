@@ -101,7 +101,6 @@ function startLiveGameSync() {
             document.getElementById('eq-armor').innerText = eq.armor ? `${eq.armor.name}${eq.armor.refine ? ` (+${eq.armor.refine})` : ""}` : "Kosong";
             document.getElementById('eq-acc').innerText = eq.accessory ? `${eq.accessory.name}${eq.accessory.refine ? ` (+${eq.accessory.refine})` : ""}` : "Kosong";
             
-            // RENDERING MOUNT BARU
             document.getElementById('eq-mount').innerText = eq.mount ? `${eq.mount.name}` : "Jalan Kaki";
 
             let wBonus = 1 + (eq.weapon?.refine || 0) * 0.15; 
@@ -294,7 +293,6 @@ document.getElementById('btn-buy-ring')?.addEventListener('click', () => buyEqui
 document.getElementById('btn-buy-hp')?.addEventListener('click', () => buyPotion(db, currentUserUid, 'HP'));
 document.getElementById('btn-buy-mp')?.addEventListener('click', () => buyPotion(db, currentUserUid, 'MP'));
 
-// PEMBELIAN MOUNT
 document.getElementById('btn-buy-horse')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Kuda Coklat'));
 document.getElementById('btn-buy-bear')?.addEventListener('click', () => buyEquipment(db, currentUserUid, 'Beruang Kutub'));
 document.getElementById('btn-mall-dragon')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Naga Terbang', 200));
@@ -302,8 +300,12 @@ document.getElementById('btn-mall-dragon')?.addEventListener('click', () => buyM
 document.getElementById('btn-bank-deposit-gold')?.addEventListener('click', () => { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { depositGold(db, currentUserUid, val); el.value = ""; } });
 document.getElementById('btn-bank-withdraw-gold')?.addEventListener('click', () => { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { withdrawGold(db, currentUserUid, val); el.value = ""; } });
 
+// MENGEMBALIKAN EVENT LISTENER UNTUK SEMUA STONE ITEM MALL
 document.getElementById('btn-mall-mirage')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Mirage Stone', 5));
+document.getElementById('btn-mall-heaven')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Heaven Stone', 15));
+document.getElementById('btn-mall-underworld')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Underworld Stone', 15));
 document.getElementById('btn-mall-universal')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Universal Stone', 50));
+
 document.getElementById('btn-mall-name')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ganti Nama', 50));
 document.getElementById('btn-mall-job')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ubah Job', 100));
 document.getElementById('btn-mall-stamina')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Ramuan Stamina', 10));
