@@ -1,7 +1,4 @@
-/* ===================================================
-   MODUL PARTY DUNGEON (FUBEN)
-   =================================================== */
-import { collection, doc, runTransaction, query, onSnapshot, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, doc, runTransaction, query, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { FB_BOSSES } from '../data/monsters.js';
 
 export function listenToParties(db, callbackRender) {
@@ -18,7 +15,12 @@ export async function createOrJoinParty(db, fbKey, playerStats) {
     const boss = FB_BOSSES[fbKey];
     if (!boss) return alert("Dungeon tidak valid!");
     if (playerStats.level < boss.levelReq) return alert(`Level Anda belum cukup! Butuh Level ${boss.levelReq}.`);
-    if (playerStats.currentStamina < 20) return alert("Butuh minimal 20 Stamina untuk masuk FB!");
+    
+    // Cek Tiket Masuk Mount
+    const mount = playerStats.equipment?.mount || null;
+    const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
+    
+    if (playerStats.currentStamina < stamReq) return alert(`Butuh minimal ${stamReq} Stamina (Efek Mount) untuk masuk FB!`);
 
     const partyRef = doc(collection(db, "parties"));
     const activePartiesQuery = query(collection(db, "parties"));
@@ -28,31 +30,18 @@ export async function createOrJoinParty(db, fbKey, playerStats) {
             const partiesSnap = await ts.get(activePartiesQuery);
             let joined = false;
 
-            // Cari Party yang sedang menunggu di FB yang sama
             for (let docSnap of partiesSnap.docs) {
                 let pData = docSnap.data();
                 if (pData.fbKey === fbKey && pData.members.length < 4 && pData.status === 'waiting') {
-                    // Cek apakah pemain sudah ada di dalam party ini
                     if (pData.members.find(m => m.uid === playerStats.uid)) throw "Anda sudah berada di dalam Party ini!";
-                    
                     let newMembers = [...pData.members, playerStats];
                     ts.update(docSnap.ref, { members: newMembers });
-                    joined = true;
-                    break;
+                    joined = true; break;
                 }
             }
 
-            // Jika tidak ada party yang tersedia, buat Party baru (Menjadi Leader)
             if (!joined) {
-                ts.set(partyRef, {
-                    fbKey: fbKey,
-                    fbName: boss.name,
-                    leaderId: playerStats.uid,
-                    leaderName: playerStats.username,
-                    members: [playerStats],
-                    status: 'waiting',
-                    timestamp: serverTimestamp()
-                });
+                ts.set(partyRef, { fbKey: fbKey, fbName: boss.name, leaderId: playerStats.uid, leaderName: playerStats.username, members: [playerStats], status: 'waiting', timestamp: serverTimestamp() });
             }
         });
         alert("🏕️ Berhasil masuk ke Ruang Tunggu Party!");
@@ -69,17 +58,12 @@ export async function leaveParty(db, partyId, uid) {
             const newMembers = data.members.filter(m => m.uid !== uid);
             
             if (newMembers.length === 0) { ts.delete(partyRef); } 
-            else if (data.leaderId === uid) {
-                // Pindah kepemimpinan ke anggota berikutnya
-                ts.update(partyRef, { members: newMembers, leaderId: newMembers[0].uid, leaderName: newMembers[0].username });
-            } else {
-                ts.update(partyRef, { members: newMembers });
-            }
+            else if (data.leaderId === uid) { ts.update(partyRef, { members: newMembers, leaderId: newMembers[0].uid, leaderName: newMembers[0].username }); } 
+            else { ts.update(partyRef, { members: newMembers }); }
         });
     } catch (err) { console.error(err); }
 }
 
-// LOGIKA PERTARUNGAN GABUNGAN (PARTY BATTLE)
 export async function startFbBattle(db, leaderUid, partyId) {
     const partyRef = doc(db, "parties", partyId);
 
@@ -89,22 +73,22 @@ export async function startFbBattle(db, leaderUid, partyId) {
             if (!partySnap.exists()) throw "Party sudah tidak ada!";
             const party = partySnap.data();
 
-            if (party.leaderId !== leaderUid) throw "Hanya Ketua (Leader) yang bisa memulai FB!";
+            if (party.leaderId !== leaderUid) throw "Hanya Ketua yang bisa memulai FB!";
             if (party.members.length < 2) throw "Minimal butuh 2 orang untuk memulai Party FB!";
 
             const boss = FB_BOSSES[party.fbKey];
-            
-            // Ambil data terbaru semua anggota langsung dari database (bukan data cache di party)
             const memberRefs = party.members.map(m => doc(db, "users", m.uid));
             const memberSnaps = await Promise.all(memberRefs.map(ref => ts.get(ref)));
 
             let totalPartyAtk = 0;
             let log = `⚔️ BATTLE LOG: Melawan ${boss.name}\n\n`;
 
-            // Hitung Total Damage (DPS Party)
             memberSnaps.forEach(snap => {
                 const md = snap.data();
-                if (md.currentHp > 0 && md.currentStamina >= 20) {
+                const mount = md.equipment?.mount || null;
+                const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
+
+                if (md.currentHp > 0 && md.currentStamina >= stamReq) {
                     const wepBonus = 1 + (md.equipment?.weapon?.refine || 0) * 0.15;
                     const pAtk = 50 + (md.str * 10) + Math.floor((md.equipment?.weapon?.patk || 0) * wepBonus);
                     const mAtk = 50 + (md.int * 10) + Math.floor((md.equipment?.weapon?.matk || 0) * wepBonus);
@@ -113,38 +97,38 @@ export async function startFbBattle(db, leaderUid, partyId) {
             });
 
             if (totalPartyAtk <= 0) throw "Semua anggota kekurangan HP/Stamina! Pertarungan dibatalkan.";
-
             const turnsToKill = Math.ceil(boss.hp / totalPartyAtk);
             log += `[!] Party Total DPS: ${totalPartyAtk} | Boss HP: ${boss.hp} | Dibunuh dalam ${turnsToKill} Putaran.\n\n`;
 
             let survivors = 0;
 
-            // Hitung AoE Damage yang diterima setiap anggota & Eksekusi Hadiah
             memberSnaps.forEach(snap => {
                 const md = snap.data();
                 const mRef = snap.ref;
                 
-                if (md.currentHp <= 0 || md.currentStamina < 20) return; // Skip pemain yang mati / stamina kurang
+                const mount = md.equipment?.mount || null;
+                const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
+                const goldMult = 1 + (mount?.goldBonus || 0);
+
+                if (md.currentHp <= 0 || md.currentStamina < stamReq) return;
 
                 const armBonus = 1 + (md.equipment?.armor?.refine || 0) * 0.15;
                 const def = 10 + (md.con * 5) + Math.floor((md.equipment?.armor?.def || 0) * armBonus);
                 
-                // Serangan Boss (AoE) kurangi DEF pemain
                 const dmgPerTurn = Math.max(1, boss.atk - def);
                 const totalDmgTaken = dmgPerTurn * turnsToKill;
                 
                 let newHp = md.currentHp - totalDmgTaken;
-                let newStamina = Math.max(0, md.currentStamina - 20); // Tiket masuk 20 Stamina
+                let newStamina = Math.max(0, md.currentStamina - stamReq);
 
                 if (newHp <= 0) {
-                    // Pemain Mati (Tidak dapat hadiah)
                     ts.update(mRef, { currentHp: 0, currentStamina: newStamina });
                     log += `💀 [${md.username}] TERBUNUH! Menerima ${totalDmgTaken} DMG.\n`;
                 } else {
-                    // Pemain Bertahan (Dapat Hadiah)
                     survivors++;
+                    let rewardGoldAkhir = Math.floor(boss.rewardGold * goldMult);
                     let newExp = (md.exp || 0) + boss.rewardExp;
-                    let newGold = (md.gold || 0) + boss.rewardGold;
+                    let newGold = (md.gold || 0) + rewardGoldAkhir;
                     let inv = md.inventory || {};
                     let dropMsg = "";
 
@@ -153,25 +137,15 @@ export async function startFbBattle(db, leaderUid, partyId) {
                         dropMsg = ` | 🎁 Drop: ${boss.drop.item}`;
                     }
 
-                    ts.update(mRef, {
-                        exp: newExp, gold: newGold, inventory: inv,
-                        currentHp: newHp, currentStamina: newStamina
-                    });
-
-                    log += `🛡️ [${md.username}] BERTAHAN! Sisa HP: ${newHp} | +${boss.rewardExp} EXP${dropMsg}\n`;
+                    ts.update(mRef, { exp: newExp, gold: newGold, inventory: inv, currentHp: newHp, currentStamina: newStamina });
+                    log += `🛡️ [${md.username}] BERTAHAN! Sisa HP: ${newHp} | +${rewardGoldAkhir} Gold${dropMsg}\n`;
                 }
             });
 
-            if (survivors > 0) {
-                log += `\n🎉 FB BERHASIL! ${survivors} orang selamat dari pertarungan.`;
-            } else {
-                log += `\n❌ PARTY WIPE OUT! Seluruh anggota Party terbunuh oleh Boss.`;
-            }
+            if (survivors > 0) { log += `\n🎉 FB BERHASIL! ${survivors} orang selamat.`; } 
+            else { log += `\n❌ PARTY WIPE OUT! Seluruh anggota Party terbunuh oleh Boss.`; }
 
-            // Hapus ruang lobby party setelah selesai
             ts.delete(partyRef);
-            
-            // Simpan log pertarungan ke memori global (Opsional, agar bisa diambil oleh klien jika perlu)
             alert(log); 
         });
     } catch (err) { alert(err); }

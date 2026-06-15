@@ -1,7 +1,3 @@
-/* ===================================================
-   MODUL BATTLE DUNGEON
-   Versi Code: 2.1.0 (Manual Stat System)
-   =================================================== */
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { MONSTER_DB } from '../data/monsters.js';
 
@@ -24,8 +20,13 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
             const maxStam = data.maxStamina !== undefined ? data.maxStamina : 100;
             const currentHealth = data.currentHp !== undefined ? data.currentHp : (data.maxHp || 1000);
 
+            // LOGIKA MOUNT
+            const mount = playerStats.equipment?.mount || null;
+            const stamReq = Math.max(1, 10 - (mount?.stamDiscount || 0)); // Diskon Stamina
+            const goldMult = 1 + (mount?.goldBonus || 0); // Multiplier Gold
+
             if (currentHealth <= 0) throw "Anda sudah mati! Pulihkan HP Anda di Apotek sebelum bertarung.";
-            if (currentStam < 10) throw "Stamina tidak cukup! Butuh 10 Stamina untuk bertarung.";
+            if (currentStam < stamReq) throw `Stamina tidak cukup! Butuh ${stamReq} Stamina (Efek Mount).`;
 
             const playerDmg = Math.max(1, playerStats.patk - monster.def);
             const monsterDmg = Math.max(1, monster.atk - playerStats.def);
@@ -37,16 +38,19 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
             let logMessage = "";
 
             if (newHp <= 0) {
-                ts.update(userRef, { currentHp: 0, currentStamina: Math.max(0, currentStam - 10) });
+                ts.update(userRef, { currentHp: 0, currentStamina: Math.max(0, currentStam - stamReq) });
                 throw `💀 KEMATIAN! Anda terbunuh oleh ${monster.name} setelah bertarung sengit. Silakan isi HP.`;
             } else {
                 let newExp = (data.exp || 0) + monster.rewardExp;
-                let newGold = (data.gold || 0) + monster.rewardGold;
+                let rewardGoldAkhir = Math.floor(monster.rewardGold * goldMult);
+                let newGold = (data.gold || 0) + rewardGoldAkhir;
+                
                 let newLevel = data.level || 1;
                 let maxExp = newLevel * 100;
                 let inv = data.inventory || {};
 
-                logMessage = `⚔️ MENANG! Membunuh ${monster.name}. Kehilangan ${hpLost} HP. Mendapat ${monster.rewardExp} EXP & ${monster.rewardGold} Gold.`;
+                logMessage = `⚔️ MENANG! Membunuh ${monster.name}. Kehilangan ${hpLost} HP. Mendapat ${monster.rewardExp} EXP & ${rewardGoldAkhir} Gold.`;
+                if (mount) logMessage += `\n🐴 [Efek Mount] Stamina hemat ${mount.stamDiscount}, Bonus Gold +${(mount.goldBonus*100)}%!`;
 
                 if (Math.random() <= monster.drop.chance) {
                     inv[monster.drop.item] = (inv[monster.drop.item] || 0) + 1;
@@ -58,26 +62,19 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                     newExp = newExp - maxExp;
                     logMessage += `\n🌟 LEVEL UP! Anda sekarang Level ${newLevel}! Mendapat 5 Poin Stat.`;
                     
-                    // PERBAIKAN: Memberikan 5 Poin Stat (Menghentikan penambahan otomatis)
                     ts.update(userRef, {
-                        level: newLevel, 
-                        exp: newExp, 
-                        gold: newGold, 
-                        inventory: inv,
-                        currentHp: data.maxHp || 1000, 
-                        currentStamina: maxStam,
+                        level: newLevel, exp: newExp, gold: newGold, inventory: inv,
+                        currentHp: data.maxHp || 1000, currentStamina: maxStam,
                         statPoints: (data.statPoints || 0) + 5
                     });
                 } else {
                     ts.update(userRef, {
                         exp: newExp, gold: newGold, inventory: inv,
-                        currentHp: newHp, currentStamina: Math.max(0, currentStam - 10)
+                        currentHp: newHp, currentStamina: Math.max(0, currentStam - stamReq)
                     });
                 }
                 alert(logMessage);
             }
         });
-    } catch (err) {
-        alert(err);
-    }
+    } catch (err) { alert(err); }
 }

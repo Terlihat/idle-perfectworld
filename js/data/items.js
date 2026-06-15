@@ -1,8 +1,3 @@
-/* ===================================================
-   DATA KONSTAN GAME
-   Versi Code: 1.6.0
-   =================================================== */
-
 export const ITEM_DB = {
     "Pedang Besi": { type: "weapon", patk: 30, sellValue: 1000 },
     "Tongkat Sihir": { type: "weapon", matk: 30, sellValue: 1000 },
@@ -16,6 +11,11 @@ export const ITEM_DB = {
     "Ramuan MP": { type: "consumable", sellValue: 250 },
     "Batu Dungeon": { type: "loot", sellValue: 300 },
     
+    // MOUNT / TUNGGANGAN BARU
+    "Kuda Coklat": { type: "mount", stamDiscount: 2, goldBonus: 0.10, sellValue: 2500 },
+    "Beruang Kutub": { type: "mount", stamDiscount: 4, goldBonus: 0.25, sellValue: 12500 },
+    "Naga Terbang": { type: "mount", stamDiscount: 8, goldBonus: 0.50, sellValue: 0 }, // Premium
+    
     // ITEM MALL & SPECIAL
     "Mirage Stone": { type: "catalyst", sellValue: 0 },
     "Heaven Stone": { type: "catalyst", sellValue: 0 },
@@ -23,7 +23,7 @@ export const ITEM_DB = {
     "Universal Stone": { type: "catalyst", sellValue: 0 },
     "Tiket Ubah Job": { type: "special", sellValue: 0 },
     "Tiket Ganti Nama": { type: "special", sellValue: 0 },
-    "Ramuan Stamina": { type: "special", sellValue: 0 } // <-- BARU: Memulihkan 50 Stamina
+    "Ramuan Stamina": { type: "special", sellValue: 0 } 
 };
 
 export const REFINE_RATES = {

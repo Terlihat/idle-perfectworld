@@ -39,7 +39,6 @@
         </div>
 
         <div id="screen-game" class="screen">
-            
             <div class="game-header">
                 <h1 style="margin: 0; font-size: 20px;"> Giga RPG Web</h1>
                 <div style="display: flex; gap: 15px; font-weight: bold; font-size: 14px; align-items: center;">
@@ -57,7 +56,7 @@
                         <div style="margin-bottom: 10px; font-size: 14px; line-height: 1.4;">
                             <strong id="player-name" style="color: #ffca28; font-size: 18px;">...</strong><br>
                             <span id="player-class" style="color: #e040fb;">...</span> | Level <strong id="player-level" style="color:#00d2ff;">1</strong><br>
-                            <span id="btn-copy-uid" style="font-size: 11px; color: #8b949e; cursor: pointer; background: #121216; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; border: 1px solid #3f3f52;" title="Klik untuk menyalin UID">
+                            <span id="btn-copy-uid" style="font-size: 11px; color: #8b949e; cursor: pointer; background: #121216; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; border: 1px solid #3f3f52;">
                                 UID: <span id="player-uid" style="user-select: all; color: #58a6ff; font-family: monospace;">-</span> 📋
                             </span>
                             <div style="margin-top: 5px; font-size: 12px;">Poin Stat: <strong id="player-stat-points" style="color:#28a745; font-size: 14px;">0</strong></div>
@@ -72,6 +71,7 @@
                             <div class="equip-item"><span>🗡️ Senjata:</span> <span id="eq-weapon">Kosong</span></div>
                             <div class="equip-item"><span>👕 Armor:</span> <span id="eq-armor">Kosong</span></div>
                             <div class="equip-item"><span>💍 Aksesoris:</span> <span id="eq-acc">Kosong</span></div>
+                            <div class="equip-item"><span>🐴 Mount:</span> <span id="eq-mount" style="color: #ffca28; font-weight: bold;">Jalan Kaki</span></div>
                         </div>
                         
                         <div class="stat-grid" style="margin-top: 10px;">
@@ -79,9 +79,7 @@
                             <div>CON: <span class="stat-val"><span id="stat-con">0</span> <button class="btn-add-stat" onclick="window.addStat('con')" style="display:none; padding:1px 5px; font-size:9px; background:#28a745; margin-left:3px;">+</button></span></div>
                             <div>DEX: <span class="stat-val"><span id="stat-dex">0</span> <button class="btn-add-stat" onclick="window.addStat('dex')" style="display:none; padding:1px 5px; font-size:9px; background:#28a745; margin-left:3px;">+</button></span></div>
                             <div>INT: <span class="stat-val"><span id="stat-int">0</span> <button class="btn-add-stat" onclick="window.addStat('int')" style="display:none; padding:1px 5px; font-size:9px; background:#28a745; margin-left:3px;">+</button></span></div>
-                            
                             <div style="grid-column: span 2; border-top: 1px solid #333; margin-top:5px; padding-top:5px;"></div>
-                            
                             <div>P.ATK: <span id="stat-patk" class="stat-val" style="color:#ff4a4a;">0</span></div>
                             <div>M.ATK: <span id="stat-matk" class="stat-val" style="color:#4ae3ff;">0</span></div>
                             <div>DEF: <span id="stat-def" class="stat-val" style="color:#a8b2b8;">0</span></div>
@@ -106,7 +104,6 @@
                 <div>
                     <div class="panel" style="border: 1px solid #dc3545; background: #241416;">
                         <h2 style="color: #ff4a4a;">🦇 Solo Dungeon</h2>
-                        <p style="font-size: 11px; color:#aaa; margin-top:0;">*Menyerang monster membutuhkan 10 Stamina.</p>
                         <select id="dungeon-select" style="width: 100%; padding: 8px; margin-bottom: 10px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
                             <option value="slime">💧 Slime Hijau (Lv. 1)</option>
                             <option value="goblin">👺 Goblin Perampok (Lv. 5)</option>
@@ -118,8 +115,6 @@
 
                     <div class="panel" style="border: 1px solid #6f42c1; background: #1c152a;">
                         <h2 style="color: #d8b4fe;">🏕️ Fuben Party (FB)</h2>
-                        <p style="font-size: 11px; color:#aaa; margin-top:0;">*Minimal 2 Orang. Butuh 20 Stamina.</p>
-                        
                         <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                             <select id="fb-select" style="flex: 1; padding: 6px; background: #121216; color: #d8b4fe; border: 1px solid #3f3f52;">
                                 <option value="fb19">🔥 FB19 (Roiling Terror)</option>
@@ -131,24 +126,19 @@
                                 <option value="fb79">🏴‍☠️ FB79 (Linus The Black)</option>
                                 <option value="fb89">👼 FB89 (Brahma/Behemoth)</option>
                                 <option value="fb99">👑 FB99 (Emperor of Heaven)</option>
-                                <option value="fb100">🌌 FB100 (Goddess of Perfect World)</option>
+                                <option value="fb100">🌌 FB100 (Goddess of PW)</option>
                             </select>
                             <button id="btn-create-party" style="background: #6f42c1;">Buat / Gabung</button>
                         </div>
-                        
                         <strong style="font-size: 11px; color:#d8b4fe;">Daftar Party Menunggu:</strong>
-                        <div id="party-list" style="max-height: 120px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 11px; border: 1px solid #3f3f52; margin-top: 5px;">
-                            Tidak ada party aktif.
-                        </div>
+                        <div id="party-list" style="max-height: 120px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 11px; border: 1px solid #3f3f52; margin-top: 5px;"></div>
                     </div>
 
                     <div class="panel" style="border: 1px solid #00d2ff; background: #16222f;">
                         <h2>🔥 Pandai Besi (+10)</h2>
                         <select id="refine-catalyst" style="width: 100%; padding: 6px; margin-bottom: 8px; background: #121216; color: #ffcc00; border: 1px solid #3f3f52;">
-                            <option value="Mirage Stone">Mirage Stone (Gagal = +0)</option>
-                            <option value="Heaven Stone">Heaven Stone (Peluang++ | Gagal = +0)</option>
-                            <option value="Underworld Stone">Underworld Stone (Peluang+ | Turun 1)</option>
-                            <option value="Universal Stone">Universal Stone (Aman | Tidak Turun)</option>
+                            <option value="Mirage Stone">Mirage Stone</option>
+                            <option value="Universal Stone">Universal Stone</option>
                         </select>
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <button id="btn-refine-weapon" style="background:#28a745; text-align: left;">🗡️ Tempa Senjata</button>
@@ -159,9 +149,7 @@
 
                     <div class="panel">
                         <h2>⚖️ Pasar Lelang</h2>
-                        <div id="auction-list" style="max-height: 150px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 12px; border: 1px solid #3f3f52;">
-                            Memuat pasar lelang...
-                        </div>
+                        <div id="auction-list" style="max-height: 150px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 12px; border: 1px solid #3f3f52;"></div>
                     </div>
                 </div>
 
@@ -170,13 +158,11 @@
                         <h2 class="gold-title">💎 Item Mall Premium</h2>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
                             <button id="btn-mall-mirage" style="background:#555;">Mirage Stone<br><small>5 COIN</small></button>
-                            <button id="btn-mall-heaven" style="background:#b8860b;">Heaven Stone<br><small>15 COIN</small></button>
-                            <button id="btn-mall-underworld" style="background:#6f42c1;">Underworld Stone<br><small>15 COIN</small></button>
                             <button id="btn-mall-universal" style="background:#dc3545;">Universal Stone<br><small>50 COIN</small></button>
                             <button id="btn-mall-name" style="background:#007bff;">Tiket Ganti Nama<br><small>50 COIN</small></button>
                             <button id="btn-mall-job" style="background:#28a745;">Tiket Ubah Job<br><small>100 COIN</small></button>
-                            <button id="btn-mall-stamina" style="background:#fd7e14; grid-column: span 2;">⚡ Ramuan Stamina (+50 Stamina)<br><small>10 COIN</small></button>
-                        </div>
+                            <button id="btn-mall-stamina" style="background:#fd7e14;">⚡ Ramuan Stamina<br><small>10 COIN</small></button>
+                            <button id="btn-mall-dragon" style="background:#8a2be2;">🐉 Naga Terbang<br><small>200 COIN</small></button> </div>
                     </div>
 
                     <div class="panel">
@@ -191,22 +177,24 @@
                     </div>
 
                     <div class="panel">
-                        <h2>⚒️ Toko Perlengkapan</h2>
+                        <h2>⚒️ Toko & Mount</h2>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
                             <button id="btn-buy-sword" style="background:#495057;">Pedang Besi<br><small>2k G</small></button>
                             <button id="btn-buy-staff" style="background:#495057;">Tongkat Sihir<br><small>2k G</small></button>
                             <button id="btn-buy-armor" style="background:#495057;">Zirah Kulit<br><small>2k G</small></button>
                             <button id="btn-buy-ring" style="background:#495057;">Cincin Akurat<br><small>3k G</small></button>
-                            <button id="btn-buy-hp" style="background:#dc3545;">Ramuan HP<br><small>500 G</small></button>
-                            <button id="btn-buy-mp" style="background:#007bff;">Ramuan MP<br><small>500 G</small></button>
+                            
+                            <button id="btn-buy-horse" style="background:#a67c00;">🐴 Kuda Coklat<br><small>5k G</small></button>
+                            <button id="btn-buy-bear" style="background:#fff; color:#000;">🐻 Beruang Kutub<br><small>25k G</small></button>
+                            
+                            <button id="btn-buy-hp" style="background:#dc3545; grid-column: span 1;">Ramuan HP<br><small>500 G</small></button>
+                            <button id="btn-buy-mp" style="background:#007bff; grid-column: span 1;">Ramuan MP<br><small>500 G</small></button>
                         </div>
                     </div>
 
                     <div class="panel" style="border: 1px solid #ffcc00;">
                         <h2 style="color: #ffcc00;">📬 Kotak Surat</h2>
-                        <div id="mailbox-list" style="max-height: 120px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 12px; border: 1px solid #3f3f52;">
-                            Memuat surat...
-                        </div>
+                        <div id="mailbox-list" style="max-height: 120px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 12px; border: 1px solid #3f3f52;"></div>
                     </div>
 
                     <div class="panel">

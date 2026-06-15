@@ -10,7 +10,8 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
         await runTransaction(db, async (ts) => {
             const data = (await ts.get(userRef)).data();
             let inv = data.inventory || {};
-            let eq = data.equipment || { weapon: null, armor: null, accessory: null };
+            // Ditambahkan dukungan slot mount
+            let eq = data.equipment || { weapon: null, armor: null, accessory: null, mount: null };
             
             if (!inv[itemName] || inv[itemName] <= 0) throw "Item tidak ditemukan!";
             
@@ -20,57 +21,61 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
                 if (inv[itemName] === 0) delete inv[itemName];
                 let updates = { inventory: inv };
 
-                if (itemName === "Tiket Ganti Nama") { 
-                    updates.username = specialInput; 
-                } else if (itemName === "Tiket Ubah Job") {
+                if (itemName === "Tiket Ganti Nama") { updates.username = specialInput; } 
+                else if (itemName === "Tiket Ubah Job") {
                     updates.characterClass = specialInput;
                     if (specialInput === 'Warrior') { updates.str = 15; updates.con = 20; updates.dex = 5; updates.int = 2; }
                     else { updates.str = 2; updates.con = 8; updates.dex = 10; updates.int = 25; }
                 } else if (itemName === "Ramuan Stamina") {
-                    // BARU: Logika Pemulihan Stamina
                     const maxStam = data.maxStamina || 100;
                     const curStam = data.currentStamina || 0;
-                    if (curStam >= maxStam) throw "Stamina Anda sudah penuh!";
-                    updates.currentStamina = Math.min(maxStam, curStam + 50); // Memulihkan 50 Stamina
+                    if (curStam >= maxStam) throw "Stamina penuh!";
+                    updates.currentStamina = Math.min(maxStam, curStam + 50);
                 }
-
-                ts.update(userRef, updates);
-                return;
+                ts.update(userRef, updates); return;
             }
 
-            // Logika Pemasangan Equipment
+            // Logika Consumable (Potions)
+            if (itemData.type === "consumable") {
+                inv[itemName] -= 1;
+                if (inv[itemName] === 0) delete inv[itemName];
+                let updates = { inventory: inv };
+                if (itemName === "Ramuan HP") updates.currentHp = Math.min(data.maxHp || 1000, (data.currentHp || 0) + 500);
+                if (itemName === "Ramuan MP") updates.currentMp = Math.min(data.maxMp || 200, (data.currentMp || 0) + 200);
+                ts.update(userRef, updates); return;
+            }
+
+            // Logika Pemasangan Equipment & Mount
             const slotType = itemData.type;
-            if (eq[slotType] && eq[slotType].name) {
-                inv[eq[slotType].name] = (inv[eq[slotType].name] || 0) + 1; 
-            }
+            if (eq[slotType] && eq[slotType].name) { inv[eq[slotType].name] = (inv[eq[slotType].name] || 0) + 1; }
+            
             inv[itemName] -= 1;
             if (inv[itemName] === 0) delete inv[itemName];
             
             eq[slotType] = { name: itemName, refine: 0, ...itemData };
             ts.update(userRef, { inventory: inv, equipment: eq });
         });
-        alert(itemData.type === "special" ? `✨ Penggunaan ${itemName} Berhasil!` : `🛡️ Berhasil memasang ${itemName}`);
+        alert(`🛡️ Berhasil memakai ${itemName}`);
     } catch (err) { alert(err); }
 }
 
 export async function sellItemToNPC(db, uid, itemName) {
-    if (!uid) return;
-    const itemData = ITEM_DB[itemName];
-    const sellPrice = itemData ? itemData.sellValue : 20;
-    if (sellPrice <= 0) return alert("Item ini terikat dan tidak bisa dijual.");
-
-    const confirmSell = confirm(`Jual ke NPC 1x [${itemName}] seharga ${sellPrice} GOLD?`);
-    if (!confirmSell) return;
-
+    if (!uid || !itemName) return;
     const userRef = doc(db, "users", uid);
+    const itemData = ITEM_DB[itemName] || { sellValue: 10 };
+    if (itemData.sellValue === 0) return alert("Item ini tidak bisa dijual!");
+
     try {
         await runTransaction(db, async (ts) => {
             const data = (await ts.get(userRef)).data();
             let inv = data.inventory || {};
-            if (!inv[itemName] || inv[itemName] < 1) throw "Item tidak ditemukan!";
+            if (!inv[itemName] || inv[itemName] <= 0) throw "Item tidak ditemukan!";
+
             inv[itemName] -= 1;
             if (inv[itemName] === 0) delete inv[itemName];
-            ts.update(userRef, { inventory: inv, gold: (data.gold || 0) + sellPrice });
+            
+            let currentGold = data.gold || 0;
+            ts.update(userRef, { inventory: inv, gold: currentGold + itemData.sellValue });
         });
     } catch (err) { alert(err); }
 }
