@@ -1,9 +1,9 @@
 /* ===================================================
-   MODUL PARTY DUNGEON (Dengan Tracker Bounty)
+   MODUL PARTY DUNGEON (Dengan Tracker Bounty & Fix Error Path)
    =================================================== */
-import { collection, doc, runTransaction, query, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, doc, runTransaction, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { FB_BOSSES } from '../data/monsters.js';
-import { getUpdatedQuests } from './quest.js'; // IMPORT LOGIKA QUEST
+import { getUpdatedQuests } from './quest.js'; 
 
 export function listenToParties(db, callbackRender) {
     const q = query(collection(db, "parties"));
@@ -24,29 +24,47 @@ export async function createOrJoinParty(db, fbKey, playerStats) {
     const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
     if (playerStats.currentStamina < stamReq) return alert(`Butuh minimal ${stamReq} Stamina (Efek Mount) untuk masuk FB!`);
 
-    const partyRef = doc(collection(db, "parties"));
-    const activePartiesQuery = query(collection(db, "parties"));
+    const partiesRef = collection(db, "parties");
+    const q = query(partiesRef, where("fbKey", "==", fbKey), where("status", "==", "waiting"));
 
     try {
-        await runTransaction(db, async (ts) => {
-            const partiesSnap = await ts.get(activePartiesQuery);
-            let joined = false;
-
-            for (let docSnap of partiesSnap.docs) {
-                let pData = docSnap.data();
-                if (pData.fbKey === fbKey && pData.members.length < 4 && pData.status === 'waiting') {
-                    if (pData.members.find(m => m.uid === playerStats.uid)) throw "Anda sudah berada di dalam Party ini!";
-                    let newMembers = [...pData.members, playerStats];
-                    ts.update(docSnap.ref, { members: newMembers });
-                    joined = true; break;
-                }
+        // PERBAIKAN: Lakukan Query DI LUAR transaksi
+        const snap = await getDocs(q);
+        let targetPartyId = null;
+        
+        for (let d of snap.docs) {
+            if (d.data().members.length < 4) {
+                targetPartyId = d.id;
+                break;
             }
+        }
 
-            if (!joined) {
-                ts.set(partyRef, { fbKey: fbKey, fbName: boss.name, leaderId: playerStats.uid, leaderName: playerStats.username, members: [playerStats], status: 'waiting', timestamp: serverTimestamp() });
-            }
-        });
-        alert("🏕️ Berhasil masuk ke Ruang Tunggu Party!");
+        if (targetPartyId) {
+            // Gabung ke Party yang sudah ada via Transaksi Data
+            const pRef = doc(db, "parties", targetPartyId);
+            await runTransaction(db, async (ts) => {
+                const pSnap = await ts.get(pRef);
+                if (!pSnap.exists()) throw "Party sudah dibubarkan.";
+                let pData = pSnap.data();
+                
+                if (pData.members.find(m => m.uid === playerStats.uid)) throw "Anda sudah berada di dalam Party ini!";
+                if (pData.members.length >= 4) throw "Party sudah penuh!";
+                
+                let newMembers = [...pData.members, { uid: playerStats.uid, username: playerStats.username, level: playerStats.level, patk: playerStats.patk, matk: playerStats.matk, def: playerStats.def }];
+                ts.update(pRef, { members: newMembers });
+            });
+            alert("🏕️ Berhasil bergabung ke Party Fuben!");
+        } else {
+            // Buat Party Baru
+            const newPartyRef = doc(partiesRef);
+            await runTransaction(db, async (ts) => {
+                ts.set(newPartyRef, { 
+                    fbKey: fbKey, fbName: boss.name, leaderId: playerStats.uid, leaderName: playerStats.username, status: 'waiting', timestamp: serverTimestamp(),
+                    members: [{ uid: playerStats.uid, username: playerStats.username, level: playerStats.level, patk: playerStats.patk, matk: playerStats.matk, def: playerStats.def }] 
+                });
+            });
+            alert("🏕️ Berhasil membuat Ruang Tunggu Party Baru!");
+        }
     } catch (err) { alert(err); }
 }
 
@@ -68,7 +86,6 @@ export async function leaveParty(db, partyId, uid) {
 
 export async function startFbBattle(db, leaderUid, partyId) {
     const partyRef = doc(db, "parties", partyId);
-
     try {
         await runTransaction(db, async (ts) => {
             const partySnap = await ts.get(partyRef);
@@ -87,14 +104,14 @@ export async function startFbBattle(db, leaderUid, partyId) {
 
             memberSnaps.forEach(snap => {
                 const md = snap.data();
+                const partyData = party.members.find(m => m.uid === snap.id);
                 const mount = md.equipment?.mount || null;
                 const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
 
                 if (md.currentHp > 0 && md.currentStamina >= stamReq) {
-                    const wepBonus = 1 + (md.equipment?.weapon?.refine || 0) * 0.15;
-                    const pAtk = 50 + (md.str * 10) + Math.floor((md.equipment?.weapon?.patk || 0) * wepBonus);
-                    const mAtk = 50 + (md.int * 10) + Math.floor((md.equipment?.weapon?.matk || 0) * wepBonus);
-                    totalPartyAtk += Math.max(1, (pAtk + mAtk) - boss.def);
+                    const effectivePAtk = partyData ? partyData.patk : 50;
+                    const effectiveMAtk = partyData ? partyData.matk : 50;
+                    totalPartyAtk += Math.max(1, (effectivePAtk + effectiveMAtk) - boss.def);
                 }
             });
 
@@ -107,6 +124,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
             memberSnaps.forEach(snap => {
                 const md = snap.data();
                 const mRef = snap.ref;
+                const partyData = party.members.find(m => m.uid === snap.id);
                 
                 const mount = md.equipment?.mount || null;
                 const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
@@ -114,10 +132,8 @@ export async function startFbBattle(db, leaderUid, partyId) {
 
                 if (md.currentHp <= 0 || md.currentStamina < stamReq) return;
 
-                const armBonus = 1 + (md.equipment?.armor?.refine || 0) * 0.15;
-                const def = 10 + (md.con * 5) + Math.floor((md.equipment?.armor?.def || 0) * armBonus);
-                
-                const dmgPerTurn = Math.max(1, boss.atk - def);
+                const effectiveDef = partyData ? partyData.def : 10;
+                const dmgPerTurn = Math.max(1, boss.atk - effectiveDef);
                 const totalDmgTaken = dmgPerTurn * turnsToKill;
                 
                 let newHp = md.currentHp - totalDmgTaken;
@@ -134,7 +150,6 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     let inv = md.inventory || {};
                     let dropMsg = "";
 
-                    // --- PENGHITUNGAN PROGRESS BOUNTY HUNTER (PARTY) ---
                     let newQuests = getUpdatedQuests(md, 'bounty', party.fbKey, 1);
 
                     if (Math.random() <= boss.drop.chance) {
@@ -145,7 +160,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     ts.update(mRef, { 
                         exp: newExp, gold: newGold, inventory: inv, 
                         currentHp: newHp, currentStamina: newStamina,
-                        quests: newQuests // Update Misi
+                        quests: newQuests 
                     });
                     log += `🛡️ [${md.username}] BERTAHAN! Sisa HP: ${newHp} | +${rewardGoldAkhir} Gold${dropMsg}\n`;
                 }

@@ -1,12 +1,12 @@
-/* ===================================================
-   DATABASE MONSTER & ELITE BOSS (FB)
-   =================================================== */
-
 export const MONSTER_DB = {
-    "slime": { name: "💧 Slime Hijau", levelReq: 1, hp: 50, atk: 15, def: 5, rewardExp: 20, rewardGold: 15, drop: { item: "Pedang Besi", chance: 0.10 } },
-    "goblin": { name: "👺 Goblin Perampok", levelReq: 5, hp: 200, atk: 40, def: 15, rewardExp: 80, rewardGold: 50, drop: { item: "Zirah Kulit", chance: 0.10 } },
-    "orc": { name: "👹 Orc Warrior", levelReq: 10, hp: 800, atk: 85, def: 40, rewardExp: 300, rewardGold: 150, drop: { item: "Cincin Akurat", chance: 0.05 } },
-    "dragon": { name: "🐉 Anak Naga", levelReq: 15, hp: 2500, atk: 150, def: 80, rewardExp: 1000, rewardGold: 500, drop: { item: "Pedang Darah (Rare)", chance: 0.02 } }
+    "slime": { name: "💧 Slime Hijau", levelReq: 1, hp: 60, atk: 15, def: 5, rewardExp: 5, rewardGold: 10, drop: { item: "Pedang Besi", chance: 0.05 } },
+    "wolf": { name: "🐺 Serigala Liar", levelReq: 3, hp: 150, atk: 30, def: 10, rewardExp: 10, rewardGold: 25, drop: { item: "Ramuan HP", chance: 0.10 } },
+    "goblin": { name: "👺 Goblin Perampok", levelReq: 5, hp: 300, atk: 50, def: 20, rewardExp: 20, rewardGold: 40, drop: { item: "Zirah Kulit", chance: 0.05 } },
+    "skeleton": { name: "💀 Tengkorak Hidup", levelReq: 8, hp: 550, atk: 80, def: 35, rewardExp: 40, rewardGold: 75, drop: { item: "Tongkat Sihir", chance: 0.05 } },
+    "orc": { name: "👹 Orc Warrior", levelReq: 10, hp: 900, atk: 120, def: 55, rewardExp: 80, rewardGold: 120, drop: { item: "Cincin Akurat", chance: 0.05 } },
+    "golem": { name: "🪨 Golem Batu", levelReq: 12, hp: 1500, atk: 160, def: 100, rewardExp: 120, rewardGold: 200, drop: { item: "Batu Dungeon", chance: 0.20 } },
+    "dragon": { name: "🐉 Anak Naga", levelReq: 15, hp: 2500, atk: 220, def: 120, rewardExp: 250, rewardGold: 350, drop: { item: "Pedang Darah (Rare)", chance: 0.02 } },
+    "demon": { name: "👿 Iblis Kecil", levelReq: 18, hp: 4000, atk: 300, def: 180, rewardExp: 400, rewardGold: 500, drop: { item: "Zirah Naga (Rare)", chance: 0.02 } }
 };
 
 export const FB_BOSSES = {

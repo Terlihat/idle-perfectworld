@@ -10,18 +10,35 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
         await runTransaction(db, async (ts) => {
             const data = (await ts.get(userRef)).data();
             let inv = data.inventory || {};
-            // Ditambahkan dukungan slot mount
             let eq = data.equipment || { weapon: null, armor: null, accessory: null, mount: null };
             
             if (!inv[itemName] || inv[itemName] <= 0) throw "Item tidak ditemukan!";
             
-            // Logika Item Spesial (Mall)
             if (itemData.type === "special") {
                 inv[itemName] -= 1;
                 if (inv[itemName] === 0) delete inv[itemName];
                 let updates = { inventory: inv };
 
-                if (itemName === "Tiket Ganti Nama") { updates.username = specialInput; } 
+                if (itemName === "Tiket Ganti Nama") { 
+                    updates.username = specialInput; 
+                    
+                    // PERBAIKAN: Sinkronisasi Nama Baru ke Database Guild
+                    if (data.guildId) {
+                        const guildRef = doc(db, "guilds", data.guildId);
+                        const gSnap = await ts.get(guildRef);
+                        if (gSnap.exists()) {
+                            const gData = gSnap.data();
+                            let gUpdates = {};
+                            let newMembers = gData.members.map(m => {
+                                if (m.uid === uid) m.name = specialInput;
+                                return m;
+                            });
+                            gUpdates.members = newMembers;
+                            if (gData.leaderId === uid) gUpdates.leaderName = specialInput;
+                            ts.update(guildRef, gUpdates);
+                        }
+                    }
+                } 
                 else if (itemName === "Tiket Ubah Job") {
                     updates.characterClass = specialInput;
                     if (specialInput === 'Warrior') { updates.str = 15; updates.con = 20; updates.dex = 5; updates.int = 2; }
@@ -35,7 +52,6 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
                 ts.update(userRef, updates); return;
             }
 
-            // Logika Consumable (Potions)
             if (itemData.type === "consumable") {
                 inv[itemName] -= 1;
                 if (inv[itemName] === 0) delete inv[itemName];
@@ -45,7 +61,6 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
                 ts.update(userRef, updates); return;
             }
 
-            // Logika Pemasangan Equipment & Mount
             const slotType = itemData.type;
             if (eq[slotType] && eq[slotType].name) { inv[eq[slotType].name] = (inv[eq[slotType].name] || 0) + 1; }
             
