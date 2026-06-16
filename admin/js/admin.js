@@ -1,6 +1,9 @@
-import { db, auth } from '../../js/firebase-config.js'; // Pastikan path ini mengarah dengan benar ke konfigurasi Anda
+import { db, auth } from '../../js/firebase-config.js'; 
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js"; // PERBAIKAN: setDoc diganti menjadi addDoc
+import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+// PERBAIKAN: Import Database Item agar list selalu up-to-date otomatis!
+import { ITEM_DB } from '../../js/data/items.js';
 
 let adminUid = null;
 
@@ -17,10 +20,12 @@ onAuthStateChanged(auth, async (user) => {
             if (docSnap.exists() && docSnap.data().role === 'admin') {
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('admin-content').style.display = 'block';
+                
                 loadServerStats();
+                populateItemDropdown(); // Jalankan fungsi pengisian item otomatis
             } else {
                 alert("Akses Ditolak! Anda bukan Admin.");
-                window.location.href = '../index.html'; // Usir ke halaman game
+                window.location.href = '../index.html'; 
             }
         } catch (err) {
             console.error(err);
@@ -46,7 +51,7 @@ async function loadServerStats() {
         userSnapshot.forEach((doc) => {
             totalPlayers++;
             const data = doc.data();
-            totalGold += (data.gold || 0) + (data.bankGold || 0); // Gabungkan gold di tas dan di bank
+            totalGold += (data.gold || 0) + (data.bankGold || 0); 
             totalCoin += (data.coin || 0);
         });
 
@@ -60,7 +65,22 @@ async function loadServerStats() {
 }
 
 // ==========================================
-// 3. FITUR KIRIM SURAT & HADIAH (DIPERBAIKI)
+// 3. GENERATOR LIST ITEM OTOMATIS
+// ==========================================
+function populateItemDropdown() {
+    const selectBox = document.getElementById('mail-item-name');
+    if (!selectBox) return;
+
+    selectBox.innerHTML = '<option value="">-- Tidak Kirim Item --</option>';
+    
+    // Melakukan looping ke seluruh data item di items.js
+    Object.keys(ITEM_DB).forEach(itemName => {
+        selectBox.innerHTML += `<option value="${itemName}">${itemName}</option>`;
+    });
+}
+
+// ==========================================
+// 4. FITUR KIRIM SURAT & HADIAH (KOMPLIT)
 // ==========================================
 document.getElementById('btn-send-mail').addEventListener('click', async () => {
     const targetUid = document.getElementById('mail-target-uid').value.trim();
@@ -68,7 +88,9 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
     const message = document.getElementById('mail-message').value.trim();
     const gold = parseInt(document.getElementById('mail-gold').value) || 0;
     const coin = parseInt(document.getElementById('mail-coin').value) || 0;
+    
     const itemName = document.getElementById('mail-item-name').value;
+    const itemQty = parseInt(document.getElementById('mail-item-qty')?.value) || 1;
 
     if (!targetUid || !title) {
         return alert("UID Penerima dan Judul Surat wajib diisi!");
@@ -79,15 +101,15 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
     btnSend.innerText = "Mengirim...";
 
     try {
-        // PERBAIKAN: Rute diarahkan ke sub-koleksi mailbox milik user target
+        // Rute ke sub-koleksi kotak surat user
         const mailboxRef = collection(db, "users", targetUid, "mailbox"); 
         
-        // Mempersiapkan struktur lampiran hadiah yang kompatibel dengan game.js
+        // Membungkus hadiah ke dalam attachments
         let attachmentsData = null;
         if (itemName && itemName !== "") {
             attachmentsData = {
                 itemName: itemName,
-                qty: 1,
+                qty: itemQty, // Menerapkan jumlah qty
                 gold: gold,
                 coin: coin
             };
@@ -108,16 +130,16 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
             timestamp: serverTimestamp()
         };
 
-        // PERBAIKAN: Menggunakan addDoc agar Firebase membuatkan ID Surat Otomatis
         await addDoc(mailboxRef, mailData); 
-        alert(`✅ Surat "${title}" berhasil dikirim ke UID: ${targetUid}`);
+        alert(`✅ Surat "${title}" beserta hadiah berhasil dikirim ke UID: ${targetUid}`);
         
-        // Reset form
+        // Reset form setelah sukses
         document.getElementById('mail-title').value = "";
         document.getElementById('mail-message').value = "";
         document.getElementById('mail-gold').value = "0";
         document.getElementById('mail-coin').value = "0";
-        // Reset dropdown item secara manual jika diperlukan (opsional)
+        document.getElementById('mail-item-name').value = "";
+        if (document.getElementById('mail-item-qty')) document.getElementById('mail-item-qty').value = "1";
         
     } catch (err) {
         console.error(err);
