@@ -1,6 +1,6 @@
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js"; // TAMBAHKAN updateDoc
+import { doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 import { selectCharacterClass, addCharacterStat, startStaminaRegeneration } from './modules/character.js';
 import { equipFromInventory, sellItemToNPC } from './modules/inventory.js';
@@ -96,7 +96,6 @@ function startLiveGameSync() {
         const btnAdmin = document.getElementById('btn-admin-panel');
         if (btnAdmin) btnAdmin.style.display = (d.role === 'admin') ? 'inline-block' : 'none';
 
-        // CEK SINKRONISASI STAT POIN OTOMATIS JIKA DATABASE DI-EDIT ADMIN
         const baseTotal = d.characterClass === 'Warrior' ? 42 : 45;
         const expectedTotal = baseTotal + ((d.level || 1) - 1) * 5;
         const currentTotal = (d.str || 0) + (d.con || 0) + (d.dex || 0) + (d.int || 0) + (d.statPoints || 0);
@@ -104,7 +103,7 @@ function startLiveGameSync() {
         if (currentTotal < expectedTotal) {
             const missing = expectedTotal - currentTotal;
             updateDoc(doc(db, "users", currentUserUid), { statPoints: (d.statPoints || 0) + missing });
-            return; // Berhenti sebentar, snapshot akan refresh otomatis setelah poin ditambahkan!
+            return; 
         }
 
         if (document.getElementById('player-name')) {
@@ -244,6 +243,7 @@ function startLiveGameSync() {
         }
     });
 
+    // PERBAIKAN LOGIKA TEXT KOTAK SURAT (Memunculkan Gold & Coin)
     const unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
         const mailDiv = document.getElementById('mailbox-list');
         if (mailDiv) { 
@@ -253,13 +253,20 @@ function startLiveGameSync() {
                 let rewardText = "";
                 
                 if (mail.attachments) {
-                    const rName = mail.attachments.itemName || mail.attachments.name || "Item";
-                    const rQty = mail.attachments.qty || 1;
-                    rewardText = `<br><span style="color:#28a745; font-size:11px;">🎁 Item Hadiah: [${escapeHTML(rName)}] x${rQty}</span>`;
+                    let rewards = [];
+                    const rName = mail.attachments.itemName || mail.attachments.name;
+                    if (rName) rewards.push(`[${escapeHTML(rName)}] x${mail.attachments.qty || 1}`);
+                    if (mail.attachments.gold > 0) rewards.push(`${mail.attachments.gold} Gold`);
+                    if (mail.attachments.coin > 0) rewards.push(`${mail.attachments.coin} COIN`);
+
+                    if (rewards.length > 0) {
+                        rewardText = `<br><span style="color:#28a745; font-size:11px;">🎁 Hadiah: ${rewards.join(', ')}</span>`;
+                    }
                     
                     if (!mail.isClaimed) { attachHtml += `<button onclick="window.claimReward('${mail.id}')" style="padding: 2px 6px; font-size: 10px; background: #28a745; float: right; margin-left:4px;">Klaim</button>`; } 
                     else if (mail.isClaimed) { attachHtml += `<span style="font-size:9px; color:#555; float:right; margin-left:4px;">(Klaim Selesai)</span>`; }
                 }
+                
                 attachHtml += `<button onclick="window.deleteMailAction('${mail.id}')" style="padding: 2px 6px; font-size: 10px; background: #dc3545; float: right;">Hapus</button>`;
                 mailDiv.innerHTML += `<div style="border-bottom:1px solid #333; padding:6px 0; overflow:hidden;"><strong style="color:#ffcc00; font-size: 12px;">[Sistem]</strong> <span style="font-size: 12px;">${escapeHTML(mail.title)}</span> ${attachHtml} ${rewardText}</div>`; 
             });
@@ -531,8 +538,6 @@ document.getElementById('btn-mall-universal')?.addEventListener('click', () => b
 document.getElementById('btn-mall-name')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ganti Nama', 50));
 document.getElementById('btn-mall-job')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ubah Job', 100));
 document.getElementById('btn-mall-stamina')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Ramuan Stamina', 10));
-
-// TOMBOL BARU UNTUK ITEM RESET STATS (DI ITEM MALL)
 document.getElementById('btn-mall-reset')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Buku Reset Stats', 100));
 
 document.getElementById('btn-admin-panel')?.addEventListener('click', () => window.location.href = './admin/index.html');

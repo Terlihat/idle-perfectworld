@@ -32,16 +32,34 @@ export async function claimMailReward(db, uid, mailId) {
             if (mail.isClaimed) throw "Hadiah sudah diklaim!";
             if (!mail.attachments) throw "Surat tidak memiliki hadiah.";
 
-            let inv = user.inventory || {};
+            let updates = {};
+
+            // 1. Klaim Item (Jika Ada)
             const itemName = mail.attachments.itemName || mail.attachments.name;
-            const qty = mail.attachments.qty || 1;
+            if (itemName) {
+                let inv = user.inventory || {};
+                const qty = mail.attachments.qty || 1;
+                inv[itemName] = (inv[itemName] || 0) + qty;
+                updates.inventory = inv;
+            }
 
-            inv[itemName] = (inv[itemName] || 0) + qty;
+            // 2. Klaim Gold (Jika Ada)
+            const addGold = mail.attachments.gold || 0;
+            if (addGold > 0) {
+                updates.gold = (user.gold || 0) + addGold;
+            }
 
+            // 3. Klaim Coin Premium (Jika Ada)
+            const addCoin = mail.attachments.coin || 0;
+            if (addCoin > 0) {
+                updates.coin = (user.coin || 0) + addCoin;
+            }
+
+            // Eksekusi pembaruan ke database
             ts.update(mailRef, { isClaimed: true });
-            ts.update(userRef, { inventory: inv });
+            ts.update(userRef, updates);
         });
-        alert("🎁 Hadiah surat berhasil diklaim ke Tas Anda!");
+        alert("🎁 Hadiah surat berhasil diklaim!");
     } catch (e) { alert(e); }
 }
 

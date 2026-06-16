@@ -1,6 +1,6 @@
 import { db, auth } from '../../js/firebase-config.js'; // Pastikan path ini mengarah dengan benar ke konfigurasi Anda
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js"; // PERBAIKAN: setDoc diganti menjadi addDoc
 
 let adminUid = null;
 
@@ -60,7 +60,7 @@ async function loadServerStats() {
 }
 
 // ==========================================
-// 3. FITUR KIRIM SURAT & HADIAH
+// 3. FITUR KIRIM SURAT & HADIAH (DIPERBAIKI)
 // ==========================================
 document.getElementById('btn-send-mail').addEventListener('click', async () => {
     const targetUid = document.getElementById('mail-target-uid').value.trim();
@@ -79,31 +79,45 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
     btnSend.innerText = "Mengirim...";
 
     try {
-        const mailRef = doc(collection(db, "mailboxes")); // Auto-generate ID untuk surat baru
+        // PERBAIKAN: Rute diarahkan ke sub-koleksi mailbox milik user target
+        const mailboxRef = collection(db, "users", targetUid, "mailbox"); 
         
+        // Mempersiapkan struktur lampiran hadiah yang kompatibel dengan game.js
+        let attachmentsData = null;
+        if (itemName && itemName !== "") {
+            attachmentsData = {
+                itemName: itemName,
+                qty: 1,
+                gold: gold,
+                coin: coin
+            };
+        } else if (gold > 0 || coin > 0) {
+            attachmentsData = {
+                gold: gold,
+                coin: coin
+            };
+        }
+
         const mailData = {
-            receiverUid: targetUid,
             senderId: "SYSTEM",
             senderName: "Administrator",
             title: title,
             message: message,
-            attachments: {
-                gold: gold,
-                coin: coin,
-                item: itemName !== "" ? { name: itemName, qty: 1 } : null
-            },
+            attachments: attachmentsData,
             isClaimed: false,
             timestamp: serverTimestamp()
         };
 
-        await setDoc(mailRef, mailData);
-        alert(`Surat berhasil dikirim ke UID: ${targetUid}`);
+        // PERBAIKAN: Menggunakan addDoc agar Firebase membuatkan ID Surat Otomatis
+        await addDoc(mailboxRef, mailData); 
+        alert(`✅ Surat "${title}" berhasil dikirim ke UID: ${targetUid}`);
         
         // Reset form
         document.getElementById('mail-title').value = "";
         document.getElementById('mail-message').value = "";
         document.getElementById('mail-gold').value = "0";
         document.getElementById('mail-coin').value = "0";
+        // Reset dropdown item secara manual jika diperlukan (opsional)
         
     } catch (err) {
         console.error(err);
