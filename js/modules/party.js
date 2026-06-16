@@ -1,5 +1,5 @@
 /* ===================================================
-   MODUL PARTY DUNGEON (Dengan Tracker Bounty & Fix Error Path)
+   MODUL PARTY DUNGEON (Fix Level Up Check & Tracker Bounty)
    =================================================== */
 import { collection, doc, runTransaction, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { FB_BOSSES } from '../data/monsters.js';
@@ -28,7 +28,6 @@ export async function createOrJoinParty(db, fbKey, playerStats) {
     const q = query(partiesRef, where("fbKey", "==", fbKey), where("status", "==", "waiting"));
 
     try {
-        // PERBAIKAN: Lakukan Query DI LUAR transaksi
         const snap = await getDocs(q);
         let targetPartyId = null;
         
@@ -40,7 +39,6 @@ export async function createOrJoinParty(db, fbKey, playerStats) {
         }
 
         if (targetPartyId) {
-            // Gabung ke Party yang sudah ada via Transaksi Data
             const pRef = doc(db, "parties", targetPartyId);
             await runTransaction(db, async (ts) => {
                 const pSnap = await ts.get(pRef);
@@ -55,7 +53,6 @@ export async function createOrJoinParty(db, fbKey, playerStats) {
             });
             alert("🏕️ Berhasil bergabung ke Party Fuben!");
         } else {
-            // Buat Party Baru
             const newPartyRef = doc(partiesRef);
             await runTransaction(db, async (ts) => {
                 ts.set(newPartyRef, { 
@@ -157,11 +154,33 @@ export async function startFbBattle(db, leaderUid, partyId) {
                         dropMsg = ` | 🎁 Drop: ${boss.drop.item}`;
                     }
 
-                    ts.update(mRef, { 
-                        exp: newExp, gold: newGold, inventory: inv, 
-                        currentHp: newHp, currentStamina: newStamina,
-                        quests: newQuests 
-                    });
+                    // ADD LEVEL UP LOOP LOGIC DI PARTY SYSTEM
+                    let newLevel = md.level || 1;
+                    let statPointsGained = 0;
+                    let leveledUp = false;
+                    while (newExp >= newLevel * 100) {
+                        newExp -= (newLevel * 100);
+                        newLevel += 1;
+                        statPointsGained += 5;
+                        leveledUp = true;
+                    }
+
+                    if (leveledUp) {
+                        ts.update(mRef, { 
+                            level: newLevel, exp: newExp, gold: newGold, inventory: inv, 
+                            currentHp: md.maxHp || 1000, currentStamina: newStamina,
+                            statPoints: (md.statPoints || 0) + statPointsGained,
+                            quests: newQuests 
+                        });
+                        dropMsg += ` (🌟 LEVEL UP TO ${newLevel}!)`;
+                    } else {
+                        ts.update(mRef, { 
+                            exp: newExp, gold: newGold, inventory: inv, 
+                            currentHp: newHp, currentStamina: newStamina,
+                            quests: newQuests 
+                        });
+                    }
+                    
                     log += `🛡️ [${md.username}] BERTAHAN! Sisa HP: ${newHp} | +${rewardGoldAkhir} Gold${dropMsg}\n`;
                 }
             });

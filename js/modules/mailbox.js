@@ -1,13 +1,11 @@
-import { collection, query, where, orderBy, onSnapshot, doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+/* ===================================================
+   MODUL MANAJEMEN KOTAK SURAT (MAILBOX)
+   =================================================== */
+import { collection, doc, query, onSnapshot, runTransaction, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 export function listenToMailbox(db, uid, callbackRender) {
     if (!uid) return;
-    const q = query(
-        collection(db, "mailboxes"), 
-        where("receiverUid", "==", uid),
-        orderBy("timestamp", "desc")
-    );
-
+    const q = query(collection(db, "users", uid, "mailbox"));
     return onSnapshot(q, (snapshot) => {
         let mails = [];
         snapshot.forEach((docSnap) => {
@@ -19,39 +17,39 @@ export function listenToMailbox(db, uid, callbackRender) {
 
 export async function claimMailReward(db, uid, mailId) {
     if (!uid || !mailId) return;
+    const mailRef = doc(db, "users", uid, "mailbox", mailId);
     const userRef = doc(db, "users", uid);
-    const mailRef = doc(db, "mailboxes", mailId);
 
     try {
         await runTransaction(db, async (ts) => {
-            const mailSnap = await ts.get(mailRef);
-            if (!mailSnap.exists()) throw "Surat tidak ditemukan!";
-            const mailData = mailSnap.data();
+            const mSnap = await ts.get(mailRef);
+            const uSnap = await ts.get(userRef);
+            if (!mSnap.exists() || !uSnap.exists()) throw "Data tidak ditemukan.";
 
-            if (mailData.isClaimed) throw "Hadiah dari surat ini sudah diklaim!";
-            if (mailData.receiverUid !== uid) throw "Ini bukan surat Anda!";
+            const mail = mSnap.data();
+            const user = uSnap.data();
 
-            const userSnap = await ts.get(userRef);
-            if (!userSnap.exists()) throw "Data pemain tidak ditemukan!";
-            const userData = userSnap.data();
+            if (mail.isClaimed) throw "Hadiah sudah diklaim!";
+            if (!mail.attachments) throw "Surat tidak memiliki hadiah.";
 
-            // Kalkulasi penambahan hadiah
-            let newGold = (userData.gold || 0) + (mailData.attachments?.gold || 0);
-            let newCoin = (userData.coin || 0) + (mailData.attachments?.coin || 0);
-            let inv = userData.inventory || {};
+            let inv = user.inventory || {};
+            const itemName = mail.attachments.itemName || mail.attachments.name;
+            const qty = mail.attachments.qty || 1;
 
-            if (mailData.attachments?.item && mailData.attachments.item.name) {
-                const itemName = mailData.attachments.item.name;
-                const itemQty = mailData.attachments.item.qty || 1;
-                inv[itemName] = (inv[itemName] || 0) + itemQty;
-            }
+            inv[itemName] = (inv[itemName] || 0) + qty;
 
-            // Update database pemain dan status surat
-            ts.update(userRef, { gold: newGold, coin: newCoin, inventory: inv });
             ts.update(mailRef, { isClaimed: true });
+            ts.update(userRef, { inventory: inv });
         });
-        alert("🎁 Hadiah berhasil ditarik ke dalam Tas!");
-    } catch (err) {
-        alert(err);
-    }
+        alert("🎁 Hadiah surat berhasil diklaim ke Tas Anda!");
+    } catch (e) { alert(e); }
+}
+
+export async function deleteMail(db, uid, mailId) {
+    if (!uid || !mailId) return;
+    const mailRef = doc(db, "users", uid, "mailbox", mailId);
+    try {
+        await deleteDoc(mailRef);
+        alert("🗑️ Surat berhasil dihapus secara manual!");
+    } catch (e) { alert(e); }
 }

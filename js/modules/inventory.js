@@ -1,3 +1,6 @@
+/* ===================================================
+   MODUL INVENTORY (Fix Batas Ramuan HP & Guild Buff)
+   =================================================== */
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ITEM_DB } from '../data/items.js';
 
@@ -21,8 +24,6 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
 
                 if (itemName === "Tiket Ganti Nama") { 
                     updates.username = specialInput; 
-                    
-                    // PERBAIKAN: Sinkronisasi Nama Baru ke Database Guild
                     if (data.guildId) {
                         const guildRef = doc(db, "guilds", data.guildId);
                         const gSnap = await ts.get(guildRef);
@@ -52,12 +53,34 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
                 ts.update(userRef, updates); return;
             }
 
+            // LOGIKA CONSUMABLE (FIX POTION HP & MP)
             if (itemData.type === "consumable") {
                 inv[itemName] -= 1;
                 if (inv[itemName] === 0) delete inv[itemName];
                 let updates = { inventory: inv };
-                if (itemName === "Ramuan HP") updates.currentHp = Math.min(data.maxHp || 1000, (data.currentHp || 0) + 500);
+
+                // Hitung Buff HP Guild di dalam transaksi agar akurat
+                let guildHpBuff = 0;
+                if (data.guildId) {
+                    const guildSnap = await ts.get(doc(db, "guilds", data.guildId));
+                    if (guildSnap.exists()) {
+                        const gLvl = guildSnap.data().level || 1;
+                        const guildUpgrades = {
+                            1: { buff: { hp: 0 } },
+                            2: { buff: { hp: 100 } },
+                            3: { buff: { hp: 250 } },
+                            4: { buff: { hp: 500 } },
+                            5: { buff: { hp: 1000 } }
+                        };
+                        guildHpBuff = guildUpgrades[gLvl].buff.hp;
+                    }
+                }
+
+                const effectiveMaxHp = (data.maxHp || 1000) + guildHpBuff;
+
+                if (itemName === "Ramuan HP") updates.currentHp = Math.min(effectiveMaxHp, (data.currentHp || 0) + 500);
                 if (itemName === "Ramuan MP") updates.currentMp = Math.min(data.maxMp || 200, (data.currentMp || 0) + 200);
+                
                 ts.update(userRef, updates); return;
             }
 
