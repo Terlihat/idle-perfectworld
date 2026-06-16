@@ -2,6 +2,8 @@ import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+// IMPORT MODULES
+import { loadUIComponents } from './ui-loader.js'; // SUNTIKAN UI LOADER
 import { selectCharacterClass, addCharacterStat, startStaminaRegeneration } from './modules/character.js';
 import { equipFromInventory, sellItemToNPC } from './modules/inventory.js';
 import { refineEquipment } from './modules/blacksmith.js';
@@ -62,6 +64,10 @@ function startDynamicChat() {
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUid = user.uid;
+        
+        // MUAT HTML EKSTERNAL DARI COMPONENTS TERLEBIH DAHULU!
+        await loadUIComponents();
+        
         const docSnap = await getDoc(doc(db, "users", currentUserUid));
         if (!docSnap.exists() || !docSnap.data().characterClass) {
             showScreen('screen-char-select');
@@ -243,7 +249,6 @@ function startLiveGameSync() {
         }
     });
 
-    // PERBAIKAN LOGIKA TEXT KOTAK SURAT (Memunculkan Gold & Coin)
     const unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
         const mailDiv = document.getElementById('mailbox-list');
         if (mailDiv) { 
@@ -346,7 +351,7 @@ function startLiveGameSync() {
 function renderGuildPanel() {
     const unjoinedView = document.getElementById('guild-unjoined-view');
     const joinedView = document.getElementById('guild-joined-view');
-    if (!currentPlayerStats.uid) return;
+    if (!currentPlayerStats.uid || !unjoinedView || !joinedView) return; // Mencegah error jika panel belum dimuat
 
     if (!currentPlayerStats.guildId || !globalGuilds[currentPlayerStats.guildId]) {
         unjoinedView.style.display = 'block';
@@ -407,35 +412,45 @@ function renderGuildPanel() {
     }
 }
 
-document.getElementById('chat-channel-select')?.addEventListener('change', (e) => {
-    const val = e.target.value;
-    if (val === 'guild' && !currentPlayerStats.guildId) {
-        alert("Anda belum bergabung dengan Guild!");
-        e.target.value = currentChatChannel; return;
+// BINDING EVENT DELEGATION (Agar tombol di HTML eksternal tetap berfungsi setelah dimuat)
+document.addEventListener('change', (e) => {
+    if (e.target && e.target.id === 'chat-channel-select') {
+        const val = e.target.value;
+        if (val === 'guild' && !currentPlayerStats.guildId) {
+            alert("Anda belum bergabung dengan Guild!");
+            e.target.value = currentChatChannel; return;
+        }
+        if (val === 'party' && !currentPartyId) {
+            alert("Anda belum masuk ke dalam Ruang Tunggu Party FB!");
+            e.target.value = currentChatChannel; return;
+        }
+        currentChatChannel = val;
+        startDynamicChat();
     }
-    if (val === 'party' && !currentPartyId) {
-        alert("Anda belum masuk ke dalam Ruang Tunggu Party FB!");
-        e.target.value = currentChatChannel; return;
-    }
-    currentChatChannel = val;
-    startDynamicChat();
 });
 
-const chatInput = document.getElementById('chat-input');
-const btnSendChat = document.getElementById('btn-send-chat');
-function executeSendingChat() { 
-    if (chatInput && chatInput.value.trim()) { 
-        let targetId = null;
-        if (currentChatChannel === 'guild') targetId = currentPlayerStats.guildId;
-        if (currentChatChannel === 'party') targetId = currentPartyId;
-        
-        sendChat(db, currentUserUid, playerUsername, chatInput.value, currentChatChannel, targetId); 
-        chatInput.value = ""; 
-    } 
-}
-btnSendChat?.addEventListener('click', executeSendingChat);
-chatInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); executeSendingChat(); } });
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'btn-send-chat') {
+        const chatInput = document.getElementById('chat-input');
+        if (chatInput && chatInput.value.trim()) { 
+            let targetId = null;
+            if (currentChatChannel === 'guild') targetId = currentPlayerStats.guildId;
+            if (currentChatChannel === 'party') targetId = currentPartyId;
+            
+            sendChat(db, currentUserUid, playerUsername, chatInput.value, currentChatChannel, targetId); 
+            chatInput.value = ""; 
+        }
+    }
+});
 
+document.addEventListener('keydown', (e) => {
+    if (e.target && e.target.id === 'chat-input' && e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btn-send-chat').click();
+    }
+});
+
+// GLOBAL WINDOW ROUTERS
 window.handleInventoryClick = function(itemName) {
     if (inventoryMode === "EQUIP") {
         if (itemName === "Tiket Ganti Nama") { const inputName = prompt("Masukkan Nama Karakter Baru:"); if (inputName && inputName.trim() !== "") equipFromInventory(db, currentUserUid, itemName, inputName); } 
@@ -477,24 +492,16 @@ window.startFb = function(partyId) { startFbBattle(db, currentUserUid, partyId);
 window.joinGuildAction = function(guildId) { if (confirm("Bergabung dengan klan ini?")) joinGuild(db, currentUserUid, currentPlayerStats, guildId); };
 window.kickMemberAction = function(targetUid) { if (confirm("Keluarkan anggota ini dari klan?")) kickMember(db, currentUserUid, currentPlayerStats.guildId, targetUid); };
 
-document.getElementById('btn-create-guild')?.addEventListener('click', () => {
-    const name = document.getElementById('input-guild-name').value;
-    if (confirm(`Dirikan Klan [${name}] seharga 100,000 Gold?`)) createGuild(db, currentUserUid, currentPlayerStats, name);
-});
-document.getElementById('btn-leave-guild')?.addEventListener('click', () => {
-    if (confirm("Yakin ingin keluar dari klan? Anda akan kehilangan semua Buff Guild!")) dbLeaveGuild(db, currentUserUid, currentPlayerStats.guildId);
-});
-document.getElementById('btn-donate-guild')?.addEventListener('click', () => {
-    const amt = parseInt(document.getElementById('input-donate-gold').value);
-    if (amt > 0) { donateGold(db, currentUserUid, currentPlayerStats.guildId, amt); document.getElementById('input-donate-gold').value = ""; }
-});
-document.getElementById('btn-upgrade-guild')?.addEventListener('click', () => { if (confirm("Gunakan kas Guild untuk naik level?")) upgradeGuild(db, currentUserUid, currentPlayerStats.guildId); });
-document.getElementById('btn-edit-motd')?.addEventListener('click', () => {
-    const txt = prompt("Masukkan pengumuman baru untuk anggota klan:");
-    if (txt) updateMotd(db, currentUserUid, currentPlayerStats.guildId, txt);
-});
-document.getElementById('btn-disband-guild')?.addEventListener('click', () => {
-    if (confirm("PERINGATAN KERAS: Yakin ingin membubarkan Klan ini selamanya? Kas akan hangus!")) disbandGuild(db, currentUserUid, currentPlayerStats.guildId);
+// STATIC EVENT LISTENERS
+// Karena komponen Guild dipanggil dari luar, event listener harus menggunakan Event Delegation (sudah dibungkus di dalam fungsi yang dipanggil onClick atau Global Event)
+document.addEventListener('click', (e) => {
+    // Tombol Guild (Dari HTML Eksternal)
+    if (e.target && e.target.id === 'btn-create-guild') { const name = document.getElementById('input-guild-name').value; if (confirm(`Dirikan Klan [${name}] seharga 100,000 Gold?`)) createGuild(db, currentUserUid, currentPlayerStats, name); }
+    if (e.target && e.target.id === 'btn-leave-guild') { if (confirm("Yakin ingin keluar dari klan? Anda akan kehilangan semua Buff Guild!")) dbLeaveGuild(db, currentUserUid, currentPlayerStats.guildId); }
+    if (e.target && e.target.id === 'btn-donate-guild') { const amt = parseInt(document.getElementById('input-donate-gold').value); if (amt > 0) { donateGold(db, currentUserUid, currentPlayerStats.guildId, amt); document.getElementById('input-donate-gold').value = ""; } }
+    if (e.target && e.target.id === 'btn-upgrade-guild') { if (confirm("Gunakan kas Guild untuk naik level?")) upgradeGuild(db, currentUserUid, currentPlayerStats.guildId); }
+    if (e.target && e.target.id === 'btn-edit-motd') { const txt = prompt("Masukkan pengumuman baru untuk anggota klan:"); if (txt) updateMotd(db, currentUserUid, currentPlayerStats.guildId, txt); }
+    if (e.target && e.target.id === 'btn-disband-guild') { if (confirm("PERINGATAN KERAS: Yakin membubarkan Klan selamanya? Kas akan hangus!")) disbandGuild(db, currentUserUid, currentPlayerStats.guildId); }
 });
 
 document.getElementById('btn-take-quest')?.addEventListener('click', () => assignRandomQuests(db, currentUserUid));

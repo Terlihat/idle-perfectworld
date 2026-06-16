@@ -188,15 +188,14 @@
                         <h2 class="gold-title">💎 Item Mall Premium</h2>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
                             <button id="btn-mall-mirage" style="background:#555;">Mirage Stone<br><small>5 COIN</small></button>
-                            <button id="btn-mall-heaven" style="background:#555;">Heaven Stone<br><small>15 COIN</small></button>
-                            <button id="btn-mall-underworld" style="background:#555;">Underworld Stone<br><small>15 COIN</small></button>
-                            <button id="btn-mall-universal" style="background:#555;">Universal Stone<br><small>50 COIN</small></button>
-                            <button id="btn-mall-name" style="background:#555;">Tiket Ganti Nama<br><small>50 COIN</small></button>
-                            <button id="btn-mall-job" style="background:#555;">Tiket Ubah Job<br><small>100 COIN</small></button>
-                            <button id="btn-mall-stamina" style="background:#555;">⚡ Ramuan Stamina<br><small>10 COIN</small></button>
-                            <button id="btn-mall-dragon" style="background:#555;">🐉 Naga Terbang<br><small>200 COIN</small></button> 
-                            
-                            <button id="btn-mall-reset" style="background:#555; grid-column: span 2;">📘 Buku Reset Status<br><small>100 COIN</small></button>
+                            <button id="btn-mall-heaven" style="background:#b8860b;">Heaven Stone<br><small>15 COIN</small></button>
+                            <button id="btn-mall-underworld" style="background:#6f42c1;">Underworld Stone<br><small>15 COIN</small></button>
+                            <button id="btn-mall-universal" style="background:#dc3545;">Universal Stone<br><small>50 COIN</small></button>
+                            <button id="btn-mall-name" style="background:#007bff;">Tiket Ganti Nama<br><small>50 COIN</small></button>
+                            <button id="btn-mall-job" style="background:#28a745;">Tiket Ubah Job<br><small>100 COIN</small></button>
+                            <button id="btn-mall-stamina" style="background:#fd7e14;">⚡ Ramuan Stamina<br><small>10 COIN</small></button>
+                            <button id="btn-mall-dragon" style="background:#8a2be2;">🐉 Naga Terbang<br><small>200 COIN</small></button> 
+                            <button id="btn-mall-reset" style="background:#8b4513; grid-column: span 2;">📘 Buku Reset Status<br><small>100 COIN</small></button>
                         </div>
                     </div>
 
@@ -225,53 +224,12 @@
                         <div id="bank-grid"></div>
                     </div>
 
-                    <div class="panel" style="border: 1px solid #ffcc00; background: #1f1a0d;">
-                        <h2 style="color: #ffcc00;">🛡️ Guild</h2>
-                        
-                        <div id="guild-unjoined-view" style="display:none;">
-                            <div style="display:flex; gap:5px; margin-bottom:5px;">
-                                <input type="text" id="input-guild-name" placeholder="Ketik Nama Klan Baru" style="flex:1;">
-                                <button id="btn-create-guild" style="background:#28a745;">Buat (100k G)</button>
-                            </div>
-                            <hr style="border-color:#333; margin:8px 0;">
-                            <strong style="font-size:11px; color:#ffcc00;">Daftar Klan Terbuka:</strong>
-                            <div id="guild-available-list" style="max-height: 120px; overflow-y: auto; font-size:11px; background:#121216; padding:5px; border:1px solid #333; margin-top:5px;"></div>
-                        </div>
-
-                        <div id="guild-joined-view" style="display:none;">
-                            <h3 id="guild-name-display" style="margin:0; color:#00d2ff;">...</h3>
-                            <div style="font-size:11px; color:#aaa; margin-bottom:5px;">
-                                Level <strong id="guild-level-display" style="color:#ffcc00;">1</strong> | Ketua: <span id="guild-leader-display">...</span>
-                            </div>
-                            <div style="font-size:11px; margin-bottom:5px; padding:4px; background:#28a745; color:#fff; border-radius:3px;">
-                                🌟 Buff Klan Aktif: <strong id="guild-buff-display">...</strong>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:5px; margin-bottom:5px;">
-                                <div style="font-size:11px; flex:1;">Kas: <strong id="guild-vault-display" style="color:#ffd700;">0</strong> G</div>
-                                <input type="number" id="input-donate-gold" placeholder="Sumbang" style="width:60px; font-size:10px;">
-                                <button id="btn-donate-guild" style="padding:4px 8px; background:#ffca28; color:#000; font-size:10px; font-weight:bold;">Donasi</button>
-                            </div>
-
-                            <div id="guild-management-controls" style="display:none; gap:5px; margin-bottom:5px;">
-                                <button id="btn-upgrade-guild" style="flex:1; background:#007bff; font-size:10px;">⏫ Naik Level</button>
-                                <button id="btn-edit-motd" style="flex:1; background:#6f42c1; font-size:10px;">📝 Edit Pengumuman</button>
-                                <button id="btn-disband-guild" style="flex:1; background:#dc3545; font-size:10px;">❌ Bubarkan</button>
-                            </div>
-                            
-                            <div style="background:#121216; padding:5px; font-size:11px; margin-bottom:5px; font-style:italic; border-left:3px solid #6f42c1;">
-                                "<span id="guild-motd-display">...</span>"
-                            </div>
-                            
-                            <strong style="font-size:11px; color:#aaa;">Anggota:</strong>
-                            <div id="guild-member-list" style="max-height: 100px; overflow-y: auto; font-size:11px; border:1px solid #333; padding:5px; background:#121216;"></div>
-                            
-                            <button id="btn-leave-guild" style="width:100%; background:#dc3545; margin-top:5px; font-size:10px;">Keluar dari Klan</button>
-                        </div>
+                    <div id="panel-guild" class="panel" style="border: 1px solid #ffcc00; background: #1f1a0d;">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Guild...</div>
                     </div>
 
-                    <div class="panel" style="border: 1px solid #ffcc00;">
-                        <h2 style="color: #ffcc00;">📬 Kotak Surat</h2>
-                        <div id="mailbox-list" style="max-height: 150px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 12px; border: 1px solid #3f3f52;"></div>
+                    <div id="panel-mailbox" class="panel" style="border: 1px solid #ffcc00;">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Kotak Surat...</div>
                     </div>
 
                     <div class="panel">
