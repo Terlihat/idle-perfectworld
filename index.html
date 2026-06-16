@@ -105,129 +105,36 @@
                 </div>
 
                 <div>
-                    <div class="panel" style="border: 1px solid #dc3545; background: #241416;">
-                        <h2 style="color: #ff4a4a;">🦇 Solo Dungeon</h2>
-                        <select id="dungeon-select" style="width: 100%; padding: 8px; margin-bottom: 10px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
-                            <option value="slime">💧 Slime Hijau (Lv. 1)</option>
-                            <option value="wolf">🐺 Serigala Liar (Lv. 3)</option>
-                            <option value="goblin">👺 Goblin Perampok (Lv. 5)</option>
-                            <option value="skeleton">💀 Tengkorak Hidup (Lv. 8)</option>
-                            <option value="orc">👹 Orc Warrior (Lv. 10)</option>
-                            <option value="golem">🪨 Golem Batu (Lv. 12)</option>
-                            <option value="dragon">🐉 Anak Naga (Lv. 15)</option>
-                            <option value="demon">👿 Iblis Kecil (Lv. 18)</option>
-                        </select>
-                        <button id="btn-attack-dungeon" style="width:100%; background: #dc3545; padding: 12px; font-size:15px;">⚔️ SERANG SENDIRIAN!</button>
+                    <div id="panel-dungeon" class="panel" style="border: 1px solid #dc3545; background: #241416;">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Solo Dungeon...</div>
                     </div>
-
-                    <div class="panel" style="border: 1px solid #6f42c1; background: #1c152a;">
-                        <h2 style="color: #d8b4fe;">🏕️ Fuben Party (FB)</h2>
-                        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                            <select id="fb-select" style="flex: 1; padding: 6px; background: #121216; color: #d8b4fe; border: 1px solid #3f3f52;">
-                                <option value="fb19">🔥 FB19 (Roiling Terror)</option>
-                                <option value="fb29">👻 FB29 (Qingzi)</option>
-                                <option value="fb39">👁️ FB39 (Herculean)</option>
-                                <option value="fb51">🐉 FB51 (Wyvern)</option>
-                                <option value="fb59">🦍 FB59 (Gluttonix)</option>
-                                <option value="fb69">🐸 FB69 (Viperion)</option>
-                                <option value="fb79">🏴‍☠️ FB79 (Linus The Black)</option>
-                                <option value="fb89">👼 FB89 (Brahma/Behemoth)</option>
-                                <option value="fb99">👑 FB99 (Emperor of Heaven)</option>
-                                <option value="fb100">🌌 FB100 (Goddess of PW)</option>
-                            </select>
-                            <button id="btn-create-party" style="background: #6f42c1;">Buat / Gabung</button>
-                        </div>
-                        <strong style="font-size: 11px; color:#d8b4fe;">Daftar Party Menunggu:</strong>
-                        <div id="party-list" style="max-height: 120px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 11px; border: 1px solid #3f3f52; margin-top: 5px;"></div>
+                    <div id="panel-party" class="panel" style="border: 1px solid #6f42c1; background: #1c152a;">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Fuben Party...</div>
                     </div>
-
-                    <div class="panel" style="border: 1px solid #28a745; background: #15201b;">
-                        <h2 style="color: #28a745;">📜 Misi Harian & Bounty</h2>
-                        <button id="btn-take-quest" style="width:100%; display:none; background:#28a745; margin-bottom:10px; padding:8px;">Ambil Misi Hari Ini</button>
-
-                        <div id="quest-daily-box" style="margin-bottom: 8px; padding: 6px; background: #121216; border: 1px solid #3f3f52; border-radius: 4px;">
-                            <strong style="color:#00d2ff; font-size:12px;">Misi Solo: <span id="quest-daily-title">-</span></strong><br>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top:4px;">
-                                <span style="font-size:11px; color:#aaa;">Progress: <strong id="quest-daily-prog" style="color:#fff;">0/0</strong></span>
-                                <button id="btn-claim-daily" style="display:none; padding:3px 8px; font-size:10px; background:#ffca28; color:#000; font-weight:bold;">Klaim Hadiah</button>
-                            </div>
-                        </div>
-
-                        <div id="quest-bounty-box" style="padding: 6px; background: #121216; border: 1px solid #3f3f52; border-radius: 4px;">
-                            <strong style="color:#d8b4fe; font-size:12px;">Bounty Fuben: <span id="quest-bounty-title">-</span></strong><br>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top:4px;">
-                                <span style="font-size:11px; color:#aaa;">Progress: <strong id="quest-bounty-prog" style="color:#fff;">0/0</strong></span>
-                                <button id="btn-claim-bounty" style="display:none; padding:3px 8px; font-size:10px; background:#ffca28; color:#000; font-weight:bold;">Klaim Hadiah</button>
-                            </div>
-                        </div>
+                    <div id="panel-quest" class="panel" style="border: 1px solid #28a745; background: #15201b;">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Misi Quest...</div>
                     </div>
-
-                    <div class="panel" style="border: 1px solid #00d2ff; background: #16222f;">
-                        <h2>🔥 Pandai Besi (+10)</h2>
-                        <select id="refine-catalyst" style="width: 100%; padding: 6px; margin-bottom: 8px; background: #121216; color: #ffcc00; border: 1px solid #3f3f52;">
-                            <option value="Mirage Stone">Mirage Stone (Gagal = +0)</option>
-                            <option value="Heaven Stone">Heaven Stone (Peluang++ | Gagal = +0)</option>
-                            <option value="Underworld Stone">Underworld Stone (Peluang+ | Turun 1)</option>
-                            <option value="Universal Stone">Universal Stone (Aman | Tidak Turun)</option>
-                        </select>
-                        <div style="display: flex; flex-direction: column; gap: 6px;">
-                            <button id="btn-refine-weapon" style="background:#28a745; text-align: left;">🗡️ Tempa Senjata</button>
-                            <button id="btn-refine-armor" style="background:#28a745; text-align: left;">👕 Tempa Armor</button>
-                            <button id="btn-refine-accessory" style="background:#28a745; text-align: left;">💍 Tempa Aksesoris</button>
-                        </div>
+                    <div id="panel-blacksmith" class="panel" style="border: 1px solid #00d2ff; background: #16222f;">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Pandai Besi...</div>
                     </div>
-
-                    <div class="panel">
-                        <h2>⚖️ Pasar Lelang</h2>
-                        <div id="auction-list" style="max-height: 150px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 12px; border: 1px solid #3f3f52;"></div>
+                    <div id="panel-auction" class="panel">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Pasar Lelang...</div>
                     </div>
                 </div>
 
                 <div>
-                    <div class="panel panel-mall">
-                        <h2 class="gold-title">💎 Item Mall Premium</h2>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                            <button id="btn-mall-mirage" style="background:#555;">Mirage Stone<br><small>5 COIN</small></button>
-                            <button id="btn-mall-heaven" style="background:#b8860b;">Heaven Stone<br><small>15 COIN</small></button>
-                            <button id="btn-mall-underworld" style="background:#6f42c1;">Underworld Stone<br><small>15 COIN</small></button>
-                            <button id="btn-mall-universal" style="background:#dc3545;">Universal Stone<br><small>50 COIN</small></button>
-                            <button id="btn-mall-name" style="background:#007bff;">Tiket Ganti Nama<br><small>50 COIN</small></button>
-                            <button id="btn-mall-job" style="background:#28a745;">Tiket Ubah Job<br><small>100 COIN</small></button>
-                            <button id="btn-mall-stamina" style="background:#fd7e14;">⚡ Ramuan Stamina<br><small>10 COIN</small></button>
-                            <button id="btn-mall-dragon" style="background:#8a2be2;">🐉 Naga Terbang<br><small>200 COIN</small></button> 
-                            <button id="btn-mall-reset" style="background:#8b4513; grid-column: span 2;">📘 Buku Reset Status<br><small>100 COIN</small></button>
-                        </div>
+                    <div id="panel-mall" class="panel panel-mall">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Item Mall...</div>
                     </div>
-
-                    <div class="panel">
-                        <h2>⚒️ Toko & Mount</h2>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                            <button id="btn-buy-sword" style="background:#495057;">Pedang Besi<br><small>2k G</small></button>
-                            <button id="btn-buy-staff" style="background:#495057;">Tongkat Sihir<br><small>2k G</small></button>
-                            <button id="btn-buy-armor" style="background:#495057;">Zirah Kulit<br><small>2k G</small></button>
-                            <button id="btn-buy-ring" style="background:#495057;">Cincin Akurat<br><small>3k G</small></button>
-                            <button id="btn-buy-horse" style="background:#a67c00;">🐴 Kuda Coklat<br><small>5k G</small></button>
-                            <button id="btn-buy-bear" style="background:#fff; color:#000;">🐻 Beruang Kutub<br><small>25k G</small></button>
-                            <button id="btn-buy-hp" style="background:#dc3545; grid-column: span 1;">Ramuan HP<br><small>500 G</small></button>
-                            <button id="btn-buy-mp" style="background:#007bff; grid-column: span 1;">Ramuan MP<br><small>500 G</small></button>
-                        </div>
+                    <div id="panel-shop" class="panel">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Toko...</div>
                     </div>
-
-                    <div class="panel">
-                        <h2>🏦 Bank</h2>
-                        <div class="bank-management" style="margin-bottom: 5px;">
-                            <input type="number" id="bank-gold-input" placeholder="Nominal Gold">
-                            <button id="btn-bank-deposit-gold" style="background: #28a745;">Simpan</button>
-                            <button id="btn-bank-withdraw-gold" style="background: #dc3545;">Tarik</button>
-                        </div>
-                        <div style="font-size: 13px; margin-bottom: 5px;">Saldo Bank: <strong id="player-bank" style="color:#00d2ff;">0</strong> Gold</div>
-                        <div id="bank-grid"></div>
+                    <div id="panel-bank" class="panel">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Bank...</div>
                     </div>
-
                     <div id="panel-guild" class="panel" style="border: 1px solid #ffcc00; background: #1f1a0d;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Guild...</div>
                     </div>
-
                     <div id="panel-mailbox" class="panel" style="border: 1px solid #ffcc00;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Kotak Surat...</div>
                     </div>

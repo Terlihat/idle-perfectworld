@@ -4,8 +4,10 @@ export async function loadUIComponents() {
     // Daftar komponen yang akan dimuat
     const components = [
         { id: 'panel-guild', file: './components/guild.html' },
-        { id: 'panel-mailbox', file: './components/mailbox.html' }
-        // Nanti Anda bisa tambahkan panel-inventory, panel-battle, dll di sini!
+        { id: 'panel-mailbox', file: './components/mailbox.html' },
+        { id: 'panel-bank', file: './components/bank.html' },
+        { id: 'panel-auction', file: './components/auction.html' },
+        { id: 'panel-blacksmith', file: './components/blacksmith.html' }
     ];
 
     for (let comp of components) {

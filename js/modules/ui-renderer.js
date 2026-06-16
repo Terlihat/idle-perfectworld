@@ -2,7 +2,7 @@
    MODUL UI RENDERER (Mesin Penggambar Tampilan)
    =================================================== */
 
-// Fungsi untuk mencegah serangan XSS (Cross-Site Scripting)
+// Fungsi untuk mencegah serangan XSS
 export function escapeHTML(str) { 
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : ""; 
 }
@@ -152,4 +152,164 @@ export function renderBankUI(bankInventory) {
             bankGrid.innerHTML += `<div class="bank-slot filled" onclick="window.handleBankClick('${escapeHTML(name)}')"><span>${escapeHTML(name)}</span><span class="inv-qty">x${qty}</span></div>`;
         } else { bankGrid.innerHTML += `<div class="bank-slot">Kosong</div>`; }
     }
+}
+
+// 5. RENDER KOTAK SURAT
+export function renderMailboxUI(mails) {
+    const mailDiv = document.getElementById('mailbox-list');
+    if (!mailDiv) return;
+    mailDiv.innerHTML = mails.length === 0 ? "Tidak ada surat." : "";
+    mails.forEach(mail => { 
+        let attachHtml = "";
+        let rewardText = "";
+        
+        if (mail.attachments) {
+            let rewards = [];
+            const rName = mail.attachments.itemName || mail.attachments.name;
+            if (rName) rewards.push(`[${escapeHTML(rName)}] x${mail.attachments.qty || 1}`);
+            if (mail.attachments.gold > 0) rewards.push(`${mail.attachments.gold} Gold`);
+            if (mail.attachments.coin > 0) rewards.push(`${mail.attachments.coin} COIN`);
+
+            if (rewards.length > 0) {
+                rewardText = `<br><span style="color:#28a745; font-size:11px;">🎁 Hadiah: ${rewards.join(', ')}</span>`;
+            }
+            if (!mail.isClaimed) { attachHtml += `<button onclick="window.claimReward('${mail.id}')" style="padding: 2px 6px; font-size: 10px; background: #28a745; float: right; margin-left:4px;">Klaim</button>`; } 
+            else { attachHtml += `<span style="font-size:9px; color:#555; float:right; margin-left:4px;">(Klaim Selesai)</span>`; }
+        }
+        
+        attachHtml += `<button onclick="window.deleteMailAction('${mail.id}')" style="padding: 2px 6px; font-size: 10px; background: #dc3545; float: right;">Hapus</button>`;
+        mailDiv.innerHTML += `<div style="border-bottom:1px solid #333; padding:6px 0; overflow:hidden;"><strong style="color:#ffcc00; font-size: 12px;">[Sistem]</strong> <span style="font-size: 12px;">${escapeHTML(mail.title)}</span> ${attachHtml} ${rewardText}</div>`; 
+    });
+}
+
+// 6. RENDER PASAR LELANG
+export function renderAuctionUI(items, currentUserUid) {
+    const auctionList = document.getElementById('auction-list');
+    if (!auctionList) return; 
+    auctionList.innerHTML = items.length === 0 ? "Belum ada lelang." : "";
+    const now = Date.now();
+    items.forEach(item => {
+        const isExpired = (item.expiresAt || 0) < now;
+        const isMine = item.sellerId === currentUserUid;
+        const itemPrice = item.buyoutPrice || item.price || 0; 
+        let btnHtml = "";
+
+        if (isMine) {
+            if (item.highestBid) {
+                btnHtml += `<div style="margin-bottom:4px; font-size:10px;">Bid: <strong style="color:#00d2ff">${item.highestBid.amount}G</strong> (${escapeHTML(item.highestBid.buyerName)})</div>`;
+                btnHtml += `<button onclick="window.actionBid('${item.id}', 'accept')" style="padding:2px 5px; font-size:9px; background:#28a745;">Terima</button> `;
+                btnHtml += `<button onclick="window.actionBid('${item.id}', 'reject')" style="padding:2px 5px; font-size:9px; background:#dc3545;">Tolak</button>`;
+                if (isExpired) btnHtml += `<div style="color:#dc3545; font-size:9px; margin-top:3px;">⏰ Habis!</div>`;
+            } else {
+                btnHtml += `<div style="margin-bottom:4px;">${isExpired ? '<span style="color:#dc3545; font-size:9px;">⏰ Kadaluarsa</span>' : '<span style="color:#28a745; font-size:9px;">🟢 Aktif</span>'}</div>`;
+                btnHtml += `<button onclick="window.cancelAuction('${item.id}')" style="padding:2px 5px; font-size:9px; background:#555;">Tarik</button>`;
+            }
+        } else {
+            const currentBid = item.highestBid ? item.highestBid.amount : 0;
+            if (!isExpired) {
+                btnHtml += `<div style="font-size:9px; margin-bottom:4px;">Bid: ${currentBid > 0 ? currentBid + 'G' : '-'}</div>`;
+                btnHtml += `<button onclick="window.placeBid('${item.id}', '${escapeHTML(item.itemName)}', ${currentBid})" style="padding:2px 5px; font-size:9px; background:#007bff;">Tawar</button> `;
+                btnHtml += `<button onclick="window.buyFromAuction('${item.id}', '${escapeHTML(item.itemName)}', ${itemPrice}, '${item.sellerId}')" style="padding:2px 5px; font-size:9px; background:#e0a800;">Beli ${itemPrice}G</button>`;
+            } else { btnHtml += `<span style="color:#dc3545; font-size:10px;">Selesai</span>`; }
+        }
+        auctionList.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding: 6px 0;"><div><strong style="color:#00d2ff;">${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: ${escapeHTML(item.sellerName)} | 💰 ${itemPrice.toLocaleString()}G</span></div><div style="text-align: right;">${btnHtml}</div></div>`;
+    });
+}
+
+// 7. RENDER PARTY
+export function renderPartyUI(parties, currentUserUid) {
+    const partyList = document.getElementById('party-list');
+    if (!partyList) return;
+    partyList.innerHTML = parties.length === 0 ? "Tidak ada party yang mencari anggota." : "";
+    parties.forEach(p => {
+        const inParty = p.members.find(m => m.uid === currentUserUid);
+        const isLeader = p.leaderId === currentUserUid;
+        let memberNames = p.members.map(m => `<span style="color:#a8b2b8;">${escapeHTML(m.username)} (Lv.${m.level})</span>`).join(", ");
+        let btnHtml = "";
+
+        if (inParty) {
+            if (isLeader) { btnHtml += `<button onclick="window.startFb('${p.id}')" style="padding: 4px 8px; font-size: 10px; background: #28a745; margin-right:4px;">▶️ MULAI FB</button>`; }
+            btnHtml += `<button onclick="window.leaveParty('${p.id}')" style="padding: 4px 8px; font-size: 10px; background: #dc3545;">Keluar</button>`;
+        }
+        partyList.innerHTML += `<div style="border-bottom:1px solid #333; padding: 6px 0; display:flex; justify-content:space-between; align-items:center;"><div style="line-height:1.3;"><strong style="color:#d8b4fe; font-size:12px;">${p.fbName}</strong><br><span style="font-size:10px; color:#aaa;">Leader: <span style="color:#ffca28;">${escapeHTML(p.leaderName)}</span> | Anggota (${p.members.length}/4)</span><br><div style="font-size:9px; margin-top:2px;">[ ${memberNames} ]</div></div><div>${btnHtml}</div></div>`;
+    });
+}
+
+// 8. RENDER GUILD
+export function renderGuildUI(stats, globalGuilds, guildUpgradesMap) {
+    const unjoinedView = document.getElementById('guild-unjoined-view');
+    const joinedView = document.getElementById('guild-joined-view');
+    if (!stats || !stats.uid || !unjoinedView || !joinedView) return; 
+
+    if (!stats.guildId || !globalGuilds[stats.guildId]) {
+        unjoinedView.style.display = 'block';
+        joinedView.style.display = 'none';
+        
+        const listContainer = document.getElementById('guild-available-list');
+        listContainer.innerHTML = "";
+        
+        const gArray = Object.values(globalGuilds);
+        if (gArray.length === 0) { listContainer.innerHTML = "Belum ada klan di server."; }
+        else {
+            gArray.forEach(g => {
+                const maxCap = guildUpgradesMap[g.level].maxMembers;
+                const isFull = g.members.length >= maxCap;
+                const btn = isFull ? `<span style="color:#dc3545; font-size:10px;">Penuh</span>` : `<button onclick="window.joinGuildAction('${g.id}')" style="padding:2px 6px; font-size:9px; background:#007bff;">Gabung</button>`;
+                listContainer.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding:4px 0;">
+                    <div><strong style="color:#00d2ff;">${escapeHTML(g.name)}</strong> (Lv.${g.level})<br><span style="color:#aaa; font-size:9px;">Ketua: ${escapeHTML(g.leaderName)} | Anggota: ${g.members.length}/${maxCap}</span></div>
+                    <div>${btn}</div>
+                </div>`;
+            });
+        }
+    } else {
+        unjoinedView.style.display = 'none';
+        joinedView.style.display = 'block';
+
+        const myGuild = globalGuilds[stats.guildId];
+        const isLeader = myGuild.leaderId === stats.uid;
+        const b = guildUpgradesMap[myGuild.level].buff;
+
+        document.getElementById('guild-name-display').innerText = myGuild.name;
+        document.getElementById('guild-level-display').innerText = myGuild.level;
+        document.getElementById('guild-leader-display').innerText = myGuild.leaderName;
+        document.getElementById('guild-vault-display').innerText = (myGuild.vaultGold || 0).toLocaleString();
+        document.getElementById('guild-motd-display').innerText = escapeHTML(myGuild.announcement);
+        document.getElementById('guild-buff-display').innerText = `+${b.atk} ATK, +${b.hp} HP, +${b.def} DEF`;
+
+        const controls = document.getElementById('guild-management-controls');
+        if (isLeader) {
+            controls.style.display = 'flex';
+            const costNext = myGuild.level < 5 ? guildUpgradesMap[myGuild.level + 1].cost.toLocaleString() + ' G' : 'MAX';
+            document.getElementById('btn-upgrade-guild').innerText = `⏫ Level Up (${costNext})`;
+        } else {
+            controls.style.display = 'none';
+        }
+
+        const memberList = document.getElementById('guild-member-list');
+        memberList.innerHTML = "";
+        myGuild.members.forEach(m => {
+            const isMe = m.uid === stats.uid;
+            const kickBtn = (isLeader && !isMe) ? `<button onclick="window.kickMemberAction('${m.uid}')" style="padding:1px 4px; font-size:8px; background:#dc3545; margin-left:5px;">Kick</button>` : '';
+            memberList.innerHTML += `
+            <div style="border-bottom:1px solid #333; padding:3px 0; display:flex; justify-content:space-between; align-items:center;">
+                <div><span style="color:${isMe ? '#ffca28' : '#fff'};">${escapeHTML(m.name)}</span> (Lv.${m.level}) ${kickBtn}</div>
+                <div style="color:#aaa;">Donasi: ${m.contribution.toLocaleString()} G</div>
+            </div>`;
+        });
+    }
+}
+
+// 9. RENDER OBROLAN CHAT
+export function renderChatUI(messages, currentChatChannel) {
+    const chatBox = document.getElementById('chat-box');
+    if (!chatBox) return; 
+    chatBox.innerHTML = "";
+    let chColor = '#aaa';
+    let chLabel = 'DUNIA';
+    if (currentChatChannel === 'guild') { chColor = '#28a745'; chLabel = 'GUILD'; }
+    if (currentChatChannel === 'party') { chColor = '#00d2ff'; chLabel = 'PARTY'; }
+
+    messages.forEach(m => { chatBox.innerHTML += `<div><strong style="color:${chColor}; font-size:9px;">[${chLabel}]</strong> <span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`; });
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
