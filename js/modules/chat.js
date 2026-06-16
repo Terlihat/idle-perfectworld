@@ -1,26 +1,36 @@
-import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+/* ===================================================
+   MODUL OBROLAN / CHAT (Multi-Channel)
+   =================================================== */
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-export function listenToChat(db, callbackRender) {
-    const q = query(collection(db, "chats"), orderBy("timestamp", "desc"), limit(30));
+export function listenToChat(db, channelType, channelId, callbackRender) {
+    // Tentukan lokasi database berdasarkan channel
+    let path = "chats"; 
+    if (channelType === "guild" && channelId) path = `guilds/${channelId}/chats`;
+    if (channelType === "party" && channelId) path = `parties/${channelId}/chats`;
+
+    const q = query(collection(db, path), orderBy("timestamp", "asc"));
     return onSnapshot(q, (snapshot) => {
         let messages = [];
-        snapshot.forEach((doc) => {
-            messages.push(doc.data({ serverTimestamps: 'estimate' }));
-        });
-        callbackRender(messages.reverse());
+        snapshot.forEach((doc) => messages.push(doc.data()));
+        callbackRender(messages);
     });
 }
 
-export async function sendChat(db, uid, username, messageText) {
-    if (!uid || !messageText.trim()) return;
+export async function sendChat(db, uid, username, text, channelType, channelId) {
+    if (!text || !text.trim()) return;
+    
+    // Tentukan lokasi database berdasarkan channel
+    let path = "chats";
+    if (channelType === "guild" && channelId) path = `guilds/${channelId}/chats`;
+    if (channelType === "party" && channelId) path = `parties/${channelId}/chats`;
+
     try {
-        await addDoc(collection(db, "chats"), {
+        await addDoc(collection(db, path), {
             uid: uid,
-            username: username || "Hero Anonim",
-            text: messageText.trim(),
+            username: username,
+            text: text,
             timestamp: serverTimestamp()
         });
-    } catch (err) {
-        console.error("Gagal mengirim obrolan:", err);
-    }
+    } catch (err) { console.error("Gagal mengirim pesan:", err); }
 }

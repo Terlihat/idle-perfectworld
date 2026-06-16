@@ -1,5 +1,5 @@
 /* ===================================================
-   MODUL BATTLE DUNGEON (Fix Loop Level Up)
+   MODUL BATTLE DUNGEON (Fix Death Rollback Transaction)
    =================================================== */
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { MONSTER_DB } from '../data/monsters.js';
@@ -17,7 +17,8 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
     const userRef = doc(db, "users", uid);
 
     try {
-        await runTransaction(db, async (ts) => {
+        // PERBAIKAN: Gunakan return msg, JANGAN gunakan throw agar database tetap tersimpan!
+        const resultMsg = await runTransaction(db, async (ts) => {
             const data = (await ts.get(userRef)).data();
             
             const currentStam = data.currentStamina !== undefined ? data.currentStamina : 100;
@@ -28,8 +29,8 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
             const stamReq = Math.max(1, 10 - (mount?.stamDiscount || 0)); 
             const goldMult = 1 + (mount?.goldBonus || 0); 
 
-            if (currentHealth <= 0) throw "Anda sudah mati! Pulihkan HP Anda di Apotek sebelum bertarung.";
-            if (currentStam < stamReq) throw `Stamina tidak cukup! Butuh ${stamReq} Stamina (Efek Mount).`;
+            if (currentHealth <= 0) return "Anda sudah mati! Pulihkan HP Anda di Apotek sebelum bertarung.";
+            if (currentStam < stamReq) return `Stamina tidak cukup! Butuh ${stamReq} Stamina (Efek Mount).`;
 
             const playerDmg = Math.max(1, playerStats.patk - monster.def);
             const monsterDmg = Math.max(1, monster.atk - playerStats.def);
@@ -41,8 +42,9 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
             let logMessage = "";
 
             if (newHp <= 0) {
+                // Simpan HP jadi 0
                 ts.update(userRef, { currentHp: 0, currentStamina: Math.max(0, currentStam - stamReq) });
-                throw `💀 KEMATIAN! Anda terbunuh oleh ${monster.name} setelah bertarung sengit. Silakan isi HP.`;
+                return `💀 KEMATIAN! Anda terbunuh oleh ${monster.name} setelah bertarung sengit. Silakan isi HP.`;
             } else {
                 let newExp = (data.exp || 0) + monster.rewardExp;
                 let rewardGoldAkhir = Math.floor(monster.rewardGold * goldMult);
@@ -61,7 +63,6 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                     logMessage += `\n🎁 DROP ITEM: Anda mendapatkan [${monster.drop.item}]!`;
                 }
 
-                // FIX LOOP LEVEL UP
                 let statPointsGained = 0;
                 let leveledUp = false;
                 while (newExp >= newLevel * 100) {
@@ -86,8 +87,12 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                         quests: newQuests 
                     });
                 }
-                alert(logMessage);
+                return logMessage;
             }
         });
+        
+        // Memunculkan alert setelah transaksi DATABASE SELESAI
+        if (resultMsg) alert(resultMsg);
+
     } catch (err) { alert(err); }
 }

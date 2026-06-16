@@ -1,6 +1,6 @@
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js"; // TAMBAHKAN updateDoc
 
 import { selectCharacterClass, addCharacterStat, startStaminaRegeneration } from './modules/character.js';
 import { equipFromInventory, sellItemToNPC } from './modules/inventory.js';
@@ -15,8 +15,6 @@ import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, 
 import { listenToParties, createOrJoinParty, leaveParty, startFbBattle } from './modules/party.js';
 import { assignRandomQuests, claimQuestReward } from './modules/quest.js';
 import { listenToGuilds, createGuild, joinGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, kickMember, disbandGuild } from './modules/guild.js';
-
-// PERBARUI IMPORT KOTAK SURAT
 import { listenToMailbox, claimMailReward, deleteMail } from './modules/mailbox.js';
 
 let currentUserUid = null;
@@ -29,12 +27,37 @@ let staminaRegenInterval = null;
 let globalGuilds = {}; 
 let guildUpgradesMap = {};
 
+let currentChatChannel = 'world'; 
+let currentPartyId = null;
+let unsubChatListener = null;
+
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
     document.getElementById(screenId).style.display = 'block';
 }
 
 function escapeHTML(str) { return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : ""; }
+
+function startDynamicChat() {
+    if (unsubChatListener) unsubChatListener(); 
+    let targetId = null;
+    if (currentChatChannel === 'guild') targetId = currentPlayerStats.guildId;
+    if (currentChatChannel === 'party') targetId = currentPartyId;
+
+    unsubChatListener = listenToChat(db, currentChatChannel, targetId, (messages) => {
+        const chatBox = document.getElementById('chat-box');
+        if (chatBox) { 
+            chatBox.innerHTML = "";
+            let chColor = '#aaa';
+            let chLabel = 'DUNIA';
+            if (currentChatChannel === 'guild') { chColor = '#28a745'; chLabel = 'GUILD'; }
+            if (currentChatChannel === 'party') { chColor = '#00d2ff'; chLabel = 'PARTY'; }
+
+            messages.forEach(m => { chatBox.innerHTML += `<div><strong style="color:${chColor}; font-size:9px;">[${chLabel}]</strong> <span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`; });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    });
+}
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -52,6 +75,7 @@ onAuthStateChanged(auth, async (user) => {
         currentUserUid = null;
         if (staminaRegenInterval) clearInterval(staminaRegenInterval);
         activeUnsubscribeListeners.forEach(unsub => unsub());
+        if (unsubChatListener) unsubChatListener();
         activeUnsubscribeListeners = [];
         showScreen('screen-auth');
     }
@@ -71,6 +95,17 @@ function startLiveGameSync() {
 
         const btnAdmin = document.getElementById('btn-admin-panel');
         if (btnAdmin) btnAdmin.style.display = (d.role === 'admin') ? 'inline-block' : 'none';
+
+        // CEK SINKRONISASI STAT POIN OTOMATIS JIKA DATABASE DI-EDIT ADMIN
+        const baseTotal = d.characterClass === 'Warrior' ? 42 : 45;
+        const expectedTotal = baseTotal + ((d.level || 1) - 1) * 5;
+        const currentTotal = (d.str || 0) + (d.con || 0) + (d.dex || 0) + (d.int || 0) + (d.statPoints || 0);
+
+        if (currentTotal < expectedTotal) {
+            const missing = expectedTotal - currentTotal;
+            updateDoc(doc(db, "users", currentUserUid), { statPoints: (d.statPoints || 0) + missing });
+            return; // Berhenti sebentar, snapshot akan refresh otomatis setelah poin ditambahkan!
+        }
 
         if (document.getElementById('player-name')) {
             document.getElementById('player-name').innerText = d.username;
@@ -96,6 +131,13 @@ function startLiveGameSync() {
                 document.getElementById('guild-buff-indicator').innerText = `🛡️ Guild Buff: +${gBuff.atk} ATK, +${gBuff.hp} HP, +${gBuff.def} DEF`;
             } else {
                 document.getElementById('guild-buff-indicator').innerText = `🛡️ Guild Buff: Belum bergabung.`;
+            }
+
+            if (!d.guildId && currentChatChannel === 'guild') {
+                currentChatChannel = 'world';
+                const sel = document.getElementById('chat-channel-select');
+                if(sel) sel.value = 'world';
+                startDynamicChat();
             }
 
             const effectiveMaxHp = (d.maxHp || 1000) + gBuff.hp;
@@ -174,6 +216,7 @@ function startLiveGameSync() {
                 else { document.getElementById('btn-claim-bounty').style.display = 'none'; }
             }
             renderGuildPanel(); 
+            if (!unsubChatListener) startDynamicChat();
         }
 
         const invGrid = document.getElementById('inventory-grid');
@@ -201,16 +244,6 @@ function startLiveGameSync() {
         }
     });
 
-    const unsubChat = listenToChat(db, (messages) => {
-        const chatBox = document.getElementById('chat-box');
-        if (chatBox) { 
-            chatBox.innerHTML = "";
-            messages.forEach(m => { chatBox.innerHTML += `<div><span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`; });
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-    });
-
-    // PERBAIKAN RENDERING SURAT: TAMPILKAN HADIAH & TOMBOL HAPUS MANUAL
     const unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
         const mailDiv = document.getElementById('mailbox-list');
         if (mailDiv) { 
@@ -227,14 +260,8 @@ function startLiveGameSync() {
                     if (!mail.isClaimed) { attachHtml += `<button onclick="window.claimReward('${mail.id}')" style="padding: 2px 6px; font-size: 10px; background: #28a745; float: right; margin-left:4px;">Klaim</button>`; } 
                     else if (mail.isClaimed) { attachHtml += `<span style="font-size:9px; color:#555; float:right; margin-left:4px;">(Klaim Selesai)</span>`; }
                 }
-                
-                // Menyematkan Tombol Hapus Manual
                 attachHtml += `<button onclick="window.deleteMailAction('${mail.id}')" style="padding: 2px 6px; font-size: 10px; background: #dc3545; float: right;">Hapus</button>`;
-
-                mailDiv.innerHTML += `
-                <div style="border-bottom:1px solid #333; padding:6px 0; overflow:hidden;">
-                    <strong style="color:#ffcc00; font-size: 12px;">[Sistem]</strong> <span style="font-size: 12px;">${escapeHTML(mail.title)}</span> ${attachHtml} ${rewardText}
-                </div>`; 
+                mailDiv.innerHTML += `<div style="border-bottom:1px solid #333; padding:6px 0; overflow:hidden;"><strong style="color:#ffcc00; font-size: 12px;">[Sistem]</strong> <span style="font-size: 12px;">${escapeHTML(mail.title)}</span> ${attachHtml} ${rewardText}</div>`; 
             });
         }
     });
@@ -275,6 +302,20 @@ function startLiveGameSync() {
 
     const unsubParties = listenToParties(db, (parties) => {
         const partyList = document.getElementById('party-list');
+        
+        let myParty = parties.find(p => p.members.find(m => m.uid === currentUserUid));
+        let newPartyId = myParty ? myParty.id : null;
+
+        if (currentPartyId !== newPartyId) {
+            currentPartyId = newPartyId;
+            if (!currentPartyId && currentChatChannel === 'party') {
+                currentChatChannel = 'world';
+                const sel = document.getElementById('chat-channel-select');
+                if(sel) sel.value = 'world';
+                startDynamicChat();
+            }
+        }
+
         if (partyList) {
             partyList.innerHTML = parties.length === 0 ? "Tidak ada party yang sedang mencari anggota." : "";
             parties.forEach(p => {
@@ -292,7 +333,7 @@ function startLiveGameSync() {
         }
     });
 
-    activeUnsubscribeListeners.push(unsubData, unsubChat, unsubMail, unsubAuction, unsubParties, unsubGuilds);
+    activeUnsubscribeListeners.push(unsubData, unsubMail, unsubAuction, unsubParties, unsubGuilds);
 }
 
 function renderGuildPanel() {
@@ -359,17 +400,46 @@ function renderGuildPanel() {
     }
 }
 
-// WINDOW ROUTING LOGIC
+document.getElementById('chat-channel-select')?.addEventListener('change', (e) => {
+    const val = e.target.value;
+    if (val === 'guild' && !currentPlayerStats.guildId) {
+        alert("Anda belum bergabung dengan Guild!");
+        e.target.value = currentChatChannel; return;
+    }
+    if (val === 'party' && !currentPartyId) {
+        alert("Anda belum masuk ke dalam Ruang Tunggu Party FB!");
+        e.target.value = currentChatChannel; return;
+    }
+    currentChatChannel = val;
+    startDynamicChat();
+});
+
+const chatInput = document.getElementById('chat-input');
+const btnSendChat = document.getElementById('btn-send-chat');
+function executeSendingChat() { 
+    if (chatInput && chatInput.value.trim()) { 
+        let targetId = null;
+        if (currentChatChannel === 'guild') targetId = currentPlayerStats.guildId;
+        if (currentChatChannel === 'party') targetId = currentPartyId;
+        
+        sendChat(db, currentUserUid, playerUsername, chatInput.value, currentChatChannel, targetId); 
+        chatInput.value = ""; 
+    } 
+}
+btnSendChat?.addEventListener('click', executeSendingChat);
+chatInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); executeSendingChat(); } });
+
 window.handleInventoryClick = function(itemName) {
     if (inventoryMode === "EQUIP") {
         if (itemName === "Tiket Ganti Nama") { const inputName = prompt("Masukkan Nama Karakter Baru:"); if (inputName && inputName.trim() !== "") equipFromInventory(db, currentUserUid, itemName, inputName); } 
         else if (itemName === "Tiket Ubah Job") { const inputJob = prompt("Pilih Job Baru (Ketik: Warrior atau Mage):"); if (inputJob === "Warrior" || inputJob === "Mage") equipFromInventory(db, currentUserUid, itemName, inputJob); } 
+        else if (itemName === "Buku Reset Stats") { if(confirm("Gunakan Buku Reset Stats? Semua alokasi manual akan dikembalikan.")) equipFromInventory(db, currentUserUid, itemName, null); }
         else { equipFromInventory(db, currentUserUid, itemName, null); }
     } 
     else if (inventoryMode === "SELL") { sellItemToNPC(db, currentUserUid, itemName); } 
     else if (inventoryMode === "BANK") { depositItem(db, currentUserUid, itemName); }
     else if (inventoryMode === "AUCTION") {
-        if (itemName.includes("Tiket") || itemName.includes("Ramuan Stamina") || itemName.includes("Naga Terbang")) return alert("Item premium tidak bisa dilelang.");
+        if (itemName.includes("Tiket") || itemName.includes("Buku") || itemName.includes("Ramuan Stamina") || itemName.includes("Naga Terbang")) return alert("Item premium tidak bisa dilelang.");
         const priceStr = prompt(`Masukkan Harga Beli Langsung (Gold) untuk 1x [${itemName}]:`);
         const price = parseInt(priceStr);
         if (price > 0) listAuctionItem(db, currentUserUid, itemName, price, playerUsername);
@@ -377,8 +447,6 @@ window.handleInventoryClick = function(itemName) {
 };
 
 window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, itemName); };
-
-// ROUTING UI KOTAK SURAT BARU
 window.claimReward = function(mailId) { claimMailReward(db, currentUserUid, mailId); };
 window.deleteMailAction = function(mailId) { if (confirm("Hapus surat ini secara permanen?")) deleteMail(db, currentUserUid, mailId); };
 
@@ -399,11 +467,9 @@ window.actionBid = function(id, action) {
 window.addStat = function(statName) { addCharacterStat(db, currentUserUid, statName); };
 window.leaveParty = function(partyId) { leaveParty(db, partyId, currentUserUid); };
 window.startFb = function(partyId) { startFbBattle(db, currentUserUid, partyId); };
-
 window.joinGuildAction = function(guildId) { if (confirm("Bergabung dengan klan ini?")) joinGuild(db, currentUserUid, currentPlayerStats, guildId); };
 window.kickMemberAction = function(targetUid) { if (confirm("Keluarkan anggota ini dari klan?")) kickMember(db, currentUserUid, currentPlayerStats.guildId, targetUid); };
 
-// BUTTON BINDINGS PUSAT
 document.getElementById('btn-create-guild')?.addEventListener('click', () => {
     const name = document.getElementById('input-guild-name').value;
     if (confirm(`Dirikan Klan [${name}] seharga 100,000 Gold?`)) createGuild(db, currentUserUid, currentPlayerStats, name);
@@ -436,7 +502,7 @@ function clearActiveModeClasses() { ['btn-mode-equip', 'btn-mode-sell', 'btn-mod
 document.getElementById('btn-mode-equip')?.addEventListener('click', () => { inventoryMode = "EQUIP"; clearActiveModeClasses(); document.getElementById('btn-mode-equip').className = "mode-active"; });
 document.getElementById('btn-mode-sell')?.addEventListener('click', () => { inventoryMode = "SELL"; clearActiveModeClasses(); document.getElementById('btn-mode-sell').className = "mode-sell-active"; });
 document.getElementById('btn-mode-bank')?.addEventListener('click', () => { inventoryMode = "BANK"; clearActiveModeClasses(); document.getElementById('btn-mode-bank').className = "mode-active"; });
-document.getElementById('btn-mode-auction')?.addEventListener('click', () => { inventoryMode = "AUTION"; clearActiveModeClasses(); document.getElementById('btn-mode-auction').className = "mode-auction-active"; });
+document.getElementById('btn-mode-auction')?.addEventListener('click', () => { inventoryMode = "AUCTION"; clearActiveModeClasses(); document.getElementById('btn-mode-auction').className = "mode-auction-active"; });
 
 document.getElementById('btn-create-party')?.addEventListener('click', () => { createOrJoinParty(db, document.getElementById('fb-select').value, currentPlayerStats); });
 document.getElementById('btn-attack-dungeon')?.addEventListener('click', () => attackMonster(db, currentUserUid, document.getElementById('dungeon-select').value, currentPlayerStats));
@@ -466,10 +532,7 @@ document.getElementById('btn-mall-name')?.addEventListener('click', () => buyMal
 document.getElementById('btn-mall-job')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Tiket Ubah Job', 100));
 document.getElementById('btn-mall-stamina')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Ramuan Stamina', 10));
 
-const chatInput = document.getElementById('chat-input');
-const btnSendChat = document.getElementById('btn-send-chat');
-function executeSendingChat() { if (chatInput && chatInput.value.trim()) { sendChat(db, currentUserUid, playerUsername, chatInput.value); chatInput.value = ""; } }
-btnSendChat?.addEventListener('click', executeSendingChat);
-chatInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); executeSendingChat(); } });
+// TOMBOL BARU UNTUK ITEM RESET STATS (DI ITEM MALL)
+document.getElementById('btn-mall-reset')?.addEventListener('click', () => buyMallItem(db, currentUserUid, 'Buku Reset Stats', 100));
 
 document.getElementById('btn-admin-panel')?.addEventListener('click', () => window.location.href = './admin/index.html');

@@ -1,12 +1,13 @@
 /* ===================================================
-   MODUL INVENTORY (Fix Batas Ramuan HP & Guild Buff)
+   MODUL INVENTORY (Dengan Fitur Reset Stats)
    =================================================== */
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ITEM_DB } from '../data/items.js';
 
 export async function equipFromInventory(db, uid, itemName, specialInput) {
-    if (!uid || !ITEM_DB[itemName]) return;
-    const itemData = ITEM_DB[itemName];
+    if (!uid) return;
+    // Bypass validasi ITEM_DB jika itemnya adalah fitur khusus (seperti Buku Reset)
+    const itemData = ITEM_DB[itemName] || { type: "special" }; 
     const userRef = doc(db, "users", uid);
 
     try {
@@ -44,7 +45,17 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
                     updates.characterClass = specialInput;
                     if (specialInput === 'Warrior') { updates.str = 15; updates.con = 20; updates.dex = 5; updates.int = 2; }
                     else { updates.str = 2; updates.con = 8; updates.dex = 10; updates.int = 25; }
-                } else if (itemName === "Ramuan Stamina") {
+                } 
+                // FITUR BARU: RESET STATUS
+                else if (itemName === "Buku Reset Stats") {
+                    let isWarrior = data.characterClass === 'Warrior';
+                    updates.str = isWarrior ? 15 : 2;
+                    updates.con = isWarrior ? 20 : 8;
+                    updates.dex = isWarrior ? 5 : 10;
+                    updates.int = isWarrior ? 2 : 25;
+                    updates.statPoints = ((data.level || 1) - 1) * 5; 
+                }
+                else if (itemName === "Ramuan Stamina") {
                     const maxStam = data.maxStamina || 100;
                     const curStam = data.currentStamina || 0;
                     if (curStam >= maxStam) throw "Stamina penuh!";
@@ -53,29 +64,20 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
                 ts.update(userRef, updates); return;
             }
 
-            // LOGIKA CONSUMABLE (FIX POTION HP & MP)
             if (itemData.type === "consumable") {
                 inv[itemName] -= 1;
                 if (inv[itemName] === 0) delete inv[itemName];
                 let updates = { inventory: inv };
 
-                // Hitung Buff HP Guild di dalam transaksi agar akurat
                 let guildHpBuff = 0;
                 if (data.guildId) {
                     const guildSnap = await ts.get(doc(db, "guilds", data.guildId));
                     if (guildSnap.exists()) {
                         const gLvl = guildSnap.data().level || 1;
-                        const guildUpgrades = {
-                            1: { buff: { hp: 0 } },
-                            2: { buff: { hp: 100 } },
-                            3: { buff: { hp: 250 } },
-                            4: { buff: { hp: 500 } },
-                            5: { buff: { hp: 1000 } }
-                        };
+                        const guildUpgrades = { 1: { buff: { hp: 0 } }, 2: { buff: { hp: 100 } }, 3: { buff: { hp: 250 } }, 4: { buff: { hp: 500 } }, 5: { buff: { hp: 1000 } } };
                         guildHpBuff = guildUpgrades[gLvl].buff.hp;
                     }
                 }
-
                 const effectiveMaxHp = (data.maxHp || 1000) + guildHpBuff;
 
                 if (itemName === "Ramuan HP") updates.currentHp = Math.min(effectiveMaxHp, (data.currentHp || 0) + 500);
