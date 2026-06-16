@@ -2,8 +2,11 @@ import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// IMPORT MODULES
-import { loadUIComponents } from './ui-loader.js'; // SUNTIKAN UI LOADER
+// IMPORT MODULES UI
+import { loadUIComponents } from './ui-loader.js';
+import { renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI, escapeHTML } from './modules/ui-renderer.js';
+
+// IMPORT MODULES SISTEM
 import { selectCharacterClass, addCharacterStat, startStaminaRegeneration } from './modules/character.js';
 import { equipFromInventory, sellItemToNPC } from './modules/inventory.js';
 import { refineEquipment } from './modules/blacksmith.js';
@@ -37,8 +40,6 @@ function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
     document.getElementById(screenId).style.display = 'block';
 }
-
-function escapeHTML(str) { return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : ""; }
 
 function startDynamicChat() {
     if (unsubChatListener) unsubChatListener(); 
@@ -99,9 +100,7 @@ function startLiveGameSync() {
         const d = docSnap.data();
         playerUsername = d.username || "Hero Anonim";
 
-        const btnAdmin = document.getElementById('btn-admin-panel');
-        if (btnAdmin) btnAdmin.style.display = (d.role === 'admin') ? 'inline-block' : 'none';
-
+        // Cek Sinkronisasi Poin Stat Jika Diubah Admin
         const baseTotal = d.characterClass === 'Warrior' ? 42 : 45;
         const expectedTotal = baseTotal + ((d.level || 1) - 1) * 5;
         const currentTotal = (d.str || 0) + (d.con || 0) + (d.dex || 0) + (d.int || 0) + (d.statPoints || 0);
@@ -112,141 +111,27 @@ function startLiveGameSync() {
             return; 
         }
 
-        if (document.getElementById('player-name')) {
-            document.getElementById('player-name').innerText = d.username;
-            document.getElementById('player-class').innerText = d.characterClass;
-            document.getElementById('player-level').innerText = d.level || 1;
-            document.getElementById('header-gold').innerText = (d.gold || 0).toLocaleString();
-            document.getElementById('header-coin').innerText = (d.coin || 0).toLocaleString();
-            document.getElementById('player-bank').innerText = (d.bankGold || 0).toLocaleString();
-            
-            const elUid = document.getElementById('player-uid');
-            if (elUid) elUid.innerText = currentUserUid;
-
-            const statPoints = d.statPoints || 0;
-            document.getElementById('player-stat-points').innerText = statPoints;
-
-            const addStatBtns = document.querySelectorAll('.btn-add-stat');
-            addStatBtns.forEach(btn => { btn.style.display = statPoints > 0 ? 'inline-block' : 'none'; });
-
-            let gBuff = { atk: 0, hp: 0, def: 0 };
-            if (d.guildId && globalGuilds[d.guildId]) {
-                const gLvl = globalGuilds[d.guildId].level;
-                gBuff = guildUpgradesMap[gLvl].buff;
-                document.getElementById('guild-buff-indicator').innerText = `🛡️ Guild Buff: +${gBuff.atk} ATK, +${gBuff.hp} HP, +${gBuff.def} DEF`;
-            } else {
-                document.getElementById('guild-buff-indicator').innerText = `🛡️ Guild Buff: Belum bergabung.`;
-            }
-
-            if (!d.guildId && currentChatChannel === 'guild') {
-                currentChatChannel = 'world';
-                const sel = document.getElementById('chat-channel-select');
-                if(sel) sel.value = 'world';
-                startDynamicChat();
-            }
-
-            const effectiveMaxHp = (d.maxHp || 1000) + gBuff.hp;
-
-            const maxExp = (d.level || 1) * 100;
-            document.getElementById('exp-text').innerText = `${d.exp || 0} / ${maxExp}`;
-            document.getElementById('exp-bar').style.width = `${Math.min(((d.exp || 0) / maxExp) * 100, 100)}%`;
-            document.getElementById('char-hp-text').innerText = `${d.currentHp} / ${effectiveMaxHp}`;
-            document.getElementById('char-hp-bar').style.width = `${Math.min((d.currentHp / effectiveMaxHp) * 100, 100)}%`;
-            document.getElementById('char-mp-text').innerText = `${d.currentMp} / ${d.maxMp}`;
-            document.getElementById('char-mp-bar').style.width = `${Math.min((d.currentMp / d.maxMp) * 100, 100)}%`;
-            
-            const curStam = d.currentStamina || 0;
-            const maxStam = d.maxStamina || 100;
-            document.getElementById('char-stam-text').innerText = `${curStam} / ${maxStam}`;
-            document.getElementById('char-stam-bar').style.width = `${Math.min((curStam / maxStam) * 100, 100)}%`;
-
-            document.getElementById('stat-str').innerText = d.str;
-            document.getElementById('stat-con').innerText = d.con;
-            document.getElementById('stat-dex').innerText = d.dex;
-            document.getElementById('stat-int').innerText = d.int;
-
-            const eq = d.equipment || {};
-            document.getElementById('eq-weapon').innerText = eq.weapon ? `${eq.weapon.name}${eq.weapon.refine ? ` (+${eq.weapon.refine})` : ""}` : "Kosong";
-            document.getElementById('eq-armor').innerText = eq.armor ? `${eq.armor.name}${eq.armor.refine ? ` (+${eq.armor.refine})` : ""}` : "Kosong";
-            document.getElementById('eq-acc').innerText = eq.accessory ? `${eq.accessory.name}${eq.accessory.refine ? ` (+${eq.accessory.refine})` : ""}` : "Kosong";
-            document.getElementById('eq-mount').innerText = eq.mount ? `${eq.mount.name}` : "Jalan Kaki";
-
-            let wBonus = 1 + (eq.weapon?.refine || 0) * 0.15; 
-            let aBonus = 1 + (eq.armor?.refine || 0) * 0.15;
-            let cBonus = 1 + (eq.accessory?.refine || 0) * 0.10;
-            
-            const patk = 50 + (d.str * 10) + Math.floor((eq.weapon?.patk || 0) * wBonus) + gBuff.atk; 
-            const matk = 50 + (d.int * 10) + Math.floor((eq.weapon?.matk || 0) * wBonus) + gBuff.atk;
-            const def = 10 + (d.con * 5) + Math.floor((eq.armor?.def || 0) * aBonus) + gBuff.def; 
-            
-            currentPlayerStats = { 
-                uid: currentUserUid, username: d.username, 
-                level: d.level, currentHp: d.currentHp, maxHp: effectiveMaxHp, currentStamina: curStam,
-                str: d.str, con: d.con, int: d.int, dex: d.dex,
-                patk: patk, matk: matk, def: def, equipment: eq,
-                guildId: d.guildId, gold: d.gold
-            };
-
-            document.getElementById('stat-patk').innerText = patk; 
-            document.getElementById('stat-matk').innerText = matk;
-            document.getElementById('stat-def').innerText = def; 
-            document.getElementById('stat-crit').innerText = (d.dex * 0.5).toFixed(1) + "%";
-            document.getElementById('stat-eva').innerText = (d.dex * 0.2).toFixed(1) + "%"; 
-            document.getElementById('stat-acc').innerText = (80 + (d.dex * 0.5) + Math.floor((eq.accessory?.accBonus || 0) * cBonus)).toFixed(1) + "%";
-            
-            const q = d.quests || {};
-            const today = new Date().toLocaleDateString('id-ID');
-            const btnTake = document.getElementById('btn-take-quest');
-            
-            if (q.lastReset !== today) {
-                btnTake.style.display = 'block';
-                document.getElementById('quest-daily-title').innerText = "Belum Diambil";
-                document.getElementById('quest-daily-prog').innerText = "0/0";
-                document.getElementById('quest-bounty-title').innerText = "Belum Diambil";
-                document.getElementById('quest-bounty-prog').innerText = "0/0";
-                document.getElementById('btn-claim-daily').style.display = 'none';
-                document.getElementById('btn-claim-bounty').style.display = 'none';
-            } else {
-                btnTake.style.display = 'none';
-                document.getElementById('quest-daily-title').innerText = q.daily.title;
-                document.getElementById('quest-daily-prog').innerText = `${q.daily.progress}/${q.daily.target}`;
-                if (q.daily.isClaimed) { document.getElementById('quest-daily-prog').innerText = "✅ Selesai"; document.getElementById('btn-claim-daily').style.display = 'none'; } 
-                else if (q.daily.progress >= q.daily.target) { document.getElementById('btn-claim-daily').style.display = 'inline-block'; } 
-                else { document.getElementById('btn-claim-daily').style.display = 'none'; }
-
-                document.getElementById('quest-bounty-title').innerText = q.bounty.title;
-                document.getElementById('quest-bounty-prog').innerText = `${q.bounty.progress}/${q.bounty.target}`;
-                if (q.bounty.isClaimed) { document.getElementById('quest-bounty-prog').innerText = "✅ Selesai"; document.getElementById('btn-claim-bounty').style.display = 'none'; } 
-                else if (q.bounty.progress >= q.bounty.target) { document.getElementById('btn-claim-bounty').style.display = 'inline-block'; } 
-                else { document.getElementById('btn-claim-bounty').style.display = 'none'; }
-            }
-            renderGuildPanel(); 
-            if (!unsubChatListener) startDynamicChat();
+        // Cek jika dikeluarkan dari Guild
+        if (!d.guildId && currentChatChannel === 'guild') {
+            currentChatChannel = 'world';
+            const sel = document.getElementById('chat-channel-select');
+            if(sel) sel.value = 'world';
+            startDynamicChat();
         }
 
-        const invGrid = document.getElementById('inventory-grid');
-        if (invGrid) {
-            invGrid.innerHTML = "";
-            let items = Object.entries(d.inventory || {});
-            for (let i = 0; i < 20; i++) {
-                if (i < items.length) {
-                    const [name, qty] = items[i];
-                    invGrid.innerHTML += `<div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(name)}')"><span>${escapeHTML(name)}</span><span class="inv-qty">x${qty}</span></div>`;
-                } else { invGrid.innerHTML += `<div class="inv-slot">Kosong</div>`; }
-            }
-        }
+        // ====================================================
+        // RENDER TAMPILAN MENGGUNAKAN UI-RENDERER
+        // ====================================================
+        const newStats = renderPlayerUI(d, currentUserUid, globalGuilds, guildUpgradesMap);
+        if (newStats) currentPlayerStats = newStats; 
 
-        const bankGrid = document.getElementById('bank-grid');
-        if (bankGrid) {
-            bankGrid.innerHTML = "";
-            let bankItems = Object.entries(d.bankInventory || {});
-            for (let i = 0; i < 16; i++) { 
-                if (i < bankItems.length) {
-                    const [name, qty] = bankItems[i];
-                    bankGrid.innerHTML += `<div class="bank-slot filled" onclick="window.handleBankClick('${escapeHTML(name)}')"><span>${escapeHTML(name)}</span><span class="inv-qty">x${qty}</span></div>`;
-                } else { bankGrid.innerHTML += `<div class="bank-slot">Kosong</div>`; }
-            }
-        }
+        renderQuestUI(d.quests);
+        renderInventoryUI(d.inventory);
+        renderBankUI(d.bankInventory);
+        // ====================================================
+
+        renderGuildPanel(); 
+        if (!unsubChatListener) startDynamicChat();
     });
 
     const unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
@@ -351,7 +236,7 @@ function startLiveGameSync() {
 function renderGuildPanel() {
     const unjoinedView = document.getElementById('guild-unjoined-view');
     const joinedView = document.getElementById('guild-joined-view');
-    if (!currentPlayerStats.uid || !unjoinedView || !joinedView) return; // Mencegah error jika panel belum dimuat
+    if (!currentPlayerStats.uid || !unjoinedView || !joinedView) return; 
 
     if (!currentPlayerStats.guildId || !globalGuilds[currentPlayerStats.guildId]) {
         unjoinedView.style.display = 'block';
@@ -412,7 +297,7 @@ function renderGuildPanel() {
     }
 }
 
-// BINDING EVENT DELEGATION (Agar tombol di HTML eksternal tetap berfungsi setelah dimuat)
+// BINDING EVENT DELEGATION
 document.addEventListener('change', (e) => {
     if (e.target && e.target.id === 'chat-channel-select') {
         const val = e.target.value;
@@ -493,9 +378,7 @@ window.joinGuildAction = function(guildId) { if (confirm("Bergabung dengan klan 
 window.kickMemberAction = function(targetUid) { if (confirm("Keluarkan anggota ini dari klan?")) kickMember(db, currentUserUid, currentPlayerStats.guildId, targetUid); };
 
 // STATIC EVENT LISTENERS
-// Karena komponen Guild dipanggil dari luar, event listener harus menggunakan Event Delegation (sudah dibungkus di dalam fungsi yang dipanggil onClick atau Global Event)
 document.addEventListener('click', (e) => {
-    // Tombol Guild (Dari HTML Eksternal)
     if (e.target && e.target.id === 'btn-create-guild') { const name = document.getElementById('input-guild-name').value; if (confirm(`Dirikan Klan [${name}] seharga 100,000 Gold?`)) createGuild(db, currentUserUid, currentPlayerStats, name); }
     if (e.target && e.target.id === 'btn-leave-guild') { if (confirm("Yakin ingin keluar dari klan? Anda akan kehilangan semua Buff Guild!")) dbLeaveGuild(db, currentUserUid, currentPlayerStats.guildId); }
     if (e.target && e.target.id === 'btn-donate-guild') { const amt = parseInt(document.getElementById('input-donate-gold').value); if (amt > 0) { donateGold(db, currentUserUid, currentPlayerStats.guildId, amt); document.getElementById('input-donate-gold').value = ""; } }
