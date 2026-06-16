@@ -98,31 +98,55 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
 // 2. RENDER SISTEM QUEST
 export function renderQuestUI(q) {
     if (!q) return;
-    const today = new Date().toLocaleDateString('id-ID');
+
+    // Kumpulkan elemen terlebih dahulu
     const btnTake = document.getElementById('btn-take-quest');
+    const qDailyTitle = document.getElementById('quest-daily-title');
+    const qDailyProg = document.getElementById('quest-daily-prog');
+    const qBountyTitle = document.getElementById('quest-bounty-title');
+    const qBountyProg = document.getElementById('quest-bounty-prog');
+    const btnClaimDaily = document.getElementById('btn-claim-daily');
+    const btnClaimBounty = document.getElementById('btn-claim-bounty');
+
+    // GUARD CLAUSE: Jika panel HTML Quest belum selesai dimuat, batalkan render untuk mencegah error
+    if (!qDailyTitle || !qDailyProg || !qBountyTitle || !qBountyProg) return;
+
+    const today = new Date().toLocaleDateString('id-ID');
     
     if (q.lastReset !== today) {
         if(btnTake) btnTake.style.display = 'block';
-        document.getElementById('quest-daily-title').innerText = "Belum Diambil";
-        document.getElementById('quest-daily-prog').innerText = "0/0";
-        document.getElementById('quest-bounty-title').innerText = "Belum Diambil";
-        document.getElementById('quest-bounty-prog').innerText = "0/0";
-        document.getElementById('btn-claim-daily').style.display = 'none';
-        document.getElementById('btn-claim-bounty').style.display = 'none';
+        qDailyTitle.innerText = "Belum Diambil";
+        qDailyProg.innerText = "0/0";
+        qBountyTitle.innerText = "Belum Diambil";
+        qBountyProg.innerText = "0/0";
+        if(btnClaimDaily) btnClaimDaily.style.display = 'none';
+        if(btnClaimBounty) btnClaimBounty.style.display = 'none';
     } else {
         if(btnTake) btnTake.style.display = 'none';
         
-        document.getElementById('quest-daily-title').innerText = q.daily.title;
-        document.getElementById('quest-daily-prog').innerText = `${q.daily.progress}/${q.daily.target}`;
-        if (q.daily.isClaimed) { document.getElementById('quest-daily-prog').innerText = "✅ Selesai"; document.getElementById('btn-claim-daily').style.display = 'none'; } 
-        else if (q.daily.progress >= q.daily.target) { document.getElementById('btn-claim-daily').style.display = 'inline-block'; } 
-        else { document.getElementById('btn-claim-daily').style.display = 'none'; }
+        qDailyTitle.innerText = q.daily.title;
+        qDailyProg.innerText = `${q.daily.progress}/${q.daily.target}`;
+        
+        if (q.daily.isClaimed) { 
+            qDailyProg.innerText = "✅ Selesai"; 
+            if(btnClaimDaily) btnClaimDaily.style.display = 'none'; 
+        } else if (q.daily.progress >= q.daily.target) { 
+            if(btnClaimDaily) btnClaimDaily.style.display = 'inline-block'; 
+        } else { 
+            if(btnClaimDaily) btnClaimDaily.style.display = 'none'; 
+        }
 
-        document.getElementById('quest-bounty-title').innerText = q.bounty.title;
-        document.getElementById('quest-bounty-prog').innerText = `${q.bounty.progress}/${q.bounty.target}`;
-        if (q.bounty.isClaimed) { document.getElementById('quest-bounty-prog').innerText = "✅ Selesai"; document.getElementById('btn-claim-bounty').style.display = 'none'; } 
-        else if (q.bounty.progress >= q.bounty.target) { document.getElementById('btn-claim-bounty').style.display = 'inline-block'; } 
-        else { document.getElementById('btn-claim-bounty').style.display = 'none'; }
+        qBountyTitle.innerText = q.bounty.title;
+        qBountyProg.innerText = `${q.bounty.progress}/${q.bounty.target}`;
+        
+        if (q.bounty.isClaimed) { 
+            qBountyProg.innerText = "✅ Selesai"; 
+            if(btnClaimBounty) btnClaimBounty.style.display = 'none'; 
+        } else if (q.bounty.progress >= q.bounty.target) { 
+            if(btnClaimBounty) btnClaimBounty.style.display = 'inline-block'; 
+        } else { 
+            if(btnClaimBounty) btnClaimBounty.style.display = 'none'; 
+        }
     }
 }
 
