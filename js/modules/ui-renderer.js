@@ -27,7 +27,9 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
 
     if (!document.getElementById('player-name')) return null;
 
-    document.getElementById('player-name').innerText = d.username || "Hero Anonim";
+    // Render Lencana VIP di samping Nama Profil
+    const vipHtml = (d.vipLevel && d.vipLevel > 0) ? `<span class="vip-badge">VIP ${d.vipLevel}</span>` : "";
+    document.getElementById('player-name').innerHTML = `${vipHtml}${escapeHTML(d.username || "Hero Anonim")}`;
     document.getElementById('player-class').innerText = d.characterClass;
     document.getElementById('player-level').innerText = d.level || 1;
     document.getElementById('header-gold').innerText = (d.gold || 0).toLocaleString();
@@ -372,6 +374,9 @@ export function renderChatUI(messages, currentChatChannel) {
     if (currentChatChannel === 'guild') { chColor = '#28a745'; chLabel = 'GUILD'; }
     if (currentChatChannel === 'party') { chColor = '#00d2ff'; chLabel = 'PARTY'; }
 
-    messages.forEach(m => { chatBox.innerHTML += `<div><strong style="color:${chColor}; font-size:9px;">[${chLabel}]</strong> <span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`; });
-    chatBox.scrollTop = chatBox.scrollHeight;
+    messages.forEach(m => { 
+        // Render lencana VIP versi mini di chat
+        const vipBadge = (m.vipLevel && m.vipLevel > 0) ? `<span class="vip-badge vip-chat">V${m.vipLevel}</span>` : "";
+        chatBox.innerHTML += `<div><strong style="color:${chColor}; font-size:9px;">[${chLabel}]</strong> ${vipBadge} <span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`; 
+    });
 }

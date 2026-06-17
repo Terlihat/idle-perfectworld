@@ -13,7 +13,9 @@ export async function selectCharacterClass(db, uid, charClass, callback) {
             characterClass: charClass,
             level: 1,
             exp: 0,
-            gold: 500, // Uang saku awal
+            vipLevel: 0,
+            vipExp: 0,
+            gold: 500,
             coin: 0,
             bankGold: 0,
             currentHp: baseStats.maxHp,
