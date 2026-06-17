@@ -42,7 +42,6 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
             let logMessage = "";
 
             if (newHp <= 0) {
-                // Simpan HP jadi 0
                 ts.update(userRef, { currentHp: 0, currentStamina: Math.max(0, currentStam - stamReq) });
                 return `💀 KEMATIAN! Anda terbunuh oleh ${monster.name} setelah bertarung sengit. Silakan isi HP.`;
             } else {
@@ -72,21 +71,31 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                     leveledUp = true;
                 }
 
+                let updateData = {
+                    exp: newExp, 
+                    gold: newGold, 
+                    inventory: inv
+                };
+
                 if (leveledUp) {
                     logMessage += `\n🌟 LEVEL UP MULTIPLE! Anda sekarang Level ${newLevel}! Mendapat ${statPointsGained} Poin Stat.`;
-                    ts.update(userRef, {
-                        level: newLevel, exp: newExp, gold: newGold, inventory: inv,
-                        currentHp: playerStats.maxHp, currentStamina: maxStam,
-                        statPoints: (data.statPoints || 0) + statPointsGained,
-                        quests: newQuests
-                    });
+                    updateData.level = newLevel;
+                    updateData.currentHp = playerStats.maxHp;
+                    updateData.currentStamina = maxStam;
+                    updateData.statPoints = (data.statPoints || 0) + statPointsGained;
                 } else {
-                    ts.update(userRef, {
-                        exp: newExp, gold: newGold, inventory: inv,
-                        currentHp: newHp, currentStamina: Math.max(0, currentStam - stamReq),
-                        quests: newQuests 
-                    });
+                    updateData.currentHp = newHp;
+                    updateData.currentStamina = Math.max(0, currentStam - stamReq);
                 }
+
+                if (newQuests !== undefined && newQuests !== null) {
+                    updateData.quests = newQuests;
+                } else if (data.quests !== undefined) {
+                    updateData.quests = data.quests; 
+                }
+
+                ts.update(userRef, updateData);
+                
                 return logMessage;
             }
         });
