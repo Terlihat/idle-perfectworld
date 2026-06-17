@@ -7,6 +7,31 @@ export function escapeHTML(str) {
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : ""; 
 }
 
+const ITEM_ICONS = {
+    "Mirage Stone": { col: 5, row: 12 },
+    "Heaven Stone": { col: 6, row: 12 },
+    "Underworld Stone": { col: 7, row: 12 },
+    "Universal Stone": { col: 8, row: 12 },
+    
+    "Pedang Besi": { col: 0, row: 2 },
+    "Tongkat Sihir": { col: 4, row: 3 },
+    "Zirah Kulit": { col: 1, row: 10 },
+    "Cincin Akurat": { col: 15, row: 20 },
+    
+    "Ramuan HP": { col: 0, row: 35 },
+    "Ramuan MP": { col: 1, row: 35 },
+    "Tiket Ganti Nama": { col: 10, row: 40 },
+    
+    "default": { col: 0, row: 0 } 
+};
+
+function getIconHTML(itemName) {
+    const pos = ITEM_ICONS[itemName] || ITEM_ICONS["default"];
+    const posX = -(pos.col * 32);
+    const posY = -(pos.row * 32);
+    return `<i class="pw-icon" style="background-position: ${posX}px ${posY}px;"></i>`;
+}
+
 // 1. RENDER PROFIL & STATUS
 export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
     const btnAdmin = document.getElementById('btn-admin-panel');
@@ -163,21 +188,23 @@ export function renderInventoryUI(inventory) {
     if (!invGrid) return;
     invGrid.innerHTML = "";
     
-    // Sortir item secara Abjad (A-Z) agar tidak lompat-lompat
     let items = Object.entries(inventory || {}).sort((a, b) => a[0].localeCompare(b[0]));
     
     for (let i = 0; i < 20; i++) {
         if (i < items.length) {
             const [name, qty] = items[i];
-            // Sembunyikan item jika jumlahnya 0 (efek bug sisa penjualan)
             if (qty > 0) {
-                invGrid.innerHTML += `<div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(name)}')"><span>${escapeHTML(name)}</span><span class="inv-qty">x${qty}</span></div>`;
+                // 👇 SUNTIKAN IKON ADA DI SINI 👇
+                invGrid.innerHTML += `
+                <div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(name)}')">
+                    ${getIconHTML(name)} 
+                    <span style="font-size:10px;">${escapeHTML(name)}</span>
+                    <span class="inv-qty">x${qty}</span>
+                </div>`;
             } else {
                 invGrid.innerHTML += `<div class="inv-slot">Kosong</div>`;
             }
-        } else { 
-            invGrid.innerHTML += `<div class="inv-slot">Kosong</div>`; 
-        }
+        } else { invGrid.innerHTML += `<div class="inv-slot">Kosong</div>`; }
     }
 }
 
@@ -186,11 +213,17 @@ export function renderBankUI(bankInventory) {
     const bankGrid = document.getElementById('bank-grid');
     if (!bankGrid) return;
     bankGrid.innerHTML = "";
-    let bankItems = Object.entries(bankInventory || {});
+    let bankItems = Object.entries(bankInventory || {}).sort((a, b) => a[0].localeCompare(b[0]));
     for (let i = 0; i < 16; i++) { 
         if (i < bankItems.length) {
             const [name, qty] = bankItems[i];
-            bankGrid.innerHTML += `<div class="bank-slot filled" onclick="window.handleBankClick('${escapeHTML(name)}')"><span>${escapeHTML(name)}</span><span class="inv-qty">x${qty}</span></div>`;
+            // 👇 SUNTIKAN IKON ADA DI SINI 👇
+            bankGrid.innerHTML += `
+            <div class="bank-slot filled" onclick="window.handleBankClick('${escapeHTML(name)}')">
+                ${getIconHTML(name)}
+                <span style="font-size:10px;">${escapeHTML(name)}</span>
+                <span class="inv-qty">x${qty}</span>
+            </div>`;
         } else { bankGrid.innerHTML += `<div class="bank-slot">Kosong</div>`; }
     }
 }

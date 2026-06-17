@@ -117,3 +117,36 @@ input[type="text"], input[type="number"], input[type="password"], input[type="em
 .chat-name { color: #ffca28; font-weight: bold; }
 .chat-controls { display: flex; gap: 5px; }
 .chat-controls input { flex: 1; margin: 0; }
+
+/* ===================================================
+   SISTEM IKON PERFECT WORLD (32x32)
+   =================================================== */
+.pw-icon {
+    /* 👇 UBAH EKSTENSI DI BARIS INI 👇 */
+    background-image: url('../assets/interface.webp'); 
+    
+    background-repeat: no-repeat;
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    vertical-align: middle;
+    border: 1px solid #3f3f52; 
+    border-radius: 3px;
+    margin-right: 5px;
+    background-color: #000; 
+}
+
+/* Modifikasi sedikit grid inventory agar ikon muat berdampingan dengan teks */
+.inv-slot.filled, .bank-slot.filled {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 4px;
+    text-align: left;
+}
+.inv-slot.filled span:first-of-type, .bank-slot.filled span:first-of-type {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
