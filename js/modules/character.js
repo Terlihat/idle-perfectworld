@@ -27,7 +27,10 @@ export async function selectCharacterClass(db, uid, charClass, callback) {
             dex: baseStats.dex,
             int: baseStats.int,
             statPoints: 0,
-            inventory: {},
+            inventory: {
+                "Tiket Ganti Nama": 1, // Memberikan 1 tiket gratis saat karakter dibuat
+                "Ramuan HP": 5         // (Bonus opsional: berikan sedikit ramuan darah untuk pemula)
+            },
             equipment: {},
             quests: { lastReset: "" },
             role: "player"
