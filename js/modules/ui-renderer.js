@@ -75,12 +75,13 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
     document.getElementById('char-mp-text').innerText = `${d.currentMp} / ${d.maxMp}`;
     document.getElementById('char-mp-bar').style.width = `${Math.min((d.currentMp / d.maxMp) * 100, 100)}%`;
     
-    const curStam = d.currentStamina || 0;
-    const maxStam = d.maxStamina || 100;
+    // --- PERBAIKAN STAMINA & VIP ---
     const vipStats = getVipStats(d.vipLevel);
-    const maxStam = (d.maxStamina || 100) + vipStats.extraMaxStamina; 
+    const maxStam = (d.maxStamina || 100) + (vipStats.extraMaxStamina || 0); 
+    
     let curStam = d.currentStamina || 0;
     if (curStam > maxStam) curStam = maxStam;
+    
     document.getElementById('char-stam-text').innerText = `${curStam} / ${maxStam}`;
     document.getElementById('char-stam-bar').style.width = `${Math.min((curStam / maxStam) * 100, 100)}%`;
 
