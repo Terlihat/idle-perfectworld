@@ -177,30 +177,26 @@
             imgWrapper.style.width = (baseWidth * scale) + 'px';
             imgWrapper.style.backgroundSize = `${32 * scale}px ${32 * scale}px`;
             zoomLevelText.innerText = `Skala: ${scale.toFixed(1)}x`;
-            hoverBox.style.display = 'none'; // Sembunyikan kotak kuning saat transisi zoom
+            hoverBox.style.display = 'none';
         }
 
         // --- SISTEM KACA PEMBESAR & SOROTAN ---
         imgWrapper.addEventListener('mousemove', function(e) {
             const rect = imgWrapper.getBoundingClientRect();
-            // Kalkulasi posisi mouse murni (tanpa pengaruh skala)
             const rawX = (e.clientX - rect.left) / scale;
             const rawY = (e.clientY - rect.top) / scale;
 
-            // Hitung Kolom & Baris
             const col = Math.floor(rawX / 32);
             const row = Math.floor(rawY / 32);
 
             if (col < 0 || row < 0) return;
 
-            // 1. Tampilkan Kotak Sorotan Kuning (Snap to Grid)
             hoverBox.style.display = 'block';
             hoverBox.style.width = `${32 * scale}px`;
             hoverBox.style.height = `${32 * scale}px`;
             hoverBox.style.left = `${col * 32 * scale}px`;
             hoverBox.style.top = `${row * 32 * scale}px`;
 
-            // 2. Tampilkan Preview di Kaca Pembesar (Zoom 3x)
             previewImg.style.left = `-${col * 32 * 3}px`;
             previewImg.style.top = `-${row * 32 * 3}px`;
 
@@ -211,7 +207,7 @@
             hoverBox.style.display = 'none';
         });
 
-        // --- SISTEM KLIK & GENERATE JSON ---
+        // --- SISTEM KLIK & GENERATE JSON (VERSI RATA KIRI) ---
         imgWrapper.addEventListener('click', function(e) {
             const rect = imgWrapper.getBoundingClientRect();
             const col = Math.floor(((e.clientX - rect.left) / scale) / 32);
@@ -220,7 +216,7 @@
             let itemName = inputName.value.trim();
             if (!itemName) itemName = `Item_Baru_${col}_${row}`;
 
-            const jsonLine = `    "${itemName}": { "col": ${col}, "row": ${row} },\n`;
+            const jsonLine = `"${itemName}": {"col": ${col}, "row": ${row}},\n`;
             
             historyBox.value += jsonLine;
             historyBox.scrollTop = historyBox.scrollHeight;
