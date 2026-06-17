@@ -1,26 +1,45 @@
-/* ===================================================
-   MODUL KARAKTER (Class, Stats, & Auto Stamina)
-   =================================================== */
-import { doc, getDoc, updateDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-export async function selectCharacterClass(db, uid, className, callback) {
-    if (!uid) return;
-    const userRef = doc(db, "users", uid);
+export async function selectCharacterClass(db, uid, charClass, callback) {
     try {
-        let stats = { characterClass: className, level: 1, exp: 0, gold: 1000, coin: 0, statPoints: 0 };
-        if (className === 'Warrior') { stats.str = 15; stats.con = 20; stats.dex = 5; stats.int = 2; }
-        else if (className === 'Mage') { stats.str = 2; stats.con = 8; stats.dex = 10; stats.int = 25; }
+        const userRef = doc(db, "users", uid);
         
-        stats.maxHp = 1000; stats.currentHp = 1000;
-        stats.maxMp = 200; stats.currentMp = 200;
-        stats.maxStamina = 100; stats.currentStamina = 100;
+        let baseStats = charClass === 'Warrior' 
+            ? { str: 20, con: 15, dex: 5, int: 2, maxHp: 1500, maxMp: 200 }
+            : { str: 2, con: 8, dex: 10, int: 25, maxHp: 800, maxMp: 1000 };
+
+        await setDoc(userRef, {
+            username: "Hero " + Math.floor(Math.random() * 1000), // Nama default
+            characterClass: charClass,
+            level: 1,
+            exp: 0,
+            gold: 500, // Uang saku awal
+            coin: 0,
+            bankGold: 0,
+            currentHp: baseStats.maxHp,
+            currentMp: baseStats.maxMp,
+            maxHp: baseStats.maxHp,
+            maxMp: baseStats.maxMp,
+            currentStamina: 100,
+            maxStamina: 100,
+            str: baseStats.str,
+            con: baseStats.con,
+            dex: baseStats.dex,
+            int: baseStats.int,
+            statPoints: 0,
+            inventory: {},
+            equipment: {},
+            quests: { lastReset: "" },
+            role: "player"
+        }, { merge: true });
+
+        alert(`Berhasil memilih class ${charClass}!`);
+        if (callback) callback();
         
-        // Catat waktu awal pembuatan karakter
-        stats.lastStaminaUpdate = Date.now();
-        
-        await updateDoc(userRef, stats);
-        if(callback) callback();
-    } catch (err) { alert(err); }
+    } catch (err) {
+        console.error("Gagal membuat karakter:", err);
+        alert("Gagal membuat karakter: " + err.message);
+    }
 }
 
 export async function addCharacterStat(db, uid, statName) {

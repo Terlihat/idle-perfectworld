@@ -1,7 +1,6 @@
 // File: js/ui-loader.js
 
 export async function loadUIComponents() {
-    // Pastikan ke-10 komponen sudah terdaftar lengkap di sini
     const components = [
         { id: 'panel-guild', file: './components/guild.html' },
         { id: 'panel-mailbox', file: './components/mailbox.html' },
