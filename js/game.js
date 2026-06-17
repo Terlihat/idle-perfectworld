@@ -105,6 +105,17 @@ function startLiveGameSync() {
             return; 
         }
 
+        if (d.guildId && globalGuilds[d.guildId]) {
+            const myGuild = globalGuilds[d.guildId];
+            const myDataInGuild = myGuild.members.find(m => m.uid === currentUserUid);
+            if (myDataInGuild && myDataInGuild.level !== (d.level || 1)) {
+                const updatedMembers = myGuild.members.map(m => 
+                    m.uid === currentUserUid ? { ...m, level: (d.level || 1) } : m
+                );
+                updateDoc(doc(db, "guilds", d.guildId), { members: updatedMembers });
+            }
+        }
+
         if (!d.guildId && currentChatChannel === 'guild') {
             currentChatChannel = 'world';
             const sel = document.getElementById('chat-channel-select');

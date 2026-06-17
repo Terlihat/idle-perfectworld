@@ -42,12 +42,19 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
 
     const effectiveMaxHp = (d.maxHp || 1000) + gBuff.hp;
 
-    // Render Bar
+    /// Render Bar
     const maxExp = (d.level || 1) * 100;
     document.getElementById('exp-text').innerText = `${d.exp || 0} / ${maxExp}`;
     document.getElementById('exp-bar').style.width = `${Math.min(((d.exp || 0) / maxExp) * 100, 100)}%`;
-    document.getElementById('char-hp-text').innerText = `${d.currentHp} / ${effectiveMaxHp}`;
-    document.getElementById('char-hp-bar').style.width = `${Math.min((d.currentHp / effectiveMaxHp) * 100, 100)}%`;
+
+    let curHp = Number(d.currentHp);
+    if (isNaN(curHp) || curHp === undefined) {
+        curHp = effectiveMaxHp;
+    }
+
+    document.getElementById('char-hp-text').innerText = `${curHp} / ${effectiveMaxHp}`;
+    document.getElementById('char-hp-bar').style.width = `${Math.min((curHp / effectiveMaxHp) * 100, 100)}%`;
+
     document.getElementById('char-mp-text').innerText = `${d.currentMp} / ${d.maxMp}`;
     document.getElementById('char-mp-bar').style.width = `${Math.min((d.currentMp / d.maxMp) * 100, 100)}%`;
     
@@ -88,7 +95,7 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
     // Kembalikan objek stat untuk digunakan oleh sistem pertarungan
     return { 
         uid: uid, username: d.username, 
-        level: d.level, currentHp: d.currentHp, maxHp: effectiveMaxHp, currentStamina: curStam,
+        level: d.level, currentHp: curHp, maxHp: effectiveMaxHp, currentStamina: curStam,
         str: d.str, con: d.con, int: d.int, dex: d.dex,
         patk: patk, matk: matk, def: def, equipment: eq,
         guildId: d.guildId, gold: d.gold
@@ -150,17 +157,27 @@ export function renderQuestUI(q) {
     }
 }
 
-// 3. RENDER GRID TAS (INVENTORY)
+// 3. RENDER GRID TAS (INVENTORY) - DIURUTKAN
 export function renderInventoryUI(inventory) {
     const invGrid = document.getElementById('inventory-grid');
     if (!invGrid) return;
     invGrid.innerHTML = "";
-    let items = Object.entries(inventory || {});
+    
+    // Sortir item secara Abjad (A-Z) agar tidak lompat-lompat
+    let items = Object.entries(inventory || {}).sort((a, b) => a[0].localeCompare(b[0]));
+    
     for (let i = 0; i < 20; i++) {
         if (i < items.length) {
             const [name, qty] = items[i];
-            invGrid.innerHTML += `<div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(name)}')"><span>${escapeHTML(name)}</span><span class="inv-qty">x${qty}</span></div>`;
-        } else { invGrid.innerHTML += `<div class="inv-slot">Kosong</div>`; }
+            // Sembunyikan item jika jumlahnya 0 (efek bug sisa penjualan)
+            if (qty > 0) {
+                invGrid.innerHTML += `<div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(name)}')"><span>${escapeHTML(name)}</span><span class="inv-qty">x${qty}</span></div>`;
+            } else {
+                invGrid.innerHTML += `<div class="inv-slot">Kosong</div>`;
+            }
+        } else { 
+            invGrid.innerHTML += `<div class="inv-slot">Kosong</div>`; 
+        }
     }
 }
 
