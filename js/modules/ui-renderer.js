@@ -12,14 +12,8 @@ fetch('./data/items.json')
     })
     .catch(err => console.error("❌ Gagal memuat items.json:", err));
 
+// HANYA ADA SATU FUNGSI INI SEKARANG
 export function getIconHTML(itemName) {
-    const pos = ITEM_ICONS[itemName] || ITEM_ICONS["default"];
-    const posX = -(pos.col * 32);
-    const posY = -(pos.row * 32);
-    return `<i class="pw-icon" style="background-position: ${posX}px ${posY}px;"></i>`;
-}
-
-function getIconHTML(itemName) {
     const pos = ITEM_ICONS[itemName] || ITEM_ICONS["default"];
     const posX = -(pos.col * 32);
     const posY = -(pos.row * 32);
@@ -61,7 +55,7 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
 
     const effectiveMaxHp = (d.maxHp || 1000) + gBuff.hp;
 
-    /// Render Bar
+    // Render Bar
     const maxExp = (d.level || 1) * 100;
     document.getElementById('exp-text').innerText = `${d.exp || 0} / ${maxExp}`;
     document.getElementById('exp-bar').style.width = `${Math.min(((d.exp || 0) / maxExp) * 100, 100)}%`;
