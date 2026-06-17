@@ -249,6 +249,38 @@
         }
 
         window.onload = () => { inputName.focus(); };
+
+        // --- SISTEM KONTROL KEYBOARD (PANAH & WASD) ---
+        window.addEventListener('keydown', function(e) {
+            // PENGAMAN: Jangan geser layar kalau kursor sedang aktif di kotak ngetik!
+            if (document.activeElement === inputName || document.activeElement === historyBox) {
+                return;
+            }
+
+            const scrollArea = document.getElementById('scroll-area');
+            const speed = 50; // Kecepatan geser per pencetan (bisa Anda ubah)
+
+            // Atas
+            if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') {
+                scrollArea.scrollBy({ top: -speed, left: 0 });
+                e.preventDefault(); // Mencegah layar bergeser ke elemen lain
+            } 
+            // Bawah
+            else if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') {
+                scrollArea.scrollBy({ top: speed, left: 0 });
+                e.preventDefault();
+            } 
+            // Kiri
+            else if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
+                scrollArea.scrollBy({ top: 0, left: -speed });
+                e.preventDefault();
+            } 
+            // Kanan
+            else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
+                scrollArea.scrollBy({ top: 0, left: speed });
+                e.preventDefault();
+            }
+        });
     </script>
 </body>
 </html>
