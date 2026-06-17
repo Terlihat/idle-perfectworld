@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Alat Pemetaan Ikon RPG</title>
+    <style>
+        body { background-color: #121216; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
+        #result-box { 
+            position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+            background: #28a745; padding: 15px 30px; border-radius: 8px; 
+            font-size: 24px; font-weight: bold; border: 2px solid #fff; z-index: 100;
+        }
+        .grid-container {
+            position: relative; display: inline-block; margin-top: 80px;
+            /* Memberikan efek grid kotak-kotak samar agar mudah dilihat */
+            background-image: linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px);
+            background-size: 32px 32px;
+            border: 2px solid #00d2ff;
+        }
+        #sprite-img { opacity: 0.85; cursor: crosshair; display: block; }
+        #sprite-img:hover { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div id="result-box">Klik ikon mana saja di bawah!</div>
+
+    <div class="grid-container">
+        <img src="./assets/interface.webp" id="sprite-img" alt="Sprite Sheet">
+    </div>
+
+    <script>
+        const img = document.getElementById('sprite-img');
+        const resultBox = document.getElementById('result-box');
+
+        img.addEventListener('click', function(e) {
+            // Ambil posisi klik mouse relatif terhadap gambar
+            const rect = img.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Hitung Kolom dan Baris (Ukuran ikon 32x32)
+            const col = Math.floor(x / 32);
+            const row = Math.floor(y / 32);
+
+            // Buat format teks untuk dicopy
+            const codeToCopy = `{ col: ${col}, row: ${row} }`;
+
+            // Tampilkan di layar
+            resultBox.innerText = `✅ Tersalin: ${codeToCopy}`;
+            resultBox.style.background = "#ffcc00";
+            resultBox.style.color = "#000";
+
+            // Otomatis Copy ke Clipboard!
+            navigator.clipboard.writeText(codeToCopy);
+
+            // Efek kedip tombol
+            setTimeout(() => {
+                resultBox.style.background = "#28a745";
+                resultBox.style.color = "#fff";
+            }, 500);
+        });
+    </script>
+</body>
+</html>
