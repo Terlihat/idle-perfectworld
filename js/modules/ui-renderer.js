@@ -1,3 +1,5 @@
+import { getVipStats } from './vip.js';
+
 export function escapeHTML(str) { 
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : ""; 
 }
@@ -75,6 +77,10 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
     
     const curStam = d.currentStamina || 0;
     const maxStam = d.maxStamina || 100;
+    const vipStats = getVipStats(d.vipLevel);
+    const maxStam = (d.maxStamina || 100) + vipStats.extraMaxStamina; 
+    let curStam = d.currentStamina || 0;
+    if (curStam > maxStam) curStam = maxStam;
     document.getElementById('char-stam-text').innerText = `${curStam} / ${maxStam}`;
     document.getElementById('char-stam-bar').style.width = `${Math.min((curStam / maxStam) * 100, 100)}%`;
 

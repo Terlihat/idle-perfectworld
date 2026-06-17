@@ -2,6 +2,7 @@
    MODUL MISI HARIAN & BOUNTY HUNTER
    =================================================== */
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getVipStats } from './vip.js';
 
 const DAILY_QUESTS = [
     { id: "slime", title: "Kalahkan 10x Slime Hijau", target: 10, rGold: 3000, rItem: "Ramuan HP" },
@@ -70,10 +71,29 @@ export async function claimQuestReward(db, uid, questType) {
 
             q[questType].isClaimed = true;
             
-            let newGold = (data.gold || 0) + (q[questType].rGold || 0);
+            // 👇 --- AWAL MESIN VIP --- 👇
+            // 1. Ambil status VIP pemain
+            const vipLevel = data.vipLevel || 0;
+            const vipStats = getVipStats(vipLevel);
+
+            // 2. Kalkulasi Gold Dasar & Bonus VIP
+            const baseGold = q[questType].rGold || 0;
+            const bonusGold = Math.floor(baseGold * (vipStats.goldBonusPct / 100));
+            const finalGold = baseGold + bonusGold;
+            // 👆 --- AKHIR MESIN VIP --- 👆
+
+            // 3. Terapkan hasil kalkulasi ke data yang akan disimpan
+            let newGold = (data.gold || 0) + finalGold;
             let newCoin = (data.coin || 0) + (q[questType].rCoin || 0);
             let inv = data.inventory || {};
-            let msg = `🎉 KLAIM BERHASIL! Mendapat +${q[questType].rGold} Gold`;
+            
+            // 4. Buat Notifikasi yang Membanggakan
+            let msg = `🎉 KLAIM BERHASIL! Mendapat +${baseGold} Gold`;
+            
+            // Tambahkan tulisan khusus jika pemain dapat bonus VIP
+            if (bonusGold > 0) {
+                msg += ` (Bonus VIP ✨: +${bonusGold} Gold)`;
+            }
 
             if (q[questType].rItem) {
                 inv[q[questType].rItem] = (inv[q[questType].rItem] || 0) + 1;

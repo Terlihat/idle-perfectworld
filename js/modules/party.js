@@ -1,9 +1,10 @@
 /* ===================================================
-   MODUL PARTY DUNGEON (Fix Level Up Check & Tracker Bounty)
+   MODUL PARTY DUNGEON (VIP Engine Installed)
    =================================================== */
 import { collection, doc, runTransaction, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { FB_BOSSES } from '../data/monsters.js';
 import { getUpdatedQuests } from './quest.js'; 
+import { getVipStats } from './vip.js'; // 👈 IMPORT MESIN VIP
 
 export function listenToParties(db, callbackRender) {
     const q = query(collection(db, "parties"));
@@ -141,9 +142,22 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     log += `💀 [${md.username}] TERBUNUH! Menerima ${totalDmgTaken} DMG.\n`;
                 } else {
                     survivors++;
-                    let rewardGoldAkhir = Math.floor(boss.rewardGold * goldMult);
-                    let newExp = (md.exp || 0) + boss.rewardExp;
-                    let newGold = (md.gold || 0) + rewardGoldAkhir;
+                    
+                    // 👇 --- MESIN VIP PARTY DIMULAI --- 👇
+                    const vipStats = getVipStats(md.vipLevel || 0);
+                    
+                    let baseGold = Math.floor(boss.rewardGold * goldMult);
+                    let baseExp = boss.rewardExp;
+                    
+                    let bonusGold = Math.floor(baseGold * (vipStats.goldBonusPct / 100));
+                    let bonusExp = Math.floor(baseExp * (vipStats.expBonusPct / 100));
+                    
+                    let finalGold = baseGold + bonusGold;
+                    let finalExp = baseExp + bonusExp;
+                    // 👆 --- MESIN VIP PARTY SELESAI --- 👆
+
+                    let newExp = (md.exp || 0) + finalExp;
+                    let newGold = (md.gold || 0) + finalGold;
                     let inv = md.inventory || {};
                     let dropMsg = "";
 
@@ -152,6 +166,11 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     if (Math.random() <= boss.drop.chance) {
                         inv[boss.drop.item] = (inv[boss.drop.item] || 0) + 1;
                         dropMsg = ` | 🎁 Drop: ${boss.drop.item}`;
+                    }
+                    
+                    // Notifikasi khusus di Log Party jika dia VIP
+                    if (bonusGold > 0 || bonusExp > 0) {
+                        dropMsg += ` ✨(VIP +${bonusGold}G / +${bonusExp}XP)`;
                     }
 
                     // ADD LEVEL UP LOOP LOGIC DI PARTY SYSTEM
@@ -181,7 +200,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                         });
                     }
                     
-                    log += `🛡️ [${md.username}] BERTAHAN! Sisa HP: ${newHp} | +${rewardGoldAkhir} Gold${dropMsg}\n`;
+                    log += `🛡️ [${md.username}] BERTAHAN! Sisa HP: ${newHp} | +${finalGold} Gold${dropMsg}\n`;
                 }
             });
 

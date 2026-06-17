@@ -1,9 +1,10 @@
 /* ===================================================
-   MODUL BATTLE DUNGEON (Fix Death Rollback Transaction)
+   MODUL BATTLE DUNGEON (VIP Engine Installed)
    =================================================== */
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { MONSTER_DB } from '../data/monsters.js';
 import { getUpdatedQuests } from './quest.js'; 
+import { getVipStats } from './vip.js'; // 👈 IMPORT VIP DI SINI
 
 export async function attackMonster(db, uid, monsterKey, playerStats) {
     if (!uid) return;
@@ -17,7 +18,6 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
     const userRef = doc(db, "users", uid);
 
     try {
-        // PERBAIKAN: Gunakan return msg, JANGAN gunakan throw agar database tetap tersimpan!
         const resultMsg = await runTransaction(db, async (ts) => {
             const data = (await ts.get(userRef)).data();
             
@@ -43,19 +43,31 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
 
             if (newHp <= 0) {
                 ts.update(userRef, { currentHp: 0, currentStamina: Math.max(0, currentStam - stamReq) });
-                return `💀 KEMATIAN! Anda terbunuh oleh ${monster.name} setelah bertarung sengit. Silakan isi HP.`;
+                return `☠️ KEMATIAN! Anda terbunuh oleh ${monster.name} setelah bertarung sengit. Silakan isi HP.`;
             } else {
-                let newExp = (data.exp || 0) + monster.rewardExp;
-                let rewardGoldAkhir = Math.floor(monster.rewardGold * goldMult);
-                let newGold = (data.gold || 0) + rewardGoldAkhir;
+                // 👇 --- MESIN VIP DIMULAI --- 👇
+                const vipStats = getVipStats(data.vipLevel || 0);
+                
+                const baseExp = monster.rewardExp;
+                const baseGold = Math.floor(monster.rewardGold * goldMult); // Base gold sudah termasuk efek mount
+                
+                const bonusExp = Math.floor(baseExp * (vipStats.expBonusPct / 100));
+                const bonusGold = Math.floor(baseGold * (vipStats.goldBonusPct / 100));
+                
+                const finalExp = baseExp + bonusExp;
+                const finalGold = baseGold + bonusGold;
+                // 👆 --- MESIN VIP SELESAI --- 👆
+
+                let newExp = (data.exp || 0) + finalExp;
+                let newGold = (data.gold || 0) + finalGold;
                 
                 let newLevel = data.level || 1;
                 let inv = data.inventory || {};
-                
                 let newQuests = getUpdatedQuests(data, 'daily', monsterKey, 1);
 
-                logMessage = `⚔️ MENANG! Membunuh ${monster.name}.\nKehilangan ${hpLost} HP. Mendapat ${monster.rewardExp} EXP & ${rewardGoldAkhir} Gold.`;
-                if (mount) logMessage += `\n🐴 [Efek Mount] Stamina hemat ${mount.stamDiscount}, Bonus Gold +${(mount.goldBonus*100)}%!`;
+                logMessage = `⚔️ MENANG! Membunuh ${monster.name}.\nKehilangan ${hpLost} HP. Mendapat ${finalExp} EXP & ${finalGold} Gold.`;
+                if (mount) logMessage += `\n🐎 [Efek Mount] Stamina hemat ${mount.stamDiscount}.`;
+                if (bonusExp > 0 || bonusGold > 0) logMessage += `\n✨ [SULTAN VIP] Bonus +${bonusExp} EXP & +${bonusGold} Gold!`; // Notifikasi VIP
 
                 if (Math.random() <= monster.drop.chance) {
                     inv[monster.drop.item] = (inv[monster.drop.item] || 0) + 1;
@@ -71,11 +83,7 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                     leveledUp = true;
                 }
 
-                let updateData = {
-                    exp: newExp, 
-                    gold: newGold, 
-                    inventory: inv
-                };
+                let updateData = { exp: newExp, gold: newGold, inventory: inv };
 
                 if (leveledUp) {
                     logMessage += `\n🌟 LEVEL UP MULTIPLE! Anda sekarang Level ${newLevel}! Mendapat ${statPointsGained} Poin Stat.`;
@@ -88,19 +96,14 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                     updateData.currentStamina = Math.max(0, currentStam - stamReq);
                 }
 
-                if (newQuests !== undefined && newQuests !== null) {
-                    updateData.quests = newQuests;
-                } else if (data.quests !== undefined) {
-                    updateData.quests = data.quests; 
-                }
+                if (newQuests !== undefined && newQuests !== null) updateData.quests = newQuests;
+                else if (data.quests !== undefined) updateData.quests = data.quests; 
 
                 ts.update(userRef, updateData);
-                
                 return logMessage;
             }
         });
         
-        // Memunculkan alert setelah transaksi DATABASE SELESAI
         if (resultMsg) alert(resultMsg);
 
     } catch (err) { alert(err); }
