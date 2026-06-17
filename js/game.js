@@ -24,6 +24,7 @@ import { listenToParties, createOrJoinParty, leaveParty, startFbBattle } from '.
 import { assignRandomQuests, claimQuestReward } from './modules/quest.js';
 import { listenToGuilds, createGuild, joinGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, kickMember, disbandGuild } from './modules/guild.js';
 import { listenToMailbox, claimMailReward, deleteMail } from './modules/mailbox.js';
+import { dismantleItemAction, DISMANTLE_CONFIG } from './modules/crafting.js';
 
 let currentUserUid = null;
 let activeUnsubscribeListeners = [];
@@ -190,7 +191,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 function clearActiveModeClasses() { 
-    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction'].forEach(id => { 
+    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction', 'btn-mode-dismantle'].forEach(id => { 
         const el = document.getElementById(id); 
         if (el) { el.className = ""; if (id !== 'btn-mode-equip') el.style.backgroundColor = "#495057"; }
     }); 
@@ -217,7 +218,8 @@ document.addEventListener('click', (e) => {
     if (targetId === 'btn-mode-sell') { inventoryMode = "SELL"; clearActiveModeClasses(); target.className = "mode-sell-active"; }
     if (targetId === 'btn-mode-bank') { inventoryMode = "BANK"; clearActiveModeClasses(); target.className = "mode-active"; }
     if (targetId === 'btn-mode-auction') { inventoryMode = "AUCTION"; clearActiveModeClasses(); target.className = "mode-auction-active"; }
-
+    if (targetId === 'btn-mode-dismantle') { inventoryMode = "DISMANTLE"; clearActiveModeClasses(); target.style.backgroundColor = "#dc3545"; }
+    
     // --- KONTROL CHAT ---
     if (targetId === 'btn-send-chat') {
         const chatInput = document.getElementById('chat-input');
@@ -293,6 +295,16 @@ window.handleInventoryClick = function(itemName) {
         const priceStr = prompt(`Masukkan Harga Beli Langsung (Gold) untuk 1x [${itemName}]:`);
         const price = parseInt(priceStr);
         if (price > 0) listAuctionItem(db, currentUserUid, itemName, price, playerUsername);
+    }
+
+    else if (inventoryMode === "DISMANTLE") {
+        if (DISMANTLE_CONFIG[itemName]) {
+            if (confirm(`🔥 Yakin ingin MELEBUR [${itemName}]?\nItem akan hancur menjadi material crafting.`)) {
+                dismantleItemAction(db, currentUserUid, itemName);
+            }
+        } else {
+            alert(`❌ [${itemName}] tidak bisa dilebur!`);
+        }
     }
 };
 
