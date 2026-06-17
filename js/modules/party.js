@@ -1,10 +1,10 @@
 /* ===================================================
-   MODUL PARTY DUNGEON (VIP Engine Installed)
+   MODUL PARTY DUNGEON (Fix Level Up Check & VIP Engine)
    =================================================== */
 import { collection, doc, runTransaction, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { FB_BOSSES } from '../data/monsters.js';
 import { getUpdatedQuests } from './quest.js'; 
-import { getVipStats } from './vip.js'; // 👈 IMPORT MESIN VIP
+import { getVipStats } from './vip.js'; // <-- VIP Import
 
 export function listenToParties(db, callbackRender) {
     const q = query(collection(db, "parties"));
@@ -143,7 +143,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 } else {
                     survivors++;
                     
-                    // 👇 --- MESIN VIP PARTY DIMULAI --- 👇
+                    // --- VIP ENGINE PARTY ---
                     const vipStats = getVipStats(md.vipLevel || 0);
                     
                     let baseGold = Math.floor(boss.rewardGold * goldMult);
@@ -154,8 +154,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     
                     let finalGold = baseGold + bonusGold;
                     let finalExp = baseExp + bonusExp;
-                    // 👆 --- MESIN VIP PARTY SELESAI --- 👆
-
+                    
                     let newExp = (md.exp || 0) + finalExp;
                     let newGold = (md.gold || 0) + finalGold;
                     let inv = md.inventory || {};
@@ -167,13 +166,11 @@ export async function startFbBattle(db, leaderUid, partyId) {
                         inv[boss.drop.item] = (inv[boss.drop.item] || 0) + 1;
                         dropMsg = ` | 🎁 Drop: ${boss.drop.item}`;
                     }
-                    
-                    // Notifikasi khusus di Log Party jika dia VIP
+
                     if (bonusGold > 0 || bonusExp > 0) {
                         dropMsg += ` ✨(VIP +${bonusGold}G / +${bonusExp}XP)`;
                     }
 
-                    // ADD LEVEL UP LOOP LOGIC DI PARTY SYSTEM
                     let newLevel = md.level || 1;
                     let statPointsGained = 0;
                     let leveledUp = false;

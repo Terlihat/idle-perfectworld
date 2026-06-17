@@ -14,7 +14,6 @@ fetch('./data/items.json')
     })
     .catch(err => console.error("❌ Gagal memuat items.json:", err));
 
-// HANYA ADA SATU FUNGSI INI SEKARANG
 export function getIconHTML(itemName) {
     const pos = ITEM_ICONS[itemName] || ITEM_ICONS["default"];
     const posX = -(pos.col * 32);
@@ -29,7 +28,6 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
 
     if (!document.getElementById('player-name')) return null;
 
-    // Render Lencana VIP di samping Nama Profil
     const vipHtml = (d.vipLevel && d.vipLevel > 0) ? `<span class="vip-badge">VIP ${d.vipLevel}</span>` : "";
     document.getElementById('player-name').innerHTML = `${vipHtml}${escapeHTML(d.username || "Hero Anonim")}`;
     document.getElementById('player-class').innerText = d.characterClass;
@@ -47,7 +45,6 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
     const addStatBtns = document.querySelectorAll('.btn-add-stat');
     addStatBtns.forEach(btn => { btn.style.display = statPoints > 0 ? 'inline-block' : 'none'; });
 
-    // Kalkulasi Buff Guild
     let gBuff = { atk: 0, hp: 0, def: 0 };
     if (d.guildId && globalGuilds[d.guildId]) {
         const gLvl = globalGuilds[d.guildId].level;
@@ -59,15 +56,12 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
 
     const effectiveMaxHp = (d.maxHp || 1000) + gBuff.hp;
 
-    // Render Bar
     const maxExp = (d.level || 1) * 100;
     document.getElementById('exp-text').innerText = `${d.exp || 0} / ${maxExp}`;
     document.getElementById('exp-bar').style.width = `${Math.min(((d.exp || 0) / maxExp) * 100, 100)}%`;
 
     let curHp = Number(d.currentHp);
-    if (isNaN(curHp) || curHp === undefined) {
-        curHp = effectiveMaxHp;
-    }
+    if (isNaN(curHp) || curHp === undefined) curHp = effectiveMaxHp;
 
     document.getElementById('char-hp-text').innerText = `${curHp} / ${effectiveMaxHp}`;
     document.getElementById('char-hp-bar').style.width = `${Math.min((curHp / effectiveMaxHp) * 100, 100)}%`;
@@ -75,9 +69,9 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
     document.getElementById('char-mp-text').innerText = `${d.currentMp} / ${d.maxMp}`;
     document.getElementById('char-mp-bar').style.width = `${Math.min((d.currentMp / d.maxMp) * 100, 100)}%`;
     
-    // --- PERBAIKAN STAMINA & VIP ---
+    // --- STAMINA & VIP (BERSIH) ---
     const vipStats = getVipStats(d.vipLevel);
-    const maxStam = (d.maxStamina || 100) + (vipStats.extraMaxStamina || 0); 
+    const maxStam = (d.maxStamina || 100) + (vipStats?.extraMaxStamina || 0); 
     
     let curStam = d.currentStamina || 0;
     if (curStam > maxStam) curStam = maxStam;
@@ -85,20 +79,17 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
     document.getElementById('char-stam-text').innerText = `${curStam} / ${maxStam}`;
     document.getElementById('char-stam-bar').style.width = `${Math.min((curStam / maxStam) * 100, 100)}%`;
 
-    // Render Raw Stats
     document.getElementById('stat-str').innerText = d.str;
     document.getElementById('stat-con').innerText = d.con;
     document.getElementById('stat-dex').innerText = d.dex;
     document.getElementById('stat-int').innerText = d.int;
 
-    // Render Equipment Text
     const eq = d.equipment || {};
     document.getElementById('eq-weapon').innerText = eq.weapon ? `${eq.weapon.name}${eq.weapon.refine ? ` (+${eq.weapon.refine})` : ""}` : "Kosong";
     document.getElementById('eq-armor').innerText = eq.armor ? `${eq.armor.name}${eq.armor.refine ? ` (+${eq.armor.refine})` : ""}` : "Kosong";
     document.getElementById('eq-acc').innerText = eq.accessory ? `${eq.accessory.name}${eq.accessory.refine ? ` (+${eq.accessory.refine})` : ""}` : "Kosong";
     document.getElementById('eq-mount').innerText = eq.mount ? `${eq.mount.name}` : "Jalan Kaki";
 
-    // Kalkulasi Total Power
     let wBonus = 1 + (eq.weapon?.refine || 0) * 0.15; 
     let aBonus = 1 + (eq.armor?.refine || 0) * 0.15;
     let cBonus = 1 + (eq.accessory?.refine || 0) * 0.10;
@@ -114,7 +105,6 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
     document.getElementById('stat-eva').innerText = (d.dex * 0.2).toFixed(1) + "%"; 
     document.getElementById('stat-acc').innerText = (80 + (d.dex * 0.5) + Math.floor((eq.accessory?.accBonus || 0) * cBonus)).toFixed(1) + "%";
 
-    // Kembalikan objek stat untuk digunakan oleh sistem pertarungan
     return { 
         uid: uid, username: d.username, 
         level: d.level, currentHp: curHp, maxHp: effectiveMaxHp, currentStamina: curStam,
@@ -127,8 +117,6 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
 // 2. RENDER SISTEM QUEST
 export function renderQuestUI(q) {
     if (!q) return;
-
-    // Kumpulkan elemen terlebih dahulu
     const btnTake = document.getElementById('btn-take-quest');
     const qDailyTitle = document.getElementById('quest-daily-title');
     const qDailyProg = document.getElementById('quest-daily-prog');
@@ -137,7 +125,6 @@ export function renderQuestUI(q) {
     const btnClaimDaily = document.getElementById('btn-claim-daily');
     const btnClaimBounty = document.getElementById('btn-claim-bounty');
 
-    // GUARD CLAUSE: Jika panel HTML Quest belum selesai dimuat, batalkan render untuk mencegah error
     if (!qDailyTitle || !qDailyProg || !qBountyTitle || !qBountyProg) return;
 
     const today = new Date().toLocaleDateString('id-ID');
@@ -179,7 +166,7 @@ export function renderQuestUI(q) {
     }
 }
 
-// 3. RENDER GRID TAS (INVENTORY) - DIURUTKAN
+// 3. RENDER GRID TAS (INVENTORY)
 export function renderInventoryUI(inventory) {
     const invGrid = document.getElementById('inventory-grid');
     if (!invGrid) return;
@@ -191,7 +178,6 @@ export function renderInventoryUI(inventory) {
         if (i < items.length) {
             const [name, qty] = items[i];
             if (qty > 0) {
-                // 👇 SUNTIKAN IKON ADA DI SINI 👇
                 invGrid.innerHTML += `
                 <div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(name)}')">
                     ${getIconHTML(name)} 
@@ -214,7 +200,6 @@ export function renderBankUI(bankInventory) {
     for (let i = 0; i < 16; i++) { 
         if (i < bankItems.length) {
             const [name, qty] = bankItems[i];
-            // 👇 SUNTIKAN IKON ADA DI SINI 👇
             bankGrid.innerHTML += `
             <div class="bank-slot filled" onclick="window.handleBankClick('${escapeHTML(name)}')">
                 ${getIconHTML(name)}
@@ -382,7 +367,6 @@ export function renderChatUI(messages, currentChatChannel) {
     if (currentChatChannel === 'party') { chColor = '#00d2ff'; chLabel = 'PARTY'; }
 
     messages.forEach(m => { 
-        // Render lencana VIP versi mini di chat
         const vipBadge = (m.vipLevel && m.vipLevel > 0) ? `<span class="vip-badge vip-chat">V${m.vipLevel}</span>` : "";
         chatBox.innerHTML += `<div><strong style="color:${chColor}; font-size:9px;">[${chLabel}]</strong> ${vipBadge} <span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`; 
     });
