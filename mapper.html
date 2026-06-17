@@ -2,76 +2,261 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Alat Pemetaan Ikon RPG (Zoomable)</title>
+    <title>Alat Pemetaan Ikon RPG Ultimate</title>
     <style>
-        body { background-color: #121216; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; overflow-x: hidden; }
+        body { 
+            background-color: #121216; color: #fff; font-family: sans-serif; 
+            margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden;
+        }
         
-        /* Kontrol UI */
-        .controls { position: fixed; top: 10px; left: 10px; z-index: 200; display: flex; gap: 5px; }
-        button { padding: 10px 15px; cursor: pointer; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; }
-        button:hover { background: #555; }
+        /* ================= SIDEBAR PANEL ================= */
+        .sidebar {
+            width: 320px; background: #1c1c24; border-right: 2px solid #3f3f52;
+            display: flex; flex-direction: column; padding: 15px; box-sizing: border-box;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5); z-index: 100;
+        }
+        .sidebar h2 { margin-top: 0; font-size: 18px; color: #00d2ff; text-align: center; border-bottom: 1px solid #3f3f52; padding-bottom: 10px; }
         
-        #result-box { 
-            position: fixed; top: 10px; right: 10px; z-index: 200;
-            background: #28a745; padding: 10px 20px; border-radius: 8px; 
-            font-weight: bold; border: 2px solid #fff;
+        /* Input Item */
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 12px; color: #aaa; margin-bottom: 5px; }
+        #item-name { 
+            width: 100%; padding: 10px; background: #121216; color: #fff; 
+            border: 1px solid #00d2ff; border-radius: 4px; font-size: 14px; box-sizing: border-box; outline: none;
+        }
+        #item-name:focus { border-color: #ffcc00; box-shadow: 0 0 5px #ffcc00; }
+
+        /* Preview (Kaca Pembesar) */
+        .preview-box { text-align: center; margin-bottom: 15px; }
+        #preview-container {
+            width: 96px; height: 96px; /* Ukuran 32x32 di-zoom 3x */
+            margin: 0 auto; border: 2px solid #ffcc00; border-radius: 4px;
+            overflow: hidden; position: relative; background: #000;
+        }
+        #preview-img {
+            position: absolute; top: 0; left: 0;
+            transform-origin: top left; transform: scale(3); /* Zoom 3x */
+            image-rendering: pixelated; /* Agar gambar tidak blur saat di-zoom */
+            pointer-events: none;
+        }
+        #coord-display { font-size: 11px; color: #aaa; margin-top: 5px; font-family: monospace; }
+
+        /* Riwayat / Textarea */
+        #history-box { 
+            flex-grow: 1; width: 100%; background: #0a0a0c; color: #28a745; 
+            border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; 
+            font-family: monospace; font-size: 12px; resize: none; outline: none; white-space: pre; overflow-wrap: normal; overflow-x: auto;
         }
 
-        /* Area Gambar */
-        .wrapper { margin-top: 60px; display: inline-block; border: 2px solid #00d2ff; }
-        #sprite-img { 
-            display: block; cursor: crosshair;
-            /* Efek grid kotak-kotak */
+        /* Tombol Copy */
+        .btn-copy { 
+            margin-top: 10px; padding: 12px; background: #28a745; color: #fff; 
+            border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase;
+        }
+        .btn-copy:hover { background: #218838; }
+
+        /* ================= AREA GAMBAR (WORKSPACE) ================= */
+        .workspace { flex-grow: 1; display: flex; flex-direction: column; position: relative; }
+        
+        .controls { 
+            background: #1c1c24; padding: 10px; border-bottom: 1px solid #3f3f52;
+            display: flex; gap: 10px; align-items: center; justify-content: center;
+        }
+        button.zoom-btn { padding: 8px 15px; cursor: pointer; background: #007bff; color: #fff; border: none; border-radius: 4px; font-weight: bold; }
+        button.zoom-btn:hover { background: #0056b3; }
+        .btn-reset { background: #dc3545 !important; }
+        .btn-reset:hover { background: #c82333 !important; }
+
+        .scroll-container { 
+            flex-grow: 1; overflow: auto; padding: 20px; background: #0a0a0c;
+        }
+
+        /* Bungkus Gambar dan Grid Sorot */
+        #img-wrapper {
+            position: relative; display: inline-block;
             background-image: linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px);
-            background-size: 32px 32px;
-            transition: transform 0.1s ease-out;
-            transform-origin: top left;
+            background-size: 32px 32px; /* Ukuran asli grid */
+        }
+        
+        #sprite-img { display: block; cursor: crosshair; }
+
+        /* Kotak Kuning Sorotan (Snap to Grid) */
+        #hover-box {
+            position: absolute; border: 2px solid #ffcc00; background: rgba(255, 204, 0, 0.3);
+            pointer-events: none; /* Agar tidak menghalangi klik ke gambar */
+            display: none; z-index: 10; box-sizing: border-box;
+        }
+
+        /* Pesan Notifikasi Sukses */
+        #toast {
+            position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white;
+            padding: 10px 20px; border-radius: 5px; font-weight: bold; opacity: 0;
+            transition: opacity 0.3s ease-in-out; pointer-events: none; z-index: 1000;
         }
     </style>
 </head>
 <body>
 
-    <div class="controls">
-        <button onclick="zoom(1.2)">🔍 Zoom In</button>
-        <button onclick="zoom(0.8)">🔎 Zoom Out</button>
-        <button onclick="resetZoom()">🔄 Ukuran Asli</button>
-    </div>
-    
-    <div id="result-box">Klik ikon mana saja!</div>
+    <div class="sidebar">
+        <h2>🛠️ Mesin Pembuat JSON</h2>
+        
+        <div class="input-group">
+            <label>1. Ketik Nama Item (Lalu klik ikon di kanan)</label>
+            <input type="text" id="item-name" placeholder="Misal: Pedang Naga" autocomplete="off">
+        </div>
 
-    <div class="wrapper">
-        <img src="./assets/interface.webp" id="sprite-img" alt="Sprite Sheet">
+        <div class="preview-box">
+            <label style="font-size: 12px; color: #aaa;">2. Kaca Pembesar (Preview 3x)</label>
+            <div id="preview-container">
+                <img src="./assets/interface.webp" id="preview-img">
+            </div>
+            <div id="coord-display">Kolom: - | Baris: -</div>
+        </div>
+
+        <label style="font-size: 12px; color: #aaa; margin-bottom: 5px;">3. Daftar Item (Tersimpan Otomatis)</label>
+        <textarea id="history-box"></textarea>
+        
+        <button class="btn-copy" onclick="copyAllJSON()">📋 Salin Semua JSON</button>
     </div>
+
+    <div class="workspace">
+        <div class="controls">
+            <button class="zoom-btn" onclick="zoom(1.2)">➕ Zoom In</button>
+            <button class="zoom-btn" onclick="zoom(0.8)">➖ Zoom Out</button>
+            <button class="zoom-btn btn-reset" onclick="resetZoom()">🔄 Ukuran Asli</button>
+            <span id="zoom-level" style="margin-left: 10px; font-size: 12px; color:#aaa;">Skala: 1.0x</span>
+        </div>
+        
+        <div class="scroll-container" id="scroll-area">
+            <div id="img-wrapper">
+                <img src="./assets/interface.webp" id="sprite-img" alt="Sprite Sheet">
+                <div id="hover-box"></div> </div>
+        </div>
+    </div>
+
+    <div id="toast">Disalin!</div>
 
     <script>
         const img = document.getElementById('sprite-img');
-        const resultBox = document.getElementById('result-box');
-        let scale = 1;
+        const imgWrapper = document.getElementById('img-wrapper');
+        const hoverBox = document.getElementById('hover-box');
+        
+        const previewImg = document.getElementById('preview-img');
+        const coordDisplay = document.getElementById('coord-display');
+        
+        const inputName = document.getElementById('item-name');
+        const historyBox = document.getElementById('history-box');
+        const toast = document.getElementById('toast');
+        const zoomLevelText = document.getElementById('zoom-level');
 
+        let scale = 1;
+        let baseWidth = 0;
+
+        // Ambil dimensi asli gambar
+        img.onload = () => { baseWidth = img.naturalWidth; };
+        if(img.complete) { baseWidth = img.naturalWidth; }
+
+        // --- SISTEM ZOOM ---
         function zoom(factor) {
+            if (baseWidth === 0) baseWidth = img.naturalWidth;
             scale *= factor;
-            img.style.transform = `scale(${scale})`;
+            applyZoom();
         }
 
         function resetZoom() {
             scale = 1;
-            img.style.transform = `scale(1)`;
+            applyZoom();
         }
 
-        img.addEventListener('click', function(e) {
-            // Menghitung posisi klik dengan mempertimbangkan skala zoom
-            const rect = img.getBoundingClientRect();
-            const x = (e.clientX - rect.left) / scale;
-            const y = (e.clientY - rect.top) / scale;
+        function applyZoom() {
+            img.style.width = (baseWidth * scale) + 'px';
+            imgWrapper.style.width = (baseWidth * scale) + 'px';
+            imgWrapper.style.backgroundSize = `${32 * scale}px ${32 * scale}px`;
+            zoomLevelText.innerText = `Skala: ${scale.toFixed(1)}x`;
+            hoverBox.style.display = 'none'; // Sembunyikan kotak kuning saat di-zoom agar tidak bug visual
+        }
 
-            const col = Math.floor(x / 32);
-            const row = Math.floor(y / 32);
+        // --- SISTEM SOROTAN & KACA PEMBESAR (HOVER) ---
+        imgWrapper.addEventListener('mousemove', function(e) {
+            const rect = imgWrapper.getBoundingClientRect();
+            // Kalkulasi posisi X dan Y murni (mengabaikan skala zoom)
+            const rawX = (e.clientX - rect.left) / scale;
+            const rawY = (e.clientY - rect.top) / scale;
 
-            const codeToCopy = `{ col: ${col}, row: ${row} }`;
+            // Hitung di Kolom dan Baris ke berapa mouse berada
+            const col = Math.floor(rawX / 32);
+            const row = Math.floor(rawY / 32);
 
-            resultBox.innerText = `✅ Tersalin: ${codeToCopy}`;
-            navigator.clipboard.writeText(codeToCopy);
+            // Mencegah error jika mouse keluar batas gambar
+            if (col < 0 || row < 0) return;
+
+            // 1. Tampilkan dan geser Kotak Kuning Sorotan (Snap to Grid)
+            hoverBox.style.display = 'block';
+            hoverBox.style.width = `${32 * scale}px`;
+            hoverBox.style.height = `${32 * scale}px`;
+            hoverBox.style.left = `${col * 32 * scale}px`;
+            hoverBox.style.top = `${row * 32 * scale}px`;
+
+            // 2. Tampilkan di Kaca Pembesar (Geser gambar preview berlawanan arah)
+            // Karena preview di-zoom 3x via CSS, kita kali posisi dengan 3
+            previewImg.style.left = `-${col * 32 * 3}px`;
+            previewImg.style.top = `-${row * 32 * 3}px`;
+
+            // 3. Update Text Bawah Preview
+            coordDisplay.innerText = `Kolom: ${col} | Baris: ${row}`;
         });
+
+        imgWrapper.addEventListener('mouseleave', () => {
+            hoverBox.style.display = 'none';
+        });
+
+        // --- SISTEM KLIK & GENERATOR JSON ---
+        imgWrapper.addEventListener('click', function(e) {
+            const rect = imgWrapper.getBoundingClientRect();
+            const col = Math.floor(((e.clientX - rect.left) / scale) / 32);
+            const row = Math.floor(((e.clientY - rect.top) / scale) / 32);
+
+            // Ambil nama dari input, atau buat nama default jika kosong
+            let itemName = inputName.value.trim();
+            if (!itemName) {
+                itemName = `Item_Tidak_Dikenal_${col}_${row}`;
+            }
+
+            // Generate format JSON yang siap dipakai di file items.json
+            const jsonLine = `    "${itemName}": { "col": ${col}, "row": ${row} },\n`;
+            
+            // Tambahkan ke History Box
+            historyBox.value += jsonLine;
+            
+            // Gulir textarea otomatis ke baris paling bawah
+            historyBox.scrollTop = historyBox.scrollHeight;
+
+            // Bersihkan input nama dan fokuskan kursor kembali agar siap mengetik item berikutnya
+            inputName.value = '';
+            inputName.focus();
+
+            showToast(`✅ [${itemName}] ditambahkan!`);
+        });
+
+        // --- FUNGSI SALIN SELURUH JSON ---
+        function copyAllJSON() {
+            if (historyBox.value.trim() === '') {
+                showToast("⚠️ Daftar masih kosong!", "#dc3545");
+                return;
+            }
+            navigator.clipboard.writeText(historyBox.value);
+            showToast("📋 Seluruh riwayat JSON berhasil disalin!");
+        }
+
+        function showToast(msg, bgColor = "#28a745") {
+            toast.innerText = msg;
+            toast.style.background = bgColor;
+            toast.style.opacity = 1;
+            setTimeout(() => { toast.style.opacity = 0; }, 2000);
+        }
+
+        // Auto-fokus ke kolom input saat program pertama kali dibuka
+        window.onload = () => { inputName.focus(); };
     </script>
 </body>
 </html>

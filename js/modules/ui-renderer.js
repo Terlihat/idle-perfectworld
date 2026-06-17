@@ -1,31 +1,23 @@
-/* ===================================================
-   MODUL UI RENDERER (Mesin Penggambar Tampilan)
-   =================================================== */
-
-// Fungsi untuk mencegah serangan XSS
 export function escapeHTML(str) { 
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : ""; 
 }
 
-const ITEM_ICONS = {
-    "Mirage Stone": { col: 93, row: 52 },
-    "Heaven Stone": { col: 6, row: 12 },
-    "Underworld Stone": { col: 7, row: 12 },
-    "Universal Stone": { col: 8, row: 12 },
-    
-    "Pedang Besi": { col: 100, row: 2 },
-    "Tongkat Sihir": { col: 121, row: 2 },
-    "Zirah Kulit": { col: 124, row: 3 },
-    "Cincin Akurat": { col: 103, row: 3 },
+let ITEM_ICONS = { "default": { col: 0, row: 0 } };
 
-    "Beruang Kutub": { col: 85, row: 100 },
-    
-    "Ramuan HP": { col: 114, row: 26 },
-    "Ramuan MP": { col: 115, row: 26 },
-    "Tiket Ganti Nama": { col: 10, row: 40 },
-    
-    "default": { col: 0, row: 0 } 
-};
+fetch('./data/items.json')
+    .then(response => response.json())
+    .then(data => {
+        ITEM_ICONS = data;
+        console.log("✅ Kamus Ikon berhasil dimuat!");
+    })
+    .catch(err => console.error("❌ Gagal memuat items.json:", err));
+
+export function getIconHTML(itemName) {
+    const pos = ITEM_ICONS[itemName] || ITEM_ICONS["default"];
+    const posX = -(pos.col * 32);
+    const posY = -(pos.row * 32);
+    return `<i class="pw-icon" style="background-position: ${posX}px ${posY}px;"></i>`;
+}
 
 function getIconHTML(itemName) {
     const pos = ITEM_ICONS[itemName] || ITEM_ICONS["default"];
