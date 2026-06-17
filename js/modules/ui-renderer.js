@@ -8,7 +8,7 @@ export function escapeHTML(str) {
 }
 
 const ITEM_ICONS = {
-    "Mirage Stone": { col: 5, row: 12 },
+    "Mirage Stone": { col: 93, row: 52 },
     "Heaven Stone": { col: 6, row: 12 },
     "Underworld Stone": { col: 7, row: 12 },
     "Universal Stone": { col: 8, row: 12 },

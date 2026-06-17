@@ -2,62 +2,75 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Alat Pemetaan Ikon RPG</title>
+    <title>Alat Pemetaan Ikon RPG (Zoomable)</title>
     <style>
-        body { background-color: #121216; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
+        body { background-color: #121216; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; overflow-x: hidden; }
+        
+        /* Kontrol UI */
+        .controls { position: fixed; top: 10px; left: 10px; z-index: 200; display: flex; gap: 5px; }
+        button { padding: 10px 15px; cursor: pointer; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; }
+        button:hover { background: #555; }
+        
         #result-box { 
-            position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
-            background: #28a745; padding: 15px 30px; border-radius: 8px; 
-            font-size: 24px; font-weight: bold; border: 2px solid #fff; z-index: 100;
+            position: fixed; top: 10px; right: 10px; z-index: 200;
+            background: #28a745; padding: 10px 20px; border-radius: 8px; 
+            font-weight: bold; border: 2px solid #fff;
         }
-        .grid-container {
-            position: relative; display: inline-block; margin-top: 80px;
-            /* Memberikan efek grid kotak-kotak samar agar mudah dilihat */
+
+        /* Area Gambar */
+        .wrapper { margin-top: 60px; display: inline-block; border: 2px solid #00d2ff; }
+        #sprite-img { 
+            display: block; cursor: crosshair;
+            /* Efek grid kotak-kotak */
             background-image: linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px);
             background-size: 32px 32px;
-            border: 2px solid #00d2ff;
+            transition: transform 0.1s ease-out;
+            transform-origin: top left;
         }
-        #sprite-img { opacity: 0.85; cursor: crosshair; display: block; }
-        #sprite-img:hover { opacity: 1; }
     </style>
 </head>
 <body>
-    <div id="result-box">Klik ikon mana saja di bawah!</div>
 
-    <div class="grid-container">
+    <div class="controls">
+        <button onclick="zoom(1.2)">🔍 Zoom In</button>
+        <button onclick="zoom(0.8)">🔎 Zoom Out</button>
+        <button onclick="resetZoom()">🔄 Ukuran Asli</button>
+    </div>
+    
+    <div id="result-box">Klik ikon mana saja!</div>
+
+    <div class="wrapper">
         <img src="./assets/interface.webp" id="sprite-img" alt="Sprite Sheet">
     </div>
 
     <script>
         const img = document.getElementById('sprite-img');
         const resultBox = document.getElementById('result-box');
+        let scale = 1;
+
+        function zoom(factor) {
+            scale *= factor;
+            img.style.transform = `scale(${scale})`;
+        }
+
+        function resetZoom() {
+            scale = 1;
+            img.style.transform = `scale(1)`;
+        }
 
         img.addEventListener('click', function(e) {
-            // Ambil posisi klik mouse relatif terhadap gambar
+            // Menghitung posisi klik dengan mempertimbangkan skala zoom
             const rect = img.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const x = (e.clientX - rect.left) / scale;
+            const y = (e.clientY - rect.top) / scale;
 
-            // Hitung Kolom dan Baris (Ukuran ikon 32x32)
             const col = Math.floor(x / 32);
             const row = Math.floor(y / 32);
 
-            // Buat format teks untuk dicopy
             const codeToCopy = `{ col: ${col}, row: ${row} }`;
 
-            // Tampilkan di layar
             resultBox.innerText = `✅ Tersalin: ${codeToCopy}`;
-            resultBox.style.background = "#ffcc00";
-            resultBox.style.color = "#000";
-
-            // Otomatis Copy ke Clipboard!
             navigator.clipboard.writeText(codeToCopy);
-
-            // Efek kedip tombol
-            setTimeout(() => {
-                resultBox.style.background = "#28a745";
-                resultBox.style.color = "#fff";
-            }, 500);
         });
     </script>
 </body>
