@@ -13,13 +13,15 @@ const ITEM_ICONS = {
     "Underworld Stone": { col: 7, row: 12 },
     "Universal Stone": { col: 8, row: 12 },
     
-    "Pedang Besi": { col: 0, row: 2 },
-    "Tongkat Sihir": { col: 4, row: 3 },
-    "Zirah Kulit": { col: 1, row: 10 },
-    "Cincin Akurat": { col: 15, row: 20 },
+    "Pedang Besi": { col: 100, row: 2 },
+    "Tongkat Sihir": { col: 121, row: 2 },
+    "Zirah Kulit": { col: 124, row: 3 },
+    "Cincin Akurat": { col: 103, row: 3 },
+
+    "Beruang Kutub": { col: 85, row: 100 },
     
-    "Ramuan HP": { col: 0, row: 35 },
-    "Ramuan MP": { col: 1, row: 35 },
+    "Ramuan HP": { col: 114, row: 26 },
+    "Ramuan MP": { col: 115, row: 26 },
     "Tiket Ganti Nama": { col: 10, row: 40 },
     
     "default": { col: 0, row: 0 } 
