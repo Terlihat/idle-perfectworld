@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <title>Alat Pemetaan Ikon RPG Ultimate</title>
     <style>
+        /* Reset Dasar */
         body { 
             background-color: #121216; color: #fff; font-family: sans-serif; 
-            margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden;
+            margin: 0; padding: 0; height: 100vh; overflow: hidden; /* Mencegah scroll di seluruh layar */
         }
         
-        /* ================= SIDEBAR PANEL ================= */
+        /* ================= SIDEBAR PANEL (KIRI) ================= */
         .sidebar {
+            position: absolute; top: 0; left: 0; bottom: 0;
             width: 320px; background: #1c1c24; border-right: 2px solid #3f3f52;
             display: flex; flex-direction: column; padding: 15px; box-sizing: border-box;
             box-shadow: 2px 0 10px rgba(0,0,0,0.5); z-index: 100;
@@ -36,7 +38,7 @@
         #preview-img {
             position: absolute; top: 0; left: 0;
             transform-origin: top left; transform: scale(3); /* Zoom 3x */
-            image-rendering: pixelated; /* Agar gambar tidak blur saat di-zoom */
+            image-rendering: pixelated; 
             pointer-events: none;
         }
         #coord-display { font-size: 11px; color: #aaa; margin-top: 5px; font-family: monospace; }
@@ -46,6 +48,7 @@
             flex-grow: 1; width: 100%; background: #0a0a0c; color: #28a745; 
             border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; 
             font-family: monospace; font-size: 12px; resize: none; outline: none; white-space: pre; overflow-wrap: normal; overflow-x: auto;
+            box-sizing: border-box;
         }
 
         /* Tombol Copy */
@@ -55,20 +58,11 @@
         }
         .btn-copy:hover { background: #218838; }
 
-        /* ================= AREA GAMBAR (WORKSPACE) ================= */
-        .workspace { flex-grow: 1; display: flex; flex-direction: column; position: relative; }
-        
-        .controls { 
-            background: #1c1c24; padding: 10px; border-bottom: 1px solid #3f3f52;
-            display: flex; gap: 10px; align-items: center; justify-content: center;
-        }
-        button.zoom-btn { padding: 8px 15px; cursor: pointer; background: #007bff; color: #fff; border: none; border-radius: 4px; font-weight: bold; }
-        button.zoom-btn:hover { background: #0056b3; }
-        .btn-reset { background: #dc3545 !important; }
-        .btn-reset:hover { background: #c82333 !important; }
-
+        /* ================= AREA KERJA (KANAN) ================= */
         .scroll-container { 
-            flex-grow: 1; overflow: auto; padding: 20px; background: #0a0a0c;
+            position: absolute; top: 0; left: 320px; right: 0; bottom: 0;
+            overflow: auto; /* Memunculkan scrollbar di area ini saja */
+            padding: 20px; background: #0a0a0c; box-sizing: border-box;
         }
 
         /* Bungkus Gambar dan Grid Sorot */
@@ -83,15 +77,27 @@
         /* Kotak Kuning Sorotan (Snap to Grid) */
         #hover-box {
             position: absolute; border: 2px solid #ffcc00; background: rgba(255, 204, 0, 0.3);
-            pointer-events: none; /* Agar tidak menghalangi klik ke gambar */
-            display: none; z-index: 10; box-sizing: border-box;
+            pointer-events: none; display: none; z-index: 10; box-sizing: border-box;
         }
+
+        /* ================= PANEL ZOOM (MENGAMBANG KANAN BAWAH) ================= */
+        .controls { 
+            position: fixed; bottom: 30px; right: 30px; z-index: 9999; 
+            background: rgba(20, 20, 26, 0.95); padding: 15px; 
+            border: 2px solid #ffcc00; border-radius: 10px;
+            display: flex; gap: 10px; align-items: center; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+        }
+        button.zoom-btn { padding: 8px 15px; cursor: pointer; background: #007bff; color: #fff; border: none; border-radius: 4px; font-weight: bold; }
+        button.zoom-btn:hover { background: #0056b3; }
+        .btn-reset { background: #dc3545 !important; }
+        .btn-reset:hover { background: #c82333 !important; }
 
         /* Pesan Notifikasi Sukses */
         #toast {
-            position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white;
+            position: fixed; top: 20px; right: 20px; background: #28a745; color: white;
             padding: 10px 20px; border-radius: 5px; font-weight: bold; opacity: 0;
-            transition: opacity 0.3s ease-in-out; pointer-events: none; z-index: 1000;
+            transition: opacity 0.3s ease-in-out; pointer-events: none; z-index: 10000;
         }
     </style>
 </head>
@@ -101,37 +107,35 @@
         <h2>🛠️ Mesin Pembuat JSON</h2>
         
         <div class="input-group">
-            <label>1. Ketik Nama Item (Lalu klik ikon di kanan)</label>
+            <label>1. Ketik Nama Item (Lalu klik gambar)</label>
             <input type="text" id="item-name" placeholder="Misal: Pedang Naga" autocomplete="off">
         </div>
 
         <div class="preview-box">
-            <label style="font-size: 12px; color: #aaa;">2. Kaca Pembesar (Preview 3x)</label>
+            <label style="font-size: 12px; color: #aaa;">2. Kaca Pembesar (Preview)</label>
             <div id="preview-container">
                 <img src="./assets/interface.webp" id="preview-img">
             </div>
             <div id="coord-display">Kolom: - | Baris: -</div>
         </div>
 
-        <label style="font-size: 12px; color: #aaa; margin-bottom: 5px;">3. Daftar Item (Tersimpan Otomatis)</label>
+        <label style="font-size: 12px; color: #aaa; margin-bottom: 5px;">3. Daftar Item Otomatis</label>
         <textarea id="history-box"></textarea>
         
         <button class="btn-copy" onclick="copyAllJSON()">📋 Salin Semua JSON</button>
     </div>
 
-    <div class="workspace">
-        <div class="controls">
-            <button class="zoom-btn" onclick="zoom(1.2)">➕ Zoom In</button>
-            <button class="zoom-btn" onclick="zoom(0.8)">➖ Zoom Out</button>
-            <button class="zoom-btn btn-reset" onclick="resetZoom()">🔄 Ukuran Asli</button>
-            <span id="zoom-level" style="margin-left: 10px; font-size: 12px; color:#aaa;">Skala: 1.0x</span>
-        </div>
-        
-        <div class="scroll-container" id="scroll-area">
-            <div id="img-wrapper">
-                <img src="./assets/interface.webp" id="sprite-img" alt="Sprite Sheet">
-                <div id="hover-box"></div> </div>
-        </div>
+    <div class="scroll-container" id="scroll-area">
+        <div id="img-wrapper">
+            <img src="./assets/interface.webp" id="sprite-img" alt="Sprite Sheet">
+            <div id="hover-box"></div> </div>
+    </div>
+
+    <div class="controls">
+        <button class="zoom-btn" onclick="zoom(1.2)">➕ Zoom In</button>
+        <button class="zoom-btn" onclick="zoom(0.8)">➖ Zoom Out</button>
+        <button class="zoom-btn btn-reset" onclick="resetZoom()">🔄 Ukuran Asli</button>
+        <span id="zoom-level" style="margin-left: 10px; font-size: 14px; color:#fff; font-weight: bold;">Skala: 1.0x</span>
     </div>
 
     <div id="toast">Disalin!</div>
@@ -173,36 +177,33 @@
             imgWrapper.style.width = (baseWidth * scale) + 'px';
             imgWrapper.style.backgroundSize = `${32 * scale}px ${32 * scale}px`;
             zoomLevelText.innerText = `Skala: ${scale.toFixed(1)}x`;
-            hoverBox.style.display = 'none'; // Sembunyikan kotak kuning saat di-zoom agar tidak bug visual
+            hoverBox.style.display = 'none'; // Sembunyikan kotak kuning saat transisi zoom
         }
 
-        // --- SISTEM SOROTAN & KACA PEMBESAR (HOVER) ---
+        // --- SISTEM KACA PEMBESAR & SOROTAN ---
         imgWrapper.addEventListener('mousemove', function(e) {
             const rect = imgWrapper.getBoundingClientRect();
-            // Kalkulasi posisi X dan Y murni (mengabaikan skala zoom)
+            // Kalkulasi posisi mouse murni (tanpa pengaruh skala)
             const rawX = (e.clientX - rect.left) / scale;
             const rawY = (e.clientY - rect.top) / scale;
 
-            // Hitung di Kolom dan Baris ke berapa mouse berada
+            // Hitung Kolom & Baris
             const col = Math.floor(rawX / 32);
             const row = Math.floor(rawY / 32);
 
-            // Mencegah error jika mouse keluar batas gambar
             if (col < 0 || row < 0) return;
 
-            // 1. Tampilkan dan geser Kotak Kuning Sorotan (Snap to Grid)
+            // 1. Tampilkan Kotak Sorotan Kuning (Snap to Grid)
             hoverBox.style.display = 'block';
             hoverBox.style.width = `${32 * scale}px`;
             hoverBox.style.height = `${32 * scale}px`;
             hoverBox.style.left = `${col * 32 * scale}px`;
             hoverBox.style.top = `${row * 32 * scale}px`;
 
-            // 2. Tampilkan di Kaca Pembesar (Geser gambar preview berlawanan arah)
-            // Karena preview di-zoom 3x via CSS, kita kali posisi dengan 3
+            // 2. Tampilkan Preview di Kaca Pembesar (Zoom 3x)
             previewImg.style.left = `-${col * 32 * 3}px`;
             previewImg.style.top = `-${row * 32 * 3}px`;
 
-            // 3. Update Text Bawah Preview
             coordDisplay.innerText = `Kolom: ${col} | Baris: ${row}`;
         });
 
@@ -210,42 +211,34 @@
             hoverBox.style.display = 'none';
         });
 
-        // --- SISTEM KLIK & GENERATOR JSON ---
+        // --- SISTEM KLIK & GENERATE JSON ---
         imgWrapper.addEventListener('click', function(e) {
             const rect = imgWrapper.getBoundingClientRect();
             const col = Math.floor(((e.clientX - rect.left) / scale) / 32);
             const row = Math.floor(((e.clientY - rect.top) / scale) / 32);
 
-            // Ambil nama dari input, atau buat nama default jika kosong
             let itemName = inputName.value.trim();
-            if (!itemName) {
-                itemName = `Item_Tidak_Dikenal_${col}_${row}`;
-            }
+            if (!itemName) itemName = `Item_Baru_${col}_${row}`;
 
-            // Generate format JSON yang siap dipakai di file items.json
             const jsonLine = `    "${itemName}": { "col": ${col}, "row": ${row} },\n`;
             
-            // Tambahkan ke History Box
             historyBox.value += jsonLine;
-            
-            // Gulir textarea otomatis ke baris paling bawah
             historyBox.scrollTop = historyBox.scrollHeight;
 
-            // Bersihkan input nama dan fokuskan kursor kembali agar siap mengetik item berikutnya
             inputName.value = '';
             inputName.focus();
 
             showToast(`✅ [${itemName}] ditambahkan!`);
         });
 
-        // --- FUNGSI SALIN SELURUH JSON ---
+        // --- SALIN SEMUA KE CLIPBOARD ---
         function copyAllJSON() {
             if (historyBox.value.trim() === '') {
                 showToast("⚠️ Daftar masih kosong!", "#dc3545");
                 return;
             }
             navigator.clipboard.writeText(historyBox.value);
-            showToast("📋 Seluruh riwayat JSON berhasil disalin!");
+            showToast("📋 Seluruh JSON berhasil disalin!");
         }
 
         function showToast(msg, bgColor = "#28a745") {
@@ -255,7 +248,6 @@
             setTimeout(() => { toast.style.opacity = 0; }, 2000);
         }
 
-        // Auto-fokus ke kolom input saat program pertama kali dibuka
         window.onload = () => { inputName.focus(); };
     </script>
 </body>
