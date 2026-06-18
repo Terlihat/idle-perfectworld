@@ -335,3 +335,14 @@ window.actionCraftItem = function(recipeName) {
         craftItemAction(db, currentUserUid, recipeName);
     }
 };
+
+// --- FUNGSI TOGGLE PANEL ---
+window.bukaMenu = function(panelId) {
+    const panel = document.getElementById(panelId);
+    if (panel) {
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        if (panel.style.display === 'block') {
+            panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+};
