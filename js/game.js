@@ -314,12 +314,21 @@ window.handleInventoryClick = function(itemName) {
     }
 
     else if (inventoryMode === "BLACKSMITH") {
-        const itemInfo = ITEM_DB[itemName];
+        // Ekstrak nama asli (Contoh: Mengubah "Pedang Besi [+2]" menjadi "Pedang Besi")
+        const baseName = itemName.replace(/\s\[\+\d+\]$/, '');
+        const itemInfo = ITEM_DB[baseName];
         
         if (!itemInfo) return alert("Item tidak dikenali sistem.");
 
+        // Ambil icon berdasarkan tipe (Bisa diganti dengan fungsi ikon asli Anda)
+        let iconEmoji = "🛡️";
+        if (itemInfo.type === 'weapon') iconEmoji = "🗡️";
+        if (itemInfo.type === 'accessory') iconEmoji = "💍";
+        if (itemInfo.type === 'catalyst') iconEmoji = "💎";
+
         if (itemInfo.type === 'weapon' || itemInfo.type === 'armor' || itemInfo.type === 'accessory') {
-            bsSelectedEquip = itemName;
+            bsSelectedEquip = itemName; // Menyimpan nama lengkap beserta [+X]
+            document.getElementById('bs-icon-equip').innerText = iconEmoji;
             document.getElementById('bs-text-equip').innerText = itemName;
             document.getElementById('bs-text-equip').style.color = "#00d2ff";
             
@@ -327,8 +336,9 @@ window.handleInventoryClick = function(itemName) {
             document.getElementById('bs-info-cost').innerText = `Biaya: ${mCost}x Mirage Stone & 1,000 Gold`;
         } 
         else if (itemInfo.type === 'catalyst') {
-            if (itemName === "Mirage Stone") return alert("Mirage Stone digunakan otomatis. Pilih batu tambahan (Heaven/Underworld/Universal)!");
+            if (itemName === "Mirage Stone") return alert("Mirage Stone digunakan otomatis. Pilih batu tambahan atau biarkan kosong!");
             bsSelectedCatalyst = itemName;
+            document.getElementById('bs-icon-catalyst').innerText = iconEmoji;
             document.getElementById('bs-text-catalyst').innerText = itemName;
             document.getElementById('bs-text-catalyst').style.color = "#ffcc00";
         } 
