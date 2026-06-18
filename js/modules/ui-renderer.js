@@ -1,4 +1,5 @@
 import { getVipStats } from './vip.js';
+import { CRAFTING_RECIPES } from './crafting.js';
 
 export function escapeHTML(str) { 
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : ""; 
@@ -370,4 +371,40 @@ export function renderChatUI(messages, currentChatChannel) {
         const vipBadge = (m.vipLevel && m.vipLevel > 0) ? `<span class="vip-badge vip-chat">V${m.vipLevel}</span>` : "";
         chatBox.innerHTML += `<div><strong style="color:${chColor}; font-size:9px;">[${chLabel}]</strong> ${vipBadge} <span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`; 
     });
+}
+
+// 10. RENDER TUNGKU TEMPA (CRAFTING)
+export function renderCraftingUI(inventory, playerLevel, playerGold) {
+    const craftList = document.getElementById('crafting-list');
+    if (!craftList) return;
+    craftList.innerHTML = "";
+
+    for (const [recipeName, recipe] of Object.entries(CRAFTING_RECIPES)) {
+        let reqHtml = `Lv.${recipe.reqLevel} | 💰 ${recipe.reqGold.toLocaleString()} Gold<br>`;
+        let canCraft = (playerLevel >= recipe.reqLevel) && (playerGold >= recipe.reqGold);
+
+        let matHtml = "";
+        for (const [matName, qtyNeeded] of Object.entries(recipe.materials)) {
+            const hasQty = inventory[matName] || 0;
+            const color = hasQty >= qtyNeeded ? "#28a745" : "#dc3545"; // Hijau jika cukup, Merah jika kurang
+            if (hasQty < qtyNeeded) canCraft = false; // Jika ada 1 saja yang kurang, tombol tempa mati
+            matHtml += `<span style="color:${color}; font-size:10px;">[${matName}] ${hasQty}/${qtyNeeded}</span><br>`;
+        }
+
+        let btnHtml = canCraft
+            ? `<button onclick="window.actionCraftItem('${escapeHTML(recipeName)}')" style="background:#00d2ff; color:#000; font-weight:bold; padding:4px 8px; font-size:10px;">🔨 TEMPA</button>`
+            : `<button disabled style="background:#555; padding:4px 8px; font-size:10px; cursor:not-allowed; border:1px solid #333;">Syarat Kurang</button>`;
+
+        craftList.innerHTML += `
+        <div style="border-bottom:1px solid #333; padding: 8px 0; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <strong style="color:#ff9800; font-size:13px;">${escapeHTML(recipe.resultItem)}</strong><br>
+                <span style="font-size:10px; color:#aaa;">Syarat: ${reqHtml}</span>
+                <div style="margin-top:4px; padding-left:4px; border-left: 2px solid #555;">
+                    ${matHtml}
+                </div>
+            </div>
+            <div>${btnHtml}</div>
+        </div>`;
+    }
 }

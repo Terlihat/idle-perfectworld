@@ -25,6 +25,8 @@ import { assignRandomQuests, claimQuestReward } from './modules/quest.js';
 import { listenToGuilds, createGuild, joinGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, kickMember, disbandGuild } from './modules/guild.js';
 import { listenToMailbox, claimMailReward, deleteMail } from './modules/mailbox.js';
 import { dismantleItemAction, DISMANTLE_CONFIG } from './modules/crafting.js';
+import { renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI, renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI } from './modules/ui-renderer.js';
+import { dismantleItemAction, DISMANTLE_CONFIG, craftItemAction } from './modules/crafting.js';
 
 let currentUserUid = null;
 let activeUnsubscribeListeners = [];
@@ -124,7 +126,6 @@ function startLiveGameSync() {
             startDynamicChat();
         }
 
-        // --- Render UI menggunakan Modul Spesialis ---
         const newStats = renderPlayerUI(d, currentUserUid, globalGuilds, guildUpgradesMap);
         if (newStats) currentPlayerStats = newStats; 
 
@@ -132,6 +133,7 @@ function startLiveGameSync() {
         renderInventoryUI(d.inventory);
         renderBankUI(d.bankInventory);
         renderGuildUI(currentPlayerStats, globalGuilds, guildUpgradesMap); 
+        renderCraftingUI(d.inventory || {}, d.level || 1, d.gold || 0);
         
         if (!unsubChatListener) startDynamicChat();
     });
@@ -330,3 +332,8 @@ window.leaveParty = function(partyId) { leaveParty(db, partyId, currentUserUid);
 window.startFb = function(partyId) { startFbBattle(db, currentUserUid, partyId); };
 window.joinGuildAction = function(guildId) { if (confirm("Bergabung dengan klan ini?")) joinGuild(db, currentUserUid, currentPlayerStats, guildId); };
 window.kickMemberAction = function(targetUid) { if (confirm("Keluarkan anggota ini dari klan?")) kickMember(db, currentUserUid, currentPlayerStats.guildId, targetUid); };
+window.actionCraftItem = function(recipeName) {
+    if(confirm(`Siap menempa [${recipeName}]?\nSemua material dan Gold yang disyaratkan akan dikonsumsi.`)) {
+        craftItemAction(db, currentUserUid, recipeName);
+    }
+};
