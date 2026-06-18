@@ -12,7 +12,6 @@ import {
 // IMPORT MODULES SISTEM
 import { selectCharacterClass, addCharacterStat, startStaminaRegeneration } from './modules/character.js';
 import { equipFromInventory, sellItemToNPC } from './modules/inventory.js';
-import { refineEquipment } from './modules/blacksmith.js';
 import { attackMonster } from './modules/battle.js'; 
 import { buyEquipment } from './modules/shop.js';
 import { listenToChat, sendChat } from './modules/chat.js';
@@ -251,11 +250,6 @@ document.addEventListener('click', (e) => {
     if (targetId === 'btn-upgrade-guild') { if (confirm("Gunakan kas Guild untuk naik level?")) upgradeGuild(db, currentUserUid, currentPlayerStats.guildId); }
     if (targetId === 'btn-edit-motd') { const txt = prompt("Masukkan pengumuman baru untuk anggota klan:"); if (txt) updateMotd(db, currentUserUid, currentPlayerStats.guildId, txt); }
     if (targetId === 'btn-disband-guild') { if (confirm("PERINGATAN KERAS: Yakin membubarkan Klan selamanya? Kas akan hangus!")) disbandGuild(db, currentUserUid, currentPlayerStats.guildId); }
-
-    // --- KONTROL PANDAI BESI ---
-    if (targetId === 'btn-refine-weapon') refineEquipment(db, currentUserUid, 'weapon', document.getElementById('refine-catalyst').value);
-    if (targetId === 'btn-refine-armor') refineEquipment(db, currentUserUid, 'armor', document.getElementById('refine-catalyst').value);
-    if (targetId === 'btn-refine-accessory') refineEquipment(db, currentUserUid, 'accessory', document.getElementById('refine-catalyst').value);
 
     // --- KONTROL BANK ---
     if (targetId === 'btn-bank-deposit-gold') { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { depositGold(db, currentUserUid, val); el.value = ""; } }
