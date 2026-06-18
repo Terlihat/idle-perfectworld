@@ -106,3 +106,33 @@ export async function sellItemToNPC(db, uid, itemName) {
         alert(`Berhasil menjual ${itemName} seharga ${itemData.sellValue} Gold.`);
     } catch (err) { alert(err); }
 }
+
+export async function unequipItem(db, uid, slotType) {
+    if (!uid) return;
+    const userRef = doc(db, "users", uid);
+    
+    try {
+        await runTransaction(db, async (ts) => {
+            const data = (await ts.get(userRef)).data();
+            let inv = data.inventory || {};
+            let eq = data.equipment || {};
+
+            if (!eq[slotType] || !eq[slotType].name) throw "Slot ini sudah kosong.";
+
+            // Ambil nama item beserta tingkat + nya
+            let oldItemName = eq[slotType].name;
+            if (eq[slotType].refine && eq[slotType].refine > 0) {
+                oldItemName += ` [+${eq[slotType].refine}]`;
+            }
+            
+            // Masukkan kembali ke tas
+            inv[oldItemName] = (inv[oldItemName] || 0) + 1;
+            
+            // Kosongkan slot di badan
+            eq[slotType] = null; 
+
+            ts.update(userRef, { inventory: inv, equipment: eq });
+        });
+        // Kita buat tanpa alert agar senyap dan mulus
+    } catch (err) { alert(err); }
+}

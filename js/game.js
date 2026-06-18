@@ -11,7 +11,7 @@ import {
 
 // IMPORT MODULES SISTEM
 import { selectCharacterClass, addCharacterStat, startStaminaRegeneration } from './modules/character.js';
-import { equipFromInventory, sellItemToNPC } from './modules/inventory.js';
+import { equipFromInventory, sellItemToNPC, unequipItem } from './modules/inventory.js';
 import { attackMonster } from './modules/battle.js'; 
 import { buyEquipment } from './modules/shop.js';
 import { listenToChat, sendChat } from './modules/chat.js';
@@ -255,12 +255,12 @@ document.addEventListener('click', (e) => {
     }
 
     // --- KONTROL GUILD ---
-    if (targetId === 'btn-create-guild') { const name = document.getElementById('input-guild-name').value; if (confirm(`Dirikan Klan [${name}] seharga 100,000 Gold?`)) createGuild(db, currentUserUid, currentPlayerStats, name); }
-    if (targetId === 'btn-leave-guild') { if (confirm("Yakin ingin keluar dari klan? Anda akan kehilangan semua Buff Guild!")) dbLeaveGuild(db, currentUserUid, currentPlayerStats.guildId); }
+    if (targetId === 'btn-create-guild') { const name = document.getElementById('input-guild-name').value; if (confirm(`Dirikan Guild [${name}] seharga 100,000 Gold?`)) createGuild(db, currentUserUid, currentPlayerStats, name); }
+    if (targetId === 'btn-leave-guild') { if (confirm("Yakin ingin keluar dari Guild? Anda akan kehilangan semua Buff Guild!")) dbLeaveGuild(db, currentUserUid, currentPlayerStats.guildId); }
     if (targetId === 'btn-donate-guild') { const amt = parseInt(document.getElementById('input-donate-gold').value); if (amt > 0) { donateGold(db, currentUserUid, currentPlayerStats.guildId, amt); document.getElementById('input-donate-gold').value = ""; } }
-    if (targetId === 'btn-upgrade-guild') { if (confirm("Gunakan kas Guild untuk naik level?")) upgradeGuild(db, currentUserUid, currentPlayerStats.guildId); }
-    if (targetId === 'btn-edit-motd') { const txt = prompt("Masukkan pengumuman baru untuk anggota klan:"); if (txt) updateMotd(db, currentUserUid, currentPlayerStats.guildId, txt); }
-    if (targetId === 'btn-disband-guild') { if (confirm("PERINGATAN KERAS: Yakin membubarkan Klan selamanya? Kas akan hangus!")) disbandGuild(db, currentUserUid, currentPlayerStats.guildId); }
+    if (targetId === 'btn-upgrade-guild') { if (confirm("Gunakan Dana Guild untuk naik level?")) upgradeGuild(db, currentUserUid, currentPlayerStats.guildId); }
+    if (targetId === 'btn-edit-motd') { const txt = prompt("Masukkan pengumuman baru untuk anggota Guild:"); if (txt) updateMotd(db, currentUserUid, currentPlayerStats.guildId, txt); }
+    if (targetId === 'btn-disband-guild') { if (confirm("PERINGATAN KERAS: Yakin membubarkan Guild selamanya? Dana Guild akan hangus!")) disbandGuild(db, currentUserUid, currentPlayerStats.guildId); }
 
     // --- KONTROL BANK ---
     if (targetId === 'btn-bank-deposit-gold') { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { depositGold(db, currentUserUid, val); el.value = ""; } }
@@ -379,8 +379,8 @@ window.actionBid = function(id, action) {
 window.addStat = function(statName) { addCharacterStat(db, currentUserUid, statName); };
 window.leaveParty = function(partyId) { leaveParty(db, partyId, currentUserUid); };
 window.startFb = function(partyId) { startFbBattle(db, currentUserUid, partyId); };
-window.joinGuildAction = function(guildId) { if (confirm("Bergabung dengan klan ini?")) joinGuild(db, currentUserUid, currentPlayerStats, guildId); };
-window.kickMemberAction = function(targetUid) { if (confirm("Keluarkan anggota ini dari klan?")) kickMember(db, currentUserUid, currentPlayerStats.guildId, targetUid); };
+window.joinGuildAction = function(guildId) { if (confirm("Bergabung dengan Guild ini?")) joinGuild(db, currentUserUid, currentPlayerStats, guildId); };
+window.kickMemberAction = function(targetUid) { if (confirm("Keluarkan anggota ini dari Guild?")) kickMember(db, currentUserUid, currentPlayerStats.guildId, targetUid); };
 window.actionCraftItem = function(recipeName) {
     if(confirm(`Siap menempa [${recipeName}]?\nSemua material dan Gold yang disyaratkan akan dikonsumsi.`)) {
         craftItemAction(db, currentUserUid, recipeName);
@@ -452,4 +452,8 @@ window.resetCatalyst = function() {
     if (elText) { elText.innerText = "Tanpa Batu"; elText.style.color = "#aaa"; }
     
     window.addBlacksmithLog("[SISTEM] Batu katalis dikosongkan.", "#aaa");
+};
+
+window.actionUnequip = function(slotType) {
+    unequipItem(db, currentUserUid, slotType);
 };

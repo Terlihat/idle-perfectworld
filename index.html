@@ -68,11 +68,12 @@
                         <div class="bar-container"><div id="char-stam-bar" class="bar-fill-stamina"></div><div id="char-stam-text" class="bar-text">Stamina</div></div>
                         
                         <div class="equip-box">
-                            <div class="equip-item"><span>🗡️ Senjata:</span> <span id="eq-weapon">Kosong</span></div>
-                            <div class="equip-item"><span>👕 Armor:</span> <span id="eq-armor">Kosong</span></div>
-                            <div class="equip-item"><span>💍 Aksesoris:</span> <span id="eq-acc">Kosong</span></div>
+                            <div class="equip-item"><span>🗡️ Senjata:</span> <span id="eq-weapon" onclick="window.actionUnequip('weapon')" style="cursor:pointer; color:#00d2ff;" title="Klik untuk melepas">Kosong</span></div>
+                            <div class="equip-item"><span>👕 Armor:</span> <span id="eq-armor" onclick="window.actionUnequip('armor')" style="cursor:pointer; color:#00d2ff;" title="Klik untuk melepas">Kosong</span></div>
+                            <div class="equip-item"><span>💍 Aksesoris:</span> <span id="eq-acc" onclick="window.actionUnequip('accessory')" style="cursor:pointer; color:#00d2ff;" title="Klik untuk melepas">Kosong</span></div>
                             <div class="equip-item"><span>🐴 Mount:</span> <span id="eq-mount" style="color: #ffca28; font-weight: bold;">Jalan Kaki</span></div>
                         </div>
+                        <p style="font-size: 8px; color: #777; text-align: center; margin-top: 2px;">*Klik nama item di atas untuk melepasnya.</p>
                         
                         <div class="stat-grid" style="margin-top: 10px;">
                             <div>STR: <span class="stat-val"><span id="stat-str">0</span> <button class="btn-add-stat" onclick="window.addStat('str')" style="display:none; padding:1px 5px; font-size:9px; background:#28a745; margin-left:3px;">+</button></span></div>
@@ -98,7 +99,7 @@
                             <button id="btn-mode-equip" class="mode-active">🛡️ PAKAI</button>
                             <button id="btn-mode-sell" style="background:#495057;">💰 JUAL</button>
                             <button id="btn-mode-dismantle" style="background-color:#495057;">🔥 LEBUR</button>
-                            <button id="btn-mode-bank" style="background:#495057;">🏦 BANK</button>
+                            <button id="btn-mode-bank" style="background:#495057;">🏦 BANGKIR</button>
                             <button id="btn-mode-auction" style="background:#495057;">⚖️ LELANG</button>
                             <button id="btn-mode-blacksmith" style="background-color:#495057;">⚒️ Pandai Besi</button>
                         </div>
@@ -138,7 +139,7 @@
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Toko...</div>
                     </div>
                     <div id="panel-bank" class="panel">
-                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Bank...</div>
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Bangkir...</div>
                     </div>
                     <div id="panel-guild" class="panel" style="border: 1px solid #ffcc00; background: #1f1a0d;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Guild...</div>

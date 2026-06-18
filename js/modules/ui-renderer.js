@@ -196,9 +196,9 @@ export function renderInventoryUI(inventory) {
                     <span class="inv-qty">x${qty}</span>
                 </div>`;
             } else {
-                invGrid.innerHTML += `<div class="inv-slot">Kosong</div>`;
+                invGrid.innerHTML += `<div class="inv-slot"></div>`;
             }
-        } else { invGrid.innerHTML += `<div class="inv-slot">Kosong</div>`; }
+        } else { invGrid.innerHTML += `<div class="inv-slot"></div>`; }
     }
 }
 
@@ -217,7 +217,7 @@ export function renderBankUI(bankInventory) {
                 <span style="font-size:10px;">${escapeHTML(name)}</span>
                 <span class="inv-qty">x${qty}</span>
             </div>`;
-        } else { bankGrid.innerHTML += `<div class="bank-slot">Kosong</div>`; }
+        } else { bankGrid.innerHTML += `<div class="bank-slot"></div>`; }
     }
 }
 
