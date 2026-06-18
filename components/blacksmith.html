@@ -2,20 +2,24 @@
 <p style="font-size: 11px; color: #aaa; text-align: center; margin-bottom: 15px;">Pilih Equip dan Batu Katalis dari Tas Anda!</p>
 
 <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 15px;">
-    <div id="bs-slot-equip" style="width: 70px; height: 70px; border: 2px dashed #00d2ff; background: #0d151e; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px;">
+    <div id="bs-slot-equip" style="width: 70px; height: 70px; border: 2px dashed #00d2ff; background: #0d151e; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer;" onclick="window.resetEquip()">
         <span style="font-size: 24px;" id="bs-icon-equip">🛡️</span>
         <span style="font-size: 9px; margin-top: 5px; text-align: center;" id="bs-text-equip">Pilih Equip</span>
     </div>
 
-    <div id="bs-slot-catalyst" style="width: 70px; height: 70px; border: 2px dashed #ffcc00; background: #1a170d; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px;" onclick="window.resetCatalyst()">
+    <div id="bs-slot-catalyst" style="width: 70px; height: 70px; border: 2px dashed #ffcc00; background: #1a170d; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer;" onclick="window.resetCatalyst()">
         <span style="font-size: 24px;" id="bs-icon-catalyst">💎</span>
         <span style="font-size: 9px; margin-top: 5px; text-align: center;" id="bs-text-catalyst">Tanpa Batu</span>
     </div>
 </div>
 
-<div id="bs-info-cost" style="text-align: center; font-size: 11px; margin-bottom: 15px; color: #ff9800; min-height: 15px;">
+<div id="bs-info-cost" style="text-align: center; font-size: 11px; margin-bottom: 5px; color: #ff9800; min-height: 15px;">
     Silakan pilih Equipment.
 </div>
 
+<div id="bs-log-panel" style="background: #0a0a0c; border: 1px solid #333; height: 85px; overflow-y: auto; font-size: 10px; padding: 6px; margin-bottom: 10px; text-align: left; font-family: monospace; border-radius: 4px;">
+    <div style="color: #777;">[SISTEM] Tungku siap digunakan...</div>
+</div>
+
 <button onclick="window.executeTempa()" style="width: 100%; padding: 10px; background: #28a745; color: #fff; font-weight: bold; font-size: 14px; border-radius: 5px; border: none; cursor: pointer;">⚒️ TEMPA (+1) ⚒️</button>
-<p style="font-size: 9px; color: #777; text-align: center; margin-top: 10px;">*Klik slot batu untuk membatalkan batu tambahan.</p>
+<p style="font-size: 9px; color: #777; text-align: center; margin-top: 10px;">*Klik pada kotak item untuk mengeluarkannya secara manual.</p>

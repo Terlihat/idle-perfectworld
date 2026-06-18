@@ -412,17 +412,44 @@ window.bukaPanelKhusus = function(panelId) {
     }
 };
 
-window.executeTempa = function() {
-    if (!bsSelectedEquip) return alert("Pilih Equipment terlebih dahulu dari Tas Anda!");
-    
-    const confirmMsg = `Yakin ingin menempa [${bsSelectedEquip}] menggunakan [${bsSelectedCatalyst}]?`;
-    if (confirm(confirmMsg)) {
-        executeRefineAction(db, currentUserUid, bsSelectedEquip, bsSelectedCatalyst);
+// --- KONTROL PANDAI BESI (TANPA POPUP) ---
+window.addBlacksmithLog = function(msg, color) {
+    const logPanel = document.getElementById('bs-log-panel');
+    if (logPanel) {
+        const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+        logPanel.innerHTML += `<div style="color: ${color}; margin-bottom: 3px;">[${time}] ${msg}</div>`;
+        logPanel.scrollTop = logPanel.scrollHeight; // Auto-scroll ke paling bawah
     }
+};
+
+window.executeTempa = function() {
+    if (!bsSelectedEquip) {
+        window.addBlacksmithLog("[ERROR] Pilih Equipment terlebih dahulu dari Tas!", "#dc3545");
+        return; 
+    }
+    // Langsung eksekusi, TIDAK ADA CONFIRM() / POPUP LAGI
+    executeRefineAction(db, currentUserUid, bsSelectedEquip, bsSelectedCatalyst);
+};
+
+window.resetEquip = function() {
+    bsSelectedEquip = null;
+    const elIcon = document.getElementById('bs-icon-equip');
+    const elText = document.getElementById('bs-text-equip');
+    if (elIcon) elIcon.innerText = "🛡️";
+    if (elText) { elText.innerText = "Pilih Equip"; elText.style.color = "#aaa"; }
+    
+    const costText = document.getElementById('bs-info-cost');
+    if (costText) costText.innerText = "Silakan pilih Equipment.";
+    
+    window.addBlacksmithLog("[SISTEM] Equipment dikeluarkan dari tungku.", "#aaa");
 };
 
 window.resetCatalyst = function() {
     bsSelectedCatalyst = "Tanpa Batu Tambahan";
-    document.getElementById('bs-text-catalyst').innerText = "Tanpa Batu";
-    document.getElementById('bs-text-catalyst').style.color = "#aaa";
+    const elIcon = document.getElementById('bs-icon-catalyst');
+    const elText = document.getElementById('bs-text-catalyst');
+    if (elIcon) elIcon.innerText = "💎";
+    if (elText) { elText.innerText = "Tanpa Batu"; elText.style.color = "#aaa"; }
+    
+    window.addBlacksmithLog("[SISTEM] Batu katalis dikosongkan.", "#aaa");
 };
