@@ -6,7 +6,7 @@ import { doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/fire
 import { loadUIComponents } from './ui-loader.js';
 import { 
     renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI, 
-    renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML 
+    renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI 
 } from './modules/ui-renderer.js';
 
 // IMPORT MODULES SISTEM
@@ -24,8 +24,6 @@ import { listenToParties, createOrJoinParty, leaveParty, startFbBattle } from '.
 import { assignRandomQuests, claimQuestReward } from './modules/quest.js';
 import { listenToGuilds, createGuild, joinGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, kickMember, disbandGuild } from './modules/guild.js';
 import { listenToMailbox, claimMailReward, deleteMail } from './modules/mailbox.js';
-import { dismantleItemAction, DISMANTLE_CONFIG } from './modules/crafting.js';
-import { renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI, renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI } from './modules/ui-renderer.js';
 import { dismantleItemAction, DISMANTLE_CONFIG, craftItemAction } from './modules/crafting.js';
 
 let currentUserUid = null;
