@@ -422,13 +422,39 @@ window.addBlacksmithLog = function(msg, color) {
     }
 };
 
-window.executeTempa = function() {
+// --- KONTROL PANDAI BESI (DENGAN ANTI-SPAM) ---
+let isForging = false; // Variabel Penanda Loading
+
+window.executeTempa = async function() {
     if (!bsSelectedEquip) {
         window.addBlacksmithLog("[ERROR] Pilih Equipment terlebih dahulu dari Tas!", "#dc3545");
         return; 
     }
-    // Langsung eksekusi, TIDAK ADA CONFIRM() / POPUP LAGI
-    executeRefineAction(db, currentUserUid, bsSelectedEquip, bsSelectedCatalyst);
+    
+    // 1. CEGAH SPAM KLIK: Jika sedang menempa, abaikan klik tambahan
+    if (isForging) return; 
+    isForging = true;
+    
+    // 2. UBAH TOMBOL JADI LOADING
+    const btnTempa = document.querySelector('button[onclick="window.executeTempa()"]');
+    if (btnTempa) {
+        btnTempa.innerText = "⏳ MENEMPA...";
+        btnTempa.style.background = "#555";
+        btnTempa.style.cursor = "not-allowed";
+    }
+
+    // 3. EKSEKUSI TEMPA (Sistem akan menunggu sampai database selesai)
+    await executeRefineAction(db, currentUserUid, bsSelectedEquip, bsSelectedCatalyst);
+
+    // 4. KEMBALIKAN TOMBOL KE SEMULA
+    if (btnTempa) {
+        btnTempa.innerText = "⚒️ TEMPA (+1) ⚒️";
+        btnTempa.style.background = "#28a745";
+        btnTempa.style.cursor = "pointer";
+    }
+    
+    // Buka kunci spam klik
+    isForging = false;
 };
 
 window.resetEquip = function() {
