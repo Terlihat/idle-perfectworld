@@ -420,8 +420,8 @@ window.addBlacksmithLog = function(msg, color) {
     }
 };
 
-// --- KONTROL PANDAI BESI (DENGAN ANTI-SPAM) ---
-let isForging = false; // Variabel Penanda Loading
+
+let isForging = false;
 
 window.executeTempa = async function() {
     if (!bsSelectedEquip) {
@@ -429,11 +429,9 @@ window.executeTempa = async function() {
         return; 
     }
     
-    // 1. CEGAH SPAM KLIK: Jika sedang menempa, abaikan klik tambahan
     if (isForging) return; 
     isForging = true;
     
-    // 2. UBAH TOMBOL JADI LOADING
     const btnTempa = document.querySelector('button[onclick="window.executeTempa()"]');
     if (btnTempa) {
         btnTempa.innerText = "⏳ MENEMPA...";
@@ -441,17 +439,14 @@ window.executeTempa = async function() {
         btnTempa.style.cursor = "not-allowed";
     }
 
-    // 3. EKSEKUSI TEMPA (Sistem akan menunggu sampai database selesai)
     await executeRefineAction(db, currentUserUid, bsSelectedEquip, bsSelectedCatalyst);
 
-    // 4. KEMBALIKAN TOMBOL KE SEMULA
     if (btnTempa) {
         btnTempa.innerText = "⚒️ TEMPA (+1) ⚒️";
         btnTempa.style.background = "#28a745";
         btnTempa.style.cursor = "pointer";
     }
     
-    // Buka kunci spam klik
     isForging = false;
 };
 
@@ -480,4 +475,26 @@ window.resetCatalyst = function() {
 
 window.actionUnequip = function(slotType) {
     unequipItem(db, currentUserUid, slotType);
+};
+
+
+window.activateBlacksmithMode = function() {
+    inventoryMode = "BLACKSMITH"; 
+    
+    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction', 'btn-mode-dismantle', 'btn-mode-blacksmith', 'btn-mode-crafting'].forEach(id => { 
+        const el = document.getElementById(id); 
+        if (el) { 
+            el.className = ""; 
+            if (id !== 'btn-mode-equip') el.style.backgroundColor = "#495057"; 
+        }
+    }); 
+    
+    const btnEnchant = document.getElementById('btn-mode-blacksmith');
+    if (btnEnchant) btnEnchant.style.backgroundColor = "#ff9800";
+    
+    if (typeof window.bukaPanelKhusus === "function") {
+        window.bukaPanelKhusus('panel-blacksmith');
+    } else {
+        alert("Sistem gagal menemukan panel tungku!");
+    }
 };
