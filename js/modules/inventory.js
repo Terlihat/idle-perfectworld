@@ -1,13 +1,19 @@
 /* ===================================================
-   MODUL INVENTORY (Dengan Fitur Reset Stats)
+   MODUL INVENTORY (Fix Equip Refined Items)
    =================================================== */
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ITEM_DB } from '../data/items.js';
 
 export async function equipFromInventory(db, uid, itemName, specialInput) {
     if (!uid) return;
-    // Bypass validasi ITEM_DB jika itemnya adalah fitur khusus (seperti Buku Reset)
-    const itemData = ITEM_DB[itemName] || { type: "special" }; 
+    
+    // 1. Ekstrak nama asli dan tingkat plus (Contoh: "Pedang Besi [+1]")
+    let baseName = itemName.replace(/\s\[\+\d+\]$/, '');
+    let currentRefine = 0;
+    const match = itemName.match(/\[\+(\d+)\]$/);
+    if (match) currentRefine = parseInt(match[1]);
+
+    const itemData = ITEM_DB[baseName] || { type: "special" }; 
     const userRef = doc(db, "users", uid);
 
     try {
@@ -29,70 +35,47 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
                         const guildRef = doc(db, "guilds", data.guildId);
                         const gSnap = await ts.get(guildRef);
                         if (gSnap.exists()) {
-                            const gData = gSnap.data();
-                            let gUpdates = {};
-                            let newMembers = gData.members.map(m => {
-                                if (m.uid === uid) m.name = specialInput;
-                                return m;
-                            });
-                            gUpdates.members = newMembers;
-                            if (gData.leaderId === uid) gUpdates.leaderName = specialInput;
-                            ts.update(guildRef, gUpdates);
+                            let gData = gSnap.data();
+                            let updatedMembers = gData.members.map(m => m.uid === uid ? { ...m, name: specialInput } : m);
+                            ts.update(guildRef, { members: updatedMembers });
+                            if (gData.leaderId === uid) ts.update(guildRef, { leaderName: specialInput });
                         }
                     }
-                } 
-                else if (itemName === "Tiket Ubah Job") {
-                    updates.characterClass = specialInput;
-                    if (specialInput === 'Warrior') { updates.str = 15; updates.con = 20; updates.dex = 5; updates.int = 2; }
-                    else { updates.str = 2; updates.con = 8; updates.dex = 10; updates.int = 25; }
-                } 
-                // FITUR BARU: RESET STATUS
-                else if (itemName === "Buku Reset Stats") {
-                    let isWarrior = data.characterClass === 'Warrior';
-                    updates.str = isWarrior ? 15 : 2;
-                    updates.con = isWarrior ? 20 : 8;
-                    updates.dex = isWarrior ? 5 : 10;
-                    updates.int = isWarrior ? 2 : 25;
-                    updates.statPoints = ((data.level || 1) - 1) * 5; 
-                }
-                else if (itemName === "Ramuan Stamina") {
-                    const maxStam = data.maxStamina || 100;
-                    const curStam = data.currentStamina || 0;
-                    if (curStam >= maxStam) throw "Stamina penuh!";
-                    updates.currentStamina = Math.min(maxStam, curStam + 50);
+                } else if (itemName === "Tiket Ubah Job") { 
+                    updates.characterClass = specialInput; 
+                } else if (itemName === "Buku Reset Stats") { 
+                    updates.str = 0; updates.con = 0; updates.dex = 0; updates.int = 0; 
+                    const baseTotal = data.characterClass === 'Warrior' ? 42 : 45;
+                    updates.statPoints = baseTotal + ((data.level || 1) - 1) * 5; 
                 }
                 ts.update(userRef, updates); return;
-            }
-
-            if (itemData.type === "consumable") {
+            } else if (itemData.type === "consumable") {
                 inv[itemName] -= 1;
                 if (inv[itemName] === 0) delete inv[itemName];
                 let updates = { inventory: inv };
-
-                let guildHpBuff = 0;
-                if (data.guildId) {
-                    const guildSnap = await ts.get(doc(db, "guilds", data.guildId));
-                    if (guildSnap.exists()) {
-                        const gLvl = guildSnap.data().level || 1;
-                        const guildUpgrades = { 1: { buff: { hp: 0 } }, 2: { buff: { hp: 100 } }, 3: { buff: { hp: 250 } }, 4: { buff: { hp: 500 } }, 5: { buff: { hp: 1000 } } };
-                        guildHpBuff = guildUpgrades[gLvl].buff.hp;
-                    }
-                }
-                const effectiveMaxHp = (data.maxHp || 1000) + guildHpBuff;
-
-                if (itemName === "Ramuan HP") updates.currentHp = Math.min(effectiveMaxHp, (data.currentHp || 0) + 500);
-                if (itemName === "Ramuan MP") updates.currentMp = Math.min(data.maxMp || 200, (data.currentMp || 0) + 200);
+                
+                if (itemName === "Ramuan HP") updates.currentHp = Math.min(data.maxHp || 1000, (data.currentHp || 0) + 1000);
+                else if (itemName === "Ramuan MP") updates.currentMp = Math.min(data.maxMp || 200, (data.currentMp || 0) + 200);
                 
                 ts.update(userRef, updates); return;
             }
 
+            // --- 2. LOGIKA MEMAKAI PERLENGKAPAN ---
             const slotType = itemData.type;
-            if (eq[slotType] && eq[slotType].name) { inv[eq[slotType].name] = (inv[eq[slotType].name] || 0) + 1; }
             
+            // A. Kembalikan item yang sedang dipakai (beserta plusnya) ke tas
+            if (eq[slotType] && eq[slotType].name) { 
+                let oldItemName = eq[slotType].name;
+                if (eq[slotType].refine > 0) oldItemName += ` [+${eq[slotType].refine}]`;
+                inv[oldItemName] = (inv[oldItemName] || 0) + 1; 
+            }
+            
+            // B. Tarik item baru dari tas
             inv[itemName] -= 1;
             if (inv[itemName] === 0) delete inv[itemName];
             
-            eq[slotType] = { name: itemName, refine: 0, ...itemData };
+            // C. Pasang ke badan (Simpan tingkat refine ke badan agar status bertambah)
+            eq[slotType] = { name: baseName, refine: currentRefine, ...itemData };
             ts.update(userRef, { inventory: inv, equipment: eq });
         });
         alert(`🛡️ Berhasil memakai ${itemName}`);
@@ -102,7 +85,10 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
 export async function sellItemToNPC(db, uid, itemName) {
     if (!uid || !itemName) return;
     const userRef = doc(db, "users", uid);
-    const itemData = ITEM_DB[itemName] || { sellValue: 10 };
+    
+    // Ekstrak nama agar bisa mendapatkan harga aslinya
+    const baseName = itemName.replace(/\s\[\+\d+\]$/, '');
+    const itemData = ITEM_DB[baseName] || { sellValue: 10 };
     if (itemData.sellValue === 0) return alert("Item ini tidak bisa dijual!");
 
     try {
@@ -113,9 +99,10 @@ export async function sellItemToNPC(db, uid, itemName) {
 
             inv[itemName] -= 1;
             if (inv[itemName] === 0) delete inv[itemName];
-            
-            let currentGold = data.gold || 0;
+
+            const currentGold = data.gold || 0;
             ts.update(userRef, { inventory: inv, gold: currentGold + itemData.sellValue });
         });
+        alert(`Berhasil menjual ${itemName} seharga ${itemData.sellValue} Gold.`);
     } catch (err) { alert(err); }
 }

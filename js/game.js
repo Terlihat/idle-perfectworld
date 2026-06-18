@@ -220,15 +220,26 @@ document.addEventListener('click', (e) => {
     // --- MODE INVENTORY ---
     if (targetId === 'btn-mode-equip') { inventoryMode = "EQUIP"; clearActiveModeClasses(); target.className = "mode-active"; }
     if (targetId === 'btn-mode-sell') { inventoryMode = "SELL"; clearActiveModeClasses(); target.className = "mode-sell-active"; }
-    if (targetId === 'btn-mode-bank') { inventoryMode = "BANK"; clearActiveModeClasses(); target.className = "mode-active"; }
-    if (targetId === 'btn-mode-auction') { inventoryMode = "AUCTION"; clearActiveModeClasses(); target.className = "mode-auction-active"; }
     if (targetId === 'btn-mode-dismantle') { inventoryMode = "DISMANTLE"; clearActiveModeClasses(); target.style.backgroundColor = "#dc3545"; }
     
+    // Mode Khusus dengan Panel Cerdas
+    if (targetId === 'btn-mode-bank') { 
+        inventoryMode = "BANK"; 
+        clearActiveModeClasses(); 
+        target.className = "mode-active"; 
+        window.bukaPanelKhusus('panel-bank'); 
+    }
+    if (targetId === 'btn-mode-auction') { 
+        inventoryMode = "AUCTION"; 
+        clearActiveModeClasses(); 
+        target.className = "mode-auction-active"; 
+        window.bukaPanelKhusus('panel-auction'); 
+    }
     if (targetId === 'btn-mode-blacksmith') { 
         inventoryMode = "BLACKSMITH"; 
         clearActiveModeClasses(); 
-        target.style.backgroundColor = "#ff9800"; // Warna oranye
-        window.bukaMenu('panel-blacksmith'); // Otomatis membuka panel tungku
+        target.style.backgroundColor = "#ff9800"; 
+        window.bukaPanelKhusus('panel-blacksmith'); 
     }
 
     // --- KONTROL CHAT ---
@@ -376,14 +387,28 @@ window.actionCraftItem = function(recipeName) {
     }
 };
 
-// --- FUNGSI TOGGLE PANEL ---
-window.bukaMenu = function(panelId) {
-    const panel = document.getElementById(panelId);
-    if (panel) {
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        if (panel.style.display === 'block') {
-            panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+// --- FUNGSI TOGGLE PANEL PINTAR ---
+window.bukaPanelKhusus = function(panelId) {
+    // Daftar panel yang saling bergantian
+    const panels = ['panel-bank', 'panel-auction', 'panel-blacksmith'];
+    const targetPanel = document.getElementById(panelId);
+    
+    // Jika panel yang diklik sudah terbuka, sembunyikan (Toggle Off)
+    if (targetPanel && targetPanel.style.display === 'block') {
+        targetPanel.style.display = 'none';
+        return;
+    }
+
+    // Sembunyikan semua panel terlebih dahulu
+    panels.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.style.display = 'none';
+    });
+
+    // Munculkan panel yang dituju
+    if (targetPanel) {
+        targetPanel.style.display = 'block';
+        targetPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 };
 

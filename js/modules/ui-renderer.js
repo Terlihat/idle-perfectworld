@@ -167,7 +167,7 @@ export function renderQuestUI(q) {
     }
 }
 
-// 3. RENDER GRID TAS (INVENTORY)
+// 3. RENDER GRID TAS (INVENTORY) DENGAN BADGE REFINE
 export function renderInventoryUI(inventory) {
     const invGrid = document.getElementById('inventory-grid');
     if (!invGrid) return;
@@ -179,10 +179,20 @@ export function renderInventoryUI(inventory) {
         if (i < items.length) {
             const [name, qty] = items[i];
             if (qty > 0) {
+                // Deteksi nama dasar dan level plus untuk UI
+                let baseName = name.replace(/\s\[\+\d+\]$/, '');
+                let badgeHtml = "";
+                const match = name.match(/\[\+(\d+)\]$/);
+                
+                if (match) { // Jika punya nilai plus (+1, +2, dst)
+                    badgeHtml = `<div style="position:absolute; top:-5px; right:-5px; background:#dc3545; color:white; font-size:10px; font-weight:bold; padding:2px 4px; border-radius:4px; z-index:10; box-shadow: 0 0 3px black;">+${match[1]}</div>`;
+                }
+
                 invGrid.innerHTML += `
                 <div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(name)}')">
-                    ${getIconHTML(name)} 
-                    <span style="font-size:10px;">${escapeHTML(name)}</span>
+                    ${badgeHtml}
+                    ${getIconHTML(baseName)} 
+                    <span style="font-size:10px;">${escapeHTML(baseName)}</span>
                     <span class="inv-qty">x${qty}</span>
                 </div>`;
             } else {
