@@ -25,6 +25,7 @@ import { assignRandomQuests, claimQuestReward } from './modules/quest.js';
 import { listenToGuilds, createGuild, joinGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, kickMember, disbandGuild } from './modules/guild.js';
 import { listenToMailbox, claimMailReward, deleteMail } from './modules/mailbox.js';
 import { dismantleItemAction, DISMANTLE_CONFIG, craftItemAction } from './modules/crafting.js';
+import { executeRefineAction } from './modules/blacksmith.js';
 
 let currentUserUid = null;
 let activeUnsubscribeListeners = [];
@@ -39,6 +40,9 @@ let guildUpgradesMap = {};
 let currentChatChannel = 'world'; 
 let currentPartyId = null;
 let unsubChatListener = null;
+
+let bsSelectedEquip = null;
+let bsSelectedCatalyst = "Tanpa Batu Tambahan";
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
@@ -306,6 +310,32 @@ window.handleInventoryClick = function(itemName) {
             alert(`❌ [${itemName}] tidak bisa dilebur!`);
         }
     }
+
+    else if (inventoryMode === "BLACKSMITH") {
+        import { ITEM_DB } from './data/items.js'; 
+        const itemInfo = ITEM_DB[itemName];
+        
+        if (!itemInfo) return alert("Item tidak dikenali sistem.");
+
+        if (itemInfo.type === 'weapon' || itemInfo.type === 'armor' || itemInfo.type === 'accessory') {
+            bsSelectedEquip = itemName;
+            document.getElementById('bs-text-equip').innerText = itemName;
+            document.getElementById('bs-text-equip').style.color = "#00d2ff";
+            
+            // Info Biaya Mirage
+            const mCost = itemInfo.type === 'weapon' ? 2 : 1;
+            document.getElementById('bs-info-cost').innerText = `Biaya: ${mCost}x Mirage Stone & 1,000 Gold`;
+        } 
+        else if (itemInfo.type === 'catalyst') {
+            if (itemName === "Mirage Stone") return alert("Mirage Stone digunakan otomatis. Pilih batu tambahan (Heaven/Underworld/Universal)!");
+            bsSelectedCatalyst = itemName;
+            document.getElementById('bs-text-catalyst').innerText = itemName;
+            document.getElementById('bs-text-catalyst').style.color = "#ffcc00";
+        } 
+        else {
+            alert("❌ Hanya bisa memasukkan Equip atau Batu Catalyst ke slot tungku!");
+        }
+    }
 };
 
 window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, itemName); };
@@ -345,4 +375,19 @@ window.bukaMenu = function(panelId) {
             panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
+};
+
+window.executeTempa = function() {
+    if (!bsSelectedEquip) return alert("Pilih Equipment terlebih dahulu dari Tas Anda!");
+    
+    const confirmMsg = `Yakin ingin menempa [${bsSelectedEquip}] menggunakan [${bsSelectedCatalyst}]?`;
+    if (confirm(confirmMsg)) {
+        executeRefineAction(db, currentUserUid, bsSelectedEquip, bsSelectedCatalyst);
+    }
+};
+
+window.resetCatalyst = function() {
+    bsSelectedCatalyst = "Tanpa Batu Tambahan";
+    document.getElementById('bs-text-catalyst').innerText = "Tanpa Batu";
+    document.getElementById('bs-text-catalyst').style.color = "#aaa";
 };
