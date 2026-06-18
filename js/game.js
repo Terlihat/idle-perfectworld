@@ -25,6 +25,7 @@ import { assignRandomQuests, claimQuestReward } from './modules/quest.js';
 import { listenToGuilds, createGuild, joinGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, kickMember, disbandGuild } from './modules/guild.js';
 import { listenToMailbox, claimMailReward, deleteMail } from './modules/mailbox.js';
 import { dismantleItemAction, DISMANTLE_CONFIG, craftItemAction } from './modules/crafting.js';
+import { ITEM_DB } from './data/items.js';
 import { executeRefineAction } from './modules/blacksmith.js';
 
 let currentUserUid = null;
@@ -195,7 +196,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 function clearActiveModeClasses() { 
-    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction', 'btn-mode-dismantle'].forEach(id => { 
+    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction', 'btn-mode-dismantle', 'btn-mode-blacksmith'].forEach(id => { 
         const el = document.getElementById(id); 
         if (el) { el.className = ""; if (id !== 'btn-mode-equip') el.style.backgroundColor = "#495057"; }
     }); 
@@ -224,6 +225,13 @@ document.addEventListener('click', (e) => {
     if (targetId === 'btn-mode-auction') { inventoryMode = "AUCTION"; clearActiveModeClasses(); target.className = "mode-auction-active"; }
     if (targetId === 'btn-mode-dismantle') { inventoryMode = "DISMANTLE"; clearActiveModeClasses(); target.style.backgroundColor = "#dc3545"; }
     
+    if (targetId === 'btn-mode-blacksmith') { 
+        inventoryMode = "BLACKSMITH"; 
+        clearActiveModeClasses(); 
+        target.style.backgroundColor = "#ff9800"; // Warna oranye
+        window.bukaMenu('panel-blacksmith'); // Otomatis membuka panel tungku
+    }
+
     // --- KONTROL CHAT ---
     if (targetId === 'btn-send-chat') {
         const chatInput = document.getElementById('chat-input');
@@ -312,7 +320,6 @@ window.handleInventoryClick = function(itemName) {
     }
 
     else if (inventoryMode === "BLACKSMITH") {
-        import { ITEM_DB } from './data/items.js'; 
         const itemInfo = ITEM_DB[itemName];
         
         if (!itemInfo) return alert("Item tidak dikenali sistem.");
@@ -322,7 +329,6 @@ window.handleInventoryClick = function(itemName) {
             document.getElementById('bs-text-equip').innerText = itemName;
             document.getElementById('bs-text-equip').style.color = "#00d2ff";
             
-            // Info Biaya Mirage
             const mCost = itemInfo.type === 'weapon' ? 2 : 1;
             document.getElementById('bs-info-cost').innerText = `Biaya: ${mCost}x Mirage Stone & 1,000 Gold`;
         } 
