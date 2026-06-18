@@ -195,7 +195,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 function clearActiveModeClasses() { 
-    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction', 'btn-mode-dismantle', 'btn-mode-blacksmith'].forEach(id => { 
+    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction', 'btn-mode-dismantle', 'btn-mode-blacksmith', 'btn-mode-crafting'].forEach(id => { 
         const el = document.getElementById(id); 
         if (el) { el.className = ""; if (id !== 'btn-mode-equip') el.style.backgroundColor = "#495057"; }
     }); 
@@ -235,11 +235,11 @@ document.addEventListener('click', (e) => {
         target.className = "mode-auction-active"; 
         window.bukaPanelKhusus('panel-auction'); 
     }
-    if (targetId === 'btn-mode-blacksmith') { 
-        inventoryMode = "BLACKSMITH"; 
+    if (targetId === 'btn-mode-crafting') { 
+        inventoryMode = "CRAFTING"; 
         clearActiveModeClasses(); 
-        target.style.backgroundColor = "#ff9800"; 
-        window.bukaPanelKhusus('panel-blacksmith'); 
+        target.style.backgroundColor = "#17a2b8";
+        window.bukaPanelKhusus('panel-crafting'); 
     }
 
     // --- KONTROL CHAT ---
@@ -389,23 +389,21 @@ window.actionCraftItem = function(recipeName) {
 
 // --- FUNGSI TOGGLE PANEL PINTAR ---
 window.bukaPanelKhusus = function(panelId) {
-    // Daftar panel yang saling bergantian
-    const panels = ['panel-bank', 'panel-auction', 'panel-blacksmith'];
+    // 👇 Tambahkan 'panel-crafting' di dalam kurung siku ini 👇
+    const panels = ['panel-bank', 'panel-auction', 'panel-blacksmith', 'panel-crafting'];
+    
     const targetPanel = document.getElementById(panelId);
     
-    // Jika panel yang diklik sudah terbuka, sembunyikan (Toggle Off)
     if (targetPanel && targetPanel.style.display === 'block') {
         targetPanel.style.display = 'none';
         return;
     }
 
-    // Sembunyikan semua panel terlebih dahulu
     panels.forEach(id => {
         const el = document.getElementById(id);
         if(el) el.style.display = 'none';
     });
 
-    // Munculkan panel yang dituju
     if (targetPanel) {
         targetPanel.style.display = 'block';
         targetPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });

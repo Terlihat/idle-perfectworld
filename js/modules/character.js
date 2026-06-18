@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, setDoc, getDoc, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 export async function selectCharacterClass(db, uid, charClass, callback) {
     try {
@@ -48,17 +48,41 @@ export async function selectCharacterClass(db, uid, charClass, callback) {
 }
 
 export async function addCharacterStat(db, uid, statName) {
+    if (!uid) return;
     const userRef = doc(db, "users", uid);
+
     try {
         await runTransaction(db, async (ts) => {
-            const d = (await ts.get(userRef)).data();
-            if (d.statPoints > 0) {
-                let updates = { statPoints: d.statPoints - 1 };
-                updates[statName] = (d[statName] || 0) + 1;
-                ts.update(userRef, updates);
+            const snap = await ts.get(userRef);
+            if (!snap.exists()) throw "Karakter tidak ditemukan!";
+            
+            const data = snap.data();
+            let currentPoints = data.statPoints || 0;
+            
+            if (currentPoints <= 0) throw "Poin stat Anda sudah habis!";
+            
+            const validStats = ['str', 'con', 'dex', 'int'];
+            if (!validStats.includes(statName)) throw "Tipe statistik tidak valid!";
+
+            let updates = {};
+            updates[statName] = (data[statName] || 0) + 1;
+            updates.statPoints = currentPoints - 1;
+
+            if (statName === 'con') {
+                updates.maxHp = (data.maxHp || 1000) + 20; 
+                updates.currentHp = (data.currentHp || 1000) + 20;
             }
+            if (statName === 'int') {
+                updates.maxMp = (data.maxMp || 200) + 10;
+                updates.currentMp = (data.currentMp || 200) + 10;
+            }
+
+            ts.update(userRef, updates);
         });
-    } catch (err) { console.error(err); }
+        
+    } catch (err) {
+        console.error("Gagal menaikkan stat:", err);
+    }
 }
 
 // ===================================================
