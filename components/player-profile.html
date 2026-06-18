@@ -1,0 +1,39 @@
+<h2>Profil & Perlengkapan</h2>
+<div style="margin-bottom: 10px; font-size: 14px; line-height: 1.4;">
+    <strong id="player-name" style="color: #ffca28; font-size: 18px;">...</strong><br>
+    <span id="player-class" style="color: #e040fb;">...</span> | Level <strong id="player-level" style="color:#00d2ff;">1</strong><br>
+    <span id="btn-copy-uid" style="font-size: 11px; color: #8b949e; cursor: pointer; background: #121216; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; border: 1px solid #3f3f52;">
+        UID: <span id="player-uid" style="user-select: all; color: #58a6ff; font-family: monospace;">-</span> 📋
+    </span>
+    <div style="margin-top: 5px; font-size: 12px;">Poin Stat: <strong id="player-stat-points" style="color:#28a745; font-size: 14px;">0</strong></div>
+</div>
+
+<div class="bar-container"><div id="exp-bar" class="bar-fill-exp"></div><div id="exp-text" class="bar-text">EXP</div></div>
+<div class="bar-container"><div id="char-hp-bar" class="bar-fill-hp"></div><div id="char-hp-text" class="bar-text">HP</div></div>
+<div class="bar-container"><div id="char-mp-bar" class="bar-fill-mp"></div><div id="char-mp-text" class="bar-text">MP</div></div>
+<div class="bar-container"><div id="char-stam-bar" class="bar-fill-stamina"></div><div id="char-stam-text" class="bar-text">Stamina</div></div>
+
+<div class="equip-box">
+    <div class="equip-item"><span>🗡️ Senjata:</span> <span id="eq-weapon" onclick="window.actionUnequip('weapon')" style="cursor:pointer; color:#00d2ff;" title="Klik untuk melepas">Kosong</span></div>
+    <div class="equip-item"><span>👕 Armor:</span> <span id="eq-armor" onclick="window.actionUnequip('armor')" style="cursor:pointer; color:#00d2ff;" title="Klik untuk melepas">Kosong</span></div>
+    <div class="equip-item"><span>💍 Aksesoris:</span> <span id="eq-acc" onclick="window.actionUnequip('accessory')" style="cursor:pointer; color:#00d2ff;" title="Klik untuk melepas">Kosong</span></div>
+    <div class="equip-item"><span>🐴 Mount:</span> <span id="eq-mount" style="color: #ffca28; font-weight: bold;">Jalan Kaki</span></div>
+</div>
+<p style="font-size: 8px; color: #777; text-align: center; margin-top: 2px;">*Klik nama item di atas untuk melepasnya.</p>
+
+<div class="stat-grid" style="margin-top: 10px;">
+    <div>STR: <span class="stat-val"><span id="stat-str">0</span> <button class="btn-add-stat" onclick="window.addStat('str')" style="display:none; padding:1px 5px; font-size:9px; background:#28a745; margin-left:3px;">+</button></span></div>
+    <div>CON: <span class="stat-val"><span id="stat-con">0</span> <button class="btn-add-stat" onclick="window.addStat('con')" style="display:none; padding:1px 5px; font-size:9px; background:#28a745; margin-left:3px;">+</button></span></div>
+    <div>DEX: <span class="stat-val"><span id="stat-dex">0</span> <button class="btn-add-stat" onclick="window.addStat('dex')" style="display:none; padding:1px 5px; font-size:9px; background:#28a745; margin-left:3px;">+</button></span></div>
+    <div>INT: <span class="stat-val"><span id="stat-int">0</span> <button class="btn-add-stat" onclick="window.addStat('int')" style="display:none; padding:1px 5px; font-size:9px; background:#28a745; margin-left:3px;">+</button></span></div>
+    <div style="grid-column: span 2; border-top: 1px solid #333; margin-top:5px; padding-top:5px;"></div>
+    
+    <div style="grid-column: span 2; font-size: 10px; color: #28a745; margin-bottom: 3px;" id="guild-buff-indicator">Buff Guild Aktif: +0 Stats</div>
+
+    <div>P.ATK: <span id="stat-patk" class="stat-val" style="color:#ff4a4a;">0</span></div>
+    <div>M.ATK: <span id="stat-matk" class="stat-val" style="color:#4ae3ff;">0</span></div>
+    <div>DEF: <span id="stat-def" class="stat-val" style="color:#a8b2b8;">0</span></div>
+    <div>Crit Rate: <span id="stat-crit" class="stat-val" style="color:#ffd700;">0%</span></div>
+    <div>Hindaran: <span id="stat-eva" class="stat-val">0%</span></div>
+    <div>Akurasi: <span id="stat-acc" class="stat-val">0%</span></div>
+</div>

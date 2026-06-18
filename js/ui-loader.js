@@ -2,6 +2,10 @@
 
 export async function loadUIComponents() {
     const components = [
+        { id: 'panel-profile', file: 'components/player-profile.html' },
+        { id: 'panel-inventory', file: 'components/inventory.html' },
+        { id: 'panel-chat', file: 'components/chat-box.html' },
+        { id: 'panel-blacksmith', file: 'components/blacksmith.html' },
         { id: 'panel-guild', file: './components/guild.html' },
         { id: 'panel-mailbox', file: './components/mailbox.html' },
         { id: 'panel-bank', file: './components/bank.html' },

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giga RPG Web</title>
+    <title>Perfect World RPG Web</title>
     <link rel="icon" type="image/x-icon" href="./favicon.ico">
     <link rel="stylesheet" href="./css/style.css">
 </head>
@@ -11,7 +11,7 @@
     <div class="container">
         <div id="screen-auth" class="screen" style="display: block;">
             <div class="panel auth-box">
-                <h2 id="auth-title" style="text-align: center;">Masuk Gerbang RPG</h2>
+                <h2 id="auth-title" style="text-align: center;">Perfect World</h2>
                 <input type="email" id="auth-email" placeholder="Email">
                 <input type="password" id="auth-password" placeholder="Password">
                 <button id="btn-primary-auth" style="width: 100%; margin-top: 10px;">MASUK</button>
@@ -40,7 +40,7 @@
 
         <div id="screen-game" class="screen">
             <div class="game-header">
-                <h1 style="margin: 0; font-size: 20px;"> Giga RPG Web</h1>
+                <h1 style="margin: 0; font-size: 20px;"> Perfect World RPG Web</h1>
                 <div style="display: flex; gap: 15px; font-weight: bold; font-size: 14px; align-items: center;">
                     <span>🪙 <span id="header-coin" style="color: #ffcc00;">0</span> COIN</span>
                     <span>💰 <span id="header-gold" style="color: #ffd700;">0</span> Gold</span>
@@ -51,65 +51,17 @@
             
             <div class="game-container">
                 <div>
-                    <div class="panel">
-                        <h2>Profil & Perlengkapan</h2>
-                        <div style="margin-bottom: 10px; font-size: 14px; line-height: 1.4;">
-                            <strong id="player-name" style="color: #ffca28; font-size: 18px;">...</strong><br>
-                            <span id="player-class" style="color: #e040fb;">...</span> | Level <strong id="player-level" style="color:#00d2ff;">1</strong><br>
-                            <span id="btn-copy-uid" style="font-size: 11px; color: #8b949e; cursor: pointer; background: #121216; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; border: 1px solid #3f3f52;">
-                                UID: <span id="player-uid" style="user-select: all; color: #58a6ff; font-family: monospace;">-</span> 📋
-                            </span>
-                            <div style="margin-top: 5px; font-size: 12px;">Poin Stat: <strong id="player-stat-points" style="color:#28a745; font-size: 14px;">0</strong></div>
-                        </div>
-                        
-                        <div class="bar-container"><div id="exp-bar" class="bar-fill-exp"></div><div id="exp-text" class="bar-text">EXP</div></div>
-                        <div class="bar-container"><div id="char-hp-bar" class="bar-fill-hp"></div><div id="char-hp-text" class="bar-text">HP</div></div>
-                        <div class="bar-container"><div id="char-mp-bar" class="bar-fill-mp"></div><div id="char-mp-text" class="bar-text">MP</div></div>
-                        <div class="bar-container"><div id="char-stam-bar" class="bar-fill-stamina"></div><div id="char-stam-text" class="bar-text">Stamina</div></div>
-                        
-                        <div class="equip-box">
-                            <div class="equip-item"><span>🗡️ Senjata:</span> <span id="eq-weapon" onclick="window.actionUnequip('weapon')" style="cursor:pointer; color:#00d2ff;" title="Klik untuk melepas">Kosong</span></div>
-                            <div class="equip-item"><span>👕 Armor:</span> <span id="eq-armor" onclick="window.actionUnequip('armor')" style="cursor:pointer; color:#00d2ff;" title="Klik untuk melepas">Kosong</span></div>
-                            <div class="equip-item"><span>💍 Aksesoris:</span> <span id="eq-acc" onclick="window.actionUnequip('accessory')" style="cursor:pointer; color:#00d2ff;" title="Klik untuk melepas">Kosong</span></div>
-                            <div class="equip-item"><span>🐴 Mount:</span> <span id="eq-mount" style="color: #ffca28; font-weight: bold;">Jalan Kaki</span></div>
-                        </div>
-                        <p style="font-size: 8px; color: #777; text-align: center; margin-top: 2px;">*Klik nama item di atas untuk melepasnya.</p>
-                        
-                        <div class="stat-grid" style="margin-top: 10px;">
-                            <div>STR: <span class="stat-val"><span id="stat-str">0</span> <button class="btn-add-stat" onclick="window.addStat('str')" style="display:none; padding:1px 5px; font-size:9px; background:#28a745; margin-left:3px;">+</button></span></div>
-                            <div>CON: <span class="stat-val"><span id="stat-con">0</span> <button class="btn-add-stat" onclick="window.addStat('con')" style="display:none; padding:1px 5px; font-size:9px; background:#28a745; margin-left:3px;">+</button></span></div>
-                            <div>DEX: <span class="stat-val"><span id="stat-dex">0</span> <button class="btn-add-stat" onclick="window.addStat('dex')" style="display:none; padding:1px 5px; font-size:9px; background:#28a745; margin-left:3px;">+</button></span></div>
-                            <div>INT: <span class="stat-val"><span id="stat-int">0</span> <button class="btn-add-stat" onclick="window.addStat('int')" style="display:none; padding:1px 5px; font-size:9px; background:#28a745; margin-left:3px;">+</button></span></div>
-                            <div style="grid-column: span 2; border-top: 1px solid #333; margin-top:5px; padding-top:5px;"></div>
-                            
-                            <div style="grid-column: span 2; font-size: 10px; color: #28a745; margin-bottom: 3px;" id="guild-buff-indicator">Guild Buff Aktif: +0 Stats</div>
-
-                            <div>P.ATK: <span id="stat-patk" class="stat-val" style="color:#ff4a4a;">0</span></div>
-                            <div>M.ATK: <span id="stat-matk" class="stat-val" style="color:#4ae3ff;">0</span></div>
-                            <div>DEF: <span id="stat-def" class="stat-val" style="color:#a8b2b8;">0</span></div>
-                            <div>Crit Rate: <span id="stat-crit" class="stat-val" style="color:#ffd700;">0%</span></div>
-                            <div>Hindaran: <span id="stat-eva" class="stat-val">0%</span></div>
-                            <div>Akurasi: <span id="stat-acc" class="stat-val">0%</span></div>
-                        </div>
+                    <div class="panel" id="panel-profile">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Profil...</div>
                     </div>
 
-                    <div class="panel">
-                        <h2>🎒 Inventory</h2>
-                        <div class="mode-buttons">
-                            <button id="btn-mode-equip" class="mode-active">🛡️ PAKAI</button>
-                            <button id="btn-mode-sell" style="background:#495057;">💰 JUAL</button>
-                            <button id="btn-mode-dismantle" style="background-color:#495057;">🔥 LEBUR</button>
-                            <button id="btn-mode-bank" style="background:#495057;">🏦 BANGKIR</button>
-                            <button id="btn-mode-auction" style="background:#495057;">⚖️ LELANG</button>
-                            <button id="btn-mode-blacksmith" style="background-color:#495057;" onclick="window.activateBlacksmithMode()">⚒️ TEMPA</button>
-                            <button id="btn-mode-crafting" style="background-color:#495057;">📜 CRAFT</button>
-                        </div>
-                        <div id="inventory-grid" class="inv-grid"></div>
+                    <div class="panel" id="panel-inventory">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Tas...</div>
                     </div>
 
                     <div id="panel-crafting" class="panel" style="display:none;">
-                        <h3 style="border-bottom: 1px solid #555; padding-bottom: 5px;">🔨 Tungku Penempaan</h3>
-                        <p style="font-size: 11px; color: #aaa;">Kumpulkan Blueprint dan Material dari Boss Fuben untuk menempa Senjata Legendary!</p>
+                        <h3 style="border-bottom: 1px solid #555; padding-bottom: 5px;">⚒️ Tungku Penempaan</h3>
+                        <p style="font-size: 11px; color: #aaa;">Kumpulkan Blueprint dari Boss Fuben untuk menempa Senjata Legendary!</p>
                         <div id="crafting-list" style="margin-top: 10px;"></div>
                     </div>
                 </div>
@@ -124,10 +76,12 @@
                     <div id="panel-quest" class="panel" style="border: 1px solid #28a745; background: #15201b;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Misi Quest...</div>
                     </div>
-                    <div id="panel-blacksmith" class="panel" style="border: 1px solid #00d2ff; background: #16222f;">
-                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Pandai Besi...</div>
+                    
+                    <div id="panel-blacksmith" class="panel" style="border: 1px solid #00d2ff; background: #16222f; display:none;">
+                        <div style=\"text-align:center; color:#aaa; font-size:12px;\">Memuat Pandai Besi...</div>
                     </div>
-                    <div id="panel-auction" class="panel">
+                    
+                    <div id="panel-auction" class="panel" style="display:none;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Pasar Lelang...</div>
                     </div>
                 </div>
@@ -139,7 +93,7 @@
                     <div id="panel-shop" class="panel">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Toko...</div>
                     </div>
-                    <div id="panel-bank" class="panel">
+                    <div id="panel-bank" class="panel" style="display:none;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Bangkir...</div>
                     </div>
                     <div id="panel-guild" class="panel" style="border: 1px solid #ffcc00; background: #1f1a0d;">
@@ -149,20 +103,8 @@
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Kotak Surat...</div>
                     </div>
 
-                    <div class="panel">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                            <h2 style="margin: 0;">💬 Obrolan</h2>
-                            <select id="chat-channel-select" style="padding: 3px; font-size: 11px; background: #121216; color: #fff; border: 1px solid #3f3f52; border-radius: 3px;">
-                                <option value="world">🌍 Dunia</option>
-                                <option value="guild">🛡️ Guild</option>
-                                <option value="party">🏕️ Party</option>
-                            </select>
-                        </div>
-                        <div id="chat-box" class="chat-box"></div>
-                        <div class="chat-controls">
-                            <input type="text" id="chat-input" placeholder="Tulis Pesan...">
-                            <button id="btn-send-chat">Kirim</button>
-                        </div>
+                    <div class="panel" id="panel-chat">
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Obrolan...</div>
                     </div>
                 </div>
             </div>
