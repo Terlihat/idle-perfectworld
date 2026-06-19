@@ -9,7 +9,7 @@ loadUIComponents();
 
 import { 
     renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI, 
-    renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI 
+    renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI, getIconHTML
 } from './modules/ui-renderer.js';
 
 // IMPORT MODULES SISTEM
@@ -330,15 +330,12 @@ window.handleInventoryClick = function(itemName) {
         
         if (!itemInfo) return alert("Item tidak dikenali sistem.");
 
-        // Ambil icon berdasarkan tipe (Bisa diganti dengan fungsi ikon asli Anda)
-        let iconEmoji = "🛡️";
-        if (itemInfo.type === 'weapon') iconEmoji = "🗡️";
-        if (itemInfo.type === 'accessory') iconEmoji = "💍";
-        if (itemInfo.type === 'catalyst') iconEmoji = "💎";
+        // Dapatkan elemen HTML ikon asli dari ui-renderer
+        const realIconHTML = getIconHTML(baseName);
 
         if (itemInfo.type === 'weapon' || itemInfo.type === 'armor' || itemInfo.type === 'accessory') {
             bsSelectedEquip = itemName; // Menyimpan nama lengkap beserta [+X]
-            document.getElementById('bs-icon-equip').innerText = iconEmoji;
+            document.getElementById('bs-icon-equip').innerHTML = realIconHTML;
             document.getElementById('bs-text-equip').innerText = itemName;
             document.getElementById('bs-text-equip').style.color = "#00d2ff";
             
@@ -348,7 +345,7 @@ window.handleInventoryClick = function(itemName) {
         else if (itemInfo.type === 'catalyst') {
             if (itemName === "Mirage Stone") return alert("Mirage Stone digunakan otomatis. Pilih batu tambahan atau biarkan kosong!");
             bsSelectedCatalyst = itemName;
-            document.getElementById('bs-icon-catalyst').innerText = iconEmoji;
+            document.getElementById('bs-icon-catalyst').innerHTML = realIconHTML;
             document.getElementById('bs-text-catalyst').innerText = itemName;
             document.getElementById('bs-text-catalyst').style.color = "#ffcc00";
         } 

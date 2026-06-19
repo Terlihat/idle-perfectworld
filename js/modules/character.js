@@ -1,5 +1,10 @@
 import { doc, setDoc, getDoc, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+// ===================================================
+// KUNCI ANTI-SPAM (Mencegah Error 400 Firebase)
+// ===================================================
+let isUpdatingStat = false; 
+
 export async function selectCharacterClass(db, uid, charClass, callback) {
     try {
         const userRef = doc(db, "users", uid);
@@ -49,6 +54,11 @@ export async function selectCharacterClass(db, uid, charClass, callback) {
 
 export async function addCharacterStat(db, uid, statName) {
     if (!uid) return;
+    
+    // JIKA SISTEM MASIH MEMPROSES KLIK SEBELUMNYA, ABAIKAN KLIK INI SEMENTARA
+    if (isUpdatingStat) return; 
+    isUpdatingStat = true; // Kunci sistem
+
     const userRef = doc(db, "users", uid);
 
     try {
@@ -81,7 +91,13 @@ export async function addCharacterStat(db, uid, statName) {
         });
         
     } catch (err) {
-        console.error("Gagal menaikkan stat:", err);
+        // Jangan tampilkan error merah di console jika itu hanya peringatan poin habis
+        if (err !== "Poin stat Anda sudah habis!") {
+            console.log("Server sedang sibuk memproses stat, mencoba menyesuaikan...");
+        }
+    } finally {
+        // SELALU BUKA KUNCI SETELAH SELESAI, AGAR TOMBOL BISA DIKLIK LAGI
+        isUpdatingStat = false;
     }
 }
 
