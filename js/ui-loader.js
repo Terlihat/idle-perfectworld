@@ -2,12 +2,15 @@
 
 export async function loadUIComponents() {
     const components = [
+        { id: 'screen-auth', file: 'components/auth.html' },
+        { id: 'screen-char-select', file: 'components/char-select.html' },
         { id: 'panel-profile', file: 'components/player-profile.html' },
         { id: 'panel-inventory', file: 'components/inventory.html' },
         { id: 'panel-chat', file: 'components/chat-box.html' },
         { id: 'panel-blacksmith', file: 'components/blacksmith.html' },
         { id: 'panel-guild', file: './components/guild.html' },
         { id: 'panel-mailbox', file: './components/mailbox.html' },
+        { id: 'panel-crafting', file: 'components/crafting.html' },
         { id: 'panel-bank', file: './components/bank.html' },
         { id: 'panel-auction', file: './components/auction.html' },
         { id: 'panel-blacksmith', file: './components/blacksmith.html' },

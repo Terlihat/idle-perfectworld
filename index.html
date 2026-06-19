@@ -10,33 +10,10 @@
 <body>
     <div class="container">
         <div id="screen-auth" class="screen" style="display: block;">
-            <div class="panel auth-box">
-                <h2 id="auth-title" style="text-align: center;">Perfect World</h2>
-                <input type="email" id="auth-email" placeholder="Email">
-                <input type="password" id="auth-password" placeholder="Password">
-                <button id="btn-primary-auth" style="width: 100%; margin-top: 10px;">MASUK</button>
-                <p style="text-align: center; font-size: 13px; margin-top: 15px;">
-                    <span id="auth-toggle-text">Belum punya akun?</span> 
-                    <a href="#" id="link-toggle-auth" style="color: #00d2ff;">Daftar Sekarang</a>
-                </p>
-            </div>
+            <div style="text-align:center; color:#aaa; margin-top: 20vh;">Memuat Gerbang Login...</div>
         </div>
 
-        <div id="screen-char-select" class="screen">
-            <div class="panel" style="max-width: 600px; margin: 50px auto;">
-                <h2 style="text-align: center;">Pilih Kelas Karakter</h2>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
-                    <div class="char-card" id="class-warrior">
-                        <h3 style="color: #ff4a4a;">⚔️ Warrior</h3>
-                        <p style="font-size: 12px; color: #aaa;">Ahli fisik. STR dan CON tinggi.</p>
-                    </div>
-                    <div class="char-card" id="class-mage">
-                        <h3 style="color: #4ae3ff;">🔮 Mage</h3>
-                        <p style="font-size: 12px; color: #aaa;">Ahli sihir. INT dan DEX tinggi.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div id="screen-char-select" class="screen" style="display: none;"></div>
 
         <div id="screen-game" class="screen">
             <div class="game-header">
@@ -60,9 +37,7 @@
                     </div>
 
                     <div id="panel-crafting" class="panel" style="display:none;">
-                        <h3 style="border-bottom: 1px solid #555; padding-bottom: 5px;">⚒️ Tungku Penempaan</h3>
-                        <p style="font-size: 11px; color: #aaa;">Kumpulkan Blueprint dari Boss Fuben untuk menempa Senjata Legendary!</p>
-                        <div id="crafting-list" style="margin-top: 10px;"></div>
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Daftar Resep...</div>
                     </div>
                 </div>
 
@@ -78,7 +53,7 @@
                     </div>
                     
                     <div id="panel-blacksmith" class="panel" style="border: 1px solid #00d2ff; background: #16222f; display:none;">
-                        <div style=\"text-align:center; color:#aaa; font-size:12px;\">Memuat Pandai Besi...</div>
+                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Pandai Besi...</div>
                     </div>
                     
                     <div id="panel-auction" class="panel" style="display:none;">
