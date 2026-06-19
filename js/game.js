@@ -1,7 +1,6 @@
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { listenToMailbox, claimMailReward, deleteMail } from './modules/mailbox.js';
 // IMPORT MODULES UI
 import { loadUIComponents } from './ui-loader.js';
 
