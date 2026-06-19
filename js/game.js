@@ -31,7 +31,6 @@ import { ITEM_DB } from './data/items.js';
 import { executeRefineAction } from './modules/blacksmith.js';
 
 let currentUserUid = null;
-let unsubMail;
 let activeUnsubscribeListeners = [];
 let inventoryMode = "EQUIP"; 
 let playerUsername = "Hero Anonim";
@@ -44,6 +43,7 @@ let guildUpgradesMap = {};
 let currentChatChannel = 'world'; 
 let currentPartyId = null;
 let unsubChatListener = null;
+let unsubMail;
 
 let bsSelectedEquip = null;
 let bsSelectedCatalyst = "Tanpa Batu Tambahan";
