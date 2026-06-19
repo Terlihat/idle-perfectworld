@@ -502,3 +502,65 @@ window.activateBlacksmithMode = function() {
         alert("Sistem gagal menemukan panel tungku!");
     }
 };
+
+// =========================================================
+// SISTEM PEMILIHAN KARAKTER BARU (EVENT DELEGATION)
+// =========================================================
+
+// 1. Eksekusi Tombol Buat Karakter
+document.addEventListener('click', async function(e) {
+    if (e.target && e.target.id === 'btn-create-char') {
+        const charNameInput = document.getElementById('char-name-input');
+        const classRadio = document.querySelector('input[name="char-class"]:checked');
+        
+        if (!charNameInput || !charNameInput.value.trim()) {
+            return alert("❌ Nama karakter tidak boleh kosong!");
+        }
+        if (!classRadio) {
+            return alert("❌ Silakan pilih Class/Job karakter Anda!");
+        }
+
+        const charName = charNameInput.value.trim();
+        const charClass = classRadio.value;
+
+        try {
+            // Ubah tombol jadi loading agar tidak di-spam
+            e.target.innerText = "⏳ MENEMPA TAKDIR...";
+            e.target.style.background = "#555";
+            e.target.disabled = true;
+
+            // Panggil fungsi bawaan untuk mengatur stats awal Job
+            await selectCharacterClass(db, currentUserUid, charClass);
+
+            // Simpan nama karakter yang diketik ke Firebase
+            const userRef = doc(db, "users", currentUserUid);
+            await updateDoc(userRef, { username: charName });
+
+            // (Layar akan otomatis berganti ke dalam game karena sistem onSnapshot)
+
+        } catch (error) {
+            alert("Gagal membuat karakter: " + error.message);
+            e.target.innerText = "🔥 Mulai Petualangan 🔥";
+            e.target.style.background = "#ff9800";
+            e.target.disabled = false;
+        }
+    }
+});
+
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.name === 'char-class') {
+
+        document.querySelectorAll('input[name="char-class"]').forEach(radio => {
+            radio.parentElement.style.borderColor = "#3f3f52";
+            radio.parentElement.style.background = "#121216";
+        });
+        
+        if (e.target.value === 'Warrior') {
+            e.target.parentElement.style.borderColor = "#dc3545";
+            e.target.parentElement.style.background = "#1c152a";
+        } else if (e.target.value === 'Mage') {
+            e.target.parentElement.style.borderColor = "#00d2ff";
+            e.target.parentElement.style.background = "#15201b";
+        }
+    }
+});
