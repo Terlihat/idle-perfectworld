@@ -4,6 +4,10 @@ import { doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/fire
 
 // IMPORT MODULES UI
 import { loadUIComponents } from './ui-loader.js';
+
+// ---> TAMBAHKAN BARIS INI DI SINI <---
+loadUIComponents(); 
+
 import { 
     renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI, 
     renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI 
