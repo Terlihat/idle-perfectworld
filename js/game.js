@@ -524,6 +524,12 @@ document.addEventListener('click', async function(e) {
             const userRef = doc(db, "users", currentUserUid);
             await updateDoc(userRef, { username: charName });
 
+            const screenChar = document.getElementById('screen-char-select');
+            const screenGame = document.getElementById('screen-game');
+            
+            if (screenChar) screenChar.style.display = 'none';
+            if (screenGame) screenGame.style.display = 'block';
+
         } catch (error) {
             alert("Gagal membuat karakter: " + error.message);
             e.target.innerText = "🔥 Mulai Petualangan 🔥";
