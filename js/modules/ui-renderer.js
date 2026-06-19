@@ -1,5 +1,6 @@
 import { getVipStats } from './vip.js';
 import { CRAFTING_RECIPES } from './crafting.js';
+import { ITEM_DB } from '../data/items.js';
 
 export function escapeHTML(str) { 
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : ""; 
@@ -167,39 +168,80 @@ export function renderQuestUI(q) {
     }
 }
 
-// 3. RENDER GRID TAS (INVENTORY) DENGAN BADGE REFINE
+// 3. RENDER GRID TAS (INVENTORY) DENGAN BADGE REFINE & STACK LIMIT
 export function renderInventoryUI(inventory) {
     const invGrid = document.getElementById('inventory-grid');
     if (!invGrid) return;
-    invGrid.innerHTML = "";
     
+    let html = "";
+    let renderSlots = []; // Antrean kotak yang akan dirender
+    
+    // Urutkan item berdasarkan abjad
     let items = Object.entries(inventory || {}).sort((a, b) => a[0].localeCompare(b[0]));
     
-    for (let i = 0; i < 20; i++) {
-        if (i < items.length) {
-            const [name, qty] = items[i];
-            if (qty > 0) {
-                // Deteksi nama dasar dan level plus untuk UI
-                let baseName = name.replace(/\s\[\+\d+\]$/, '');
-                let badgeHtml = "";
-                const match = name.match(/\[\+(\d+)\]$/);
-                
-                if (match) { // Jika punya nilai plus (+1, +2, dst)
-                    badgeHtml = `<div style="position:absolute; top:-5px; right:-5px; background:#dc3545; color:white; font-size:10px; font-weight:bold; padding:2px 4px; border-radius:4px; z-index:10; box-shadow: 0 0 3px black;">+${match[1]}</div>`;
-                }
-
-                invGrid.innerHTML += `
-                <div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(name)}')">
-                    ${badgeHtml}
-                    ${getIconHTML(baseName)} 
-                    <span style="font-size:10px;">${escapeHTML(baseName)}</span>
-                    <span class="inv-qty">x${qty}</span>
-                </div>`;
-            } else {
-                invGrid.innerHTML += `<div class="inv-slot"></div>`;
-            }
-        } else { invGrid.innerHTML += `<div class="inv-slot"></div>`; }
+    // 1. PROSES PEMBELAHAN ITEM BERDASARKAN STACK LIMIT
+    for (const [name, totalQty] of items) {
+        if (totalQty <= 0) continue;
+        
+        // Deteksi nama dasar dan level plus untuk UI
+        let baseName = name.replace(/\s\[\+\d+\]$/, '');
+        let badgeHtml = "";
+        const match = name.match(/\[\+(\d+)\]$/);
+        
+        if (match) { // Jika punya nilai plus (+1, +2, dst)
+            badgeHtml = `<div style="position:absolute; top:-5px; right:-5px; background:#dc3545; color:white; font-size:10px; font-weight:bold; padding:2px 4px; border-radius:4px; z-index:10; box-shadow: 0 0 3px black;">+${match[1]}</div>`;
+        }
+        
+        // Cek tipe item dari database untuk menentukan batas tumpukan
+        const itemInfo = ITEM_DB[baseName] || { type: 'misc' };
+        
+        let maxStack = 99; // Default potion/item biasa
+        if (['weapon', 'armor', 'accessory', 'mount'].includes(itemInfo.type)) maxStack = 1;
+        else if (['catalyst', 'material'].includes(itemInfo.type)) maxStack = 1000;
+        else if (['potion'].includes(itemInfo.type)) maxStack = 99;
+        
+        // Belah item jika melebihi batas maksimal (Stack Limit)
+        let remainingQty = totalQty;
+        while (remainingQty > 0) {
+            let currentSlotQty = Math.min(remainingQty, maxStack);
+            
+            // Masukkan kotak yang sudah dibelah ke dalam antrean
+            renderSlots.push({
+                name: name,
+                baseName: baseName,
+                badgeHtml: badgeHtml,
+                qty: currentSlotQty
+            });
+            
+            remainingQty -= currentSlotQty;
+        }
     }
+    
+    // 2. RENDER SEMUA KOTAK YANG TERISI KE DALAM HTML
+    for (let i = 0; i < renderSlots.length; i++) {
+        const slot = renderSlots[i];
+        
+        // Jangan tampilkan tulisan x1 jika itemnya adalah equipment (opsional agar lebih rapi)
+        const qtyText = (slot.qty > 1) ? `<span class="inv-qty">x${slot.qty}</span>` : "";
+
+        html += `
+        <div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(slot.name)}')">
+            ${slot.badgeHtml}
+            ${getIconHTML(slot.baseName)} 
+            <span style="font-size:10px;">${escapeHTML(slot.baseName)}</span>
+            ${qtyText}
+        </div>`;
+    }
+    
+    // 3. TAMBAHKAN KOTAK KOSONG (Minimal Tas Selalu Punya 20 Kotak)
+    const minSlots = 20;
+    const totalSlotsToRender = Math.max(minSlots, renderSlots.length); // Jika item > 20, tas akan memanjang otomatis
+    
+    for (let i = renderSlots.length; i < totalSlotsToRender; i++) {
+        html += `<div class="inv-slot"></div>`;
+    }
+    
+    invGrid.innerHTML = html;
 }
 
 // 4. RENDER GRID BANK
