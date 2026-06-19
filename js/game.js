@@ -391,9 +391,7 @@ window.actionCraftItem = function(recipeName) {
     }
 };
 
-// --- FUNGSI TOGGLE PANEL PINTAR ---
 window.bukaPanelKhusus = function(panelId) {
-    // 👇 Tambahkan 'panel-crafting' di dalam kurung siku ini 👇
     const panels = ['panel-bank', 'panel-auction', 'panel-blacksmith', 'panel-crafting'];
     
     const targetPanel = document.getElementById(panelId);
@@ -414,16 +412,14 @@ window.bukaPanelKhusus = function(panelId) {
     }
 };
 
-// --- KONTROL PANDAI BESI (TANPA POPUP) ---
 window.addBlacksmithLog = function(msg, color) {
     const logPanel = document.getElementById('bs-log-panel');
     if (logPanel) {
         const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
         logPanel.innerHTML += `<div style="color: ${color}; margin-bottom: 3px;">[${time}] ${msg}</div>`;
-        logPanel.scrollTop = logPanel.scrollHeight; // Auto-scroll ke paling bawah
+        logPanel.scrollTop = logPanel.scrollHeight;
     }
 };
-
 
 let isForging = false;
 
@@ -503,11 +499,6 @@ window.activateBlacksmithMode = function() {
     }
 };
 
-// =========================================================
-// SISTEM PEMILIHAN KARAKTER BARU (EVENT DELEGATION)
-// =========================================================
-
-// 1. Eksekusi Tombol Buat Karakter
 document.addEventListener('click', async function(e) {
     if (e.target && e.target.id === 'btn-create-char') {
         const charNameInput = document.getElementById('char-name-input');
@@ -524,19 +515,14 @@ document.addEventListener('click', async function(e) {
         const charClass = classRadio.value;
 
         try {
-            // Ubah tombol jadi loading agar tidak di-spam
             e.target.innerText = "⏳ MENEMPA TAKDIR...";
             e.target.style.background = "#555";
             e.target.disabled = true;
 
-            // Panggil fungsi bawaan untuk mengatur stats awal Job
             await selectCharacterClass(db, currentUserUid, charClass);
 
-            // Simpan nama karakter yang diketik ke Firebase
             const userRef = doc(db, "users", currentUserUid);
             await updateDoc(userRef, { username: charName });
-
-            // (Layar akan otomatis berganti ke dalam game karena sistem onSnapshot)
 
         } catch (error) {
             alert("Gagal membuat karakter: " + error.message);
