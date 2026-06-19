@@ -1,7 +1,7 @@
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
+import { listenToMailbox, claimMailReward, deleteMail } from './modules/mailbox.js';
 // IMPORT MODULES UI
 import { loadUIComponents } from './ui-loader.js';
 
@@ -145,7 +145,7 @@ function startLiveGameSync() {
     });
 
     // 3. Sinkronisasi Kotak Surat
-    const unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
+    listenToMailbox(db, currentUserUid, (mails) => {
         renderMailboxUI(mails);
     });
 
@@ -556,3 +556,14 @@ document.addEventListener('change', function(e) {
         }
     }
 });
+
+// --- KONTROL KOTAK SURAT ---
+window.claimMail = function(mailId) { 
+    claimMailReward(db, currentUserUid, mailId); 
+};
+
+window.deleteMail = function(mailId) {
+    if (confirm("Yakin ingin menghapus surat ini?")) {
+        deleteMail(db, currentUserUid, mailId);
+    }
+};

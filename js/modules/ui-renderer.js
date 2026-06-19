@@ -221,32 +221,81 @@ export function renderBankUI(bankInventory) {
     }
 }
 
-// 5. RENDER KOTAK SURAT
+// 5. RENDER KOTAK SURAT (DENGAN LOG PERTARUNGAN & HADIAH)
 export function renderMailboxUI(mails) {
-    const mailDiv = document.getElementById('mailbox-list');
-    if (!mailDiv) return;
-    mailDiv.innerHTML = mails.length === 0 ? "Tidak ada surat." : "";
-    mails.forEach(mail => { 
-        let attachHtml = "";
-        let rewardText = "";
-        
-        if (mail.attachments) {
-            let rewards = [];
-            const rName = mail.attachments.itemName || mail.attachments.name;
-            if (rName) rewards.push(`[${escapeHTML(rName)}] x${mail.attachments.qty || 1}`);
-            if (mail.attachments.gold > 0) rewards.push(`${mail.attachments.gold} Gold`);
-            if (mail.attachments.coin > 0) rewards.push(`${mail.attachments.coin} COIN`);
 
-            if (rewards.length > 0) {
-                rewardText = `<br><span style="color:#28a745; font-size:11px;">🎁 Hadiah: ${rewards.join(', ')}</span>`;
-            }
-            if (!mail.isClaimed) { attachHtml += `<button onclick="window.claimReward('${mail.id}')" style="padding: 2px 6px; font-size: 10px; background: #28a745; float: right; margin-left:4px;">Klaim</button>`; } 
-            else { attachHtml += `<span style="font-size:9px; color:#555; float:right; margin-left:4px;">(Klaim Selesai)</span>`; }
-        }
+    const mailboxPanel = document.getElementById('mailbox-list'); 
+    if (!mailboxPanel) return;
+
+    // Pastikan mails adalah array
+    const mailList = Array.isArray(mails) ? mails : [];
+    
+    let html = `<h3 style="border-bottom: 1px solid #ffcc00; padding-bottom: 5px; color:#ffcc00;">📬 Kotak Surat</h3>`;
+    
+    if (mailList.length === 0) {
+        html += `<p style="text-align:center; color:#aaa; font-size:11px; margin-top:15px;">Tidak ada surat.</p>`;
+    } else {
+        // Mengurutkan dari surat terbaru
+        const sortedMails = [...mailList].sort((a, b) => b.id.localeCompare(a.id)); 
         
-        attachHtml += `<button onclick="window.deleteMailAction('${mail.id}')" style="padding: 2px 6px; font-size: 10px; background: #dc3545; float: right;">Hapus</button>`;
-        mailDiv.innerHTML += `<div style="border-bottom:1px solid #333; padding:6px 0; overflow:hidden;"><strong style="color:#ffcc00; font-size: 12px;">[Sistem]</strong> <span style="font-size: 12px;">${escapeHTML(mail.title)}</span> ${attachHtml} ${rewardText}</div>`; 
-    });
+        html += `<div style="max-height: 300px; overflow-y: auto; margin-top:10px; display:flex; flex-direction:column; gap:8px;">`;
+        
+        sortedMails.forEach(mail => {
+            const icon = mail.isRead ? "📭" : "📩";
+            const color = mail.isRead ? "#777" : "#fff";
+            const border = mail.isRead ? "#333" : "#ffcc00";
+            
+            // 1. Format Isi Surat (Log Pertarungan / Teks)
+            const formattedContent = escapeHTML(mail.content || "").replace(/\n/g, '<br>');
+
+            // 2. Format Lampiran Hadiah (Logika Asli Anda)
+            let rewardText = "";
+            let btnKlaim = "";
+            
+            if (mail.attachments) {
+                let rewards = [];
+                const rName = mail.attachments.itemName || mail.attachments.name;
+                if (rName) rewards.push(`[${escapeHTML(rName)}] x${mail.attachments.qty || 1}`);
+                if (mail.attachments.gold > 0) rewards.push(`${mail.attachments.gold} Gold`);
+                if (mail.attachments.coin > 0) rewards.push(`${mail.attachments.coin} COIN`);
+
+                if (rewards.length > 0) {
+                    rewardText = `<div style="color:#28a745; font-size:11px; margin-top:5px; font-weight:bold;">🎁 Hadiah: ${rewards.join(', ')}</div>`;
+                }
+                
+                // Tombol Klaim / Keterangan Selesai
+                if (!mail.isClaimed) { 
+                    btnKlaim = `<button onclick="event.stopPropagation(); window.claimMail('${mail.id}')" style="flex:1; background: #28a745; color: white; border: none; padding: 6px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold;">🎁 Klaim Hadiah</button>`; 
+                } else {
+                    btnKlaim = `<button disabled style="flex:1; background: #555; color: #888; border: none; padding: 6px; border-radius: 3px; font-size: 10px;">✅ Diklaim</button>`;
+                }
+            }
+
+            // 3. Merakit Tampilan HTML (Bisa di-klik untuk membuka lipatan surat)
+            html += `
+            <div style="background: #121216; border: 1px solid ${border}; padding: 8px; border-radius: 5px; cursor: pointer;" 
+                 onclick="this.querySelector('.mail-body').style.display = this.querySelector('.mail-body').style.display === 'none' ? 'block' : 'none';">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong style="color: ${color}; font-size: 12px;">${icon} [Sistem] ${escapeHTML(mail.title || "Pesan")}</strong>
+                    <span style="font-size: 9px; color: #888;">${escapeHTML(mail.date || "")}</span>
+                </div>
+                
+                <div class="mail-body" style="display: none; margin-top: 8px; font-size: 10px; color: #ccc; border-top: 1px dashed #444; padding-top: 8px; font-family: monospace; line-height: 1.4;">
+                    ${formattedContent}
+                    ${rewardText}
+                    
+                    <div style="margin-top: 10px; display: flex; gap: 5px;">
+                        ${btnKlaim}
+                        <button onclick="event.stopPropagation(); window.deleteMail('${mail.id}')" style="flex:1; background: #dc3545; color: white; border: none; padding: 6px; border-radius: 3px; cursor: pointer; font-size: 10px;">🗑️ Hapus</button>
+                    </div>
+                </div>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+    
+    mailboxPanel.innerHTML = html;
 }
 
 // 6. RENDER PASAR LELANG

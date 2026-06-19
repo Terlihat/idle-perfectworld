@@ -4,7 +4,8 @@
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { MONSTER_DB } from '../data/monsters.js';
 import { getUpdatedQuests } from './quest.js'; 
-import { getVipStats } from './vip.js'; // <-- VIP Import
+import { getVipStats } from './vip.js';
+import { sendSoloBattleReport } from './mailbox.js';
 
 export async function attackMonster(db, uid, monsterKey, playerStats) {
     if (!uid) return;
@@ -113,7 +114,11 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
             }
         });
         
-        if (resultMsg) alert(resultMsg);
+        if (resultMsg) {
+            const isWin = !resultMsg.includes("terbunuh oleh"); 
+            await sendSoloBattleReport(db, uid, isWin, monster.name, resultMsg);
+            // alert(resultMsg); // <-- Matikan alert agar log hanya muncul di Mailbox
+        }
 
     } catch (err) { alert(err); }
 }

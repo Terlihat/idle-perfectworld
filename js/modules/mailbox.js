@@ -1,7 +1,7 @@
 /* ===================================================
    MODUL MANAJEMEN KOTAK SURAT (MAILBOX)
    =================================================== */
-import { collection, doc, query, onSnapshot, runTransaction, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, doc, query, onSnapshot, runTransaction, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 export function listenToMailbox(db, uid, callbackRender) {
     if (!uid) return;
@@ -34,7 +34,6 @@ export async function claimMailReward(db, uid, mailId) {
 
             let updates = {};
 
-            // 1. Klaim Item (Jika Ada)
             const itemName = mail.attachments.itemName || mail.attachments.name;
             if (itemName) {
                 let inv = user.inventory || {};
@@ -43,19 +42,12 @@ export async function claimMailReward(db, uid, mailId) {
                 updates.inventory = inv;
             }
 
-            // 2. Klaim Gold (Jika Ada)
             const addGold = mail.attachments.gold || 0;
-            if (addGold > 0) {
-                updates.gold = (user.gold || 0) + addGold;
-            }
+            if (addGold > 0) updates.gold = (user.gold || 0) + addGold;
 
-            // 3. Klaim Coin Premium (Jika Ada)
             const addCoin = mail.attachments.coin || 0;
-            if (addCoin > 0) {
-                updates.coin = (user.coin || 0) + addCoin;
-            }
+            if (addCoin > 0) updates.coin = (user.coin || 0) + addCoin;
 
-            // Eksekusi pembaruan ke database
             ts.update(mailRef, { isClaimed: true });
             ts.update(userRef, updates);
         });
@@ -68,6 +60,34 @@ export async function deleteMail(db, uid, mailId) {
     const mailRef = doc(db, "users", uid, "mailbox", mailId);
     try {
         await deleteDoc(mailRef);
-        alert("🗑️ Surat berhasil dihapus secara manual!");
-    } catch (e) { alert(e); }
+    } catch (e) { alert("Gagal menghapus: " + e); }
+}
+
+// --- FUNGSI BARU: PENGIRIM BATTLE REPORT PARTY ---
+export async function sendPartyBattleReport(db, partyMembers, isWin, bossName, logContent) {
+    const timestamp = new Date().toLocaleString('id-ID');
+    const promises = partyMembers.map(member => {
+        const mailRef = doc(collection(db, "users", member.uid, "mailbox"));
+        return setDoc(mailRef, {
+            title: isWin ? `🏆 Kemenangan FB: ${bossName}` : `💀 Kekalahan FB: ${bossName}`,
+            content: logContent,
+            date: timestamp,
+            isRead: false,
+            isClaimed: true // Ditandai 'true' karena surat ini murni teks, tidak ada attachment hadiah yg perlu di-klaim
+        }).catch(err => console.log("Gagal kirim surat", err));
+    });
+    await Promise.all(promises);
+}
+
+// --- FUNGSI BARU: PENGIRIM BATTLE REPORT SOLO ---
+export async function sendSoloBattleReport(db, uid, isWin, monsterName, logContent) {
+    const timestamp = new Date().toLocaleString('id-ID');
+    const mailRef = doc(collection(db, "users", uid, "mailbox"));
+    await setDoc(mailRef, {
+        title: isWin ? `⚔️ Menang Solo: ${monsterName}` : `☠️ Kalah Solo: ${monsterName}`,
+        content: logContent,
+        date: timestamp,
+        isRead: false,
+        isClaimed: true
+    });
 }

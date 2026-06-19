@@ -4,7 +4,8 @@
 import { collection, doc, runTransaction, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { FB_BOSSES } from '../data/monsters.js';
 import { getUpdatedQuests } from './quest.js'; 
-import { getVipStats } from './vip.js'; // <-- VIP Import
+import { getVipStats } from './vip.js';
+import { sendPartyBattleReport } from './mailbox.js';
 
 export function listenToParties(db, callbackRender) {
     const q = query(collection(db, "parties"));
@@ -205,7 +206,15 @@ export async function startFbBattle(db, leaderUid, partyId) {
             else { log += `\n❌ PARTY WIPE OUT! Seluruh anggota Party terbunuh oleh Boss.`; }
 
             ts.delete(partyRef);
-            alert(log); 
+            
+            return { logResult: log, isWin: survivors > 0, partyMembers: pd.members, bossName: boss.name };
+            
         });
+
+        if (resultMsg && resultMsg.logResult) {
+            await sendPartyBattleReport(db, resultMsg.partyMembers, resultMsg.isWin, resultMsg.bossName, resultMsg.logResult);
+            // Opsional: alert("Pertarungan selesai! Cek Kotak Surat Anda.");
+        }
+
     } catch (err) { alert(err); }
 }
