@@ -31,6 +31,7 @@ import { ITEM_DB } from './data/items.js';
 import { executeRefineAction } from './modules/blacksmith.js';
 
 let currentUserUid = null;
+let unsubMail;
 let activeUnsubscribeListeners = [];
 let inventoryMode = "EQUIP"; 
 let playerUsername = "Hero Anonim";
@@ -67,7 +68,6 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUid = user.uid;
         
-        // Memuat HTML Panel Eksternal terlebih dahulu
         await loadUIComponents();
         
         const docSnap = await getDoc(doc(db, "users", currentUserUid));
@@ -90,15 +90,13 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 function startLiveGameSync() {
-    
-    // 1. Sinkronisasi Guild
+
     const unsubGuilds = listenToGuilds(db, (guildsData, upgradesData) => {
         globalGuilds = guildsData;
         guildUpgradesMap = upgradesData;
         renderGuildUI(currentPlayerStats, globalGuilds, guildUpgradesMap); 
     });
 
-    // 2. Sinkronisasi User Data
     const unsubData = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
         if (!docSnap.exists()) return;
         const d = docSnap.data();
@@ -143,12 +141,10 @@ function startLiveGameSync() {
         if (!unsubChatListener) startDynamicChat();
     });
 
-    // 3. Sinkronisasi Kotak Surat
     listenToMailbox(db, currentUserUid, (mails) => {
         renderMailboxUI(mails);
     });
 
-    // 4. Sinkronisasi Pasar Lelang
     const unsubAuction = listenToAuction(db, (items) => {
         renderAuctionUI(items, currentUserUid);
     });

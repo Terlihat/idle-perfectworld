@@ -86,10 +86,11 @@ export async function leaveParty(db, partyId, uid) {
 export async function startFbBattle(db, leaderUid, partyId) {
     const partyRef = doc(db, "parties", partyId);
     try {
-        await runTransaction(db, async (ts) => {
+        // PERBAIKAN 1: Tambahkan 'const resultMsg =' untuk menampung hasil return
+        const resultMsg = await runTransaction(db, async (ts) => {
             const partySnap = await ts.get(partyRef);
             if (!partySnap.exists()) throw "Party sudah tidak ada!";
-            const party = partySnap.data();
+            const party = partySnap.data(); // <--- Variabel bernama 'party'
 
             if (party.leaderId !== leaderUid) throw "Hanya Ketua yang bisa memulai FB!";
             if (party.members.length < 2) throw "Minimal butuh 2 orang untuk memulai Party FB!";
@@ -207,14 +208,17 @@ export async function startFbBattle(db, leaderUid, partyId) {
 
             ts.delete(partyRef);
             
-            return { logResult: log, isWin: survivors > 0, partyMembers: pd.members, bossName: boss.name };
+            // PERBAIKAN 2: Ubah pd.members menjadi party.members
+            return { logResult: log, isWin: survivors > 0, partyMembers: party.members, bossName: boss.name };
             
-        });
+        }); // Penutup transaksi
 
         if (resultMsg && resultMsg.logResult) {
             await sendPartyBattleReport(db, resultMsg.partyMembers, resultMsg.isWin, resultMsg.bossName, resultMsg.logResult);
-            // Opsional: alert("Pertarungan selesai! Cek Kotak Surat Anda.");
+            // alert("Pertarungan selesai! Cek Kotak Surat Anda."); // (Bisa dinyalakan jika ingin ada notif)
         }
 
-    } catch (err) { alert(err); }
+    } catch (err) { 
+        alert(err); 
+    }
 }
