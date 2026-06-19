@@ -1,25 +1,21 @@
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, getDoc, updateDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
 // IMPORT MODULES UI
 import { loadUIComponents } from './ui-loader.js';
-
-// ---> TAMBAHKAN BARIS INI DI SINI <---
 loadUIComponents(); 
 
 import { 
     renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI, 
-    renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI, getIconHTML
+    renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI, getIconHTML, renderShopAndMall
 } from './modules/ui-renderer.js';
 
 // IMPORT MODULES SISTEM
 import { selectCharacterClass, addCharacterStat, startStaminaRegeneration } from './modules/character.js';
 import { equipFromInventory, sellItemToNPC, unequipItem } from './modules/inventory.js';
 import { attackMonster } from './modules/battle.js'; 
-import { buyEquipment } from './modules/shop.js';
 import { listenToChat, sendChat } from './modules/chat.js';
-import { buyPotion } from './modules/apothecary.js';
-import { buyMallItem } from './modules/mall.js'; 
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
 import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, rejectBid, cancelAuction } from './modules/auction.js';
 import { listenToParties, createOrJoinParty, leaveParty, startFbBattle } from './modules/party.js';
@@ -75,6 +71,7 @@ onAuthStateChanged(auth, async (user) => {
             showScreen('screen-char-select');
         } else {
             showScreen('screen-game');
+            renderShopAndMall(); // Render Grid Toko saat game dimuat
             startLiveGameSync();
             if (staminaRegenInterval) clearInterval(staminaRegenInterval);
             staminaRegenInterval = startStaminaRegeneration(db, currentUserUid); 
@@ -141,7 +138,7 @@ function startLiveGameSync() {
         if (!unsubChatListener) startDynamicChat();
     });
 
-    listenToMailbox(db, currentUserUid, (mails) => {
+    unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
         renderMailboxUI(mails);
     });
 
@@ -149,7 +146,6 @@ function startLiveGameSync() {
         renderAuctionUI(items, currentUserUid);
     });
 
-    // 5. Sinkronisasi Party
     const unsubParties = listenToParties(db, (parties) => {
         let myParty = parties.find(p => p.members.find(m => m.uid === currentUserUid));
         let newPartyId = myParty ? myParty.id : null;
@@ -202,26 +198,26 @@ function clearActiveModeClasses() {
 
 // ROUTING KLIK TOMBOL GLOBAL (EVENT DELEGATION)
 document.addEventListener('click', (e) => {
-    // Cari tombol terdekat yang diklik
     const target = e.target.closest('button') || e.target.closest('.char-card') || e.target;
     const targetId = target.id;
 
     if (!targetId) return;
 
-    // --- KONTROL UMUM & AUTENTIKASI ---
     if (targetId === 'btn-admin-panel') window.location.href = './admin/index.html';
     if (targetId === 'btn-copy-uid') { if (currentUserUid) { navigator.clipboard.writeText(currentUserUid); alert("📋 UID disalin!"); } }
     
-    // --- PEMILIHAN KELAS ---
+    // --- NAVIGASI TOGGLE PANEL ---
+    if (targetId === 'btn-toggle-mall') window.togglePanel('panel-mall');
+    if (targetId === 'btn-toggle-shop') window.togglePanel('panel-shop');
+    if (targetId === 'btn-toggle-mail') window.togglePanel('panel-mailbox');
+
     if (targetId === 'class-warrior') selectCharacterClass(db, currentUserUid, 'Warrior', () => showScreen('screen-game'));
     if (targetId === 'class-mage') selectCharacterClass(db, currentUserUid, 'Mage', () => showScreen('screen-game'));
 
-    // --- MODE INVENTORY ---
     if (targetId === 'btn-mode-equip') { inventoryMode = "EQUIP"; clearActiveModeClasses(); target.className = "mode-active"; }
     if (targetId === 'btn-mode-sell') { inventoryMode = "SELL"; clearActiveModeClasses(); target.className = "mode-sell-active"; }
     if (targetId === 'btn-mode-dismantle') { inventoryMode = "DISMANTLE"; clearActiveModeClasses(); target.style.backgroundColor = "#dc3545"; }
     
-    // Mode Khusus dengan Panel Cerdas
     if (targetId === 'btn-mode-bank') { 
         inventoryMode = "BANK"; 
         clearActiveModeClasses(); 
@@ -241,7 +237,6 @@ document.addEventListener('click', (e) => {
         window.bukaPanelKhusus('panel-crafting'); 
     }
 
-    // --- KONTROL CHAT ---
     if (targetId === 'btn-send-chat') {
         const chatInput = document.getElementById('chat-input');
         if (chatInput && chatInput.value.trim()) { 
@@ -253,7 +248,6 @@ document.addEventListener('click', (e) => {
         }
     }
 
-    // --- KONTROL GUILD ---
     if (targetId === 'btn-create-guild') { const name = document.getElementById('input-guild-name').value; if (confirm(`Dirikan Guild [${name}] seharga 100,000 Gold?`)) createGuild(db, currentUserUid, currentPlayerStats, name); }
     if (targetId === 'btn-leave-guild') { if (confirm("Yakin ingin keluar dari Guild? Anda akan kehilangan semua Buff Guild!")) dbLeaveGuild(db, currentUserUid, currentPlayerStats.guildId); }
     if (targetId === 'btn-donate-guild') { const amt = parseInt(document.getElementById('input-donate-gold').value); if (amt > 0) { donateGold(db, currentUserUid, currentPlayerStats.guildId, amt); document.getElementById('input-donate-gold').value = ""; } }
@@ -261,42 +255,19 @@ document.addEventListener('click', (e) => {
     if (targetId === 'btn-edit-motd') { const txt = prompt("Masukkan pengumuman baru untuk anggota Guild:"); if (txt) updateMotd(db, currentUserUid, currentPlayerStats.guildId, txt); }
     if (targetId === 'btn-disband-guild') { if (confirm("PERINGATAN KERAS: Yakin membubarkan Guild selamanya? Dana Guild akan hangus!")) disbandGuild(db, currentUserUid, currentPlayerStats.guildId); }
 
-    // --- KONTROL BANK ---
     if (targetId === 'btn-bank-deposit-gold') { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { depositGold(db, currentUserUid, val); el.value = ""; } }
     if (targetId === 'btn-bank-withdraw-gold') { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { withdrawGold(db, currentUserUid, val); el.value = ""; } }
 
-    // --- KONTROL DUNGEON & PARTY ---
     if (targetId === 'btn-attack-dungeon') attackMonster(db, currentUserUid, document.getElementById('dungeon-select').value, currentPlayerStats);
     if (targetId === 'btn-create-party') createOrJoinParty(db, document.getElementById('fb-select').value, currentPlayerStats);
 
-    // --- KONTROL MISI (QUEST) ---
     if (targetId === 'btn-take-quest') assignRandomQuests(db, currentUserUid);
     if (targetId === 'btn-claim-daily') claimQuestReward(db, currentUserUid, 'daily');
     if (targetId === 'btn-claim-bounty') claimQuestReward(db, currentUserUid, 'bounty');
 
-    // --- KONTROL TOKO NPC ---
-    if (targetId === 'btn-buy-sword') buyEquipment(db, currentUserUid, 'Pedang Besi');
-    if (targetId === 'btn-buy-staff') buyEquipment(db, currentUserUid, 'Tongkat Sihir');
-    if (targetId === 'btn-buy-armor') buyEquipment(db, currentUserUid, 'Zirah Kulit');
-    if (targetId === 'btn-buy-ring') buyEquipment(db, currentUserUid, 'Cincin Akurat');
-    if (targetId === 'btn-buy-horse') buyEquipment(db, currentUserUid, 'Kuda Coklat');
-    if (targetId === 'btn-buy-bear') buyEquipment(db, currentUserUid, 'Beruang Kutub');
-    if (targetId === 'btn-buy-hp') buyPotion(db, currentUserUid, 'HP');
-    if (targetId === 'btn-buy-mp') buyPotion(db, currentUserUid, 'MP');
-
-    // --- KONTROL ITEM MALL ---
-    if (targetId === 'btn-mall-mirage') buyMallItem(db, currentUserUid, 'Mirage Stone', 5);
-    if (targetId === 'btn-mall-heaven') buyMallItem(db, currentUserUid, 'Heaven Stone', 15);
-    if (targetId === 'btn-mall-underworld') buyMallItem(db, currentUserUid, 'Underworld Stone', 15);
-    if (targetId === 'btn-mall-universal') buyMallItem(db, currentUserUid, 'Universal Stone', 50);
-    if (targetId === 'btn-mall-name') buyMallItem(db, currentUserUid, 'Tiket Ganti Nama', 50);
-    if (targetId === 'btn-mall-job') buyMallItem(db, currentUserUid, 'Tiket Ubah Job', 100);
-    if (targetId === 'btn-mall-stamina') buyMallItem(db, currentUserUid, 'Ramuan Stamina', 10);
-    if (targetId === 'btn-mall-dragon') buyMallItem(db, currentUserUid, 'Naga Terbang', 200);
-    if (targetId === 'btn-mall-reset') buyMallItem(db, currentUserUid, 'Buku Reset Stats', 100);
 });
 
-// GLOBAL WINDOW ROUTERS (UNTUK ITEM KLIK)
+// GLOBAL WINDOW ROUTERS
 window.handleInventoryClick = function(itemName) {
     if (inventoryMode === "EQUIP") {
         if (itemName === "Tiket Ganti Nama") { const inputName = prompt("Masukkan Nama Karakter Baru:"); if (inputName && inputName.trim() !== "") equipFromInventory(db, currentUserUid, itemName, inputName); } 
@@ -312,7 +283,6 @@ window.handleInventoryClick = function(itemName) {
         const price = parseInt(priceStr);
         if (price > 0) listAuctionItem(db, currentUserUid, itemName, price, playerUsername);
     }
-
     else if (inventoryMode === "DISMANTLE") {
         if (DISMANTLE_CONFIG[itemName]) {
             if (confirm(`🔥 Yakin ingin MELEBUR [${itemName}]?\nItem akan hancur menjadi material crafting.`)) {
@@ -322,19 +292,16 @@ window.handleInventoryClick = function(itemName) {
             alert(`❌ [${itemName}] tidak bisa dilebur!`);
         }
     }
-
     else if (inventoryMode === "BLACKSMITH") {
-        // Ekstrak nama asli (Contoh: Mengubah "Pedang Besi [+2]" menjadi "Pedang Besi")
         const baseName = itemName.replace(/\s\[\+\d+\]$/, '');
         const itemInfo = ITEM_DB[baseName];
         
         if (!itemInfo) return alert("Item tidak dikenali sistem.");
 
-        // Dapatkan elemen HTML ikon asli dari ui-renderer
         const realIconHTML = getIconHTML(baseName);
 
         if (itemInfo.type === 'weapon' || itemInfo.type === 'armor' || itemInfo.type === 'accessory') {
-            bsSelectedEquip = itemName; // Menyimpan nama lengkap beserta [+X]
+            bsSelectedEquip = itemName; 
             document.getElementById('bs-icon-equip').innerHTML = realIconHTML;
             document.getElementById('bs-text-equip').innerText = itemName;
             document.getElementById('bs-text-equip').style.color = "#00d2ff";
@@ -356,8 +323,8 @@ window.handleInventoryClick = function(itemName) {
 };
 
 window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, itemName); };
-window.claimReward = function(mailId) { claimMailReward(db, currentUserUid, mailId); };
-window.deleteMailAction = function(mailId) { if (confirm("Hapus surat ini secara permanen?")) deleteMail(db, currentUserUid, mailId); };
+window.claimMail = function(mailId) { claimMailReward(db, currentUserUid, mailId); };
+window.deleteMail = function(mailId) { if (confirm("Yakin ingin menghapus surat ini?")) deleteMail(db, currentUserUid, mailId); };
 window.buyFromAuction = function(id, name, price, sellerId) { if (confirm(`Beli Langsung ${name} seharga ${price} Gold?`)) buyAuctionItem(db, currentUserUid, id, name, price, sellerId); };
 window.cancelAuction = function(id) { if (confirm("Tarik barang dari pasar?")) cancelAuction(db, currentUserUid, id); };
 
@@ -404,6 +371,14 @@ window.bukaPanelKhusus = function(panelId) {
     }
 };
 
+window.togglePanel = function(panelId) {
+    const el = document.getElementById(panelId);
+    if (el) {
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        if (el.style.display === 'block') el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+};
+
 window.addBlacksmithLog = function(msg, color) {
     const logPanel = document.getElementById('bs-log-panel');
     if (logPanel) {
@@ -446,7 +421,7 @@ window.resetEquip = function() {
     bsSelectedEquip = null;
     const elIcon = document.getElementById('bs-icon-equip');
     const elText = document.getElementById('bs-text-equip');
-    if (elIcon) elIcon.innerText = "🛡️";
+    if (elIcon) elIcon.innerHTML = "🛡️";
     if (elText) { elText.innerText = "Pilih Equip"; elText.style.color = "#aaa"; }
     
     const costText = document.getElementById('bs-info-cost');
@@ -459,7 +434,7 @@ window.resetCatalyst = function() {
     bsSelectedCatalyst = "Tanpa Batu Tambahan";
     const elIcon = document.getElementById('bs-icon-catalyst');
     const elText = document.getElementById('bs-text-catalyst');
-    if (elIcon) elIcon.innerText = "💎";
+    if (elIcon) elIcon.innerHTML = "💎";
     if (elText) { elText.innerText = "Tanpa Batu"; elText.style.color = "#aaa"; }
     
     window.addBlacksmithLog("[SISTEM] Batu katalis dikosongkan.", "#aaa");
@@ -468,7 +443,6 @@ window.resetCatalyst = function() {
 window.actionUnequip = function(slotType) {
     unequipItem(db, currentUserUid, slotType);
 };
-
 
 window.activateBlacksmithMode = function() {
     inventoryMode = "BLACKSMITH"; 
@@ -533,7 +507,6 @@ document.addEventListener('click', async function(e) {
 
 document.addEventListener('change', function(e) {
     if (e.target && e.target.name === 'char-class') {
-
         document.querySelectorAll('input[name="char-class"]').forEach(radio => {
             radio.parentElement.style.borderColor = "#3f3f52";
             radio.parentElement.style.background = "#121216";
@@ -549,13 +522,95 @@ document.addEventListener('change', function(e) {
     }
 });
 
-// --- KONTROL KOTAK SURAT ---
-window.claimMail = function(mailId) { 
-    claimMailReward(db, currentUserUid, mailId); 
+// ==========================================
+// SISTEM MODAL PEMBELIAN TOKO & MALL
+// ==========================================
+let currentBuyItem = null;
+let currentBuyPrice = 0;
+let currentBuyCurrency = 'Gold';
+
+window.openBuyModal = function(itemName, price, currency) {
+    currentBuyItem = itemName;
+    currentBuyPrice = price;
+    currentBuyCurrency = currency;
+    
+    const modal = document.getElementById('buy-modal');
+    if (!modal) return;
+    
+    document.getElementById('buy-modal-title').innerText = `Beli [${itemName}]`;
+    document.getElementById('buy-modal-qty').value = 1;
+    document.getElementById('buy-modal-currency').innerText = currency;
+    document.getElementById('buy-modal-currency').style.color = currency === 'Coin' ? '#ffcc00' : '#e0a800';
+    
+    const iconContainer = document.getElementById('buy-modal-icon');
+    if (iconContainer && typeof getIconHTML === 'function') {
+        iconContainer.innerHTML = getIconHTML(itemName);
+    }
+    
+    updateModalTotal();
+    modal.style.display = 'flex';
 };
 
-window.deleteMail = function(mailId) {
-    if (confirm("Yakin ingin menghapus surat ini?")) {
-        deleteMail(db, currentUserUid, mailId);
+function updateModalTotal() {
+    const qty = parseInt(document.getElementById('buy-modal-qty').value) || 1;
+    document.getElementById('buy-modal-total').innerText = (currentBuyPrice * qty).toLocaleString();
+}
+
+document.addEventListener('input', (e) => {
+    if (e.target.id === 'buy-modal-qty') {
+        let val = parseInt(e.target.value);
+        if (val < 1) e.target.value = 1;
+        if (val > 999) e.target.value = 999; 
+        updateModalTotal();
     }
-};
+});
+
+document.addEventListener('click', async (e) => {
+    if (e.target.id === 'btn-cancel-buy') {
+        document.getElementById('buy-modal').style.display = 'none';
+    }
+    
+    if (e.target.id === 'btn-confirm-buy') {
+        const qty = parseInt(document.getElementById('buy-modal-qty').value) || 1;
+        const btn = document.getElementById('btn-confirm-buy');
+        
+        btn.disabled = true;
+        btn.innerText = "⏳ PROSES...";
+        btn.style.background = "#555";
+        
+        try {
+            const userRef = doc(db, "users", currentUserUid);
+            const totalCost = currentBuyPrice * qty;
+            
+            await runTransaction(db, async (ts) => {
+                const snap = await ts.get(userRef);
+                if (!snap.exists()) throw "User tidak ditemukan.";
+                const data = snap.data();
+                let updates = {};
+                
+                if (currentBuyCurrency === 'Gold') {
+                    if ((data.gold || 0) < totalCost) throw `Gold tidak cukup! Butuh ${totalCost.toLocaleString()} Gold.`;
+                    updates.gold = data.gold - totalCost;
+                } else if (currentBuyCurrency === 'Coin') {
+                    if ((data.coin || 0) < totalCost) throw `Coin Premium tidak cukup! Butuh ${totalCost.toLocaleString()} Coin.`;
+                    updates.coin = data.coin - totalCost;
+                }
+
+                let inv = data.inventory || {};
+                inv[currentBuyItem] = (inv[currentBuyItem] || 0) + qty;
+                updates.inventory = inv;
+                
+                ts.update(userRef, updates);
+            });
+            
+            document.getElementById('buy-modal').style.display = 'none';
+            
+        } catch (err) {
+            alert("❌ " + err);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "BELI";
+            btn.style.background = "#28a745";
+        }
+    }
+});

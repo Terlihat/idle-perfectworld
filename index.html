@@ -69,11 +69,19 @@
                 </div>
 
                 <div>
-                    <div id="panel-mall" class="panel panel-mall">
-                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Item Mall...</div>
+                    <!-- PANEL TERSEMBUNYI -->
+                    <div id="panel-mall" class="panel panel-mall" style="display:none; border: 1px solid #ffcc00; margin-bottom: 15px;">
+                        <h2 class="gold-title" style="text-align: center; margin-top: 0;">💎 Item Mall Premium</h2>
+                        <div id="panel-mall-grid"></div>
                     </div>
-                    <div id="panel-shop" class="panel">
-                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Toko...</div>
+                    
+                    <div id="panel-shop" class="panel" style="display:none; border: 1px solid #17a2b8; margin-bottom: 15px;">
+                        <h2 style="text-align: center; color: #17a2b8; margin-top: 0;">🏪 Toko & Mount</h2>
+                        <div id="panel-shop-grid"></div>
+                    </div>
+                    
+                    <div id="panel-mailbox" class="panel" style="display:none; border: 1px solid #dc3545; margin-bottom: 15px;">
+                        <!-- Tempat UI Mailbox akan dirender -->
                     </div>
                     <div id="panel-bank" class="panel" style="display:none;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Bangkir...</div>
@@ -81,14 +89,28 @@
                     <div id="panel-guild" class="panel" style="border: 1px solid #ffcc00; background: #1f1a0d;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Guild...</div>
                     </div>
-                    <div id="panel-mailbox" class="panel" style="border: 1px solid #ffcc00;">
-                        <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Kotak Surat...</div>
-                    </div>
-
                     <div class="panel" id="panel-chat">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Obrolan...</div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="buy-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+        <div style="background:#121216; border:2px solid #ffcc00; border-radius:8px; padding:20px; width:300px; text-align:center; box-shadow: 0 0 15px rgba(255,204,0,0.3);">
+            <h3 id="buy-modal-title" style="color:#ffcc00; margin-top:0; border-bottom: 1px solid #333; padding-bottom:10px;">Beli Item</h3>
+            <div id="buy-modal-icon" style="font-size:40px; margin:15px 0;"></div>
+            <div style="margin:15px 0;">
+                <label style="font-size:11px; color:#aaa;">Berapa banyak yang ingin Anda beli?</label><br>
+                <input type="number" id="buy-modal-qty" value="1" min="1" max="999" style="width:80px; text-align:center; font-size:16px; font-weight:bold; background:#222; color:#fff; border:1px solid #555; border-radius:4px; padding:8px; margin-top:8px;">
+            </div>
+            <div style="font-size:14px; margin-bottom:20px; background:#1a1a1a; padding:10px; border-radius:4px;">
+                Total Biaya: <strong id="buy-modal-total" style="color:#28a745; font-size:16px;">0</strong> <span id="buy-modal-currency">Gold</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; gap:10px;">
+                <button id="btn-cancel-buy" style="flex:1; background:#dc3545; padding:10px; font-weight:bold; border:none; border-radius:4px; color:#fff; cursor:pointer;">BATAL</button>
+                <button id="btn-confirm-buy" style="flex:1; background:#28a745; padding:10px; font-weight:bold; border:none; border-radius:4px; color:#fff; cursor:pointer;">BELI</button>
             </div>
         </div>
     </div>

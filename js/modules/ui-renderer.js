@@ -509,3 +509,55 @@ export function renderCraftingUI(inventory, playerLevel, playerGold) {
         </div>`;
     }
 }
+
+// ==========================================
+// 11. SISTEM RENDER TOKO & ITEM MALL (REAL ICON)
+// ==========================================
+
+export const SHOP_ITEMS = [
+    { name: 'Pedang Besi', price: 2000, currency: 'Gold' },
+    { name: 'Tongkat Sihir', price: 2000, currency: 'Gold' },
+    { name: 'Zirah Kulit', price: 2000, currency: 'Gold' },
+    { name: 'Cincin Akurat', price: 3000, currency: 'Gold' },
+    { name: 'Kuda Coklat', price: 5000, currency: 'Gold' },
+    { name: 'Beruang Kutub', price: 25000, currency: 'Gold' },
+    { name: 'Ramuan HP', price: 500, currency: 'Gold' },
+    { name: 'Ramuan MP', price: 500, currency: 'Gold' }
+];
+
+export const MALL_ITEMS = [
+    { name: 'Mirage Stone', price: 5, currency: 'Coin' },
+    { name: 'Heaven Stone', price: 15, currency: 'Coin' },
+    { name: 'Underworld Stone', price: 15, currency: 'Coin' },
+    { name: 'Universal Stone', price: 50, currency: 'Coin' },
+    { name: 'Tiket Ganti Nama', price: 50, currency: 'Coin' },
+    { name: 'Tiket Ubah Job', price: 100, currency: 'Coin' },
+    { name: 'Ramuan Stamina', price: 10, currency: 'Coin' },
+    { name: 'Naga Terbang', price: 200, currency: 'Coin' },
+    { name: 'Buku Reset Stats', price: 100, currency: 'Coin' }
+];
+
+export function renderShopAndMall() {
+    const shopContainer = document.getElementById('panel-shop-grid');
+    const mallContainer = document.getElementById('panel-mall-grid');
+    
+    function buildGrid(items) {
+        let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px; margin-top:10px;">';
+        items.forEach(item => {
+            const iconHTML = getIconHTML(item.name);
+            const colorPrice = item.currency === 'Coin' ? '#ffcc00' : '#e0a800';
+            
+            html += `
+            <div onclick="window.openBuyModal('${escapeHTML(item.name)}', ${item.price}, '${item.currency}')" 
+                 style="background:#121216; border:1px solid #333; border-radius:5px; padding:10px; text-align:center; cursor:pointer; transition:0.2s;">
+                <div style="font-size:28px; margin-bottom:8px;">${iconHTML}</div>
+                <div style="font-size:10px; color:#fff; margin-bottom:5px; line-height:1.2; height:24px;">${escapeHTML(item.name)}</div>
+                <div style="font-size:11px; font-weight:bold; color:${colorPrice}; background:#222; padding:2px; border-radius:3px;">💰 ${item.price}</div>
+            </div>`;
+        });
+        return html + '</div>';
+    }
+
+    if (shopContainer) shopContainer.innerHTML = buildGrid(SHOP_ITEMS);
+    if (mallContainer) mallContainer.innerHTML = buildGrid(MALL_ITEMS);
+}
