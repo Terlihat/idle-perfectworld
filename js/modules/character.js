@@ -1,4 +1,5 @@
 import { doc, setDoc, getDoc, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getVipStats } from './vip.js';
 
 let isUpdatingStat = false; 
 
@@ -60,24 +61,25 @@ export async function addCharacterStat(db, uid, statName) {
     }
 }
 
-// FIX: Regenerasi Stamina Cepat (Langsung Eksekusi)
+// FIX: Regenerasi Stamina Cepat + Deteksi VIP + Anti-Corrupt Time
 export function startStaminaRegeneration(db, uid) {
     if (!uid) return;
     const userRef = doc(db, "users", uid);
     
-    // Kita bungkus logikanya ke dalam satu mesin fungsi
     const syncStamina = async () => {
         try {
             const snap = await getDoc(userRef);
             if (snap.exists()) {
                 const data = snap.data();
-                const maxStam = data.maxStamina || 100;
-                let currentStam = data.currentStamina !== undefined ? data.currentStamina : 100;
-                const now = Date.now();
                 
+                // Kalkulasi Batas Maksimal dengan VIP
+                const vipStats = getVipStats(data.vipLevel || 0);
+                const maxStam = (data.maxStamina || 100) + (vipStats.extraMaxStamina || 0);
+                let currentStam = data.currentStamina !== undefined ? data.currentStamina : maxStam;
+                
+                const now = Date.now();
                 let lastUpdate = data.lastStaminaUpdate;
                 
-                // Perlindungan: Jika data lama belum ada timestamp-nya
                 if (!lastUpdate) {
                     lastUpdate = now;
                     await updateDoc(userRef, { lastStaminaUpdate: now });
@@ -85,26 +87,32 @@ export function startStaminaRegeneration(db, uid) {
 
                 if (currentStam < maxStam) {
                     const diffMs = now - lastUpdate;
+                    
+                    // Perlindungan: Jika waktu HP/PC pemain error dan nyangkut di masa depan
+                    if (diffMs < 0) {
+                        await updateDoc(userRef, { lastStaminaUpdate: now });
+                        return;
+                    }
+
                     const diffMinutes = Math.floor(diffMs / 60000); // 1 Stamina = 1 Menit
 
                     if (diffMinutes > 0) {
                         const newStam = Math.min(maxStam, currentStam + diffMinutes);
-                        const newUpdateTime = lastUpdate + (diffMinutes * 60000);
+                        // Jangan gunakan 'now', tapi tambahkan dari waktu terakhir 
+                        // agar sisa detik yang belum genap 1 menit tidak hangus
+                        const newUpdateTime = lastUpdate + (diffMinutes * 60000); 
                         await updateDoc(userRef, { currentStamina: newStam, lastStaminaUpdate: newUpdateTime });
                     }
                 } else if (currentStam >= maxStam && now - lastUpdate > 60000) {
-                    // Jika stamina sudah penuh, sesuaikan jam ke waktu sekarang
+                    // Jika stamina kepenuhan / lebih dari batas max, reset waktu hitung
                     await updateDoc(userRef, { lastStaminaUpdate: now });
                 }
             }
         } catch (err) { console.error("Gagal sinkronisasi stamina:", err); }
     };
 
-    // 1. Eksekusi INSTAN detik itu juga saat game dimuat!
-    syncStamina();
-
-    // 2. Lanjutkan pengecekan otomatis setiap 60 detik
-    return setInterval(syncStamina, 60000);
+    syncStamina(); // Tembak langsung saat game dimuat
+    return setInterval(syncStamina, 60000); // Jalankan otomatis tiap 1 menit
 }
 
 // FITUR BARU: Minum Ramuan
