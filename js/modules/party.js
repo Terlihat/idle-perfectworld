@@ -83,110 +83,128 @@ export async function leaveParty(db, partyId, uid) {
     } catch (err) { console.error(err); }
 }
 
-export async function startFbBattle(db, leaderUid, partyId) {
+export async function startFbBattle(db, partyId) {
+    if (!partyId) return;
     const partyRef = doc(db, "parties", partyId);
+
     try {
-        // PERBAIKAN 1: Tambahkan 'const resultMsg =' untuk menampung hasil return
         const resultMsg = await runTransaction(db, async (ts) => {
-            const partySnap = await ts.get(partyRef);
-            if (!partySnap.exists()) throw "Party sudah tidak ada!";
-            const party = partySnap.data(); // <--- Variabel bernama 'party'
+            const pSnap = await ts.get(partyRef);
+            if (!pSnap.exists()) throw "Party tidak ditemukan.";
+            const party = pSnap.data();
 
-            if (party.leaderId !== leaderUid) throw "Hanya Ketua yang bisa memulai FB!";
-            if (party.members.length < 2) throw "Minimal butuh 2 orang untuk memulai Party FB!";
-
+            if (party.status === "in_battle") throw "Party sedang bertarung!";
             const boss = FB_BOSSES[party.fbKey];
-            const memberRefs = party.members.map(m => doc(db, "users", m.uid));
-            const memberSnaps = await Promise.all(memberRefs.map(ref => ts.get(ref)));
+            if (!boss) throw "Dungeon tidak valid.";
 
+            // Kalkulasi damage party
             let totalPartyAtk = 0;
-            let log = `⚔️ BATTLE LOG: Melawan ${boss.name}\n\n`;
-
-            memberSnaps.forEach(snap => {
-                const md = snap.data();
-                const partyData = party.members.find(m => m.uid === snap.id);
-                const mount = md.equipment?.mount || null;
-                const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
-
-                if (md.currentHp > 0 && md.currentStamina >= stamReq) {
-                    const effectivePAtk = partyData ? partyData.patk : 50;
-                    const effectiveMAtk = partyData ? partyData.matk : 50;
-                    totalPartyAtk += Math.max(1, (effectivePAtk + effectiveMAtk) - boss.def);
-                }
+            party.members.forEach(m => {
+                totalPartyAtk += (m.patk || 10) + (m.matk || 10);
             });
 
-            if (totalPartyAtk <= 0) throw "Semua anggota kekurangan HP/Stamina! Pertarungan dibatalkan.";
-            const turnsToKill = Math.ceil(boss.hp / totalPartyAtk);
-            log += `[!] Party Total DPS: ${totalPartyAtk} | Boss HP: ${boss.hp} | Dibunuh dalam ${turnsToKill} Putaran.\n\n`;
+            // Kalkulasi total hit
+            let dmgToBoss = Math.max(1, totalPartyAtk - (boss.def || 0));
+            let totalHit = Math.ceil(boss.hp / dmgToBoss);
 
+            // Damage boss ke party
+            let bossAtk = boss.atk || 100;
+            let log = `⚔️ REKAP PERTARUNGAN [${boss.name}]:\n\n`;
             let survivors = 0;
 
-            memberSnaps.forEach(snap => {
-                const md = snap.data();
-                const mRef = snap.ref;
-                const partyData = party.members.find(m => m.uid === snap.id);
-                
-                const mount = md.equipment?.mount || null;
-                const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
-                const goldMult = 1 + (mount?.goldBonus || 0);
+            // 1. --- SISTEM GACHA DROP ACAK ---
+            let memberDrops = {}; 
+            let dropLogMsg = "\n\n🎁 HASIL LOOT ACAK:\n";
+            let adaDrop = false;
 
-                if (md.currentHp <= 0 || md.currentStamina < stamReq) return;
+            let dropsArray = [];
+            if (boss.drop) dropsArray.push(boss.drop);
+            if (boss.drops) dropsArray = dropsArray.concat(boss.drops);
 
-                const effectiveDef = partyData ? partyData.def : 10;
-                const dmgPerTurn = Math.max(1, boss.atk - effectiveDef);
-                const totalDmgTaken = dmgPerTurn * turnsToKill;
+            if (dropsArray.length > 0) {
+                dropsArray.forEach(d => {
+                    // Cek Hoki: Apakah barang ini jatuh?
+                    if (Math.random() <= d.chance) {
+                        adaDrop = true;
+                        // Pilih Anggota Party secara acak untuk menerima barang
+                        const luckyMember = party.members[Math.floor(Math.random() * party.members.length)];
+                        
+                        if (!memberDrops[luckyMember.uid]) memberDrops[luckyMember.uid] = [];
+                        memberDrops[luckyMember.uid].push(d.item);
+                        
+                        dropLogMsg += `> 💎 [${d.item}] jatuh ke dalam tas ${luckyMember.username}!\n`;
+                    }
+                });
+            }
+            if (!adaDrop) dropLogMsg += "> Tidak ada barang langka yang jatuh pada perburuan kali ini.\n";
+            // ---------------------------------
+
+            // 2. --- LOOP UNTUK UPDATE DATA TIAP ANGGOTA ---
+            for (let i = 0; i < party.members.length; i++) {
+                let member = party.members[i];
+                let mRef = doc(db, "users", member.uid);
+                let mSnap = await ts.get(mRef);
+                if (!mSnap.exists()) continue;
+
+                let md = mSnap.data();
+                let dmgToMember = Math.max(1, bossAtk - (md.def || 0));
+                let totalDmgTaken = dmgToMember * totalHit;
+
+                let currentHp = md.currentHp || member.maxHp || 1000;
+                let newHp = Math.max(0, currentHp - totalDmgTaken);
                 
-                let newHp = md.currentHp - totalDmgTaken;
-                let newStamina = Math.max(0, md.currentStamina - stamReq);
+                const vipStats = getVipStats(md.vipLevel || 0);
+                const currentStamina = md.currentStamina !== undefined ? md.currentStamina : 100;
+                const stamReq = Math.max(1, 20 - (member.mountBonus?.stamDiscount || 0));
+                let newStamina = Math.max(0, currentStamina - stamReq);
+                
+                let expGain = boss.rewardExp || 1000;
+                let goldGain = boss.rewardGold || 500;
+                let finalGold = goldGain + Math.floor(goldGain * (member.mountBonus?.goldBonus || 0));
+
+                let newExpDeath = Math.max(0, (md.exp || 0) - Math.floor(expGain * 0.5));
+                let newExp = (md.exp || 0) + expGain;
+                let newGold = (md.gold || 0) + finalGold;
+                
+                const newQuests = getUpdatedQuests(md.quests, boss.name);
+
+                // PENYISIPAN BARANG GACHA KE DALAM TAS ANGGOTA
+                let inv = md.inventory || {};
+                let dropsGot = memberDrops[member.uid] || [];
+                let extraDropText = "";
+
+                if (dropsGot.length > 0) {
+                    dropsGot.forEach(item => { inv[item] = (inv[item] || 0) + 1; });
+                    extraDropText = `\n   💎 (Loot Hoki): Dapat ${dropsGot.join(", ")}`;
+                }
 
                 if (newHp <= 0) {
-                    ts.update(mRef, { currentHp: 0, currentStamina: newStamina });
-                    log += `💀 [${md.username}] TERBUNUH! Menerima ${totalDmgTaken} DMG.\n`;
+                    // MEMBER TEWAS
+                    ts.update(mRef, { currentHp: 0, exp: newExpDeath, inventory: inv, currentStamina: newStamina });
+                    log += `💀 [${md.username}] TEWAS!${extraDropText}\n`;
                 } else {
+                    // MEMBER SELAMAT (Bertahan hidup)
                     survivors++;
-                    
-                    // --- VIP ENGINE PARTY ---
-                    const vipStats = getVipStats(md.vipLevel || 0);
-                    
-                    let baseGold = Math.floor(boss.rewardGold * goldMult);
-                    let baseExp = boss.rewardExp;
-                    
-                    let bonusGold = Math.floor(baseGold * (vipStats.goldBonusPct / 100));
-                    let bonusExp = Math.floor(baseExp * (vipStats.expBonusPct / 100));
-                    
-                    let finalGold = baseGold + bonusGold;
-                    let finalExp = baseExp + bonusExp;
-                    
-                    let newExp = (md.exp || 0) + finalExp;
-                    let newGold = (md.gold || 0) + finalGold;
-                    let inv = md.inventory || {};
-                    let dropMsg = "";
-
-                    let newQuests = getUpdatedQuests(md, 'bounty', party.fbKey, 1);
-
-                    if (Math.random() <= boss.drop.chance) {
-                        inv[boss.drop.item] = (inv[boss.drop.item] || 0) + 1;
-                        dropMsg = ` | 🎁 Drop: ${boss.drop.item}`;
-                    }
-
-                    if (bonusGold > 0 || bonusExp > 0) {
-                        dropMsg += ` ✨(VIP +${bonusGold}G / +${bonusExp}XP)`;
-                    }
-
                     let newLevel = md.level || 1;
-                    let statPointsGained = 0;
+                    let reqExp = newLevel * 1000;
                     let leveledUp = false;
-                    while (newExp >= newLevel * 100) {
-                        newExp -= (newLevel * 100);
-                        newLevel += 1;
+                    let statPointsGained = 0;
+
+                    while (newExp >= reqExp) {
+                        newExp -= reqExp;
+                        newLevel++;
                         statPointsGained += 5;
+                        reqExp = newLevel * 1000;
                         leveledUp = true;
                     }
 
+                    let dropMsg = extraDropText;
+
                     if (leveledUp) {
                         ts.update(mRef, { 
-                            level: newLevel, exp: newExp, gold: newGold, inventory: inv, 
-                            currentHp: md.maxHp || 1000, currentStamina: newStamina,
+                            exp: newExp, gold: newGold, inventory: inv, 
+                            level: newLevel, currentHp: member.maxHp, 
+                            currentStamina: md.maxStamina || 100, 
                             statPoints: (md.statPoints || 0) + statPointsGained,
                             quests: newQuests 
                         });
@@ -201,21 +219,26 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     
                     log += `🛡️ [${md.username}] BERTAHAN! Sisa HP: ${newHp} | +${finalGold} Gold${dropMsg}\n`;
                 }
-            });
+            } // -- AKHIR LOOP --
 
-            if (survivors > 0) { log += `\n🎉 FB BERHASIL! ${survivors} orang selamat.`; } 
-            else { log += `\n❌ PARTY WIPE OUT! Seluruh anggota Party terbunuh oleh Boss.`; }
+            // 3. TENTUKAN HASIL AKHIR & GABUNGKAN LOG LOOT
+            if (survivors > 0) { 
+                log += `\n🎉 FB BERHASIL! ${survivors} orang selamat.`; 
+                log += dropLogMsg; // Tambahkan info siapa saja yang hoki dapat barang!
+            } 
+            else { 
+                log += `\n❌ PARTY WIPE OUT! Seluruh anggota Party terbunuh oleh Boss.`; 
+            }
 
+            // Hapus Party karena sudah selesai bertarung
             ts.delete(partyRef);
             
-            // PERBAIKAN 2: Ubah pd.members menjadi party.members
             return { logResult: log, isWin: survivors > 0, partyMembers: party.members, bossName: boss.name };
             
-        }); // Penutup transaksi
+        }); 
 
         if (resultMsg && resultMsg.logResult) {
             await sendPartyBattleReport(db, resultMsg.partyMembers, resultMsg.isWin, resultMsg.bossName, resultMsg.logResult);
-            // alert("Pertarungan selesai! Cek Kotak Surat Anda."); // (Bisa dinyalakan jika ingin ada notif)
         }
 
     } catch (err) { 
