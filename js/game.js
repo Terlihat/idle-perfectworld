@@ -387,7 +387,11 @@ window.handleInventoryClick = async function(itemName) {
         else { equipFromInventory(db, currentUserUid, itemName, null); }
     } 
     else if (inventoryMode === "SELL") { sellItemToNPC(db, currentUserUid, itemName); } 
-    else if (inventoryMode === "BANK") { depositItem(db, currentUserUid, itemName); }
+    else if (inventoryMode === "BANK") { 
+    const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ingin disimpan?`, "Simpan ke Bank", "number");
+    const qty = parseInt(qtyStr);
+    if (qty > 0) depositItem(db, currentUserUid, itemName, qty);
+    }
     else if (inventoryMode === "AUCTION") {
         if (itemName.includes("Tiket") || itemName.includes("Buku") || itemName.includes("Ramuan Stamina") || itemName.includes("Naga Terbang")) return window.rpgAlert("Item premium tidak bisa dilelang.");
         const priceStr = await window.rpgPrompt(`Masukkan Harga Beli Langsung (Gold) untuk 1x [${itemName}]:`, "Jual ke Lelang", "number");
@@ -433,7 +437,11 @@ window.handleInventoryClick = async function(itemName) {
     }
 };
 
-window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, itemName); };
+window.handleBankClick = async function(itemName) { 
+    const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ingin ditarik?`, "Tarik dari Bank", "number");
+    const qty = parseInt(qtyStr);
+    if (qty > 0) withdrawItem(db, currentUserUid, itemName, qty); 
+};
 window.claimMail = function(mailId) { claimMailReward(db, currentUserUid, mailId); };
 window.deleteMail = async function(mailId) { if (await window.rpgConfirm("Yakin ingin menghapus surat ini?", "Hapus Surat")) deleteMail(db, currentUserUid, mailId); };
 window.deleteAllMails = async function() {
