@@ -437,55 +437,56 @@ window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, i
 window.claimMail = function(mailId) { claimMailReward(db, currentUserUid, mailId); };
 window.deleteMail = async function(mailId) { if (await window.rpgConfirm("Yakin ingin menghapus surat ini?", "Hapus Surat")) deleteMail(db, currentUserUid, mailId); };
 window.deleteAllMails = async function() {
-    if (!await window.rpgConfirm("Hapus semua surat?\n(Surat yang berisi Hadiah/Lampiran tidak akan dihapus).", "Bersihkan Kotak Surat")) return;
+    if (!await window.rpgConfirm("Hapus semua surat?\n(Surat yang berisi Hadiah/Lampiran yang belum diklaim TIDAK akan dihapus).", "Bersihkan Kotak Surat")) return;
+
+    // 1. Trik Jeda UI: Memberi masa 200ms agar modal konfirmasi tertutup sepenuhnya.
+    // Ini mencegah "Silent UI Error" di mana amaran baharu gagal muncul.
+    await new Promise(res => setTimeout(res, 200));
 
     try {
         const mailRef = collection(db, "users", currentUserUid, "mail");
         const snap = await getDocs(mailRef);
         
+        // 2. Menggunakan ciri Batch Firebase untuk memadam banyak data secara serentak dan selamat
+        const batch = writeBatch(db);
         let deletedCount = 0;
 
-        for (const docSnap of snap.docs) {
+        snap.docs.forEach(docSnap => {
             const data = docSnap.data();
             
-            // 1. Deteksi Hadiah Valid secara Ketat
+            // 3. Pengecekan Hadiah Kalis Ralat (Menggunakan {} sebagai perlindungan jika null)
             let isPunyaHadiah = false;
+            const att = data.attachments || {}; 
             
-            if (data.attachments) {
-                // Periksa apakah lampiran benar-benar memiliki isi (bukan cuma objek kosong {})
-                const adaItem = data.attachments.itemName || data.attachments.name;
-                const adaGold = data.attachments.gold > 0;
-                const adaCoin = data.attachments.coin > 0;
-                
-                if (adaItem || adaGold || adaCoin) {
-                    isPunyaHadiah = true;
-                }
+            const adaItem = att.itemName || att.name;
+            const adaGold = (att.gold || 0) > 0;
+            const adaCoin = (att.coin || 0) > 0;
+            
+            if (adaItem || adaGold || adaCoin || data.reward) {
+                isPunyaHadiah = true;
             }
             
-            // Support variabel 'reward' lama jika ada
-            if (data.reward) {
-                isPunyaHadiah = true; 
-            }
+            // 4. Pengesahan status tuntutan (claim) dengan selamat
+            const isSudahDiKlaim = data.isClaimed === true || data.isClaimed === "true";
             
-            // 2. Jika punya hadiah yang VALID dan belum diklaim, JANGAN DIHAPUS
-            const janganDihapus = isPunyaHadiah && data.isClaimed !== true;
+            // 5. Syarat Utama: Surat BOLEH DIHAPUS JIKA ia tiada hadiah, ATAU hadiahnya telah dituntut!
+            const bisaDihapus = !isPunyaHadiah || isSudahDiKlaim;
             
-            // 3. Eksekusi Penghapusan untuk Surat Biasa / Log Pertarungan / Hadiah yang sudah diambil
-            if (!janganDihapus) {
-                deleteMail(db, currentUserUid, docSnap.id);
+            if (bisaDihapus) {
+                batch.delete(docSnap.ref);
                 deletedCount++;
             }
-        }
+        });
 
-        // 4. Notifikasi Hasil
         if (deletedCount > 0) {
-            window.rpgAlert(`🧹 ${deletedCount} surat berhasil dibersihkan!`, "Sukses");
+            await batch.commit(); // Melaksanakan pemadaman secara pukal
+            window.rpgAlert(`🧹 ${deletedCount} surat telah berjaya dibersihkan!`, "Berjaya");
         } else {
-            window.rpgAlert("Tidak ada surat kosong yang bisa dihapus.\n(Semua sisa surat di kotak Anda saat ini masih berisi hadiah yang belum diambil).", "Kotak Bersih");
+            window.rpgAlert("Tiada surat yang boleh dipadam.\n(Baki surat di dalam kotak anda kini hanya mengandungi hadiah yang belum diambil).", "Kotak Bersih");
         }
 
     } catch (err) {
-        window.rpgAlert(`Gagal membersihkan kotak surat: ${err.message}`, "Sistem Error");
+        window.rpgAlert(`Gagal membersihkan kotak surat: ${err.message}`, "Ralat Sistem");
     }
 };
 window.buyFromAuction = async function(id, name, price, sellerId) { if (await window.rpgConfirm(`Beli Langsung ${name} seharga ${price} Gold?`, "Pasar Lelang")) buyAuctionItem(db, currentUserUid, id, name, price, sellerId); };
