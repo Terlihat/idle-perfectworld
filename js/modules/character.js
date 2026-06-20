@@ -17,7 +17,7 @@ export async function selectCharacterClass(db, uid, charClass, callback) {
             exp: 0,
             vipLevel: 0,
             vipExp: 0,
-            gold: 500,
+            gold: 0,
             coin: 0,
             bankGold: 0,
             currentHp: baseStats.maxHp,
@@ -60,12 +60,13 @@ export async function addCharacterStat(db, uid, statName) {
     }
 }
 
-// FIX: Regenerasi Stamina Anti-Beku
+// FIX: Regenerasi Stamina Cepat (Langsung Eksekusi)
 export function startStaminaRegeneration(db, uid) {
     if (!uid) return;
     const userRef = doc(db, "users", uid);
     
-    return setInterval(async () => {
+    // Kita bungkus logikanya ke dalam satu mesin fungsi
+    const syncStamina = async () => {
         try {
             const snap = await getDoc(userRef);
             if (snap.exists()) {
@@ -84,7 +85,7 @@ export function startStaminaRegeneration(db, uid) {
 
                 if (currentStam < maxStam) {
                     const diffMs = now - lastUpdate;
-                    const diffMinutes = Math.floor(diffMs / 60000);
+                    const diffMinutes = Math.floor(diffMs / 60000); // 1 Stamina = 1 Menit
 
                     if (diffMinutes > 0) {
                         const newStam = Math.min(maxStam, currentStam + diffMinutes);
@@ -92,11 +93,18 @@ export function startStaminaRegeneration(db, uid) {
                         await updateDoc(userRef, { currentStamina: newStam, lastStaminaUpdate: newUpdateTime });
                     }
                 } else if (currentStam >= maxStam && now - lastUpdate > 60000) {
+                    // Jika stamina sudah penuh, sesuaikan jam ke waktu sekarang
                     await updateDoc(userRef, { lastStaminaUpdate: now });
                 }
             }
         } catch (err) { console.error("Gagal sinkronisasi stamina:", err); }
-    }, 60000);
+    };
+
+    // 1. Eksekusi INSTAN detik itu juga saat game dimuat!
+    syncStamina();
+
+    // 2. Lanjutkan pengecekan otomatis setiap 60 detik
+    return setInterval(syncStamina, 60000);
 }
 
 // FITUR BARU: Minum Ramuan
