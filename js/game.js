@@ -7,7 +7,7 @@ import { loadUIComponents } from './ui-loader.js';
 loadUIComponents(); 
 
 import { 
-    renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI, 
+    renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI, writeBatch,
     renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI, getIconHTML, renderShopAndMall, renderPKUI
 } from './modules/ui-renderer.js';
 
@@ -989,5 +989,40 @@ window.attackPK = async function(targetUid, targetName) {
     } catch(err) {
         window.rpgAlert(err, "Pertarungan Batal");
         window.addPKLog(`Batal menyerang: ${err}`, "#aaa"); // Catat juga jika gagal
+    }
+};
+
+window.deleteAllMails = async function() {
+    if (!await window.rpgConfirm("Hapus semua surat?\n(Surat yang berisi Lampiran/Hadiah yang belum diklaim TIDAK akan dihapus).", "Bersihkan Kotak Surat")) return;
+
+    try {
+        const mailRef = collection(db, "users", currentUserUid, "mail");
+        const snap = await getDocs(mailRef);
+        
+        const batch = writeBatch(db);
+        let deletedCount = 0;
+
+        snap.forEach(docSnap => {
+            const data = docSnap.data();
+            
+            // PENYESUAIAN PENTING: Mengecek variabel 'attachments' sesuai dengan skrip Anda
+            const hasUnclaimedAttachment = data.attachments && data.isClaimed !== true;
+            
+            // Jika tidak ada attachment ATAU attachment sudah di-claim, maka surat boleh dihapus
+            if (!hasUnclaimedAttachment) {
+                batch.delete(docSnap.ref);
+                deletedCount++;
+            }
+        });
+
+        if (deletedCount > 0) {
+            await batch.commit();
+            window.rpgAlert(`🧹 ${deletedCount} surat berhasil dibersihkan!`, "Sukses");
+        } else {
+            window.rpgAlert("Tidak ada surat yang bisa dihapus. (Pastikan Anda sudah mengambil/mengklaim semua lampiran hadiah terlebih dahulu).", "Kotak Bersih");
+        }
+
+    } catch (err) {
+        window.rpgAlert(`Gagal membersihkan kotak surat: ${err.message}`, "Sistem Error");
     }
 };

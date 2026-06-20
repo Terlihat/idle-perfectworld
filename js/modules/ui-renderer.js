@@ -266,13 +266,19 @@ export function renderBankUI(bankInventory) {
 // 5. RENDER KOTAK SURAT (DENGAN LOG PERTARUNGAN & HADIAH)
 export function renderMailboxUI(mails) {
 
-    const mailboxPanel = document.getElementById('mailbox-list'); 
+    // Gunakan id 'mailbox-list' (atau fallback ke 'panel-mailbox' jika diperlukan)
+    const mailboxPanel = document.getElementById('mailbox-list') || document.getElementById('panel-mailbox'); 
     if (!mailboxPanel) return;
 
     // Pastikan mails adalah array
     const mailList = Array.isArray(mails) ? mails : [];
     
-    let html = `<h3 style="border-bottom: 1px solid #ffcc00; padding-bottom: 5px; color:#ffcc00;">📬 Kotak Surat</h3>`;
+    // --- MODIFIKASI: Header Flexbox untuk Judul & Tombol Hapus Semua ---
+    let html = `
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ffcc00; padding-bottom: 5px; margin-bottom: 10px;">
+        <h3 style="margin: 0; color:#ffcc00; font-size: 16px;">📬 Kotak Surat</h3>
+        <button onclick="window.deleteAllMails()" style="background: #dc3545; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">🗑️ Hapus Semua</button>
+    </div>`;
     
     if (mailList.length === 0) {
         html += `<p style="text-align:center; color:#aaa; font-size:11px; margin-top:15px;">Tidak ada surat.</p>`;
@@ -280,15 +286,15 @@ export function renderMailboxUI(mails) {
         // Mengurutkan dari surat terbaru
         const sortedMails = [...mailList].sort((a, b) => b.id.localeCompare(a.id)); 
         
-        html += `<div style="max-height: 300px; overflow-y: auto; margin-top:10px; display:flex; flex-direction:column; gap:8px;">`;
+        html += `<div style="max-height: 300px; overflow-y: auto; display:flex; flex-direction:column; gap:8px;">`;
         
         sortedMails.forEach(mail => {
             const icon = mail.isRead ? "📭" : "📩";
             const color = mail.isRead ? "#777" : "#fff";
             const border = mail.isRead ? "#333" : "#ffcc00";
             
-            // 1. Format Isi Surat (Log Pertarungan / Teks)
-            const formattedContent = escapeHTML(mail.content || "").replace(/\n/g, '<br>');
+            // 1. Format Isi Surat (Menyesuaikan dengan data 'content' atau 'message')
+            const formattedContent = escapeHTML(mail.content || mail.message || "").replace(/\n/g, '<br>');
 
             // 2. Format Lampiran Hadiah (Logika Asli Anda)
             let rewardText = "";
@@ -313,7 +319,7 @@ export function renderMailboxUI(mails) {
                 }
             }
 
-            // 3. Merakit Tampilan HTML (Bisa di-klik untuk membuka lipatan surat)
+            // 3. Merakit Tampilan HTML (Sistem Lipatan / Accordion Tetap Dipertahankan)
             html += `
             <div style="background: #121216; border: 1px solid ${border}; padding: 8px; border-radius: 5px; cursor: pointer;" 
                  onclick="this.querySelector('.mail-body').style.display = this.querySelector('.mail-body').style.display === 'none' ? 'block' : 'none';">
