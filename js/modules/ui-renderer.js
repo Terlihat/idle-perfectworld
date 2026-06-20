@@ -540,7 +540,10 @@ export const MALL_ITEMS = [
     { name: 'Tiket Ubah Job', price: 100, currency: 'Coin' },
     { name: 'Ramuan Stamina', price: 10, currency: 'Coin' },
     { name: 'Naga Terbang', price: 200, currency: 'Coin' },
-    { name: 'Buku Reset Stats', price: 100, currency: 'Coin' }
+    { name: 'Buku Reset Stats', price: 100, currency: 'Coin' },
+    { name: 'Dragon Orb (1 Star)', price: 10, currency: 'Coin' },
+    { name: 'Dragon Orb (2 Star)', price: 25, currency: 'Coin' },
+    { name: 'Dragon Orb (3 Star)', price: 60, currency: 'Coin' }
 ];
 
 export function renderShopAndMall() {
