@@ -26,6 +26,8 @@ import { dismantleItemAction, DISMANTLE_CONFIG, craftItemAction } from './module
 import { ITEM_DB } from './data/items.js';
 import { executeRefineAction } from './modules/blacksmith.js';
 
+import { MONSTER_DB } from './data/monsters.js';
+
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
 // ==========================================
@@ -1062,3 +1064,30 @@ window.attackPK = async function(targetUid, targetName) {
         window.addPKLog(`Batal menyerang: ${err}`, "#aaa"); // Catat juga jika gagal
     }
 };
+
+// --- SISTEM PEMBACA INFO DROP BOS FB ---
+document.addEventListener('change', (e) => {
+    if (e.target.id === 'fb-select') {
+        const bossKey = e.target.value;
+        const boss = MONSTER_DB[bossKey]; 
+        
+        const infoBox = document.getElementById('fb-drop-info');
+        const textBox = document.getElementById('fb-drop-text');
+
+        if (boss && infoBox && textBox) {
+            let dropsInfo = [];
+            
+            if (boss.drop) dropsInfo.push(`[${boss.drop.item}] (${(boss.drop.chance * 100).toFixed(0)}%)`);
+            if (boss.drops && Array.isArray(boss.drops)) {
+                boss.drops.forEach(d => dropsInfo.push(`[${d.item}] (${(d.chance * 100).toFixed(0)}%)`));
+            }
+
+            if (dropsInfo.length > 0) {
+                textBox.innerText = dropsInfo.join(' | ');
+            } else {
+                textBox.innerText = "Hanya EXP & Gold";
+            }
+            infoBox.style.display = 'block';
+        }
+    }
+});

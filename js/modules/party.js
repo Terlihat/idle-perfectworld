@@ -97,17 +97,14 @@ export async function startFbBattle(db, partyId) {
             const boss = FB_BOSSES[party.fbKey];
             if (!boss) throw "Dungeon tidak valid.";
 
-            // Kalkulasi damage party
             let totalPartyAtk = 0;
             party.members.forEach(m => {
                 totalPartyAtk += (m.patk || 10) + (m.matk || 10);
             });
 
-            // Kalkulasi total hit
             let dmgToBoss = Math.max(1, totalPartyAtk - (boss.def || 0));
             let totalHit = Math.ceil(boss.hp / dmgToBoss);
 
-            // Damage boss ke party
             let bossAtk = boss.atk || 100;
             let log = `⚔️ REKAP PERTARUNGAN [${boss.name}]:\n\n`;
             let survivors = 0;
@@ -123,10 +120,8 @@ export async function startFbBattle(db, partyId) {
 
             if (dropsArray.length > 0) {
                 dropsArray.forEach(d => {
-                    // Cek Hoki: Apakah barang ini jatuh?
                     if (Math.random() <= d.chance) {
                         adaDrop = true;
-                        // Pilih Anggota Party secara acak untuk menerima barang
                         const luckyMember = party.members[Math.floor(Math.random() * party.members.length)];
                         
                         if (!memberDrops[luckyMember.uid]) memberDrops[luckyMember.uid] = [];
@@ -137,7 +132,6 @@ export async function startFbBattle(db, partyId) {
                 });
             }
             if (!adaDrop) dropLogMsg += "> Tidak ada barang langka yang jatuh pada perburuan kali ini.\n";
-            // ---------------------------------
 
             // 2. --- LOOP UNTUK UPDATE DATA TIAP ANGGOTA ---
             for (let i = 0; i < party.members.length; i++) {
@@ -168,7 +162,6 @@ export async function startFbBattle(db, partyId) {
                 
                 const newQuests = getUpdatedQuests(md.quests, boss.name);
 
-                // PENYISIPAN BARANG GACHA KE DALAM TAS ANGGOTA
                 let inv = md.inventory || {};
                 let dropsGot = memberDrops[member.uid] || [];
                 let extraDropText = "";
@@ -179,11 +172,9 @@ export async function startFbBattle(db, partyId) {
                 }
 
                 if (newHp <= 0) {
-                    // MEMBER TEWAS
                     ts.update(mRef, { currentHp: 0, exp: newExpDeath, inventory: inv, currentStamina: newStamina });
                     log += `💀 [${md.username}] TEWAS!${extraDropText}\n`;
                 } else {
-                    // MEMBER SELAMAT (Bertahan hidup)
                     survivors++;
                     let newLevel = md.level || 1;
                     let reqExp = newLevel * 1000;
@@ -219,18 +210,16 @@ export async function startFbBattle(db, partyId) {
                     
                     log += `🛡️ [${md.username}] BERTAHAN! Sisa HP: ${newHp} | +${finalGold} Gold${dropMsg}\n`;
                 }
-            } // -- AKHIR LOOP --
+            }
 
-            // 3. TENTUKAN HASIL AKHIR & GABUNGKAN LOG LOOT
             if (survivors > 0) { 
                 log += `\n🎉 FB BERHASIL! ${survivors} orang selamat.`; 
-                log += dropLogMsg; // Tambahkan info siapa saja yang hoki dapat barang!
+                log += dropLogMsg;
             } 
             else { 
                 log += `\n❌ PARTY WIPE OUT! Seluruh anggota Party terbunuh oleh Boss.`; 
             }
 
-            // Hapus Party karena sudah selesai bertarung
             ts.delete(partyRef);
             
             return { logResult: log, isWin: survivors > 0, partyMembers: party.members, bossName: boss.name };
