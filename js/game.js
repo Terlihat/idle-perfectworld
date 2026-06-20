@@ -12,7 +12,7 @@ import {
 } from './modules/ui-renderer.js';
 
 // IMPORT MODULES SISTEM
-import { selectCharacterClass, addCharacterStat, startStaminaRegeneration } from './modules/character.js';
+import { selectCharacterClass, addCharacterStat, startStaminaRegeneration, consumePotion } from './modules/character.js';
 import { equipFromInventory, sellItemToNPC, unequipItem } from './modules/inventory.js';
 import { attackMonster } from './modules/battle.js'; 
 import { listenToChat, sendChat } from './modules/chat.js';
