@@ -31,6 +31,7 @@
                 <button id="btn-toggle-mall" style="background: #ffcc00; color: #000; font-weight: bold; padding: 8px 15px;">💎 Item Mall</button>
                 <button id="btn-toggle-shop" style="background: #17a2b8; color: #fff; font-weight: bold; padding: 8px 15px;">🏪 Toko NPC</button>
                 <button id="btn-toggle-mail" style="background: #dc3545; color: #fff; font-weight: bold; padding: 8px 15px;">📬 Kotak Surat</button>
+                <button id="btn-toggle-leaderboard" style="background: #e83e8c; color: #fff; font-weight: bold; padding: 8px 15px;">🏆 Peringkat</button>
             </div>
 
             <div class="game-container">
@@ -69,6 +70,19 @@
                 </div>
 
                 <div>
+                    <!-- PANEL LEADERBOARD TERSEMBUNYI -->
+                    <div id="panel-leaderboard" class="panel" style="display:none; border: 1px solid #e83e8c; margin-bottom: 15px;">
+                        <h2 style="text-align: center; color: #e83e8c; margin-top: 0;">🏆 Papan Peringkat Global</h2>
+                        <div style="display:flex; gap:5px; justify-content:center; margin-bottom:10px;">
+                            <button id="btn-lb-level" style="flex:1; background:#00d2ff; color:#000; font-weight:bold; padding:8px 5px; border-radius:3px; border:none; cursor:pointer;">Top Level</button>
+                            <button id="btn-lb-gold" style="flex:1; background:#ffcc00; color:#000; font-weight:bold; padding:8px 5px; border-radius:3px; border:none; cursor:pointer;">Top Sultan</button>
+                            <button id="btn-lb-bp" style="flex:1; background:#dc3545; color:#fff; font-weight:bold; padding:8px 5px; border-radius:3px; border:none; cursor:pointer;">Top BP</button>
+                        </div>
+                        <div id="leaderboard-content" style="min-height: 150px; background:#121216; border:1px solid #333; border-radius:5px; padding:10px;">
+                            <div style="text-align:center; color:#aaa; font-size:12px; margin-top:20px;">Klik kategori di atas untuk memuat data.</div>
+                        </div>
+                    </div>
+
                     <!-- PANEL TERSEMBUNYI -->
                     <div id="panel-mall" class="panel panel-mall" style="display:none; border: 1px solid #ffcc00; margin-bottom: 15px;">
                         <h2 class="gold-title" style="text-align: center; margin-top: 0;">💎 Item Mall Premium</h2>
