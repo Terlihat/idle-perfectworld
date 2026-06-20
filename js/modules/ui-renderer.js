@@ -276,7 +276,7 @@ export function renderMailboxUI(mails) {
     // --- MODIFIKASI: Header Flexbox untuk Judul & Tombol Hapus Semua ---
     let html = `
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ffcc00; padding-bottom: 5px; margin-bottom: 10px;">
-        <h3 style="margin: 0; color:#ffcc00; font-size: 16px;">📬 Kotak Surat</h3>
+        <h3 style="margin: 0; color:#ffcc00; font-size: 16px;">📬 Daftar Surat</h3>
         <button onclick="window.deleteAllMails()" style="background: #dc3545; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">🗑️ Hapus Semua</button>
     </div>`;
     

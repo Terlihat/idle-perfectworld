@@ -25,6 +25,20 @@ export const ITEM_DB = {
     "Tiket Ganti Nama": { type: "special", sellValue: 0 },
     "Ramuan Stamina": { type: "special", sellValue: 0 },
 
+    // === DRAGON ORBS (CATALYST) ===
+    "Dragon Orb (1 Star)": { type: "catalyst", desc: "100% sukses tempa ke +1" },
+    "Dragon Orb (2 Star)": { type: "catalyst", desc: "100% sukses tempa ke +2" },
+    "Dragon Orb (3 Star)": { type: "catalyst", desc: "100% sukses tempa ke +3" },
+    "Dragon Orb (4 Star)": { type: "catalyst", desc: "100% sukses tempa ke +4" },
+    "Dragon Orb (5 Star)": { type: "catalyst", desc: "100% sukses tempa ke +5" },
+    "Dragon Orb (6 Star)": { type: "catalyst", desc: "100% sukses tempa ke +6" },
+    "Dragon Orb (7 Star)": { type: "catalyst", desc: "100% sukses tempa ke +7" },
+    "Dragon Orb (8 Star)": { type: "catalyst", desc: "100% sukses tempa ke +8" },
+    "Dragon Orb (9 Star)": { type: "catalyst", desc: "100% sukses tempa ke +9" },
+    "Dragon Orb Ocean": { type: "catalyst", desc: "100% sukses tempa ke +10" },
+    "Dragon Orb Mirage": { type: "catalyst", desc: "100% sukses tempa ke +11" },
+    "Dragon Orb Flame": { type: "catalyst", desc: "100% sukses tempa ke +12" },
+
     // ==========================================
     // DATABASE STATUS EQUIP LEGENDARY (CRAFTING)
     // ==========================================
