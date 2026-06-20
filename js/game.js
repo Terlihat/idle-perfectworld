@@ -436,7 +436,43 @@ window.handleInventoryClick = async function(itemName) {
 window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, itemName); };
 window.claimMail = function(mailId) { claimMailReward(db, currentUserUid, mailId); };
 window.deleteMail = async function(mailId) { if (await window.rpgConfirm("Yakin ingin menghapus surat ini?", "Hapus Surat")) deleteMail(db, currentUserUid, mailId); };
-window.deleteAllMails = async function(){if (!await window.rpgConfirm("Hapus semua surat?\n(Surat yang berisi Lampiran/Hadiah yang belum diklaim TIDAK akan dihapus).", "Bersihkan Kotak Surat")) return;try{const mailRef = collection(db, "users", currentUserUid, "mail");const snap = await getDocs(mailRef);const batch = writeBatch(db);let deletedCount = 0;snap.forEach(docSnap =>{const data = docSnap.data();const hasUnclaimedAttachment = data.attachments && data.isClaimed !== true;if (!hasUnclaimedAttachment){batch.delete(docSnap.ref);deletedCount++;}});if (deletedCount > 0){await batch.commit();window.rpgAlert(`🧹 ${deletedCount}surat berhasil dibersihkan!`, "Sukses");}else{window.rpgAlert("Tidak ada surat yang bisa dihapus. (Pastikan Anda sudah mengambil/mengklaim semua lampiran hadiah terlebih dahulu).", "Kotak Bersih");}}catch (err){window.rpgAlert(`Gagal membersihkan kotak surat:${err.message}`, "Sistem Error");}};
+window.deleteAllMails = async function() {
+    // 1. Tampilkan Pop-up Konfirmasi
+    if (!await window.rpgConfirm("Hapus semua surat?\n(Surat yang berisi Lampiran/Hadiah yang belum diklaim TIDAK akan dihapus).", "Bersihkan Kotak Surat")) return;
+
+    try {
+        // 2. Ambil semua surat dari database
+        const mailRef = collection(db, "users", currentUserUid, "mail");
+        const snap = await getDocs(mailRef);
+        
+        let deletedCount = 0;
+
+        // 3. Proses pengecekan satu per satu
+        for (const docSnap of snap.docs) {
+            const data = docSnap.data();
+            
+            // Cek: Apakah surat ini punya lampiran (attachments) DAN belum diklaim?
+            const hasUnclaimedAttachment = data.attachments && data.isClaimed !== true;
+            
+            // Jika TIDAK punya lampiran yang nyangkut, HAPUS!
+            if (!hasUnclaimedAttachment) {
+                // Kita gunakan fungsi deleteMail dari modul Anda sendiri yang sudah terbukti jalan!
+                deleteMail(db, currentUserUid, docSnap.id);
+                deletedCount++;
+            }
+        }
+
+        // 4. Tampilkan Notifikasi Hasil Akhir
+        if (deletedCount > 0) {
+            window.rpgAlert(`🧹 ${deletedCount} surat berhasil dibersihkan!`, "Sukses");
+        } else {
+            window.rpgAlert("Tidak ada surat yang bisa dihapus. (Semua sisa surat masih memiliki hadiah yang belum Anda klaim).", "Kotak Bersih");
+        }
+
+    } catch (err) {
+        window.rpgAlert(`Gagal membersihkan kotak surat: ${err.message}`, "Sistem Error");
+    }
+};
 window.buyFromAuction = async function(id, name, price, sellerId) { if (await window.rpgConfirm(`Beli Langsung ${name} seharga ${price} Gold?`, "Pasar Lelang")) buyAuctionItem(db, currentUserUid, id, name, price, sellerId); };
 window.cancelAuction = async function(id) { if (await window.rpgConfirm("Tarik barang dari pasar?", "Batal Lelang")) cancelAuction(db, currentUserUid, id); };
 
