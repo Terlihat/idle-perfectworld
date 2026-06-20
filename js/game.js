@@ -216,6 +216,15 @@ function startLiveGameSync() {
 
     unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
         renderMailboxUI(mails);
+        const badge = document.getElementById('mail-badge');
+        if (badge) {
+            if (mails && mails.length > 0) {
+                badge.innerText = mails.length;
+                badge.style.display = 'inline-block'; // Munculkan badge
+            } else {
+                badge.style.display = 'none'; // Sembunyikan jika kosong
+            }
+        }
     });
 
     const unsubAuction = listenToAuction(db, (items) => {
@@ -913,6 +922,15 @@ window.attackPK = async function(targetUid, targetName) {
                     pkKills: (me.pkKills || 0) + 1 // Karma Name bertambah
                 });
 
+                // 📬 KIRIM SURAT DUKA KE MUSUH (OFFLINE/ONLINE)
+                const enemyMailRef = doc(collection(db, "users", targetUid, "mail"));
+                ts.set(enemyMailRef, {
+                    title: "☠️ Terbunuh di Dark Forest!",
+                    message: `Anda telah dibantai oleh [${me.username}] di Zona PK!\n\nKehilangan: ${goldStolen.toLocaleString()} Gold.` + (stolenItem ? `\nBarang dirampas: 1x ${stolenItem}` : ""),
+                    date: new Date().toLocaleString('id-ID'),
+                    timestamp: Date.now()
+                });
+
                 logMsg = `🔥 KEMENANGAN!\nAnda membantai ${targetName}.\nMencuri 💰 ${goldStolen.toLocaleString()} Gold.` + (stolenItem ? `\n\n🎁 DROP: Anda mendapat [${stolenItem}] dari mayatnya!` : "");
                 return { success: true, log: logMsg };
 
@@ -946,6 +964,15 @@ window.attackPK = async function(targetUid, targetName) {
                     gold: (enemy.gold || 0) + goldLost,
                     inventory: enemyInv,
                     pkKills: (enemy.pkKills || 0) + 1
+                });
+
+                // 📬 KIRIM SURAT KEMENANGAN KE MUSUH (Karena dia diserang saat Offline namun menang)
+                const enemyMailRef = doc(collection(db, "users", targetUid, "mail"));
+                ts.set(enemyMailRef, {
+                    title: "🛡️ Pertahanan PK Berhasil!",
+                    message: `[${me.username}] mencoba menyerang Anda di Dark Forest, namun tewas oleh pertahanan Anda!\n\nAnda menjarah: ${goldLost.toLocaleString()} Gold.` + (lostItem ? `\nBarang dijarah: 1x ${lostItem}` : ""),
+                    date: new Date().toLocaleString('id-ID'),
+                    timestamp: Date.now()
                 });
 
                 logMsg = `💀 KEKALAHAN!\nAnda dibunuh oleh ${targetName}.\nKehilangan 💰 ${goldLost.toLocaleString()} Gold.` + (lostItem ? `\n\n🚨 RAMPASAN: [${lostItem}] Anda terlempar dan diambil musuh!` : "");
