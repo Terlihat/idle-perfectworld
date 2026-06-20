@@ -437,36 +437,51 @@ window.handleBankClick = function(itemName) { withdrawItem(db, currentUserUid, i
 window.claimMail = function(mailId) { claimMailReward(db, currentUserUid, mailId); };
 window.deleteMail = async function(mailId) { if (await window.rpgConfirm("Yakin ingin menghapus surat ini?", "Hapus Surat")) deleteMail(db, currentUserUid, mailId); };
 window.deleteAllMails = async function() {
-    // 1. Tampilkan Pop-up Konfirmasi
-    if (!await window.rpgConfirm("Hapus semua surat?\n(Surat yang berisi Lampiran/Hadiah yang belum diklaim TIDAK akan dihapus).", "Bersihkan Kotak Surat")) return;
+    if (!await window.rpgConfirm("Hapus semua surat?\n(Surat yang berisi Hadiah/Lampiran tidak akan dihapus).", "Bersihkan Kotak Surat")) return;
 
     try {
-        // 2. Ambil semua surat dari database
         const mailRef = collection(db, "users", currentUserUid, "mail");
         const snap = await getDocs(mailRef);
         
         let deletedCount = 0;
 
-        // 3. Proses pengecekan satu per satu
         for (const docSnap of snap.docs) {
             const data = docSnap.data();
             
-            // Cek: Apakah surat ini punya lampiran (attachments) DAN belum diklaim?
-            const hasUnclaimedAttachment = data.attachments && data.isClaimed !== true;
+            // 1. Deteksi Hadiah Valid secara Ketat
+            let isPunyaHadiah = false;
             
-            // Jika TIDAK punya lampiran yang nyangkut, HAPUS!
-            if (!hasUnclaimedAttachment) {
-                // Kita gunakan fungsi deleteMail dari modul Anda sendiri yang sudah terbukti jalan!
+            if (data.attachments) {
+                // Periksa apakah lampiran benar-benar memiliki isi (bukan cuma objek kosong {})
+                const adaItem = data.attachments.itemName || data.attachments.name;
+                const adaGold = data.attachments.gold > 0;
+                const adaCoin = data.attachments.coin > 0;
+                
+                if (adaItem || adaGold || adaCoin) {
+                    isPunyaHadiah = true;
+                }
+            }
+            
+            // Support variabel 'reward' lama jika ada
+            if (data.reward) {
+                isPunyaHadiah = true; 
+            }
+            
+            // 2. Jika punya hadiah yang VALID dan belum diklaim, JANGAN DIHAPUS
+            const janganDihapus = isPunyaHadiah && data.isClaimed !== true;
+            
+            // 3. Eksekusi Penghapusan untuk Surat Biasa / Log Pertarungan / Hadiah yang sudah diambil
+            if (!janganDihapus) {
                 deleteMail(db, currentUserUid, docSnap.id);
                 deletedCount++;
             }
         }
 
-        // 4. Tampilkan Notifikasi Hasil Akhir
+        // 4. Notifikasi Hasil
         if (deletedCount > 0) {
             window.rpgAlert(`🧹 ${deletedCount} surat berhasil dibersihkan!`, "Sukses");
         } else {
-            window.rpgAlert("Tidak ada surat yang bisa dihapus. (Semua sisa surat masih memiliki hadiah yang belum Anda klaim).", "Kotak Bersih");
+            window.rpgAlert("Tidak ada surat kosong yang bisa dihapus.\n(Semua sisa surat di kotak Anda saat ini masih berisi hadiah yang belum diambil).", "Kotak Bersih");
         }
 
     } catch (err) {
