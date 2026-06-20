@@ -519,7 +519,7 @@ window.executeTempa = async function() {
     await executeRefineAction(db, currentUserUid, bsSelectedEquip, bsSelectedCatalyst);
 
     if (btnTempa) {
-        btnTempa.innerText = "⚒️ TEMPA (+1) ⚒️";
+        btnTempa.innerText = "⚒️ TEMPA";
         btnTempa.style.background = "#28a745";
         btnTempa.style.cursor = "pointer";
     }

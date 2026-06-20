@@ -55,22 +55,22 @@
                 </div>
 
                 <div>
-                    <div id="panel-dungeon" class="panel" style="border: 1px solid #dc3545; background: #241416;">
+                    <div id="panel-dungeon" class="panel">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Solo Dungeon...</div>
                     </div>
-                    <div id="panel-party" class="panel" style="border: 1px solid #6f42c1; background: #1c152a;">
+                    <div id="panel-party" class="panel">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Fuben Party...</div>
                     </div>
-                    <div id="panel-quest" class="panel" style="border: 1px solid #28a745; background: #15201b;">
+                    <div id="panel-quest" class="panel">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Misi Quest...</div>
                     </div>
                     
-                    <div id="panel-blacksmith" class="panel" style="border: 1px solid #00d2ff; background: #16222f; display:none;">
+                    <div id="panel-blacksmith" class="panel" style="display:none;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Pandai Besi...</div>
                     </div>
 
                     <!-- PANEL DARK FOREST (ZONA PK) -->
-                    <div id="panel-pk" class="panel" style="display:none; border: 1px solid #ff4c4c; margin-bottom: 15px; background: #1a0505;">
+                    <div id="panel-pk" class="panel" style="display:none; margin-bottom: 15px;">
                         <h2 style="text-align: center; color: #ff4c4c; margin-top: 0;">🌲 Dark Forest (Zona PK)</h2>
                         <p style="text-align:center; color:#aaa; font-size:12px;">Peringatan: Pemain yang kalah kehilangan 5% Gold dan berisiko kehilangan Item Tas. (Red Name = Drop 20%)</p>
                         
@@ -99,7 +99,7 @@
 
                 <div>
                     <!-- PANEL LEADERBOARD TERSEMBUNYI -->
-                    <div id="panel-leaderboard" class="panel" style="display:none; border: 1px solid #e83e8c; margin-bottom: 15px;">
+                    <div id="panel-leaderboard" class="panel" style="display:none; margin-bottom: 15px;">
                         <h2 style="text-align: center; color: #e83e8c; margin-top: 0;">🏆 Papan Peringkat Global</h2>
                         <div style="display:flex; gap:5px; justify-content:center; margin-bottom:10px;">
                             <button id="btn-lb-level" style="flex:1; background:#00d2ff; color:#000; font-weight:bold; padding:8px 5px; border-radius:3px; border:none; cursor:pointer;">Top Level</button>
@@ -112,23 +112,23 @@
                     </div>
 
                     <!-- PANEL TERSEMBUNYI -->
-                    <div id="panel-mall" class="panel panel-mall" style="display:none; border: 1px solid #ffcc00; margin-bottom: 15px;">
+                    <div id="panel-mall" class="panel panel-mall" style="display:none; margin-bottom: 15px;">
                         <h2 class="gold-title" style="text-align: center; margin-top: 0;">💎 Item Mall Premium</h2>
                         <div id="panel-mall-grid"></div>
                     </div>
                     
-                    <div id="panel-shop" class="panel" style="display:none; border: 1px solid #17a2b8; margin-bottom: 15px;">
+                    <div id="panel-shop" class="panel" style="display:none; margin-bottom: 15px;">
                         <h2 style="text-align: center; color: #17a2b8; margin-top: 0;">🏪 Toko & Mount</h2>
                         <div id="panel-shop-grid"></div>
                     </div>
                     
-                    <div id="panel-mailbox" class="panel" style="display:none; border: 1px solid #dc3545; margin-bottom: 15px;">
+                    <div id="panel-mailbox" class="panel" style="display:none; margin-bottom: 15px;">
                         <!-- Tempat UI Mailbox akan dirender -->
                     </div>
                     <div id="panel-bank" class="panel" style="display:none;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Bangkir...</div>
                     </div>
-                    <div id="panel-guild" class="panel" style="border: 1px solid #ffcc00; background: #1f1a0d;">
+                    <div id="panel-guild" class="panel">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Guild...</div>
                     </div>
                     <div class="panel" id="panel-chat">
@@ -139,6 +139,7 @@
         </div>
     </div>
 
+    <!-- MODAL KONFIRMASI PEMBELIAN -->
     <div id="buy-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
         <div style="background:#121216; border:2px solid #ffcc00; border-radius:8px; padding:20px; width:300px; text-align:center; box-shadow: 0 0 15px rgba(255,204,0,0.3);">
             <h3 id="buy-modal-title" style="color:#ffcc00; margin-top:0; border-bottom: 1px solid #333; padding-bottom:10px;">Beli Item</h3>
@@ -157,6 +158,7 @@
         </div>
     </div>
 
+    <!-- UNIVERSAL RPG MODAL -->
     <div id="rpg-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center;">
         <div id="rpg-modal-box" style="background:#121216; border:2px solid #00d2ff; border-radius:8px; padding:20px; width:320px; text-align:center; box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);">
             <h3 id="rpg-modal-title" style="color:#00d2ff; margin-top:0; border-bottom: 1px dashed #333; padding-bottom:10px;">Notifikasi</h3>
