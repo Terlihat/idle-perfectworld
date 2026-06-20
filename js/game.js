@@ -980,22 +980,19 @@ window.attackPK = async function(targetUid, targetName) {
                     }
                 }
 
-                // Terapkan derita pada musuh
                 ts.update(targetRef, { 
                     currentHp: 0, 
                     gold: Math.max(0, (enemy.gold || 0) - goldStolen),
                     inventory: enemyInv,
-                    inPkZone: false // Terpental kembali ke kota
+                    inPkZone: false
                 });
 
-                // Terapkan kejayaan padaku
                 ts.update(myRef, {
                     gold: (me.gold || 0) + goldStolen,
                     inventory: myInv,
-                    pkKills: (me.pkKills || 0) + 1 // Karma Name bertambah
+                    pkKills: (me.pkKills || 0) + 1
                 });
 
-                // 📬 KIRIM SURAT DUKA KE MUSUH (OFFLINE/ONLINE)
                 const enemyMailRef = doc(collection(db, "users", targetUid, "mailbox"));
                 ts.set(enemyMailRef, {
                     title: "☠️ Terbunuh di Dark Forest!",
@@ -1008,7 +1005,6 @@ window.attackPK = async function(targetUid, targetName) {
                 return { success: true, log: logMsg };
 
             } else {
-                // --- MUSUH MENANG (AKU MATI) ---
                 let goldLost = Math.floor((me.gold || 0) * 0.05);
                 let myInv = me.inventory || {};
                 let enemyInv = enemy.inventory || {};
@@ -1030,7 +1026,7 @@ window.attackPK = async function(targetUid, targetName) {
                     currentHp: 0, 
                     gold: Math.max(0, (me.gold || 0) - goldLost),
                     inventory: myInv,
-                    inPkZone: false // Saya terpental ke kota
+                    inPkZone: false
                 });
 
                 ts.update(targetRef, {
@@ -1039,7 +1035,6 @@ window.attackPK = async function(targetUid, targetName) {
                     pkKills: (enemy.pkKills || 0) + 1
                 });
 
-                // 📬 KIRIM SURAT KEMENANGAN KE MUSUH (Karena dia diserang saat Offline namun menang)
                 const enemyMailRef = doc(collection(db, "users", targetUid, "mail"));
                 ts.set(enemyMailRef, {
                     title: "🛡️ Pertahanan PK Berhasil!",
@@ -1053,10 +1048,8 @@ window.attackPK = async function(targetUid, targetName) {
             }
         });
 
-        // Tampilkan Modal Peringatan Utama
         window.rpgAlert(result.log, result.success ? "🏆 PK BERHASIL" : "💀 TRAGEDI");
         
-        // CATAT KE DALAM LOG BERDARAH DI PANEL PK!
         window.addPKLog(result.log, result.success ? "#28a745" : "#dc3545");
 
     } catch(err) {
