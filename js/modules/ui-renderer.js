@@ -556,12 +556,15 @@ export function renderShopAndMall() {
             const iconHTML = getIconHTML(item.name);
             const colorPrice = item.currency === 'Coin' ? '#ffcc00' : '#e0a800';
             
+            // Tambahkan logika untuk membedakan ikon Koin dan Gold
+            const currencyIcon = item.currency === 'Coin' ? '🪙' : '💰';
+            
             html += `
             <div onclick="window.openBuyModal('${escapeHTML(item.name)}', ${item.price}, '${item.currency}')" 
                  style="background:#121216; border:1px solid #333; border-radius:5px; padding:10px; text-align:center; cursor:pointer; transition:0.2s;">
                 <div style="font-size:28px; margin-bottom:8px;">${iconHTML}</div>
                 <div style="font-size:10px; color:#fff; margin-bottom:5px; line-height:1.2; height:24px;">${escapeHTML(item.name)}</div>
-                <div style="font-size:11px; font-weight:bold; color:${colorPrice}; background:#222; padding:2px; border-radius:3px;">💰 ${item.price}</div>
+                <div style="font-size:11px; font-weight:bold; color:${colorPrice}; background:#222; padding:2px; border-radius:3px;">${currencyIcon} ${item.price}</div>
             </div>`;
         });
         return html + '</div>';
