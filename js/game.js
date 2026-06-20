@@ -163,13 +163,20 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 function startLiveGameSync() {
+    // 1. Bersihkan sisa listener lama agar tidak bocor (Mencegah Permission-Denied)
+    activeUnsubscribeListeners.forEach(unsub => {
+        if (typeof unsub === 'function') unsub();
+    });
+    activeUnsubscribeListeners = [];
 
+    // 2. Daftarkan Listener Guild
     const unsubGuilds = listenToGuilds(db, (guildsData, upgradesData) => {
         globalGuilds = guildsData;
         guildUpgradesMap = upgradesData;
         renderGuildUI(currentPlayerStats, globalGuilds, guildUpgradesMap); 
     });
 
+    // 3. Daftarkan Listener Data Pemain Utama
     const unsubData = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
         if (!docSnap.exists()) return;
         const d = docSnap.data();
@@ -214,7 +221,8 @@ function startLiveGameSync() {
         if (!unsubChatListener) startDynamicChat();
     });
 
-    unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
+    // 4. Daftarkan Listener Kotak Surat (Mailbox)
+    const unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
         renderMailboxUI(mails);
         const badge = document.getElementById('mail-badge');
         if (badge) {
@@ -227,10 +235,12 @@ function startLiveGameSync() {
         }
     });
 
+    // 5. Daftarkan Listener Lelang (Auction)
     const unsubAuction = listenToAuction(db, (items) => {
         renderAuctionUI(items, currentUserUid);
     });
 
+    // 6. Daftarkan Listener Party
     const unsubParties = listenToParties(db, (parties) => {
         let myParty = parties.find(p => p.members.find(m => m.uid === currentUserUid));
         let newPartyId = myParty ? myParty.id : null;
@@ -247,6 +257,7 @@ function startLiveGameSync() {
         renderPartyUI(parties, currentUserUid);
     });
 
+    // 7. Simpan semua pengintai ke dalam wadah agar bisa dihentikan saat Logout/Refresh
     activeUnsubscribeListeners.push(unsubData, unsubMail, unsubAuction, unsubParties, unsubGuilds);
 }
 
