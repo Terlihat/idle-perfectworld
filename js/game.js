@@ -910,6 +910,16 @@ document.addEventListener('click', async (e) => {
     }
 });
 
+// --- MESIN PENCETAK LOG DARK FOREST ---
+window.addPKLog = function(msg, color) {
+    const logPanel = document.getElementById('pk-log-panel');
+    if (logPanel) {
+        const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+        logPanel.innerHTML += `<div style="color: ${color}; margin-bottom: 6px; border-bottom: 1px dashed #222; padding-bottom: 4px;">[${time}] ${msg.replace(/\n/g, '<br>')}</div>`;
+        logPanel.scrollTop = logPanel.scrollHeight; // Auto-scroll ke bawah
+    }
+};
+
 // 3. LOGIKA PERTARUNGAN (BATTLE TRANSACTION)
 window.attackPK = async function(targetUid, targetName) {
     if (currentPlayerStats.currentHp <= 0) return window.rpgAlert("Hantu tidak bisa menyerang!");
