@@ -1,13 +1,13 @@
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { doc, getDoc, updateDoc, onSnapshot, runTransaction, collection, getDocs, query, where} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, getDoc, updateDoc, onSnapshot, runTransaction, collection, getDocs, query, where, writeBatch} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // IMPORT MODULES UI
 import { loadUIComponents } from './ui-loader.js';
 loadUIComponents(); 
 
 import { 
-    renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI, writeBatch,
+    renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI,
     renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI, getIconHTML, renderShopAndMall, renderPKUI
 } from './modules/ui-renderer.js';
 
