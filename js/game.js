@@ -439,22 +439,18 @@ window.deleteMail = async function(mailId) { if (await window.rpgConfirm("Yakin 
 window.deleteAllMails = async function() {
     if (!await window.rpgConfirm("Hapus semua surat?\n(Surat yang berisi Hadiah/Lampiran yang belum diklaim TIDAK akan dihapus).", "Bersihkan Kotak Surat")) return;
 
-    // 1. Trik Jeda UI: Memberi masa 200ms agar modal konfirmasi tertutup sepenuhnya.
-    // Ini mencegah "Silent UI Error" di mana amaran baharu gagal muncul.
     await new Promise(res => setTimeout(res, 200));
 
     try {
-        const mailRef = collection(db, "users", currentUserUid, "mail");
+        const mailRef = collection(db, "users", currentUserUid, "mailbox"); 
         const snap = await getDocs(mailRef);
         
-        // 2. Menggunakan ciri Batch Firebase untuk memadam banyak data secara serentak dan selamat
         const batch = writeBatch(db);
         let deletedCount = 0;
 
         snap.docs.forEach(docSnap => {
             const data = docSnap.data();
             
-            // 3. Pengecekan Hadiah Kalis Ralat (Menggunakan {} sebagai perlindungan jika null)
             let isPunyaHadiah = false;
             const att = data.attachments || {}; 
             
@@ -466,10 +462,7 @@ window.deleteAllMails = async function() {
                 isPunyaHadiah = true;
             }
             
-            // 4. Pengesahan status tuntutan (claim) dengan selamat
             const isSudahDiKlaim = data.isClaimed === true || data.isClaimed === "true";
-            
-            // 5. Syarat Utama: Surat BOLEH DIHAPUS JIKA ia tiada hadiah, ATAU hadiahnya telah dituntut!
             const bisaDihapus = !isPunyaHadiah || isSudahDiKlaim;
             
             if (bisaDihapus) {
@@ -479,14 +472,14 @@ window.deleteAllMails = async function() {
         });
 
         if (deletedCount > 0) {
-            await batch.commit(); // Melaksanakan pemadaman secara pukal
-            window.rpgAlert(`🧹 ${deletedCount} surat telah berjaya dibersihkan!`, "Berjaya");
+            await batch.commit(); 
+            window.rpgAlert(`🧹 ${deletedCount} surat berhasil dibersihkan!`, "Sukses");
         } else {
-            window.rpgAlert("Tiada surat yang boleh dipadam.\n(Baki surat di dalam kotak anda kini hanya mengandungi hadiah yang belum diambil).", "Kotak Bersih");
+            window.rpgAlert("Tidak ada surat yang bisa dihapus.\n(Semua sisa surat masih berisi hadiah yang belum diambil).", "Kotak Bersih");
         }
 
     } catch (err) {
-        window.rpgAlert(`Gagal membersihkan kotak surat: ${err.message}`, "Ralat Sistem");
+        window.rpgAlert(`Gagal membersihkan kotak surat: ${err.message}`, "Sistem Error");
     }
 };
 window.buyFromAuction = async function(id, name, price, sellerId) { if (await window.rpgConfirm(`Beli Langsung ${name} seharga ${price} Gold?`, "Pasar Lelang")) buyAuctionItem(db, currentUserUid, id, name, price, sellerId); };
@@ -976,7 +969,7 @@ window.attackPK = async function(targetUid, targetName) {
                 });
 
                 // 📬 KIRIM SURAT DUKA KE MUSUH (OFFLINE/ONLINE)
-                const enemyMailRef = doc(collection(db, "users", targetUid, "mail"));
+                const enemyMailRef = doc(collection(db, "users", targetUid, "mailbox"));
                 ts.set(enemyMailRef, {
                     title: "☠️ Terbunuh di Dark Forest!",
                     message: `Anda telah dibantai oleh [${me.username}] di Zona PK!\n\nKehilangan: ${goldStolen.toLocaleString()} Gold.` + (stolenItem ? `\nBarang dirampas: 1x ${stolenItem}` : ""),
