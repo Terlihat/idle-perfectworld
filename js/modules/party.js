@@ -204,7 +204,7 @@ export async function startFbBattle(db, partyId) {
                         ts.update(mRef, { 
                             exp: newExp, gold: newGold, inventory: inv, 
                             level: newLevel, currentHp: member.maxHp, 
-                            currentStamina: md.maxStamina || 100, 
+                            currentStamina: (md.maxStamina || 100) + (vipStats.extraMaxStamina || 0), 
                             statPoints: (md.statPoints || 0) + statPointsGained,
                             quests: newQuests 
                         });
