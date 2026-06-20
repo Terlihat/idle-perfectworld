@@ -561,3 +561,40 @@ export function renderShopAndMall() {
     if (shopContainer) shopContainer.innerHTML = buildGrid(SHOP_ITEMS);
     if (mallContainer) mallContainer.innerHTML = buildGrid(MALL_ITEMS);
 }
+
+// ==========================================
+// 12. SISTEM RENDER ZONA PK (DARK FOREST)
+// ==========================================
+export function renderPKUI(pkPlayers, currentUid) {
+    const container = document.getElementById('pk-player-list');
+    if (!container) return;
+
+    let html = '<div style="display:grid; gap:10px;">';
+    let targetCount = 0;
+
+    pkPlayers.forEach(p => {
+        if (p.id === currentUid) return; // Jangan tampilkan diri sendiri di daftar mangsa
+        targetCount++;
+        
+        let isRed = (p.pkKills || 0) >= 3;
+        let nameColor = isRed ? '#ff4c4c' : '#fff';
+        let karmaTitle = isRed ? '💀 RED NAME (Drop 20%)' : 'Pengembara (Drop 5%)';
+
+        html += `
+        <div style="background:#121216; border:1px solid ${isRed ? '#ff4c4c' : '#555'}; border-radius:5px; padding:10px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <div style="color:${nameColor}; font-weight:bold; font-size:14px;">${escapeHTML(p.username)} <span style="font-size:10px; color:#aaa;">(Lv. ${p.level || 1})</span></div>
+                <div style="font-size:11px; color:#ffcc00;">${karmaTitle}</div>
+            </div>
+            <button onclick="window.attackPK('${p.id}', '${escapeHTML(p.username)}')" style="background:#dc3545; color:#fff; border:none; padding:8px 15px; border-radius:3px; cursor:pointer; font-weight:bold;">Serang</button>
+        </div>`;
+    });
+    
+    html += '</div>';
+
+    if (targetCount === 0) {
+        html = '<div style="text-align:center; color:#555; padding:20px;">Hutan sepi. Tidak ada pemain lain di sini.</div>';
+    }
+
+    container.innerHTML = html;
+}

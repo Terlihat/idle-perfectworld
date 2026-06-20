@@ -1,6 +1,6 @@
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { doc, getDoc, updateDoc, onSnapshot, runTransaction, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, getDoc, updateDoc, onSnapshot, runTransaction, collection, getDocs, query, where} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // IMPORT MODULES UI
 import { loadUIComponents } from './ui-loader.js';
@@ -8,7 +8,7 @@ loadUIComponents();
 
 import { 
     renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI, 
-    renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI, getIconHTML, renderShopAndMall
+    renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI, getIconHTML, renderShopAndMall, renderPKUI
 } from './modules/ui-renderer.js';
 
 // IMPORT MODULES SISTEM
@@ -793,5 +793,166 @@ window.fetchLeaderboard = async function(type) {
 
     } catch (err) {
         lbContent.innerHTML = `<div style="text-align:center; color:#dc3545; margin-top:20px;">Gagal memuat: ${err.message}</div>`;
+    }
+};
+
+// ==========================================
+// SISTEM DARK FOREST (ZONA PK & LOOT DROP)
+// ==========================================
+
+// 1. LIVE TRACKER UNTUK RADAR ZONA PK
+const qPk = query(collection(db, "users"), where("inPkZone", "==", true));
+onSnapshot(qPk, (snap) => {
+    let pkPlayers = [];
+    snap.forEach(docSnap => {
+        if(docSnap.data().currentHp > 0) { // Hanya lacak yang masih hidup
+            pkPlayers.push({ id: docSnap.id, ...docSnap.data() });
+        }
+    });
+    
+    if (typeof renderPKUI === 'function') renderPKUI(pkPlayers, currentUserUid);
+    
+    // Atur tombol masuk/keluar secara dinamis
+    const myPkData = pkPlayers.find(p => p.id === currentUserUid);
+    const btnEnter = document.getElementById('btn-enter-pk');
+    const btnLeave = document.getElementById('btn-leave-pk');
+    if (myPkData) {
+        if (btnEnter) btnEnter.style.display = 'none';
+        if (btnLeave) btnLeave.style.display = 'inline-block';
+    } else {
+        if (btnEnter) btnEnter.style.display = 'inline-block';
+        if (btnLeave) btnLeave.style.display = 'none';
+    }
+});
+
+// 2. KONTROL TOMBOL NAVIGASI & MASUK ZONA
+document.addEventListener('click', async (e) => {
+    const targetId = e.target.id;
+    if (!targetId) return;
+
+    if (targetId === 'btn-toggle-pk') window.togglePanel('panel-pk');
+    
+    if (targetId === 'btn-enter-pk') {
+        if (currentPlayerStats.currentHp <= 0) return window.rpgAlert("Anda sudah mati! Sembuhkan diri di kota.");
+        if (await window.rpgConfirm("Nyawa dan harta menjadi taruhan di sini. Masuk Dark Forest?", "Gerbang Hutan")) {
+            updateDoc(doc(db, "users", currentUserUid), { inPkZone: true });
+        }
+    }
+    if (targetId === 'btn-leave-pk') {
+        updateDoc(doc(db, "users", currentUserUid), { inPkZone: false });
+        window.rpgAlert("Anda berhasil lari ke Safe Zone.", "Aman");
+    }
+});
+
+// 3. LOGIKA PERTARUNGAN (BATTLE TRANSACTION)
+window.attackPK = async function(targetUid, targetName) {
+    if (currentPlayerStats.currentHp <= 0) return window.rpgAlert("Hantu tidak bisa menyerang!");
+    if (!await window.rpgConfirm(`Bantai ${targetName} sekarang?`, "Target Dikunci")) return;
+
+    try {
+        const targetRef = doc(db, "users", targetUid);
+        const myRef = doc(db, "users", currentUserUid);
+
+        const result = await runTransaction(db, async (ts) => {
+            const mySnap = await ts.get(myRef);
+            const targetSnap = await ts.get(targetRef);
+
+            if (!mySnap.exists() || !targetSnap.exists()) throw "Target menghilang tertelan kabut.";
+            const me = mySnap.data();
+            const enemy = targetSnap.data();
+
+            if (!enemy.inPkZone || enemy.currentHp <= 0) throw "Target sudah kabur ke kota atau sudah mati.";
+            if (me.currentHp <= 0) throw "Anda mati kehabisan darah sebelum menyerang!";
+
+            // Kalkulasi Kekuatan Dasar (BP)
+            let myBP = (me.level || 1)*50 + (me.str || 0)*10 + (me.dex || 0)*10 + (me.con || 0)*10 + (me.int || 0)*10;
+            let enemyBP = (enemy.level || 1)*50 + (enemy.str || 0)*10 + (enemy.dex || 0)*10 + (enemy.con || 0)*10 + (enemy.int || 0)*10;
+
+            // Tambahkan elemen kejutan (RNG ±10%) agar menegangkan
+            myBP *= (0.9 + Math.random() * 0.2);
+            enemyBP *= (0.9 + Math.random() * 0.2);
+
+            let logMsg = "";
+            const safeItems = ["Tiket Ganti Nama", "Buku Reset Stats", "Tiket Ubah Job", "Ramuan Stamina", "Naga Terbang"]; // Item Kebal Drop
+
+            if (myBP >= enemyBP) {
+                // --- AKU MENANG ---
+                let goldStolen = Math.floor((enemy.gold || 0) * 0.05); // Curi 5% Gold pasti
+                let enemyInv = enemy.inventory || {};
+                let myInv = me.inventory || {};
+                let stolenItem = null;
+
+                // Penentuan Drop Item (Red Name = 20%, Normal = 5%)
+                let dropRate = ((enemy.pkKills || 0) >= 3) ? 0.20 : 0.05;
+
+                if (Math.random() <= dropRate) {
+                    let possibleItems = Object.keys(enemyInv).filter(i => enemyInv[i] > 0 && !safeItems.includes(i));
+                    if (possibleItems.length > 0) {
+                        stolenItem = possibleItems[Math.floor(Math.random() * possibleItems.length)];
+                        enemyInv[stolenItem] -= 1;
+                        if (enemyInv[stolenItem] <= 0) delete enemyInv[stolenItem];
+                        myInv[stolenItem] = (myInv[stolenItem] || 0) + 1;
+                    }
+                }
+
+                // Terapkan derita pada musuh
+                ts.update(targetRef, { 
+                    currentHp: 0, 
+                    gold: Math.max(0, (enemy.gold || 0) - goldStolen),
+                    inventory: enemyInv,
+                    inPkZone: false // Terpental kembali ke kota
+                });
+
+                // Terapkan kejayaan padaku
+                ts.update(myRef, {
+                    gold: (me.gold || 0) + goldStolen,
+                    inventory: myInv,
+                    pkKills: (me.pkKills || 0) + 1 // Karma Name bertambah
+                });
+
+                logMsg = `🔥 KEMENANGAN!\nAnda membantai ${targetName}.\nMencuri 💰 ${goldStolen.toLocaleString()} Gold.` + (stolenItem ? `\n\n🎁 DROP: Anda mendapat [${stolenItem}] dari mayatnya!` : "");
+                return { success: true, log: logMsg };
+
+            } else {
+                // --- MUSUH MENANG (AKU MATI) ---
+                let goldLost = Math.floor((me.gold || 0) * 0.05);
+                let myInv = me.inventory || {};
+                let enemyInv = enemy.inventory || {};
+                let lostItem = null;
+
+                let dropRate = ((me.pkKills || 0) >= 3) ? 0.20 : 0.05;
+
+                if (Math.random() <= dropRate) {
+                    let possibleItems = Object.keys(myInv).filter(i => myInv[i] > 0 && !safeItems.includes(i));
+                    if (possibleItems.length > 0) {
+                        lostItem = possibleItems[Math.floor(Math.random() * possibleItems.length)];
+                        myInv[lostItem] -= 1;
+                        if (myInv[lostItem] <= 0) delete myInv[lostItem];
+                        enemyInv[lostItem] = (enemyInv[lostItem] || 0) + 1;
+                    }
+                }
+
+                ts.update(myRef, { 
+                    currentHp: 0, 
+                    gold: Math.max(0, (me.gold || 0) - goldLost),
+                    inventory: myInv,
+                    inPkZone: false // Saya terpental ke kota
+                });
+
+                ts.update(targetRef, {
+                    gold: (enemy.gold || 0) + goldLost,
+                    inventory: enemyInv,
+                    pkKills: (enemy.pkKills || 0) + 1
+                });
+
+                logMsg = `💀 KEKALAHAN!\nAnda dibunuh oleh ${targetName}.\nKehilangan 💰 ${goldLost.toLocaleString()} Gold.` + (lostItem ? `\n\n🚨 RAMPASAN: [${lostItem}] Anda terlempar dan diambil musuh!` : "");
+                return { success: false, log: logMsg };
+            }
+        });
+
+        window.rpgAlert(result.log, result.success ? "🏆 PK BERHASIL" : "💀 TRAGEDI");
+
+    } catch(err) {
+        window.rpgAlert(err, "Pertarungan Batal");
     }
 };

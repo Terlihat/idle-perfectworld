@@ -32,6 +32,7 @@
                 <button id="btn-toggle-shop" style="background: #17a2b8; color: #fff; font-weight: bold; padding: 8px 15px;">🏪 Toko NPC</button>
                 <button id="btn-toggle-mail" style="background: #dc3545; color: #fff; font-weight: bold; padding: 8px 15px;">📬 Kotak Surat</button>
                 <button id="btn-toggle-leaderboard" style="background: #e83e8c; color: #fff; font-weight: bold; padding: 8px 15px;">🏆 Peringkat</button>
+                <button id="btn-toggle-pk" style="background: #8b0000; color: #fff; font-weight: bold; padding: 8px 15px;">⚔️ Dark Forest</button>
             </div>
 
             <div class="game-container">
@@ -62,6 +63,21 @@
                     
                     <div id="panel-blacksmith" class="panel" style="border: 1px solid #00d2ff; background: #16222f; display:none;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Pandai Besi...</div>
+                    </div>
+
+                    <!-- PANEL DARK FOREST (ZONA PK) -->
+                    <div id="panel-pk" class="panel" style="display:none; border: 1px solid #ff4c4c; margin-bottom: 15px; background: #1a0505;">
+                        <h2 style="text-align: center; color: #ff4c4c; margin-top: 0;">🌲 Dark Forest (Zona PK)</h2>
+                        <p style="text-align:center; color:#aaa; font-size:12px;">Peringatan: Pemain yang kalah akan kehilangan 5% Gold dan berisiko kehilangan Item Tas. (Red Name = Drop 20%)</p>
+                        
+                        <div style="text-align:center; margin: 15px 0;">
+                            <button id="btn-enter-pk" style="background:#dc3545; color:#fff; padding:10px 20px; font-weight:bold; border-radius:5px; border:none; cursor:pointer;">🔥 MASUK ZONA PK</button>
+                            <button id="btn-leave-pk" style="display:none; background:#28a745; color:#fff; padding:10px 20px; font-weight:bold; border-radius:5px; border:none; cursor:pointer;">🛡️ KEMBALI KE KOTA AMAN</button>
+                        </div>
+                        
+                        <div id="pk-player-list" style="margin-top:15px;">
+                            <div style="text-align:center; color:#555;">(Hutan tampak gelap dan sepi...)</div>
+                        </div>
                     </div>
                     
                     <div id="panel-auction" class="panel" style="display:none;">
