@@ -1,8 +1,5 @@
 import { doc, setDoc, getDoc, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// ===================================================
-// KUNCI ANTI-SPAM (Mencegah Error 400 Firebase)
-// ===================================================
 let isUpdatingStat = false; 
 
 export async function selectCharacterClass(db, uid, charClass, callback) {
@@ -14,7 +11,7 @@ export async function selectCharacterClass(db, uid, charClass, callback) {
             : { str: 2, con: 8, dex: 10, int: 25, maxHp: 800, maxMp: 1000 };
 
         await setDoc(userRef, {
-            username: "Hero " + Math.floor(Math.random() * 1000), // Nama default
+            username: "Hero " + Math.floor(Math.random() * 1000),
             characterClass: charClass,
             level: 1,
             exp: 0,
@@ -29,111 +26,45 @@ export async function selectCharacterClass(db, uid, charClass, callback) {
             maxMp: baseStats.maxMp,
             currentStamina: 100,
             maxStamina: 100,
-            str: baseStats.str,
-            con: baseStats.con,
-            dex: baseStats.dex,
-            int: baseStats.int,
+            lastStaminaUpdate: Date.now(), // FIX: Langsung catat waktu lahir!
+            inventory: { "Pedang Besi": 1, "Ramuan HP": 5 },
+            bankInventory: {},
+            equipment: { weapon: null, armor: null, accessory: null },
             statPoints: 0,
-            inventory: {
-                "Tiket Ganti Nama": 1, // Memberikan 1 tiket gratis saat karakter dibuat
-                "Ramuan HP": 5         // (Bonus opsional: berikan sedikit ramuan darah untuk pemula)
-            },
-            equipment: {},
-            quests: { lastReset: "" },
-            role: "player"
-        }, { merge: true });
-
-        alert(`Berhasil memilih class ${charClass}!`);
-        if (callback) callback();
+            pkKills: 0,
+            inPkZone: false
+        });
         
-    } catch (err) {
-        console.error("Gagal membuat karakter:", err);
-        alert("Gagal membuat karakter: " + err.message);
-    }
+        if (callback) callback();
+    } catch (err) { alert(err); }
 }
 
 export async function addCharacterStat(db, uid, statName) {
-    if (!uid) return;
-    
-    // JIKA SISTEM MASIH MEMPROSES KLIK SEBELUMNYA, ABAIKAN KLIK INI SEMENTARA
     if (isUpdatingStat) return; 
-    isUpdatingStat = true; // Kunci sistem
-
-    const userRef = doc(db, "users", uid);
+    isUpdatingStat = true;
 
     try {
+        const userRef = doc(db, "users", uid);
         await runTransaction(db, async (ts) => {
-            const snap = await ts.get(userRef);
-            if (!snap.exists()) throw "Karakter tidak ditemukan!";
+            const data = (await ts.get(userRef)).data();
+            if ((data.statPoints || 0) <= 0) throw "Poin Stat tidak cukup!";
             
-            const data = snap.data();
-            let currentPoints = data.statPoints || 0;
-            
-            if (currentPoints <= 0) throw "Poin stat Anda sudah habis!";
-            
-            const validStats = ['str', 'con', 'dex', 'int'];
-            if (!validStats.includes(statName)) throw "Tipe statistik tidak valid!";
-
-            let updates = {};
+            let updates = { statPoints: data.statPoints - 1 };
             updates[statName] = (data[statName] || 0) + 1;
-            updates.statPoints = currentPoints - 1;
-
-            if (statName === 'con') {
-                updates.maxHp = (data.maxHp || 1000) + 20; 
-                updates.currentHp = (data.currentHp || 1000) + 20;
-            }
-            if (statName === 'int') {
-                updates.maxMp = (data.maxMp || 200) + 10;
-                updates.currentMp = (data.currentMp || 200) + 10;
-            }
-
             ts.update(userRef, updates);
         });
-        
     } catch (err) {
-        // Jangan tampilkan error merah di console jika itu hanya peringatan poin habis
-        if (err !== "Poin stat Anda sudah habis!") {
-            console.log("Server sedang sibuk memproses stat, mencoba menyesuaikan...");
-        }
+        window.rpgAlert(err, "Gagal");
     } finally {
-        // SELALU BUKA KUNCI SETELAH SELESAI, AGAR TOMBOL BISA DIKLIK LAGI
-        isUpdatingStat = false;
+        setTimeout(() => { isUpdatingStat = false; }, 300); 
     }
 }
 
-// ===================================================
-// SISTEM REGENERASI STAMINA ABSOLUT (OFFLINE & ONLINE)
-// ===================================================
+// FIX: Regenerasi Stamina Anti-Beku
 export function startStaminaRegeneration(db, uid) {
-    if (!uid) return null;
+    if (!uid) return;
     const userRef = doc(db, "users", uid);
-
-    // 1. KALKULASI OFFLINE (Berjalan instan saat pemain baru login)
-    getDoc(userRef).then((snap) => {
-        if (snap.exists()) {
-            const data = snap.data();
-            const maxStam = data.maxStamina || 100;
-            let currentStam = data.currentStamina !== undefined ? data.currentStamina : 100;
-            const now = Date.now();
-
-            if (data.lastStaminaUpdate) {
-                const diffMs = now - data.lastStaminaUpdate;
-                const diffMinutes = Math.floor(diffMs / 60000); // 1 Stamina = 1 Menit (60,000 ms)
-
-                if (diffMinutes > 0 && currentStam < maxStam) {
-                    currentStam = Math.min(maxStam, currentStam + diffMinutes);
-                    // Simpan sisa milidetik agar perhitungan online selanjutnya tidak "terpotong"
-                    const newUpdateTime = data.lastStaminaUpdate + (diffMinutes * 60000);
-                    updateDoc(userRef, { currentStamina: currentStam, lastStaminaUpdate: newUpdateTime });
-                }
-            } else {
-                // Jika player belum punya data waktu, buat baru
-                updateDoc(userRef, { lastStaminaUpdate: now });
-            }
-        }
-    });
-
-    // 2. KALKULASI ONLINE (Berjalan konstan di background tiap menit)
+    
     return setInterval(async () => {
         try {
             const snap = await getDoc(userRef);
@@ -143,9 +74,15 @@ export function startStaminaRegeneration(db, uid) {
                 let currentStam = data.currentStamina !== undefined ? data.currentStamina : 100;
                 const now = Date.now();
                 
+                let lastUpdate = data.lastStaminaUpdate;
+                
+                // Perlindungan: Jika data lama belum ada timestamp-nya
+                if (!lastUpdate) {
+                    lastUpdate = now;
+                    await updateDoc(userRef, { lastStaminaUpdate: now });
+                }
+
                 if (currentStam < maxStam) {
-                    // Gunakan perhitungan selisih agar kebal terhadap lag atau tab browser yang "tertidur"
-                    const lastUpdate = data.lastStaminaUpdate || now;
                     const diffMs = now - lastUpdate;
                     const diffMinutes = Math.floor(diffMs / 60000);
 
@@ -154,12 +91,45 @@ export function startStaminaRegeneration(db, uid) {
                         const newUpdateTime = lastUpdate + (diffMinutes * 60000);
                         await updateDoc(userRef, { currentStamina: newStam, lastStaminaUpdate: newUpdateTime });
                     }
-                } else {
-                    // Jika stamina sudah penuh, tarik "lastUpdate" ke waktu sekarang 
-                    // agar tidak terjadi ledakan stamina ganda saat nanti terpakai
+                } else if (currentStam >= maxStam && now - lastUpdate > 60000) {
                     await updateDoc(userRef, { lastStaminaUpdate: now });
                 }
             }
         } catch (err) { console.error("Gagal sinkronisasi stamina:", err); }
-    }, 60000); // Interval 60 detik
+    }, 60000);
+}
+
+// FITUR BARU: Minum Ramuan
+export async function consumePotion(db, uid, itemName, playerMaxHp, playerMaxMp) {
+    const userRef = doc(db, "users", uid);
+    try {
+        await runTransaction(db, async (ts) => {
+            const data = (await ts.get(userRef)).data();
+            let inv = data.inventory || {};
+            
+            if (!inv[itemName] || inv[itemName] < 1) throw `Anda tidak memiliki ${itemName} di tas.`;
+
+            let currentHp = data.currentHp || 0;
+            let currentMp = data.currentMp || 0;
+            let maxHp = playerMaxHp || data.maxHp || 1000;
+            let maxMp = playerMaxMp || data.maxMp || 200;
+
+            if (itemName === "Ramuan HP") {
+                if (currentHp >= maxHp) throw "HP Anda masih penuh!";
+                currentHp = maxHp; // Full Heal
+            } else if (itemName === "Ramuan MP") {
+                if (currentMp >= maxMp) throw "MP Anda masih penuh!";
+                currentMp = maxMp; // Full Heal
+            }
+
+            inv[itemName] -= 1;
+            if (inv[itemName] <= 0) delete inv[itemName];
+
+            ts.update(userRef, { inventory: inv, currentHp: currentHp, currentMp: currentMp });
+        });
+        return true;
+    } catch (err) {
+        window.rpgAlert(err, "Inventaris");
+        return false;
+    }
 }

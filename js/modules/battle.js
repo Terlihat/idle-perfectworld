@@ -1,6 +1,3 @@
-/* ===================================================
-   MODUL BATTLE DUNGEON (Fix Death Rollback + VIP Engine)
-   =================================================== */
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { MONSTER_DB } from '../data/monsters.js';
 import { getUpdatedQuests } from './quest.js'; 
@@ -22,92 +19,106 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
         const resultMsg = await runTransaction(db, async (ts) => {
             const data = (await ts.get(userRef)).data();
             
-            // --- VIP ENGINE: Kalkulasi Stamina ---
             const vipStats = getVipStats(data.vipLevel || 0);
-            
             const currentStam = data.currentStamina !== undefined ? data.currentStamina : 100;
             const maxStam = (data.maxStamina !== undefined ? data.maxStamina : 100) + (vipStats.extraMaxStamina || 0);
-            const currentHealth = data.currentHp !== undefined ? data.currentHp : playerStats.maxHp;
-
-            const mount = playerStats.equipment?.mount || null;
-            const stamReq = Math.max(1, 10 - (mount?.stamDiscount || 0)); 
-            const goldMult = 1 + (mount?.goldBonus || 0); 
-
-            if (currentHealth <= 0) return "Anda sudah mati! Pulihkan HP Anda di Apotek sebelum bertarung.";
-            if (currentStam < stamReq) return `Stamina tidak cukup! Butuh ${stamReq} Stamina (Efek Mount).`;
-
-            const playerDmg = Math.max(1, playerStats.patk - monster.def);
-            const monsterDmg = Math.max(1, monster.atk - playerStats.def);
             
-            const turnsToKill = Math.ceil(monster.hp / playerDmg);
-            const hpLost = turnsToKill * monsterDmg;
+            let stamReq = monster.staminaReq || 5;
+            if (playerStats.mountBonus && playerStats.mountBonus.stamDiscount) {
+                stamReq = Math.max(1, stamReq - playerStats.mountBonus.stamDiscount);
+            }
+            if (currentStam < stamReq) throw `Stamina tidak cukup! Butuh ${stamReq} Stamina.`;
 
-            let newHp = currentHealth - hpLost;
+            const currentHp = data.currentHp !== undefined ? data.currentHp : playerStats.maxHp;
+            if (currentHp <= 0) throw "Anda sudah mati! Minum Ramuan HP terlebih dahulu.";
+
+            let pAtk = playerStats.patk || 10;
+            let pMatk = playerStats.matk || 10;
+            let pDef = playerStats.def || 5;
+
+            // Damage player vs monster
+            let dmgToMonster = Math.max(1, (pAtk + pMatk) - (monster.def || 0));
+            let totalHit = Math.ceil(monster.hp / dmgToMonster); 
+            
+            // Damage monster vs player
+            let mAtk = monster.atk || 5;
+            let dmgToPlayer = Math.max(1, mAtk - pDef);
+            let totalDmgTaken = dmgToPlayer * totalHit;
+
+            // Perhitungan Drop Rate (RNG)
+            let isItemDrop = Math.random() <= (monster.dropRate || 0.1); 
             let logMessage = "";
 
+            // FIX: Pertahanan nilai EXP dari NaN
+            const expGain = monster.exp || 50; 
+            const goldGain = monster.gold || 100;
+            
+            let newHp = Math.max(0, currentHp - totalDmgTaken);
+
             if (newHp <= 0) {
-                ts.update(userRef, { currentHp: 0, currentStamina: Math.max(0, currentStam - stamReq) });
-                return `☠️ KEMATIAN! Anda terbunuh oleh ${monster.name} setelah bertarung sengit. Silakan isi HP.`;
+                // PEMAIN MATI
+                const expPenalty = Math.floor(expGain * 0.5); 
+                let newExpDeath = Math.max(0, (data.exp || 0) - expPenalty);
+                
+                ts.update(userRef, { 
+                    currentHp: 0, 
+                    exp: newExpDeath,
+                    currentStamina: Math.max(0, currentStam - stamReq)
+                });
+                return `💀 TRAGEDI! Anda terbunuh oleh ${monster.name}!\nKehilangan ${expPenalty} EXP.`;
             } else {
-                // --- VIP ENGINE: Kalkulasi Hadiah ---
-                let baseExp = monster.rewardExp;
-                let baseGold = Math.floor(monster.rewardGold * goldMult);
-                
-                let bonusExp = Math.floor(baseExp * (vipStats.expBonusPct / 100));
-                let bonusGold = Math.floor(baseGold * (vipStats.goldBonusPct / 100));
-                
-                let finalExp = baseExp + bonusExp;
-                let finalGold = baseGold + bonusGold;
-                
-                let newExp = (data.exp || 0) + finalExp;
-                let newGold = (data.gold || 0) + finalGold;
-                
-                let newLevel = data.level || 1;
+                // PEMAIN MENANG
+                logMessage = `⚔️ BERHASIL! Anda mengalahkan ${monster.name}.\nSisa HP: ${newHp}/${playerStats.maxHp}\n🎁 Dapat: ${expGain} EXP & ${goldGain} Gold`;
+
                 let inv = data.inventory || {};
-                
-                let newQuests = getUpdatedQuests(data, 'daily', monsterKey, 1);
-
-                logMessage = `⚔️ MENANG! Membunuh ${monster.name}.\nKehilangan ${hpLost} HP. Mendapat ${finalExp} EXP & ${finalGold} Gold.`;
-                
-                if (mount) logMessage += `\n🐎 [Efek Mount] Stamina hemat ${mount.stamDiscount}, Bonus Gold +${(mount.goldBonus*100)}%!`;
-                if (bonusExp > 0 || bonusGold > 0) logMessage += `\n✨ [SULTAN VIP] Bonus +${bonusExp} EXP & +${bonusGold} Gold!`;
-
-                if (Math.random() <= monster.drop.chance) {
-                    inv[monster.drop.item] = (inv[monster.drop.item] || 0) + 1;
-                    logMessage += `\n🎁 DROP ITEM: Anda mendapatkan [${monster.drop.item}]!`;
+                if (isItemDrop && monster.drops) {
+                    let droppedItem = monster.drops[Math.floor(Math.random() * monster.drops.length)];
+                    inv[droppedItem] = (inv[droppedItem] || 0) + 1;
+                    logMessage += `\n💎 DROP RARE: Mendapatkan [${droppedItem}]!`;
                 }
 
-                let statPointsGained = 0;
+                // Kalkulasi Quest
+                const newQuests = getUpdatedQuests(data.quests, monster.name);
+
+                // FIX: Kalkulasi EXP Anti-Stuck & Auto-Heal Level Up
+                let newExp = (data.exp || 0) + expGain;
+                if (isNaN(newExp)) newExp = expGain; // Bypass jika data sebelumnya rusak/NaN
+                
+                let newGold = (data.gold || 0) + goldGain;
+                let newLevel = data.level || 1;
+                let reqExp = newLevel * 1000;
                 let leveledUp = false;
-                while (newExp >= newLevel * 100) {
-                    newExp -= (newLevel * 100);
-                    newLevel += 1;
+                let statPointsGained = 0;
+
+                while (newExp >= reqExp) {
+                    newExp -= reqExp;
+                    newLevel++;
                     statPointsGained += 5;
+                    reqExp = newLevel * 1000;
                     leveledUp = true;
                 }
 
-                let updateData = {
-                    exp: newExp, 
-                    gold: newGold, 
-                    inventory: inv
-                };
+                let updateData = { exp: newExp, gold: newGold, inventory: inv };
 
                 if (leveledUp) {
-                    logMessage += `\n🌟 LEVEL UP MULTIPLE! Anda sekarang Level ${newLevel}! Mendapat ${statPointsGained} Poin Stat.`;
+                    logMessage += `\n🌟 LEVEL UP! Anda sekarang Level ${newLevel}! Mendapat ${statPointsGained} Poin Stat.`;
                     updateData.level = newLevel;
-                    updateData.currentHp = playerStats.maxHp;
-                    updateData.currentStamina = maxStam; // Stamina terisi max berdasarkan VIP!
+                    updateData.currentHp = playerStats.maxHp || 1000; // FULL HEAL!
+                    updateData.currentMp = playerStats.maxMp || 200;
+                    updateData.currentStamina = maxStam; 
                     updateData.statPoints = (data.statPoints || 0) + statPointsGained;
                 } else {
                     updateData.currentHp = newHp;
                     updateData.currentStamina = Math.max(0, currentStam - stamReq);
+                    
+                    // FIX: Jika sebelumnya stamina penuh, paksa mulai waktu perhitungan mundur
+                    if (currentStam >= maxStam) {
+                        updateData.lastStaminaUpdate = Date.now();
+                    }
                 }
 
-                if (newQuests !== undefined && newQuests !== null) {
-                    updateData.quests = newQuests;
-                } else if (data.quests !== undefined) {
-                    updateData.quests = data.quests; 
-                }
+                if (newQuests !== undefined && newQuests !== null) updateData.quests = newQuests;
+                else if (data.quests !== undefined) updateData.quests = data.quests; 
 
                 ts.update(userRef, updateData);
                 return logMessage;
@@ -117,8 +128,6 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
         if (resultMsg) {
             const isWin = !resultMsg.includes("terbunuh oleh"); 
             await sendSoloBattleReport(db, uid, isWin, monster.name, resultMsg);
-            // alert(resultMsg); // <-- Matikan alert agar log hanya muncul di Mailbox
         }
-
     } catch (err) { alert(err); }
 }

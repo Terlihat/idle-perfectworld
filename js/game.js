@@ -384,13 +384,17 @@ window.handleInventoryClick = async function(itemName) {
         else if (itemName === "Buku Reset Stats") { 
             if(await window.rpgConfirm("Gunakan Buku Reset Stats? Semua alokasi manual akan dikembalikan.", "Reset Stats")) equipFromInventory(db, currentUserUid, itemName, null); 
         }
+        else if (itemName === "Ramuan HP" || itemName === "Ramuan MP") {
+            const sukses = await consumePotion(db, currentUserUid, itemName, currentPlayerStats.maxHp, currentPlayerStats.maxMp);
+            if (sukses) window.rpgAlert(`Glug glug glug...\nAnda meminum [${itemName}]! Nyawa/Mana kembali penuh.`, "Berhasil Diteguk");
+        }
         else { equipFromInventory(db, currentUserUid, itemName, null); }
     } 
     else if (inventoryMode === "SELL") { sellItemToNPC(db, currentUserUid, itemName); } 
     else if (inventoryMode === "BANK") { 
-    const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ingin disimpan?`, "Simpan ke Bank", "number");
-    const qty = parseInt(qtyStr);
-    if (qty > 0) depositItem(db, currentUserUid, itemName, qty);
+        const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ingin disimpan?`, "Simpan ke Bank", "number");
+        const qty = parseInt(qtyStr);
+        if (qty > 0) depositItem(db, currentUserUid, itemName, qty);
     }
     else if (inventoryMode === "AUCTION") {
         if (itemName.includes("Tiket") || itemName.includes("Buku") || itemName.includes("Ramuan Stamina") || itemName.includes("Naga Terbang")) return window.rpgAlert("Item premium tidak bisa dilelang.");
