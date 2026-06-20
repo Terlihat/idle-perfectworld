@@ -834,6 +834,9 @@ document.addEventListener('click', async (e) => {
     
     if (targetId === 'btn-enter-pk') {
         if (currentPlayerStats.currentHp <= 0) return window.rpgAlert("Anda sudah mati! Sembuhkan diri di kota.");
+        if ((currentPlayerStats.level || 1) < 30) {
+            return window.rpgAlert("Hutan ini terlalu berdarah untuk pemula!\nAnda harus mencapai Level 30 untuk memasukinya.", "Akses Ditolak");
+        }
         if (await window.rpgConfirm("Nyawa dan harta menjadi taruhan di sini. Masuk Dark Forest?", "Gerbang Hutan")) {
             updateDoc(doc(db, "users", currentUserUid), { inPkZone: true });
         }
@@ -950,9 +953,14 @@ window.attackPK = async function(targetUid, targetName) {
             }
         });
 
+        // Tampilkan Modal Peringatan Utama
         window.rpgAlert(result.log, result.success ? "🏆 PK BERHASIL" : "💀 TRAGEDI");
+        
+        // CATAT KE DALAM LOG BERDARAH DI PANEL PK!
+        window.addPKLog(result.log, result.success ? "#28a745" : "#dc3545");
 
     } catch(err) {
         window.rpgAlert(err, "Pertarungan Batal");
+        window.addPKLog(`Batal menyerang: ${err}`, "#aaa"); // Catat juga jika gagal
     }
 };
