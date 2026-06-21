@@ -147,7 +147,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
             }
             if (!adaDrop) dropLogMsg += "> Sayang sekali, tidak ada barang langka yang jatuh kali ini.\n";
 
-            // 3. --- UPDATE DATA TIAP ANGGOTA ---
+            // 3. --- UPDATE DATA TIAP ANGGOTA (DENGAN KOMPENSASI KEMATIAN) ---
             memberSnaps.forEach(snap => {
                 const md = snap.data();
                 const mRef = snap.ref;
@@ -165,6 +165,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 
                 let newHp = md.currentHp - totalDmgTaken;
                 let newStamina = Math.max(0, md.currentStamina - stamReq);
+                let isDead = newHp <= 0;
 
                 // PENYISIPAN BARANG GACHA KE DALAM TAS
                 let inv = md.inventory || {};
@@ -176,59 +177,73 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     extraDropText = `\n   💎 (Loot Acak): Dapat ${dropsGot.join(", ")}`;
                 }
 
-                if (newHp <= 0) {
-                    // MEMBER TEWAS
-                    let newExpDeath = Math.max(0, (md.exp || 0) - Math.floor(boss.rewardExp * 0.5));
-                    ts.update(mRef, { currentHp: 0, currentStamina: newStamina, exp: newExpDeath, inventory: inv });
-                    log += `💀 [${md.username}] TERBUNUH! Menerima ${totalDmgTaken} DMG.${extraDropText}\n`;
+                // KALKULASI REWARD DASAR (VIP & MOUNT)
+                const vipStats = getVipStats(md.vipLevel || 0);
+                let baseGold = Math.floor(boss.rewardGold * goldMult);
+                let baseExp = boss.rewardExp;
+                let bonusGold = Math.floor(baseGold * (vipStats.goldBonusPct / 100));
+                let bonusExp = Math.floor(baseExp * (vipStats.expBonusPct / 100));
+                
+                let finalExpGain = baseExp + bonusExp;
+                let finalGoldGain = baseGold + bonusGold;
+
+                // --- SISTEM KOMPENSASI KEMATIAN ---
+                if (isDead) {
+                    // Jika mati, hadiah dipotong menjadi 30% (Kalikan 0.3)
+                    finalExpGain = Math.floor(finalExpGain * 0.3);
+                    finalGoldGain = Math.floor(finalGoldGain * 0.3);
                 } else {
-                    // MEMBER SELAMAT
-                    survivors++;
-                    const vipStats = getVipStats(md.vipLevel || 0);
-                    
-                    let baseGold = Math.floor(boss.rewardGold * goldMult);
-                    let baseExp = boss.rewardExp;
-                    let bonusGold = Math.floor(baseGold * (vipStats.goldBonusPct / 100));
-                    let bonusExp = Math.floor(baseExp * (vipStats.expBonusPct / 100));
-                    
-                    let newExp = (md.exp || 0) + (baseExp + bonusExp);
-                    let newGold = (md.gold || 0) + (baseGold + bonusGold);
-                    
-                    let newQuests = getUpdatedQuests(md, 'bounty', party.fbKey, 1);
-                    
-                    let dropMsg = extraDropText;
-                    if (bonusGold > 0 || bonusExp > 0) {
-                        dropMsg += ` ✨(VIP +${bonusGold}G / +${bonusExp}XP)`;
-                    }
+                    survivors++; // Hanya dihitung jika selamat
+                }
 
-                    let newLevel = md.level || 1;
-                    let statPointsGained = 0;
-                    let leveledUp = false;
-                    while (newExp >= newLevel * 100) {
-                        newExp -= (newLevel * 100);
-                        newLevel += 1;
-                        statPointsGained += 5;
-                        leveledUp = true;
-                    }
+                let newExp = (md.exp || 0) + finalExpGain;
+                let newGold = (md.gold || 0) + finalGoldGain;
+                let newQuests = getUpdatedQuests(md, 'bounty', party.fbKey, 1);
+                
+                let dropMsg = extraDropText;
+                if (!isDead && (bonusGold > 0 || bonusExp > 0)) {
+                    dropMsg += ` ✨(VIP +${bonusGold}G / +${bonusExp}XP)`;
+                } else if (isDead) {
+                    dropMsg += ` 📉(Penalti Kematian: Hadiah 30%)`;
+                }
 
-                    if (leveledUp) {
-                        ts.update(mRef, { 
-                            level: newLevel, exp: newExp, gold: newGold, inventory: inv, 
-                            currentHp: md.maxHp || 1000, 
-                            currentStamina: (md.maxStamina || 100) + (vipStats.extraMaxStamina || 0),
-                            statPoints: (md.statPoints || 0) + statPointsGained,
-                            quests: newQuests 
-                        });
-                        dropMsg += ` (🌟 LEVEL UP TO ${newLevel}!)`;
-                    } else {
-                        ts.update(mRef, { 
-                            exp: newExp, gold: newGold, inventory: inv, 
-                            currentHp: newHp, currentStamina: newStamina,
-                            quests: newQuests 
-                        });
-                    }
-                    
-                    log += `🛡️ [${md.username}] BERTAHAN! Sisa HP: ${newHp} | +${baseGold + bonusGold} Gold${dropMsg}\n`;
+                // LOGIKA LEVEL UP
+                let newLevel = md.level || 1;
+                let statPointsGained = 0;
+                let leveledUp = false;
+                while (newExp >= newLevel * 100) {
+                    newExp -= (newLevel * 100);
+                    newLevel += 1;
+                    statPointsGained += 5;
+                    leveledUp = true;
+                }
+
+                // UPDATE DATABASE
+                let updateData = {
+                    exp: newExp, 
+                    gold: newGold, 
+                    inventory: inv, 
+                    quests: newQuests,
+                    currentStamina: newStamina
+                };
+
+                if (leveledUp) {
+                    updateData.level = newLevel;
+                    updateData.statPoints = (md.statPoints || 0) + statPointsGained;
+                    updateData.currentStamina = (md.maxStamina || 100) + (vipStats.extraMaxStamina || 0);
+                    // Jika naik level saat mati, nyawa tetap 0 (harus minum ramuan di kota)
+                    updateData.currentHp = isDead ? 0 : (md.maxHp || 1000); 
+                    dropMsg += ` (🌟 LEVEL UP TO ${newLevel}!)`;
+                } else {
+                    updateData.currentHp = isDead ? 0 : newHp;
+                }
+
+                ts.update(mRef, updateData);
+
+                if (isDead) {
+                    log += `💀 [${md.username}] TERBUNUH! Menerima ${totalDmgTaken} DMG. (+${finalGoldGain} Gold)${dropMsg}\n`;
+                } else {
+                    log += `🛡️ [${md.username}] BERTAHAN! Sisa HP: ${newHp} | +${finalGoldGain} Gold${dropMsg}\n`;
                 }
             });
 
@@ -237,6 +252,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 log += dropLogMsg; 
             } else { 
                 log += `\n❌ PARTY WIPE OUT! Seluruh anggota Party terbunuh oleh Boss.`; 
+                log += dropLogMsg; // Biarkan mereka mendapat hadiah langka walau rata tanah!
             }
 
             ts.delete(partyRef);
@@ -244,6 +260,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
             return { logResult: log, isWin: survivors > 0, partyMembers: party.members, bossName: boss.name };
         }); 
 
+        // 4. --- KIRIM SURAT TANPA POP-UP ---
         if (resultMsg && resultMsg.logResult) {
             await sendPartyBattleReport(db, resultMsg.partyMembers, resultMsg.isWin, resultMsg.bossName, resultMsg.logResult);
         }
