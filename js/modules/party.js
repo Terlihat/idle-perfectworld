@@ -122,32 +122,9 @@ export async function startFbBattle(db, leaderUid, partyId) {
             log += `[!] Party Total DPS: ${totalPartyAtk} | Boss HP: ${boss.hp} | Dibunuh dalam ${turnsToKill} Putaran.\n\n`;
 
             let survivors = 0;
+            let battleResults = []; // Tempat menyimpan hasil ramalan nyawa
 
-            // 2. --- SISTEM GACHA DROP ACAK ---
-            let memberDrops = {}; 
-            let dropLogMsg = "\n\n🎁 HASIL LOOT ACAK:\n";
-            let adaDrop = false;
-
-            let dropsArray = [];
-            if (boss.drop) dropsArray.push(boss.drop);
-            if (boss.drops) dropsArray = dropsArray.concat(boss.drops);
-
-            if (dropsArray.length > 0) {
-                dropsArray.forEach(d => {
-                    if (Math.random() <= d.chance) {
-                        adaDrop = true;
-                        const luckyMember = party.members[Math.floor(Math.random() * party.members.length)];
-                        
-                        if (!memberDrops[luckyMember.uid]) memberDrops[luckyMember.uid] = [];
-                        memberDrops[luckyMember.uid].push(d.item);
-                        
-                        dropLogMsg += `> 💎 [${d.item}] didapatkan oleh ${luckyMember.username}!\n`;
-                    }
-                });
-            }
-            if (!adaDrop) dropLogMsg += "> Sayang sekali, tidak ada barang langka yang jatuh kali ini.\n";
-
-            // 3. --- UPDATE DATA TIAP ANGGOTA (DENGAN KOMPENSASI KEMATIAN) ---
+            // 2. --- PRA-KALKULASI HASIL NYAWA TIAP ANGGOTA ---
             memberSnaps.forEach(snap => {
                 const md = snap.data();
                 const mRef = snap.ref;
@@ -157,7 +134,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
                 const goldMult = 1 + (mount?.goldBonus || 0);
 
-                if (md.currentHp <= 0 || md.currentStamina < stamReq) return;
+                if (md.currentHp <= 0 || md.currentStamina < stamReq) return; // Abaikan yang sudah mati dari awal
 
                 const effectiveDef = partyData ? partyData.def : 10;
                 const dmgPerTurn = Math.max(1, boss.atk - effectiveDef);
@@ -167,9 +144,51 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 let newStamina = Math.max(0, md.currentStamina - stamReq);
                 let isDead = newHp <= 0;
 
+                if (!isDead) survivors++;
+
+                // Simpan hasil untuk dieksekusi nanti
+                battleResults.push({
+                    snap, md, mRef, goldMult, newHp, newStamina, isDead, totalDmgTaken
+                });
+            });
+
+            // 3. --- SISTEM GACHA DROP ACAK (HANYA JIKA ADA YANG HIDUP) ---
+            let memberDrops = {}; 
+            let dropLogMsg = "\n\n🎁 HASIL LOOT ACAK:\n";
+            let adaDrop = false;
+
+            // Jika ada minimal 1 orang yang selamat, Bos menjatuhkan hartanya!
+            if (survivors > 0) {
+                let dropsArray = [];
+                if (boss.drop) dropsArray.push(boss.drop);
+                if (boss.drops) dropsArray = dropsArray.concat(boss.drops);
+
+                if (dropsArray.length > 0) {
+                    dropsArray.forEach(d => {
+                        if (Math.random() <= d.chance) {
+                            adaDrop = true;
+                            const luckyMember = party.members[Math.floor(Math.random() * party.members.length)];
+                            
+                            if (!memberDrops[luckyMember.uid]) memberDrops[luckyMember.uid] = [];
+                            memberDrops[luckyMember.uid].push(d.item);
+                            
+                            dropLogMsg += `> 💎 [${d.item}] didapatkan oleh ${luckyMember.username}!\n`;
+                        }
+                    });
+                }
+                if (!adaDrop) dropLogMsg += "> Sayang sekali, tidak ada barang langka yang jatuh kali ini.\n";
+            } else {
+                // Jika semua mati (Wipe Out), hadiah hangus!
+                dropLogMsg = "\n\n❌ LOOT GAGAL: Karena seluruh tim terbunuh, Bos kembali ke sarangnya dan membawa pergi semua hartanya.\n";
+            }
+
+            // 4. --- EKSEKUSI UPDATE DATABASE KE SEMUA ANGGOTA ---
+            battleResults.forEach(res => {
+                const { snap, md, mRef, goldMult, newHp, newStamina, isDead, totalDmgTaken } = res;
+
                 // PENYISIPAN BARANG GACHA KE DALAM TAS
                 let inv = md.inventory || {};
-                let dropsGot = memberDrops[md.uid] || [];
+                let dropsGot = memberDrops[snap.id] || [];
                 let extraDropText = "";
 
                 if (dropsGot.length > 0) {
@@ -177,7 +196,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     extraDropText = `\n   💎 (Loot Acak): Dapat ${dropsGot.join(", ")}`;
                 }
 
-                // KALKULASI REWARD DASAR (VIP & MOUNT)
+                // KALKULASI REWARD DASAR (VIP)
                 const vipStats = getVipStats(md.vipLevel || 0);
                 let baseGold = Math.floor(boss.rewardGold * goldMult);
                 let baseExp = boss.rewardExp;
@@ -187,13 +206,10 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 let finalExpGain = baseExp + bonusExp;
                 let finalGoldGain = baseGold + bonusGold;
 
-                // --- SISTEM KOMPENSASI KEMATIAN ---
+                // KOMPENSASI MATI
                 if (isDead) {
-                    // Jika mati, hadiah dipotong menjadi 50% (Kalikan 0.5)
-                    finalExpGain = Math.floor(finalExpGain * 0.5);
-                    finalGoldGain = Math.floor(finalGoldGain * 0.5);
-                } else {
-                    survivors++; // Hanya dihitung jika selamat
+                    finalExpGain = Math.floor(finalExpGain * 0.3); // Hanya dapat 30%
+                    finalGoldGain = Math.floor(finalGoldGain * 0.3); // Hanya dapat 30%
                 }
 
                 let newExp = (md.exp || 0) + finalExpGain;
@@ -204,7 +220,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 if (!isDead && (bonusGold > 0 || bonusExp > 0)) {
                     dropMsg += ` ✨(VIP +${bonusGold}G / +${bonusExp}XP)`;
                 } else if (isDead) {
-                    dropMsg += ` 📉(Penalti Kematian: Hadiah 50%)`;
+                    dropMsg += ` 📉(Penalti Kematian: Hadiah 30%)`;
                 }
 
                 // LOGIKA LEVEL UP
@@ -231,7 +247,6 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     updateData.level = newLevel;
                     updateData.statPoints = (md.statPoints || 0) + statPointsGained;
                     updateData.currentStamina = (md.maxStamina || 100) + (vipStats.extraMaxStamina || 0);
-                    // Jika naik level saat mati, nyawa tetap 0 (harus minum ramuan di kota)
                     updateData.currentHp = isDead ? 0 : (md.maxHp || 1000); 
                     dropMsg += ` (🌟 LEVEL UP TO ${newLevel}!)`;
                 } else {
@@ -247,20 +262,20 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 }
             });
 
+            // 5. PENUTUP SURAT
             if (survivors > 0) { 
                 log += `\n🎉 FB BERHASIL! ${survivors} orang selamat.`; 
-                log += dropLogMsg; 
             } else { 
                 log += `\n❌ PARTY WIPE OUT! Seluruh anggota Party terbunuh oleh Boss.`; 
-                log += dropLogMsg; // Biarkan mereka mendapat hadiah langka walau rata tanah!
             }
+            log += dropLogMsg; // Cetak pesan gagal loot atau berhasil loot
 
             ts.delete(partyRef);
             
             return { logResult: log, isWin: survivors > 0, partyMembers: party.members, bossName: boss.name };
         }); 
 
-        // 4. --- KIRIM SURAT TANPA POP-UP ---
+        // 6. --- KIRIM SURAT ---
         if (resultMsg && resultMsg.logResult) {
             await sendPartyBattleReport(db, resultMsg.partyMembers, resultMsg.isWin, resultMsg.bossName, resultMsg.logResult);
         }
