@@ -127,6 +127,8 @@ export async function executeRefineAction(db, uid, equipName, catalystName) {
             equipText.style.color = newRefine > 0 ? "#ff9800" : "#00d2ff";
         }
 
+        return finalItemName;
+
     } catch (err) { 
         if (typeof window.addBlacksmithLog === "function") window.addBlacksmithLog(err, "#dc3545"); 
     }

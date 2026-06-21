@@ -593,7 +593,15 @@ window.executeTempa = async function() {
         btnTempa.style.cursor = "not-allowed";
     }
 
-    await executeRefineAction(db, currentUserUid, bsSelectedEquip, bsSelectedCatalyst);
+    // 1. TANGKAP HASIL TEMPA (NAMA ITEM BARU) DARI BLACKSMITH.JS
+    const newEquipName = await executeRefineAction(db, currentUserUid, bsSelectedEquip, bsSelectedCatalyst);
+
+    // 2. JIKA ADA NAMA BARU (Sukses/Gagal turun level), UPDATE SLOT OTOMATIS!
+    if (newEquipName && typeof newEquipName === 'string') {
+        bsSelectedEquip = newEquipName;
+        const elText = document.getElementById('bs-text-equip');
+        if (elText) elText.innerText = newEquipName; // Teks di layar langsung berubah!
+    }
 
     if (btnTempa) {
         btnTempa.innerText = "⚒️ TEMPA";
