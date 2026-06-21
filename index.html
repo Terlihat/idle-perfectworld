@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="icon" type="image/x-icon" href="./favicon.ico">
     <link rel="stylesheet" href="./css/style.css">
 </head>
+
 <body>
     <div class="container">
         <div id="screen-auth" class="screen" style="display: block;">
@@ -25,18 +27,28 @@
                     <button id="btn-logout" style="background: #dc3545;">Keluar</button>
                 </div>
             </div>
-            
+
             <!-- TOMBOL KONTROL NAVIGASI -->
-            <div style="display: flex; gap: 10px; margin: 15px 0; justify-content: center; background: #1a1a1a; padding: 10px; border-radius: 5px; border: 1px solid #333;">
-                <button id="btn-toggle-mall" style="background: #ffcc00; color: #000; font-weight: bold; padding: 8px 15px;">💎 Item Mall</button>
-                <button id="btn-toggle-shop" style="background: #17a2b8; color: #fff; font-weight: bold; padding: 8px 15px;">🏪 Toko NPC</button>
-                <button id="btn-toggle-mail" style="position: relative; background: #dc3545; color: #fff; font-weight: bold; padding: 8px 15px; border: none; border-radius: 3px; cursor: pointer;">
+            <div
+                style="display: flex; gap: 10px; margin: 15px 0; justify-content: center; background: #1a1a1a; padding: 10px; border-radius: 5px; border: 1px solid #333;">
+                <button id="btn-toggle-mall"
+                    style="background: #ffcc00; color: #000; font-weight: bold; padding: 8px 15px;">💎 Item
+                    Mall</button>
+                <button id="btn-toggle-shop"
+                    style="background: #17a2b8; color: #fff; font-weight: bold; padding: 8px 15px;">🏪 Toko NPC</button>
+                <button id="btn-toggle-mail"
+                    style="position: relative; background: #dc3545; color: #fff; font-weight: bold; padding: 8px 15px; border: none; border-radius: 3px; cursor: pointer;">
                     📬 Kotak Surat
                     <!-- Badge Notifikasi Merah -->
-                    <span id="mail-badge" style="display: none; position: absolute; top: -8px; right: -8px; background: #ff4c4c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; border: 2px solid #1a1a1a; font-weight: bold; box-shadow: 0 0 5px red;">0</span>
+                    <span id="mail-badge"
+                        style="display: none; position: absolute; top: -8px; right: -8px; background: #ff4c4c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; border: 2px solid #1a1a1a; font-weight: bold; box-shadow: 0 0 5px red;">0</span>
                 </button>
-                <button id="btn-toggle-leaderboard" style="background: #e83e8c; color: #fff; font-weight: bold; padding: 8px 15px;">🏆 Peringkat</button>
-                <button id="btn-toggle-pk" style="background: #8b0000; color: #fff; font-weight: bold; padding: 8px 15px;">⚔️ Dark Forest</button>
+                <button id="btn-toggle-leaderboard"
+                    style="background: #e83e8c; color: #fff; font-weight: bold; padding: 8px 15px;">🏆
+                    Peringkat</button>
+                <button id="btn-toggle-pk"
+                    style="background: #8b0000; color: #fff; font-weight: bold; padding: 8px 15px;">⚔️ Dark
+                    Forest</button>
             </div>
 
             <div class="game-container">
@@ -64,7 +76,7 @@
                     <div id="panel-quest" class="panel">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Misi Quest...</div>
                     </div>
-                    
+
                     <div id="panel-blacksmith" class="panel" style="display:none;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Pandai Besi...</div>
                     </div>
@@ -72,26 +84,34 @@
                     <!-- PANEL DARK FOREST (ZONA PK) -->
                     <div id="panel-pk" class="panel" style="display:none; margin-bottom: 15px;">
                         <h2 style="text-align: center; color: #ff4c4c; margin-top: 0;">🌲 Dark Forest (Zona PK)</h2>
-                        <p style="text-align:center; color:#aaa; font-size:12px;">Peringatan: Pemain yang kalah kehilangan 5% Gold dan berisiko kehilangan Item Tas. (Red Name = Drop 20%)</p>
-                        
+                        <p style="text-align:center; color:#aaa; font-size:12px;">Peringatan: Pemain yang kalah
+                            kehilangan 5% Gold dan berisiko kehilangan Item Tas. (Red Name = Drop 20%)</p>
+
                         <div style="text-align:center; margin: 15px 0;">
-                            <button id="btn-enter-pk" style="background:#dc3545; color:#fff; padding:10px 20px; font-weight:bold; border-radius:5px; border:none; cursor:pointer;">🔥 MASUK ZONA PK</button>
-                            <button id="btn-leave-pk" style="display:none; background:#28a745; color:#fff; padding:10px 20px; font-weight:bold; border-radius:5px; border:none; cursor:pointer;">🛡️ KEMBALI KE KOTA AMAN</button>
+                            <button id="btn-enter-pk"
+                                style="background:#dc3545; color:#fff; padding:10px 20px; font-weight:bold; border-radius:5px; border:none; cursor:pointer;">🔥
+                                MASUK ZONA PK</button>
+                            <button id="btn-leave-pk"
+                                style="display:none; background:#28a745; color:#fff; padding:10px 20px; font-weight:bold; border-radius:5px; border:none; cursor:pointer;">🛡️
+                                KEMBALI KE KOTA AMAN</button>
                         </div>
-                        
+
                         <div id="pk-player-list" style="margin-top:15px; margin-bottom:15px;">
                             <div style="text-align:center; color:#555;">(Hutan tampak gelap dan sepi...)</div>
                         </div>
 
                         <!-- KOTAK LOG PERTEMPURAN PK -->
                         <div style="background:#0d0d12; border:1px solid #333; border-radius:5px; padding:10px;">
-                            <div style="font-size:12px; font-weight:bold; color:#ff4c4c; margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:5px;">📜 Catatan Berdarah</div>
-                            <div id="pk-log-panel" style="height: 120px; overflow-y: auto; font-family: monospace; font-size: 11px; padding-right: 5px;">
+                            <div
+                                style="font-size:12px; font-weight:bold; color:#ff4c4c; margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:5px;">
+                                📜 Catatan Berdarah</div>
+                            <div id="pk-log-panel"
+                                style="height: 120px; overflow-y: auto; font-family: monospace; font-size: 11px; padding-right: 5px;">
                                 <div style="color: #555;">[SISTEM] Menunggu aktivitas pertarungan...</div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div id="panel-auction" class="panel" style="display:none;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Pasar Lelang...</div>
                     </div>
@@ -102,12 +122,20 @@
                     <div id="panel-leaderboard" class="panel" style="display:none; margin-bottom: 15px;">
                         <h2 style="text-align: center; color: #e83e8c; margin-top: 0;">🏆 Papan Peringkat Global</h2>
                         <div style="display:flex; gap:5px; justify-content:center; margin-bottom:10px;">
-                            <button id="btn-lb-level" style="flex:1; background:#00d2ff; color:#000; font-weight:bold; padding:8px 5px; border-radius:3px; border:none; cursor:pointer;">Top Level</button>
-                            <button id="btn-lb-gold" style="flex:1; background:#ffcc00; color:#000; font-weight:bold; padding:8px 5px; border-radius:3px; border:none; cursor:pointer;">Top Sultan</button>
-                            <button id="btn-lb-bp" style="flex:1; background:#dc3545; color:#fff; font-weight:bold; padding:8px 5px; border-radius:3px; border:none; cursor:pointer;">Top BP</button>
+                            <button id="btn-lb-level"
+                                style="flex:1; background:#00d2ff; color:#000; font-weight:bold; padding:8px 5px; border-radius:3px; border:none; cursor:pointer;">Top
+                                Level</button>
+                            <button id="btn-lb-gold"
+                                style="flex:1; background:#ffcc00; color:#000; font-weight:bold; padding:8px 5px; border-radius:3px; border:none; cursor:pointer;">Top
+                                Sultan</button>
+                            <button id="btn-lb-bp"
+                                style="flex:1; background:#dc3545; color:#fff; font-weight:bold; padding:8px 5px; border-radius:3px; border:none; cursor:pointer;">Top
+                                BP</button>
                         </div>
-                        <div id="leaderboard-content" style="min-height: 150px; background:#121216; border:1px solid #333; border-radius:5px; padding:10px;">
-                            <div style="text-align:center; color:#aaa; font-size:12px; margin-top:20px;">Klik kategori di atas untuk memuat data.</div>
+                        <div id="leaderboard-content"
+                            style="min-height: 150px; background:#121216; border:1px solid #333; border-radius:5px; padding:10px;">
+                            <div style="text-align:center; color:#aaa; font-size:12px; margin-top:20px;">Klik kategori
+                                di atas untuk memuat data.</div>
                         </div>
                     </div>
 
@@ -116,15 +144,14 @@
                         <h2 class="gold-title" style="text-align: center; margin-top: 0;">💎 Item Mall Premium</h2>
                         <div id="panel-mall-grid"></div>
                     </div>
-                    
+
                     <div id="panel-shop" class="panel" style="display:none; margin-bottom: 15px;">
                         <h2 style="text-align: center; color: #17a2b8; margin-top: 0;">🏪 Toko & Mount</h2>
                         <div id="panel-shop-grid"></div>
                     </div>
-                    
-                    <div id="panel-mailbox" class="panel" style="display:none; margin-bottom: 15px;">
-                        <!-- Tempat UI Mailbox akan dirender -->
-                    </div>
+
+                    <div id="panel-mailbox" class="panel" style="display:none; margin-bottom: 15px;"></div>
+
                     <div id="panel-bank" class="panel" style="display:none;">
                         <div style="text-align:center; color:#aaa; font-size:12px;">Memuat Bankir...</div>
                     </div>
@@ -140,36 +167,50 @@
     </div>
 
     <!-- MODAL KONFIRMASI PEMBELIAN -->
-    <div id="buy-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
-        <div style="background:#121216; border:2px solid #ffcc00; border-radius:8px; padding:20px; width:300px; text-align:center; box-shadow: 0 0 15px rgba(255,204,0,0.3);">
-            <h3 id="buy-modal-title" style="color:#ffcc00; margin-top:0; border-bottom: 1px solid #333; padding-bottom:10px;">Beli Item</h3>
+    <div id="buy-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+        <div
+            style="background:#121216; border:2px solid #ffcc00; border-radius:8px; padding:20px; width:300px; text-align:center; box-shadow: 0 0 15px rgba(255,204,0,0.3);">
+            <h3 id="buy-modal-title"
+                style="color:#ffcc00; margin-top:0; border-bottom: 1px solid #333; padding-bottom:10px;">Beli Item</h3>
             <div id="buy-modal-icon" style="font-size:40px; margin:15px 0;"></div>
             <div style="margin:15px 0;">
                 <label style="font-size:11px; color:#aaa;">Berapa banyak yang ingin Anda beli?</label><br>
-                <input type="number" id="buy-modal-qty" value="1" min="1" max="999" style="width:80px; text-align:center; font-size:16px; font-weight:bold; background:#222; color:#fff; border:1px solid #555; border-radius:4px; padding:8px; margin-top:8px;">
+                <input type="number" id="buy-modal-qty" value="1" min="1" max="999"
+                    style="width:80px; text-align:center; font-size:16px; font-weight:bold; background:#222; color:#fff; border:1px solid #555; border-radius:4px; padding:8px; margin-top:8px;">
             </div>
             <div style="font-size:14px; margin-bottom:20px; background:#1a1a1a; padding:10px; border-radius:4px;">
-                Total Biaya: <strong id="buy-modal-total" style="color:#28a745; font-size:16px;">0</strong> <span id="buy-modal-currency">Gold</span>
+                Total Biaya: <strong id="buy-modal-total" style="color:#28a745; font-size:16px;">0</strong> <span
+                    id="buy-modal-currency">Gold</span>
             </div>
             <div style="display:flex; justify-content:space-between; gap:10px;">
-                <button id="btn-cancel-buy" style="flex:1; background:#dc3545; padding:10px; font-weight:bold; border:none; border-radius:4px; color:#fff; cursor:pointer;">BATAL</button>
-                <button id="btn-confirm-buy" style="flex:1; background:#28a745; padding:10px; font-weight:bold; border:none; border-radius:4px; color:#fff; cursor:pointer;">BELI</button>
+                <button id="btn-cancel-buy"
+                    style="flex:1; background:#dc3545; padding:10px; font-weight:bold; border:none; border-radius:4px; color:#fff; cursor:pointer;">BATAL</button>
+                <button id="btn-confirm-buy"
+                    style="flex:1; background:#28a745; padding:10px; font-weight:bold; border:none; border-radius:4px; color:#fff; cursor:pointer;">BELI</button>
             </div>
         </div>
     </div>
 
     <!-- UNIVERSAL RPG MODAL -->
-    <div id="rpg-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center;">
-        <div id="rpg-modal-box" style="background:#121216; border:2px solid #00d2ff; border-radius:8px; padding:20px; width:320px; text-align:center; box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);">
-            <h3 id="rpg-modal-title" style="color:#00d2ff; margin-top:0; border-bottom: 1px dashed #333; padding-bottom:10px;">Notifikasi</h3>
-            
+    <div id="rpg-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center;">
+        <div id="rpg-modal-box"
+            style="background:#121216; border:2px solid #00d2ff; border-radius:8px; padding:20px; width:320px; text-align:center; box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);">
+            <h3 id="rpg-modal-title"
+                style="color:#00d2ff; margin-top:0; border-bottom: 1px dashed #333; padding-bottom:10px;">Notifikasi
+            </h3>
+
             <p id="rpg-modal-msg" style="color:#ddd; font-size:14px; margin:15px 0; line-height: 1.5;"></p>
-            
-            <input type="text" id="rpg-modal-input" style="display:none; width:100%; padding:10px; margin-bottom:15px; background:#0d151e; color:#fff; border:1px solid #00d2ff; border-radius:4px; text-align:center; font-size:14px; box-sizing: border-box;">
-            
+
+            <input type="text" id="rpg-modal-input"
+                style="display:none; width:100%; padding:10px; margin-bottom:15px; background:#0d151e; color:#fff; border:1px solid #00d2ff; border-radius:4px; text-align:center; font-size:14px; box-sizing: border-box;">
+
             <div style="display:flex; justify-content:center; gap:10px; margin-top: 10px;">
-                <button id="btn-rpg-cancel" style="display:none; flex:1; background:#dc3545; padding:10px; font-weight:bold; border:none; border-radius:4px; color:#fff; cursor:pointer;">BATAL</button>
-                <button id="btn-rpg-ok" style="flex:1; background:#00d2ff; color:#000; padding:10px; font-weight:bold; border:none; border-radius:4px; cursor:pointer;">OK</button>
+                <button id="btn-rpg-cancel"
+                    style="display:none; flex:1; background:#dc3545; padding:10px; font-weight:bold; border:none; border-radius:4px; color:#fff; cursor:pointer;">BATAL</button>
+                <button id="btn-rpg-ok"
+                    style="flex:1; background:#00d2ff; color:#000; padding:10px; font-weight:bold; border:none; border-radius:4px; cursor:pointer;">OK</button>
             </div>
         </div>
     </div>
@@ -178,4 +219,5 @@
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/game.js"></script>
 </body>
+
 </html>
