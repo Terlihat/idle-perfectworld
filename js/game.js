@@ -515,7 +515,21 @@ window.actionBid = async function(id, action) {
 
 window.addStat = function(statName) { addCharacterStat(db, currentUserUid, statName); };
 window.leaveParty = function(partyId) { leaveParty(db, partyId, currentUserUid); };
-window.startFb = function(partyId) { startFbBattle(db, currentUserUid, partyId); };
+window.startFb = async function(partyId) {
+    // 1. Kunci tombol agar tidak di-klik berkali-kali secara tidak sengaja
+    if (window.isFbRunning) return; 
+    window.isFbRunning = true;
+    
+    try {
+        // 2. Panggil fungsi utama FB
+        await startFbBattle(db, currentUserUid, partyId); 
+    } catch (err) {
+        console.error("Gagal memulai FB:", err);
+    } finally {
+        // 3. Buka kunci setelah jeda agar sistem database sempat menghapus room
+        setTimeout(() => { window.isFbRunning = false; }, 1500);
+    }
+};
 window.joinGuildAction = async function(guildId) { if (await window.rpgConfirm("Bergabung dengan Guild ini?", "Gabung Guild")) joinGuild(db, currentUserUid, currentPlayerStats, guildId); };
 window.kickMemberAction = async function(targetUid) { if (await window.rpgConfirm("Keluarkan anggota ini dari Guild?", "Keluarkan Anggota")) kickMember(db, currentUserUid, currentPlayerStats.guildId, targetUid); };
 window.actionCraftItem = async function(recipeName) {
