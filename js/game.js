@@ -28,7 +28,6 @@ import { executeRefineAction } from './modules/blacksmith.js';
 
 import { MONSTER_DB } from './data/monsters.js';
 import './modules/game-state.js';
-
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
 // ==========================================
