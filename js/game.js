@@ -1,12 +1,12 @@
 import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { doc, getDoc, updateDoc, onSnapshot, runTransaction, collection, getDocs, query, where, writeBatch} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, getDoc, updateDoc, onSnapshot, runTransaction, collection, getDocs, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // IMPORT MODULES UI
 import { loadUIComponents } from './ui-loader.js';
-loadUIComponents(); 
+loadUIComponents();
 
-import { 
+import {
     renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI,
     renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI, getIconHTML, renderShopAndMall, renderPKUI
 } from './modules/ui-renderer.js';
@@ -14,7 +14,7 @@ import {
 // IMPORT MODULES SISTEM
 import { selectCharacterClass, addCharacterStat, startStaminaRegeneration, consumePotion } from './modules/character.js';
 import { equipFromInventory, sellItemToNPC, unequipItem } from './modules/inventory.js';
-import { attackMonster } from './modules/battle.js'; 
+import { attackMonster } from './modules/battle.js';
 import { listenToChat, sendChat } from './modules/chat.js';
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
 import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, rejectBid, cancelAuction } from './modules/auction.js';
@@ -27,11 +27,12 @@ import { ITEM_DB } from './data/items.js';
 import { executeRefineAction } from './modules/blacksmith.js';
 
 import { MONSTER_DB } from './data/monsters.js';
+import './modules/game-state.js';
 
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
 // ==========================================
-window.showModal = function({ type, msg, title, inputType = 'text' }) {
+window.showModal = function ({ type, msg, title, inputType = 'text' }) {
     return new Promise((resolve) => {
         const modal = document.getElementById('rpg-modal');
         const box = document.getElementById('rpg-modal-box');
@@ -50,12 +51,12 @@ window.showModal = function({ type, msg, title, inputType = 'text' }) {
         let colorTheme = '#00d2ff'; // Default Biru
         if (type === 'alert') colorTheme = '#ffcc00'; // Kuning (Peringatan)
         if (type === 'confirm') colorTheme = '#ff9800'; // Oranye (Pertanyaan)
-        
+
         elTitle.innerText = title;
         elTitle.style.color = colorTheme;
         box.style.borderColor = colorTheme;
         btnOk.style.background = colorTheme;
-        
+
         elMsg.innerHTML = String(msg).replace(/\n/g, '<br>');
 
         // Reset Event Listener agar tidak bertumpuk
@@ -95,32 +96,17 @@ window.showModal = function({ type, msg, title, inputType = 'text' }) {
 };
 
 // ALIAS FUNGSI UNTUK MEMPERMUDAH PEMANGGILAN
-window.rpgAlert = (msg, title="Pesan Sistem") => window.showModal({type: 'alert', msg, title});
-window.rpgConfirm = (msg, title="Konfirmasi") => window.showModal({type: 'confirm', msg, title});
-window.rpgPrompt = (msg, title="Input", inputType="text") => window.showModal({type: 'prompt', msg, title, inputType});
+window.rpgAlert = (msg, title = "Pesan Sistem") => window.showModal({ type: 'alert', msg, title });
+window.rpgConfirm = (msg, title = "Konfirmasi") => window.showModal({ type: 'confirm', msg, title });
+window.rpgPrompt = (msg, title = "Input", inputType = "text") => window.showModal({ type: 'prompt', msg, title, inputType });
 
 // OVERRIDE ALERT BAWAAN BROWSER AGAR MODUL LAIN OTOMATIS KEREN
-window.alert = function(msg) { window.rpgAlert(msg); };
+window.alert = function (msg) { window.rpgAlert(msg); };
 
 // ==========================================
 
-let currentUserUid = null;
-let activeUnsubscribeListeners = [];
-let inventoryMode = "EQUIP"; 
-let playerUsername = "Hero Anonim";
-let currentPlayerStats = {}; 
-let staminaRegenInterval = null;
-
-let globalGuilds = {}; 
-let guildUpgradesMap = {};
-
-let currentChatChannel = 'world'; 
-let currentPartyId = null;
-let unsubChatListener = null;
+let inventoryMode = "EQUIP";
 let unsubMail;
-
-let bsSelectedEquip = null;
-let bsSelectedCatalyst = "Tanpa Batu Tambahan";
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
@@ -128,7 +114,7 @@ function showScreen(screenId) {
 }
 
 function startDynamicChat() {
-    if (unsubChatListener) unsubChatListener(); 
+    if (unsubChatListener) unsubChatListener();
     let targetId = null;
     if (currentChatChannel === 'guild') targetId = currentPlayerStats.guildId;
     if (currentChatChannel === 'party') targetId = currentPartyId;
@@ -141,9 +127,9 @@ function startDynamicChat() {
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUid = user.uid;
-        
+
         await loadUIComponents();
-        
+
         const docSnap = await getDoc(doc(db, "users", currentUserUid));
         if (!docSnap.exists() || !docSnap.data().characterClass) {
             showScreen('screen-char-select');
@@ -152,7 +138,7 @@ onAuthStateChanged(auth, async (user) => {
             renderShopAndMall();
             startLiveGameSync();
             if (staminaRegenInterval) clearInterval(staminaRegenInterval);
-            staminaRegenInterval = startStaminaRegeneration(db, currentUserUid); 
+            staminaRegenInterval = startStaminaRegeneration(db, currentUserUid);
         }
     } else {
         currentUserUid = null;
@@ -173,7 +159,7 @@ function startLiveGameSync() {
     const unsubGuilds = listenToGuilds(db, (guildsData, upgradesData) => {
         globalGuilds = guildsData;
         guildUpgradesMap = upgradesData;
-        renderGuildUI(currentPlayerStats, globalGuilds, guildUpgradesMap); 
+        renderGuildUI(currentPlayerStats, globalGuilds, guildUpgradesMap);
     });
 
     const unsubData = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
@@ -187,14 +173,14 @@ function startLiveGameSync() {
 
         if (currentTotal < expectedTotal) {
             updateDoc(doc(db, "users", currentUserUid), { statPoints: (d.statPoints || 0) + (expectedTotal - currentTotal) });
-            return; 
+            return;
         }
 
         if (d.guildId && globalGuilds[d.guildId]) {
             const myGuild = globalGuilds[d.guildId];
             const myDataInGuild = myGuild.members.find(m => m.uid === currentUserUid);
             if (myDataInGuild && myDataInGuild.level !== (d.level || 1)) {
-                const updatedMembers = myGuild.members.map(m => 
+                const updatedMembers = myGuild.members.map(m =>
                     m.uid === currentUserUid ? { ...m, level: (d.level || 1) } : m
                 );
                 updateDoc(doc(db, "guilds", d.guildId), { members: updatedMembers });
@@ -204,19 +190,19 @@ function startLiveGameSync() {
         if (!d.guildId && currentChatChannel === 'guild') {
             currentChatChannel = 'world';
             const sel = document.getElementById('chat-channel-select');
-            if(sel) sel.value = 'world';
+            if (sel) sel.value = 'world';
             startDynamicChat();
         }
 
         const newStats = renderPlayerUI(d, currentUserUid, globalGuilds, guildUpgradesMap);
-        if (newStats) currentPlayerStats = newStats; 
+        if (newStats) currentPlayerStats = newStats;
 
         renderQuestUI(d.quests);
         renderInventoryUI(d.inventory);
         renderBankUI(d.bankInventory);
-        renderGuildUI(currentPlayerStats, globalGuilds, guildUpgradesMap); 
+        renderGuildUI(currentPlayerStats, globalGuilds, guildUpgradesMap);
         renderCraftingUI(d.inventory || {}, d.level || 1, d.gold || 0);
-        
+
         if (!unsubChatListener) startDynamicChat();
     });
 
@@ -246,7 +232,7 @@ function startLiveGameSync() {
             if (!currentPartyId && currentChatChannel === 'party') {
                 currentChatChannel = 'world';
                 const sel = document.getElementById('chat-channel-select');
-                if(sel) sel.value = 'world';
+                if (sel) sel.value = 'world';
                 startDynamicChat();
             }
         }
@@ -279,11 +265,11 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-function clearActiveModeClasses() { 
-    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction', 'btn-mode-dismantle', 'btn-mode-blacksmith', 'btn-mode-crafting'].forEach(id => { 
-        const el = document.getElementById(id); 
+function clearActiveModeClasses() {
+    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction', 'btn-mode-dismantle', 'btn-mode-blacksmith', 'btn-mode-crafting'].forEach(id => {
+        const el = document.getElementById(id);
         if (el) { el.className = ""; if (id !== 'btn-mode-equip') el.style.backgroundColor = "#495057"; }
-    }); 
+    });
 }
 
 document.addEventListener('click', async (e) => {
@@ -294,7 +280,7 @@ document.addEventListener('click', async (e) => {
 
     if (targetId === 'btn-admin-panel') window.location.href = './admin/index.html';
     if (targetId === 'btn-copy-uid') { if (currentUserUid) { navigator.clipboard.writeText(currentUserUid); window.rpgAlert("📋 UID disalin!"); } }
-    
+
     // --- NAVIGASI TOGGLE PANEL ---
     if (targetId === 'btn-toggle-mall') window.togglePanel('panel-mall');
     if (targetId === 'btn-toggle-shop') window.togglePanel('panel-shop');
@@ -316,49 +302,49 @@ document.addEventListener('click', async (e) => {
     if (targetId === 'btn-mode-equip') { inventoryMode = "EQUIP"; clearActiveModeClasses(); target.className = "mode-active"; }
     if (targetId === 'btn-mode-sell') { inventoryMode = "SELL"; clearActiveModeClasses(); target.className = "mode-sell-active"; }
     if (targetId === 'btn-mode-dismantle') { inventoryMode = "DISMANTLE"; clearActiveModeClasses(); target.style.backgroundColor = "#dc3545"; }
-    
-    if (targetId === 'btn-mode-bank') { 
-        inventoryMode = "BANK"; 
-        clearActiveModeClasses(); 
-        target.className = "mode-active"; 
-        window.bukaPanelKhusus('panel-bank'); 
+
+    if (targetId === 'btn-mode-bank') {
+        inventoryMode = "BANK";
+        clearActiveModeClasses();
+        target.className = "mode-active";
+        window.bukaPanelKhusus('panel-bank');
     }
-    if (targetId === 'btn-mode-auction') { 
-        inventoryMode = "AUCTION"; 
-        clearActiveModeClasses(); 
-        target.className = "mode-auction-active"; 
-        window.bukaPanelKhusus('panel-auction'); 
+    if (targetId === 'btn-mode-auction') {
+        inventoryMode = "AUCTION";
+        clearActiveModeClasses();
+        target.className = "mode-auction-active";
+        window.bukaPanelKhusus('panel-auction');
     }
-    if (targetId === 'btn-mode-crafting') { 
-        inventoryMode = "CRAFTING"; 
-        clearActiveModeClasses(); 
+    if (targetId === 'btn-mode-crafting') {
+        inventoryMode = "CRAFTING";
+        clearActiveModeClasses();
         target.style.backgroundColor = "#17a2b8";
-        window.bukaPanelKhusus('panel-crafting'); 
+        window.bukaPanelKhusus('panel-crafting');
     }
 
     if (targetId === 'btn-send-chat') {
         const chatInput = document.getElementById('chat-input');
-        if (chatInput && chatInput.value.trim()) { 
+        if (chatInput && chatInput.value.trim()) {
             let tId = null;
             if (currentChatChannel === 'guild') tId = currentPlayerStats.guildId;
             if (currentChatChannel === 'party') tId = currentPartyId;
-            sendChat(db, currentUserUid, playerUsername, chatInput.value, currentChatChannel, tId); 
-            chatInput.value = ""; 
+            sendChat(db, currentUserUid, playerUsername, chatInput.value, currentChatChannel, tId);
+            chatInput.value = "";
         }
     }
 
     // --- FITUR GUILD DENGAN RPG MODAL ---
-    if (targetId === 'btn-create-guild') { 
-        const name = document.getElementById('input-guild-name').value; 
+    if (targetId === 'btn-create-guild') {
+        const name = document.getElementById('input-guild-name').value;
         if (!name) return window.rpgAlert("Nama guild tidak boleh kosong!");
-        if (await window.rpgConfirm(`Dirikan Guild [${name}] seharga 100,000 Gold?`, "Buat Guild")) createGuild(db, currentUserUid, currentPlayerStats, name); 
+        if (await window.rpgConfirm(`Dirikan Guild [${name}] seharga 100,000 Gold?`, "Buat Guild")) createGuild(db, currentUserUid, currentPlayerStats, name);
     }
     if (targetId === 'btn-leave-guild') { if (await window.rpgConfirm("Yakin ingin keluar dari Guild? Anda akan kehilangan semua Buff Guild!", "Keluar Guild")) dbLeaveGuild(db, currentUserUid, currentPlayerStats.guildId); }
     if (targetId === 'btn-donate-guild') { const amt = parseInt(document.getElementById('input-donate-gold').value); if (amt > 0) { donateGold(db, currentUserUid, currentPlayerStats.guildId, amt); document.getElementById('input-donate-gold').value = ""; } }
     if (targetId === 'btn-upgrade-guild') { if (await window.rpgConfirm("Gunakan Dana Guild untuk naik level?", "Upgrade Guild")) upgradeGuild(db, currentUserUid, currentPlayerStats.guildId); }
-    if (targetId === 'btn-edit-motd') { 
-        const txt = await window.rpgPrompt("Masukkan pengumuman baru untuk anggota Guild:", "Ubah Papan Info"); 
-        if (txt) updateMotd(db, currentUserUid, currentPlayerStats.guildId, txt); 
+    if (targetId === 'btn-edit-motd') {
+        const txt = await window.rpgPrompt("Masukkan pengumuman baru untuk anggota Guild:", "Ubah Papan Info");
+        if (txt) updateMotd(db, currentUserUid, currentPlayerStats.guildId, txt);
     }
     if (targetId === 'btn-disband-guild') { if (await window.rpgConfirm("PERINGATAN KERAS: Yakin membubarkan Guild selamanya? Dana Guild akan hangus!", "Bubarkan Guild")) disbandGuild(db, currentUserUid, currentPlayerStats.guildId); }
 
@@ -375,28 +361,28 @@ document.addEventListener('click', async (e) => {
 });
 
 // GLOBAL WINDOW ROUTERS ASYNC
-window.handleInventoryClick = async function(itemName) {
+window.handleInventoryClick = async function (itemName) {
     if (inventoryMode === "EQUIP") {
-        if (itemName === "Tiket Ganti Nama") { 
-            const inputName = await window.rpgPrompt("Masukkan Nama Karakter Baru:", "Ganti Nama"); 
-            if (inputName && inputName.trim() !== "") equipFromInventory(db, currentUserUid, itemName, inputName); 
-        } 
-        else if (itemName === "Tiket Ubah Job") { 
-            const inputJob = await window.rpgPrompt("Pilih Job Baru (Ketik: Warrior atau Mage):", "Ganti Job"); 
-            if (inputJob === "Warrior" || inputJob === "Mage") equipFromInventory(db, currentUserUid, itemName, inputJob); 
+        if (itemName === "Tiket Ganti Nama") {
+            const inputName = await window.rpgPrompt("Masukkan Nama Karakter Baru:", "Ganti Nama");
+            if (inputName && inputName.trim() !== "") equipFromInventory(db, currentUserUid, itemName, inputName);
+        }
+        else if (itemName === "Tiket Ubah Job") {
+            const inputJob = await window.rpgPrompt("Pilih Job Baru (Ketik: Warrior atau Mage):", "Ganti Job");
+            if (inputJob === "Warrior" || inputJob === "Mage") equipFromInventory(db, currentUserUid, itemName, inputJob);
             else if (inputJob) window.rpgAlert("Job tidak valid! Harus 'Warrior' atau 'Mage'.");
-        } 
-        else if (itemName === "Buku Reset Stats") { 
-            if(await window.rpgConfirm("Gunakan Buku Reset Stats? Semua alokasi manual akan dikembalikan.", "Reset Stats")) equipFromInventory(db, currentUserUid, itemName, null); 
+        }
+        else if (itemName === "Buku Reset Stats") {
+            if (await window.rpgConfirm("Gunakan Buku Reset Stats? Semua alokasi manual akan dikembalikan.", "Reset Stats")) equipFromInventory(db, currentUserUid, itemName, null);
         }
         else if (itemName === "Ramuan HP" || itemName === "Ramuan MP") {
             const sukses = await consumePotion(db, currentUserUid, itemName, currentPlayerStats.maxHp, currentPlayerStats.maxMp);
             if (sukses) window.rpgAlert(`Glug glug glug...\nAnda meminum [${itemName}]! Nyawa/Mana kembali penuh.`, "Berhasil Diteguk");
         }
         else { equipFromInventory(db, currentUserUid, itemName, null); }
-    } 
-    else if (inventoryMode === "SELL") { sellItemToNPC(db, currentUserUid, itemName); } 
-    else if (inventoryMode === "BANK") { 
+    }
+    else if (inventoryMode === "SELL") { sellItemToNPC(db, currentUserUid, itemName); }
+    else if (inventoryMode === "BANK") {
         const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ingin disimpan?`, "Simpan ke Bank", "number");
         const qty = parseInt(qtyStr);
         if (qty > 0) depositItem(db, currentUserUid, itemName, qty);
@@ -419,69 +405,69 @@ window.handleInventoryClick = async function(itemName) {
     else if (inventoryMode === "BLACKSMITH") {
         const baseName = itemName.replace(/\s\[\+\d+\]$/, '');
         const itemInfo = ITEM_DB[baseName];
-        
+
         if (!itemInfo) return window.rpgAlert("Item tidak dikenali sistem.");
 
         const realIconHTML = getIconHTML(baseName);
 
         if (itemInfo.type === 'weapon' || itemInfo.type === 'armor' || itemInfo.type === 'accessory') {
-            bsSelectedEquip = itemName; 
+            bsSelectedEquip = itemName;
             document.getElementById('bs-icon-equip').innerHTML = realIconHTML;
             document.getElementById('bs-text-equip').innerText = itemName;
             document.getElementById('bs-text-equip').style.color = "#00d2ff";
-            
+
             const mCost = itemInfo.type === 'weapon' ? 2 : 1;
             document.getElementById('bs-info-cost').innerText = `Biaya: ${mCost}x Mirage Stone & 1,000 Gold`;
-        } 
+        }
         else if (itemInfo.type === 'catalyst') {
             if (itemName === "Mirage Stone") return window.rpgAlert("Mirage Stone digunakan otomatis. Pilih batu tambahan atau biarkan kosong!");
             bsSelectedCatalyst = itemName;
             document.getElementById('bs-icon-catalyst').innerHTML = realIconHTML;
             document.getElementById('bs-text-catalyst').innerText = itemName;
             document.getElementById('bs-text-catalyst').style.color = "#ffcc00";
-        } 
+        }
         else {
             window.rpgAlert("❌ Hanya bisa memasukkan Equip atau Batu Catalyst ke slot tungku!");
         }
     }
 };
 
-window.handleBankClick = async function(itemName) { 
+window.handleBankClick = async function (itemName) {
     const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ingin ditarik?`, "Tarik dari Bank", "number");
     const qty = parseInt(qtyStr);
-    if (qty > 0) withdrawItem(db, currentUserUid, itemName, qty); 
+    if (qty > 0) withdrawItem(db, currentUserUid, itemName, qty);
 };
-window.claimMail = function(mailId) { claimMailReward(db, currentUserUid, mailId); };
-window.deleteMail = async function(mailId) { if (await window.rpgConfirm("Yakin ingin menghapus surat ini?", "Hapus Surat")) deleteMail(db, currentUserUid, mailId); };
-window.deleteAllMails = async function() {
+window.claimMail = function (mailId) { claimMailReward(db, currentUserUid, mailId); };
+window.deleteMail = async function (mailId) { if (await window.rpgConfirm("Yakin ingin menghapus surat ini?", "Hapus Surat")) deleteMail(db, currentUserUid, mailId); };
+window.deleteAllMails = async function () {
     if (!await window.rpgConfirm("Hapus semua surat?\n(Surat yang berisi Hadiah/Lampiran yang belum diklaim TIDAK akan dihapus).", "Bersihkan Kotak Surat")) return;
 
     await new Promise(res => setTimeout(res, 200));
 
     try {
-        const mailRef = collection(db, "users", currentUserUid, "mailbox"); 
+        const mailRef = collection(db, "users", currentUserUid, "mailbox");
         const snap = await getDocs(mailRef);
-        
+
         const batch = writeBatch(db);
         let deletedCount = 0;
 
         snap.docs.forEach(docSnap => {
             const data = docSnap.data();
-            
+
             let isPunyaHadiah = false;
-            const att = data.attachments || {}; 
-            
+            const att = data.attachments || {};
+
             const adaItem = att.itemName || att.name;
             const adaGold = (att.gold || 0) > 0;
             const adaCoin = (att.coin || 0) > 0;
-            
+
             if (adaItem || adaGold || adaCoin || data.reward) {
                 isPunyaHadiah = true;
             }
-            
+
             const isSudahDiKlaim = data.isClaimed === true || data.isClaimed === "true";
             const bisaDihapus = !isPunyaHadiah || isSudahDiKlaim;
-            
+
             if (bisaDihapus) {
                 batch.delete(docSnap.ref);
                 deletedCount++;
@@ -489,7 +475,7 @@ window.deleteAllMails = async function() {
         });
 
         if (deletedCount > 0) {
-            await batch.commit(); 
+            await batch.commit();
             window.rpgAlert(`🧹 ${deletedCount} surat berhasil dibersihkan!`, "Sukses");
         } else {
             window.rpgAlert("Tidak ada surat yang bisa dihapus.\n(Semua sisa surat masih berisi hadiah yang belum diambil).", "Kotak Bersih");
@@ -499,30 +485,30 @@ window.deleteAllMails = async function() {
         window.rpgAlert(`Gagal membersihkan kotak surat: ${err.message}`, "Sistem Error");
     }
 };
-window.buyFromAuction = async function(id, name, price, sellerId) { if (await window.rpgConfirm(`Beli Langsung ${name} seharga ${price} Gold?`, "Pasar Lelang")) buyAuctionItem(db, currentUserUid, id, name, price, sellerId); };
-window.cancelAuction = async function(id) { if (await window.rpgConfirm("Tarik barang dari pasar?", "Batal Lelang")) cancelAuction(db, currentUserUid, id); };
+window.buyFromAuction = async function (id, name, price, sellerId) { if (await window.rpgConfirm(`Beli Langsung ${name} seharga ${price} Gold?`, "Pasar Lelang")) buyAuctionItem(db, currentUserUid, id, name, price, sellerId); };
+window.cancelAuction = async function (id) { if (await window.rpgConfirm("Tarik barang dari pasar?", "Batal Lelang")) cancelAuction(db, currentUserUid, id); };
 
-window.placeBid = async function(id, name, currentBid) {
+window.placeBid = async function (id, name, currentBid) {
     const minBid = currentBid > 0 ? currentBid + 10 : 10;
     const bidStr = await window.rpgPrompt(`Masukkan tawaran (Bid) untuk ${name}\n(Minimal: ${minBid} Gold):`, "Tawar Lelang", "number");
     const bidAmt = parseInt(bidStr);
     if (bidAmt >= minBid) { placeBid(db, currentUserUid, playerUsername, id, bidAmt); } else if (bidStr) { window.rpgAlert(`Tawaran terlalu rendah! Minimal tawaran adalah ${minBid} Gold.`); }
 };
-window.actionBid = async function(id, action) {
+window.actionBid = async function (id, action) {
     if (action === 'accept' && await window.rpgConfirm("Terima tawaran ini?", "Terima Tawaran")) acceptBid(db, currentUserUid, id);
     if (action === 'reject' && await window.rpgConfirm("Tolak tawaran ini?", "Tolak Tawaran")) rejectBid(db, currentUserUid, id);
 };
 
-window.addStat = function(statName) { addCharacterStat(db, currentUserUid, statName); };
-window.leaveParty = function(partyId) { leaveParty(db, partyId, currentUserUid); };
-window.startFb = async function(partyId) {
+window.addStat = function (statName) { addCharacterStat(db, currentUserUid, statName); };
+window.leaveParty = function (partyId) { leaveParty(db, partyId, currentUserUid); };
+window.startFb = async function (partyId) {
     // 1. Kunci tombol agar tidak di-klik berkali-kali secara tidak sengaja
-    if (window.isFbRunning) return; 
+    if (window.isFbRunning) return;
     window.isFbRunning = true;
-    
+
     try {
         // 2. Panggil fungsi utama FB
-        await startFbBattle(db, currentUserUid, partyId); 
+        await startFbBattle(db, currentUserUid, partyId);
     } catch (err) {
         console.error("Gagal memulai FB:", err);
     } finally {
@@ -530,18 +516,18 @@ window.startFb = async function(partyId) {
         setTimeout(() => { window.isFbRunning = false; }, 1500);
     }
 };
-window.joinGuildAction = async function(guildId) { if (await window.rpgConfirm("Bergabung dengan Guild ini?", "Gabung Guild")) joinGuild(db, currentUserUid, currentPlayerStats, guildId); };
-window.kickMemberAction = async function(targetUid) { if (await window.rpgConfirm("Keluarkan anggota ini dari Guild?", "Keluarkan Anggota")) kickMember(db, currentUserUid, currentPlayerStats.guildId, targetUid); };
-window.actionCraftItem = async function(recipeName) {
-    if(await window.rpgConfirm(`Siap menempa [${recipeName}]?\nSemua material dan Gold yang disyaratkan akan dikonsumsi.`, "Crafting")) {
+window.joinGuildAction = async function (guildId) { if (await window.rpgConfirm("Bergabung dengan Guild ini?", "Gabung Guild")) joinGuild(db, currentUserUid, currentPlayerStats, guildId); };
+window.kickMemberAction = async function (targetUid) { if (await window.rpgConfirm("Keluarkan anggota ini dari Guild?", "Keluarkan Anggota")) kickMember(db, currentUserUid, currentPlayerStats.guildId, targetUid); };
+window.actionCraftItem = async function (recipeName) {
+    if (await window.rpgConfirm(`Siap menempa [${recipeName}]?\nSemua material dan Gold yang disyaratkan akan dikonsumsi.`, "Crafting")) {
         craftItemAction(db, currentUserUid, recipeName);
     }
 };
 
-window.bukaPanelKhusus = function(panelId) {
+window.bukaPanelKhusus = function (panelId) {
     const panels = ['panel-bank', 'panel-auction', 'panel-blacksmith', 'panel-crafting'];
     const targetPanel = document.getElementById(panelId);
-    
+
     if (targetPanel && targetPanel.style.display === 'block') {
         targetPanel.style.display = 'none';
         return;
@@ -549,7 +535,7 @@ window.bukaPanelKhusus = function(panelId) {
 
     panels.forEach(id => {
         const el = document.getElementById(id);
-        if(el) el.style.display = 'none';
+        if (el) el.style.display = 'none';
     });
 
     if (targetPanel) {
@@ -558,7 +544,7 @@ window.bukaPanelKhusus = function(panelId) {
     }
 };
 
-window.togglePanel = function(panelId) {
+window.togglePanel = function (panelId) {
     const el = document.getElementById(panelId);
     if (el) {
         el.style.display = el.style.display === 'none' ? 'block' : 'none';
@@ -566,7 +552,7 @@ window.togglePanel = function(panelId) {
     }
 };
 
-window.addBlacksmithLog = function(msg, color) {
+window.addBlacksmithLog = function (msg, color) {
     const logPanel = document.getElementById('bs-log-panel');
     if (logPanel) {
         const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
@@ -575,17 +561,15 @@ window.addBlacksmithLog = function(msg, color) {
     }
 };
 
-let isForging = false;
-
-window.executeTempa = async function() {
+window.executeTempa = async function () {
     if (!bsSelectedEquip) {
         window.addBlacksmithLog("[ERROR] Pilih Equipment terlebih dahulu dari Tas!", "#dc3545");
-        return; 
+        return;
     }
-    
-    if (isForging) return; 
+
+    if (isForging) return;
     isForging = true;
-    
+
     const btnTempa = document.querySelector('button[onclick="window.executeTempa()"]');
     if (btnTempa) {
         btnTempa.innerText = "⏳ MENEMPA...";
@@ -608,51 +592,51 @@ window.executeTempa = async function() {
         btnTempa.style.background = "#28a745";
         btnTempa.style.cursor = "pointer";
     }
-    
+
     isForging = false;
 };
 
-window.resetEquip = function() {
+window.resetEquip = function () {
     bsSelectedEquip = null;
     const elIcon = document.getElementById('bs-icon-equip');
     const elText = document.getElementById('bs-text-equip');
     if (elIcon) elIcon.innerHTML = "🛡️";
     if (elText) { elText.innerText = "Pilih Equip"; elText.style.color = "#aaa"; }
-    
+
     const costText = document.getElementById('bs-info-cost');
     if (costText) costText.innerText = "Silakan pilih Equipment.";
-    
+
     window.addBlacksmithLog("[SISTEM] Equipment dikeluarkan dari tungku.", "#aaa");
 };
 
-window.resetCatalyst = function() {
+window.resetCatalyst = function () {
     bsSelectedCatalyst = "Tanpa Batu Tambahan";
     const elIcon = document.getElementById('bs-icon-catalyst');
     const elText = document.getElementById('bs-text-catalyst');
     if (elIcon) elIcon.innerHTML = "💎";
     if (elText) { elText.innerText = "Tanpa Batu"; elText.style.color = "#aaa"; }
-    
+
     window.addBlacksmithLog("[SISTEM] Batu katalis dikosongkan.", "#aaa");
 };
 
-window.actionUnequip = function(slotType) {
+window.actionUnequip = function (slotType) {
     unequipItem(db, currentUserUid, slotType);
 };
 
-window.activateBlacksmithMode = function() {
-    inventoryMode = "BLACKSMITH"; 
-    
-    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction', 'btn-mode-dismantle', 'btn-mode-blacksmith', 'btn-mode-crafting'].forEach(id => { 
-        const el = document.getElementById(id); 
-        if (el) { 
-            el.className = ""; 
-            if (id !== 'btn-mode-equip') el.style.backgroundColor = "#495057"; 
+window.activateBlacksmithMode = function () {
+    inventoryMode = "BLACKSMITH";
+
+    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction', 'btn-mode-dismantle', 'btn-mode-blacksmith', 'btn-mode-crafting'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.className = "";
+            if (id !== 'btn-mode-equip') el.style.backgroundColor = "#495057";
         }
-    }); 
-    
+    });
+
     const btnEnchant = document.getElementById('btn-mode-blacksmith');
     if (btnEnchant) btnEnchant.style.backgroundColor = "#ff9800";
-    
+
     if (typeof window.bukaPanelKhusus === "function") {
         window.bukaPanelKhusus('panel-blacksmith');
     } else {
@@ -661,11 +645,11 @@ window.activateBlacksmithMode = function() {
 };
 
 // MENGUBAH EVENT LISTENER INI AGAR ASYNC AWAIT BERJALAN LANCAR
-document.addEventListener('click', async function(e) {
+document.addEventListener('click', async function (e) {
     if (e.target && e.target.id === 'btn-create-char') {
         const charNameInput = document.getElementById('char-name-input');
         const classRadio = document.querySelector('input[name="char-class"]:checked');
-        
+
         if (!charNameInput || !charNameInput.value.trim()) {
             return window.rpgAlert("❌ Nama karakter tidak boleh kosong!");
         }
@@ -688,7 +672,7 @@ document.addEventListener('click', async function(e) {
 
             const screenChar = document.getElementById('screen-char-select');
             const screenGame = document.getElementById('screen-game');
-            
+
             if (screenChar) screenChar.style.display = 'none';
             if (screenGame) screenGame.style.display = 'block';
 
@@ -701,13 +685,13 @@ document.addEventListener('click', async function(e) {
     }
 });
 
-document.addEventListener('change', function(e) {
+document.addEventListener('change', function (e) {
     if (e.target && e.target.name === 'char-class') {
         document.querySelectorAll('input[name="char-class"]').forEach(radio => {
             radio.parentElement.style.borderColor = "#3f3f52";
             radio.parentElement.style.background = "#121216";
         });
-        
+
         if (e.target.value === 'Warrior') {
             e.target.parentElement.style.borderColor = "#dc3545";
             e.target.parentElement.style.background = "#1c152a";
@@ -725,24 +709,24 @@ let currentBuyItem = null;
 let currentBuyPrice = 0;
 let currentBuyCurrency = 'Gold';
 
-window.openBuyModal = function(itemName, price, currency) {
+window.openBuyModal = function (itemName, price, currency) {
     currentBuyItem = itemName;
     currentBuyPrice = price;
     currentBuyCurrency = currency;
-    
+
     const modal = document.getElementById('buy-modal');
     if (!modal) return window.rpgAlert("Error: HTML Modal Pembelian belum terpasang!");
-    
+
     document.getElementById('buy-modal-title').innerText = `Beli [${itemName}]`;
     document.getElementById('buy-modal-qty').value = 1;
     document.getElementById('buy-modal-currency').innerText = currency;
     document.getElementById('buy-modal-currency').style.color = currency === 'Coin' ? '#ffcc00' : '#e0a800';
-    
+
     const iconContainer = document.getElementById('buy-modal-icon');
     if (iconContainer && typeof getIconHTML === 'function') {
         iconContainer.innerHTML = getIconHTML(itemName);
     }
-    
+
     updateModalTotal();
     modal.style.display = 'flex';
 };
@@ -756,7 +740,7 @@ document.addEventListener('input', (e) => {
     if (e.target.id === 'buy-modal-qty') {
         let val = parseInt(e.target.value);
         if (val < 1) e.target.value = 1;
-        if (val > 999) e.target.value = 999; 
+        if (val > 999) e.target.value = 999;
         updateModalTotal();
     }
 });
@@ -765,25 +749,25 @@ document.addEventListener('click', async (e) => {
     if (e.target.id === 'btn-cancel-buy') {
         document.getElementById('buy-modal').style.display = 'none';
     }
-    
+
     if (e.target.id === 'btn-confirm-buy') {
         const qty = parseInt(document.getElementById('buy-modal-qty').value) || 1;
         const btn = document.getElementById('btn-confirm-buy');
-        
+
         btn.disabled = true;
         btn.innerText = "⏳ PROSES...";
         btn.style.background = "#555";
-        
+
         try {
             const userRef = doc(db, "users", currentUserUid);
             const totalCost = currentBuyPrice * qty;
-            
+
             await runTransaction(db, async (ts) => {
                 const snap = await ts.get(userRef);
                 if (!snap.exists()) throw "User tidak ditemukan.";
                 const data = snap.data();
                 let updates = {};
-                
+
                 if (currentBuyCurrency === 'Gold') {
                     if ((data.gold || 0) < totalCost) throw `Gold tidak cukup! Butuh ${totalCost.toLocaleString()} Gold.`;
                     updates.gold = data.gold - totalCost;
@@ -795,12 +779,12 @@ document.addEventListener('click', async (e) => {
                 let inv = data.inventory || {};
                 inv[currentBuyItem] = (inv[currentBuyItem] || 0) + qty;
                 updates.inventory = inv;
-                
+
                 ts.update(userRef, updates);
             });
-            
+
             document.getElementById('buy-modal').style.display = 'none';
-            
+
         } catch (err) {
             window.rpgAlert("❌ " + err);
         } finally {
@@ -814,29 +798,29 @@ document.addEventListener('click', async (e) => {
 // ==========================================
 // SISTEM GLOBAL LEADERBOARD & KALKULASI BP
 // ==========================================
-window.fetchLeaderboard = async function(type) {
+window.fetchLeaderboard = async function (type) {
     const lbContent = document.getElementById('leaderboard-content');
     if (!lbContent) return;
-    
+
     lbContent.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">⏳ Memindai data seluruh pemain...</div>';
-    
+
     try {
         const usersRef = collection(db, "users");
         const snap = await getDocs(usersRef); // Unduh data pemain (bisa dioptimalkan di masa depan)
         let usersData = [];
-        
+
         snap.forEach(docSnap => {
             const d = docSnap.data();
             // Hanya masukkan pemain yang sudah membuat karakter (punya username)
             if (d.username) {
                 // RUMUS BATTLE POWER (BP): (Level x 50) + (Semua Status x 10) + (1/5 HP Maksimal)
-                let calculatedBP = (d.level || 1) * 50 + 
-                                   (d.str || 0) * 10 + 
-                                   (d.con || 0) * 10 + 
-                                   (d.dex || 0) * 10 + 
-                                   (d.int || 0) * 10 + 
-                                   Math.floor((d.maxHp || 0) / 5);
-                         
+                let calculatedBP = (d.level || 1) * 50 +
+                    (d.str || 0) * 10 +
+                    (d.con || 0) * 10 +
+                    (d.dex || 0) * 10 +
+                    (d.int || 0) * 10 +
+                    Math.floor((d.maxHp || 0) / 5);
+
                 usersData.push({
                     name: d.username,
                     level: d.level || 1,
@@ -856,25 +840,25 @@ window.fetchLeaderboard = async function(type) {
         let html = '<table style="width:100%; border-collapse:collapse; font-size:12px; text-align:center;">';
         html += '<tr style="background:#222; color:#fff; border-bottom:2px solid #555;">';
         html += '<th style="padding:8px 5px;">Rank</th><th style="padding:8px 5px; text-align:left;">Nama</th><th style="padding:8px 5px;">Class</th><th style="padding:8px 5px;">Nilai</th></tr>';
-        
+
         // Ambil maksimal Top 10
         for (let i = 0; i < Math.min(10, usersData.length); i++) {
             const u = usersData[i];
             let valStr = "";
             let valColor = "#fff";
-            
+
             // Format angka dan ikon berdasar kategori
             if (type === 'level') { valStr = `Lv. ${u.level}`; valColor = '#00d2ff'; }
             if (type === 'gold') { valStr = `💰 ${u.gold.toLocaleString()}`; valColor = '#ffcc00'; }
             if (type === 'bp') { valStr = `⚔️ ${u.bp.toLocaleString()}`; valColor = '#dc3545'; }
-            
+
             // Dekorasi Medali Top 3
-            let rankColor = '#aaa'; 
-            let rankIcon = `#${i+1}`;
+            let rankColor = '#aaa';
+            let rankIcon = `#${i + 1}`;
             if (i === 0) { rankColor = '#ffcc00'; rankIcon = '🥇 1'; }
             else if (i === 1) { rankColor = '#c0c0c0'; rankIcon = '🥈 2'; }
             else if (i === 2) { rankColor = '#cd7f32'; rankIcon = '🥉 3'; }
-            
+
             html += `<tr style="border-bottom:1px solid #333; background: ${i % 2 === 0 ? '#1a1a24' : '#121216'}; transition:0.2s;">
                 <td style="padding:8px 5px; color:${rankColor}; font-weight:bold; font-size:14px;">${rankIcon}</td>
                 <td style="padding:8px 5px; color:#fff; font-weight:bold; text-align:left;">${escapeHTML(u.name)}</td>
@@ -899,13 +883,13 @@ const qPk = query(collection(db, "users"), where("inPkZone", "==", true));
 onSnapshot(qPk, (snap) => {
     let pkPlayers = [];
     snap.forEach(docSnap => {
-        if(docSnap.data().currentHp > 0) { // Hanya lacak yang masih hidup
+        if (docSnap.data().currentHp > 0) { // Hanya lacak yang masih hidup
             pkPlayers.push({ id: docSnap.id, ...docSnap.data() });
         }
     });
-    
+
     if (typeof renderPKUI === 'function') renderPKUI(pkPlayers, currentUserUid);
-    
+
     // Atur tombol masuk/keluar secara dinamis
     const myPkData = pkPlayers.find(p => p.id === currentUserUid);
     const btnEnter = document.getElementById('btn-enter-pk');
@@ -925,7 +909,7 @@ document.addEventListener('click', async (e) => {
     if (!targetId) return;
 
     if (targetId === 'btn-toggle-pk') window.togglePanel('panel-pk');
-    
+
     if (targetId === 'btn-enter-pk') {
         if (currentPlayerStats.currentHp <= 0) return window.rpgAlert("Anda sudah mati! Sembuhkan diri di kota.");
         if ((currentPlayerStats.level || 1) < 30) {
@@ -942,7 +926,7 @@ document.addEventListener('click', async (e) => {
 });
 
 // --- MESIN PENCETAK LOG DARK FOREST ---
-window.addPKLog = function(msg, color) {
+window.addPKLog = function (msg, color) {
     const logPanel = document.getElementById('pk-log-panel');
     if (logPanel) {
         const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
@@ -952,7 +936,7 @@ window.addPKLog = function(msg, color) {
 };
 
 // 3. LOGIKA PERTARUNGAN (BATTLE TRANSACTION)
-window.attackPK = async function(targetUid, targetName) {
+window.attackPK = async function (targetUid, targetName) {
     if (currentPlayerStats.currentHp <= 0) return window.rpgAlert("Hantu tidak bisa menyerang!");
     if (!await window.rpgConfirm(`Bantai ${targetName} sekarang?`, "Target Dikunci")) return;
 
@@ -972,8 +956,8 @@ window.attackPK = async function(targetUid, targetName) {
             if (me.currentHp <= 0) throw "Anda mati kehabisan darah sebelum menyerang!";
 
             // Kalkulasi Kekuatan Dasar (BP)
-            let myBP = (me.level || 1)*50 + (me.str || 0)*10 + (me.dex || 0)*10 + (me.con || 0)*10 + (me.int || 0)*10;
-            let enemyBP = (enemy.level || 1)*50 + (enemy.str || 0)*10 + (enemy.dex || 0)*10 + (enemy.con || 0)*10 + (enemy.int || 0)*10;
+            let myBP = (me.level || 1) * 50 + (me.str || 0) * 10 + (me.dex || 0) * 10 + (me.con || 0) * 10 + (me.int || 0) * 10;
+            let enemyBP = (enemy.level || 1) * 50 + (enemy.str || 0) * 10 + (enemy.dex || 0) * 10 + (enemy.con || 0) * 10 + (enemy.int || 0) * 10;
 
             // Tambahkan elemen kejutan (RNG ±10%) agar menegangkan
             myBP *= (0.9 + Math.random() * 0.2);
@@ -1002,8 +986,8 @@ window.attackPK = async function(targetUid, targetName) {
                     }
                 }
 
-                ts.update(targetRef, { 
-                    currentHp: 0, 
+                ts.update(targetRef, {
+                    currentHp: 0,
                     gold: Math.max(0, (enemy.gold || 0) - goldStolen),
                     inventory: enemyInv,
                     inPkZone: false
@@ -1044,8 +1028,8 @@ window.attackPK = async function(targetUid, targetName) {
                     }
                 }
 
-                ts.update(myRef, { 
-                    currentHp: 0, 
+                ts.update(myRef, {
+                    currentHp: 0,
                     gold: Math.max(0, (me.gold || 0) - goldLost),
                     inventory: myInv,
                     inPkZone: false
@@ -1071,10 +1055,10 @@ window.attackPK = async function(targetUid, targetName) {
         });
 
         window.rpgAlert(result.log, result.success ? "🏆 PK BERHASIL" : "💀 TRAGEDI");
-        
+
         window.addPKLog(result.log, result.success ? "#28a745" : "#dc3545");
 
-    } catch(err) {
+    } catch (err) {
         window.rpgAlert(err, "Pertarungan Batal");
         window.addPKLog(`Batal menyerang: ${err}`, "#aaa"); // Catat juga jika gagal
     }
@@ -1084,14 +1068,14 @@ window.attackPK = async function(targetUid, targetName) {
 document.addEventListener('change', (e) => {
     if (e.target.id === 'fb-select') {
         const bossKey = e.target.value;
-        const boss = MONSTER_DB[bossKey]; 
-        
+        const boss = MONSTER_DB[bossKey];
+
         const infoBox = document.getElementById('fb-drop-info');
         const textBox = document.getElementById('fb-drop-text');
 
         if (boss && infoBox && textBox) {
             let dropsInfo = [];
-            
+
             if (boss.drop) dropsInfo.push(`[${boss.drop.item}] (${(boss.drop.chance * 100).toFixed(0)}%)`);
             if (boss.drops && Array.isArray(boss.drops)) {
                 boss.drops.forEach(d => dropsInfo.push(`[${d.item}] (${(d.chance * 100).toFixed(0)}%)`));
