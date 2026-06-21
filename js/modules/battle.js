@@ -78,7 +78,7 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                 }
 
                 // Kalkulasi Quest
-                const newQuests = getUpdatedQuests(data.quests, monster.name);
+                const newQuests = getUpdatedQuests(data, 'daily', monsterKey, 1);
 
                 // FIX: Kalkulasi EXP Anti-Stuck & Auto-Heal Level Up
                 let newExp = (data.exp || 0) + expGain;
