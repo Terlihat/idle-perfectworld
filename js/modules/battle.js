@@ -102,7 +102,7 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
 
                 // Masukkan data dasar yang pasti di-update
                 let updateData = {
-                    exp: newExp, // ✅ SEKARANG AMAN! Memasukkan sisa EXP SETELAH dipotong level up
+                    exp: newExp,
                     gold: newGold,
                     inventory: inv
                 };
