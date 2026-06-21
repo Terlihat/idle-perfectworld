@@ -189,9 +189,9 @@ export async function startFbBattle(db, leaderUid, partyId) {
 
                 // --- SISTEM KOMPENSASI KEMATIAN ---
                 if (isDead) {
-                    // Jika mati, hadiah dipotong menjadi 30% (Kalikan 0.3)
-                    finalExpGain = Math.floor(finalExpGain * 0.3);
-                    finalGoldGain = Math.floor(finalGoldGain * 0.3);
+                    // Jika mati, hadiah dipotong menjadi 50% (Kalikan 0.5)
+                    finalExpGain = Math.floor(finalExpGain * 0.5);
+                    finalGoldGain = Math.floor(finalGoldGain * 0.5);
                 } else {
                     survivors++; // Hanya dihitung jika selamat
                 }
