@@ -1,13 +1,13 @@
 import { doc, setDoc, getDoc, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getVipStats } from './vip.js';
 
-let isUpdatingStat = false; 
+let isUpdatingStat = false;
 
 export async function selectCharacterClass(db, uid, charClass, callback) {
     try {
         const userRef = doc(db, "users", uid);
-        
-        let baseStats = charClass === 'Warrior' 
+
+        let baseStats = charClass === 'Warrior'
             ? { str: 20, con: 15, dex: 5, int: 2, maxHp: 1500, maxMp: 200 }
             : { str: 2, con: 8, dex: 10, int: 25, maxHp: 800, maxMp: 1000 };
 
@@ -35,13 +35,13 @@ export async function selectCharacterClass(db, uid, charClass, callback) {
             pkKills: 0,
             inPkZone: false
         });
-        
+
         if (callback) callback();
     } catch (err) { alert(err); }
 }
 
 export async function addCharacterStat(db, uid, statName) {
-    if (isUpdatingStat) return; 
+    if (isUpdatingStat) return;
     isUpdatingStat = true;
 
     try {
@@ -49,7 +49,7 @@ export async function addCharacterStat(db, uid, statName) {
         await runTransaction(db, async (ts) => {
             const data = (await ts.get(userRef)).data();
             if ((data.statPoints || 0) <= 0) throw "Poin Stat tidak cukup!";
-            
+
             let updates = { statPoints: data.statPoints - 1 };
             updates[statName] = (data[statName] || 0) + 1;
             ts.update(userRef, updates);
@@ -57,7 +57,7 @@ export async function addCharacterStat(db, uid, statName) {
     } catch (err) {
         window.rpgAlert(err, "Gagal");
     } finally {
-        setTimeout(() => { isUpdatingStat = false; }, 300); 
+        setTimeout(() => { isUpdatingStat = false; }, 300);
     }
 }
 
@@ -65,21 +65,21 @@ export async function addCharacterStat(db, uid, statName) {
 export function startStaminaRegeneration(db, uid) {
     if (!uid) return;
     const userRef = doc(db, "users", uid);
-    
+
     const syncStamina = async () => {
         try {
             const snap = await getDoc(userRef);
             if (snap.exists()) {
                 const data = snap.data();
-                
+
                 // Kalkulasi Batas Maksimal dengan VIP
                 const vipStats = getVipStats(data.vipLevel || 0);
                 const maxStam = (data.maxStamina || 100) + (vipStats.extraMaxStamina || 0);
                 let currentStam = data.currentStamina !== undefined ? data.currentStamina : maxStam;
-                
+
                 const now = Date.now();
                 let lastUpdate = data.lastStaminaUpdate;
-                
+
                 if (!lastUpdate) {
                     lastUpdate = now;
                     await updateDoc(userRef, { lastStaminaUpdate: now });
@@ -87,7 +87,7 @@ export function startStaminaRegeneration(db, uid) {
 
                 if (currentStam < maxStam) {
                     const diffMs = now - lastUpdate;
-                    
+
                     // Perlindungan: Jika waktu HP/PC pemain error dan nyangkut di masa depan
                     if (diffMs < 0) {
                         await updateDoc(userRef, { lastStaminaUpdate: now });
@@ -100,7 +100,7 @@ export function startStaminaRegeneration(db, uid) {
                         const newStam = Math.min(maxStam, currentStam + diffMinutes);
                         // Jangan gunakan 'now', tapi tambahkan dari waktu terakhir 
                         // agar sisa detik yang belum genap 1 menit tidak hangus
-                        const newUpdateTime = lastUpdate + (diffMinutes * 60000); 
+                        const newUpdateTime = lastUpdate + (diffMinutes * 60000);
                         await updateDoc(userRef, { currentStamina: newStam, lastStaminaUpdate: newUpdateTime });
                     }
                 } else if (currentStam >= maxStam && now - lastUpdate > 60000) {
@@ -122,7 +122,7 @@ export async function consumePotion(db, uid, itemName, playerMaxHp, playerMaxMp)
         await runTransaction(db, async (ts) => {
             const data = (await ts.get(userRef)).data();
             let inv = data.inventory || {};
-            
+
             if (!inv[itemName] || inv[itemName] < 1) throw `Anda tidak memiliki ${itemName} di tas.`;
 
             let currentHp = data.currentHp || 0;

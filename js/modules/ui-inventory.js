@@ -9,7 +9,7 @@ export function renderInventoryUI(inventory) {
     let renderSlots = [];
     let items = Object.entries(inventory || {}).sort((a, b) => a[0].localeCompare(b[0]));
     for (const [name, totalQty] of items) {
-		
+
         if (totalQty <= 0) continue;
         let baseName = name.replace(/\s\[\+\d+\]$/, '');
         let badgeHtml = "";
@@ -17,7 +17,7 @@ export function renderInventoryUI(inventory) {
         if (match) {
             badgeHtml = `<div style="position:absolute; top:-5px; right:-5px; background:#dc3545; color:white; font-size:10px; font-weight:bold; padding:2px 4px; border-radius:4px; z-index:10; box-shadow: 0 0 3px black;">+${match[1]}</div>`;
         }
-		
+
         const itemInfo = ITEM_DB[baseName] || { type: 'misc' };
         let maxStack = 99;
         if (['weapon', 'armor', 'accessory', 'mount'].includes(itemInfo.type)) maxStack = 1;
@@ -35,7 +35,7 @@ export function renderInventoryUI(inventory) {
             remainingQty -= currentSlotQty;
         }
     }
-	
+
     for (let i = 0; i < renderSlots.length; i++) {
         const slot = renderSlots[i];
         const qtyText = (slot.qty > 1) ? `<span class="inv-qty">x${slot.qty}</span>` : "";
@@ -47,7 +47,7 @@ export function renderInventoryUI(inventory) {
             ${qtyText}
         </div>`;
     }
-	
+
     const minSlots = 20;
     const totalSlotsToRender = Math.max(minSlots, renderSlots.length);
     for (let i = renderSlots.length; i < totalSlotsToRender; i++) {
@@ -78,7 +78,7 @@ export function renderCraftingUI(inventory, playerLevel, playerGold) {
     const craftList = document.getElementById('crafting-list');
     if (!craftList) return;
     craftList.innerHTML = "";
-	
+
     for (const [recipeName, recipe] of Object.entries(CRAFTING_RECIPES)) {
         let reqHtml = `Lv.${recipe.reqLevel} | 💰 ${recipe.reqGold.toLocaleString()} Gold<br>`;
         let canCraft = (playerLevel >= recipe.reqLevel) && (playerGold >= recipe.reqGold);
@@ -89,7 +89,7 @@ export function renderCraftingUI(inventory, playerLevel, playerGold) {
             if (hasQty < qtyNeeded) canCraft = false;
             matHtml += `<span style="color:${color}; font-size:10px;">[${matName}] ${hasQty}/${qtyNeeded}</span><br>`;
         }
-		
+
         let btnHtml = canCraft
             ? `<button onclick="window.actionCraftItem('${escapeHTML(recipeName)}')" style="background:#00d2ff; color:#000; font-weight:bold; padding:4px 8px; font-size:10px;">🔨 TEMPA</button>`
             : `<button disabled style="background:#555; padding:4px 8px; font-size:10px; cursor:not-allowed; border:1px solid #333;">Syarat Kurang</button>`;
