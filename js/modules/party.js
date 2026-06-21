@@ -204,7 +204,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 if (!isDead && (bonusGold > 0 || bonusExp > 0)) {
                     dropMsg += ` ✨(VIP +${bonusGold}G / +${bonusExp}XP)`;
                 } else if (isDead) {
-                    dropMsg += ` 📉(Penalti Kematian: Hadiah 30%)`;
+                    dropMsg += ` 📉(Penalti Kematian: Hadiah 50%)`;
                 }
 
                 // LOGIKA LEVEL UP
