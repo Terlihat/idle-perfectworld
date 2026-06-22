@@ -21,12 +21,13 @@ export async function loadUIComponents() {
         { id: 'panel-blacksmith', file: './components/blacksmith.html' },
         { id: 'panel-pk', file: './components/pk.html' }, // Komponen Baru
         { id: 'panel-auction', file: './components/auction.html' },
-        { id: 'panel-coin-market', file: './components/coin-market.html' },
+        { id: 'panel-refine-transfer', file: './components/refine-transfer.html' },
 
         // --- Kolom 3 (Kanan) ---
         { id: 'panel-leaderboard', file: './components/leaderboard.html' }, // Komponen Baru
         { id: 'panel-mall', file: './components/mall.html' },
         { id: 'panel-shop', file: './components/shop.html' },
+        { id: 'panel-coin-market', file: './components/coin-market.html' },
         { id: 'panel-mailbox', file: './components/mailbox.html' },
         { id: 'panel-bank', file: './components/bank.html' },
         { id: 'panel-guild', file: './components/guild.html' },

@@ -30,6 +30,7 @@ import { MONSTER_DB } from './data/monsters.js';
 import './modules/game-state.js';
 import './modules/coin-market.js';
 import { listenToCoinMarket } from './modules/coin-market.js';
+import './modules/refine-transfer.js';
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
 // ==========================================
@@ -210,6 +211,12 @@ function startLiveGameSync() {
         renderBankUI(d.bankInventory);
         renderGuildUI(currentPlayerStats, globalGuilds, guildUpgradesMap);
         renderCraftingUI(d.inventory || {}, d.level || 1, d.gold || 0);
+
+        window.currentInventoryData = d.inventory || {};
+        const elOwnedStone = document.getElementById('transfer-owned-stone');
+        if (elOwnedStone) {
+            elOwnedStone.innerText = d.inventory && d.inventory['Universal Stone'] ? d.inventory['Universal Stone'] : 0;
+        }
 
         if (!unsubChatListener) startDynamicChat();
     });
@@ -677,6 +684,27 @@ window.activateBlacksmithMode = function () {
     } else {
         window.rpgAlert("Sistem gagal menemukan panel tungku!");
     }
+};
+
+window.activateTransferMode = function () {
+    // 1. Tampilkan panel transfer
+    const panelTransfer = document.getElementById('panel-refine-transfer');
+    if (panelTransfer) {
+        // Jika sedang tersembunyi, maka munculkan. Jika sudah muncul, sembunyikan (Toggle)
+        if (panelTransfer.style.display === 'none') {
+            panelTransfer.style.display = 'block';
+            panelTransfer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            panelTransfer.style.display = 'none';
+        }
+    }
+
+    // 2. (Opsional) Sembunyikan panel Blacksmith / Crafting agar layar tidak penuh
+    const panelBs = document.getElementById('panel-blacksmith');
+    if (panelBs) panelBs.style.display = 'none';
+
+    const panelCraft = document.getElementById('panel-crafting');
+    if (panelCraft) panelCraft.style.display = 'none';
 };
 
 // MENGUBAH EVENT LISTENER INI AGAR ASYNC AWAIT BERJALAN LANCAR
