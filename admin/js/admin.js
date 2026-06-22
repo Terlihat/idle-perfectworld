@@ -213,6 +213,9 @@ document.getElementById('btn-search-player').addEventListener('click', async () 
             document.getElementById('edit-player-class').innerText = data.characterClass || "Tidak diketahui";
             document.getElementById('edit-player-gold').value = data.gold || 0;
             document.getElementById('edit-player-coin').value = data.coin || 0;
+            document.getElementById('edit-player-level-input').value = data.level || 1;
+            document.getElementById('edit-player-exp').value = data.exp || 0;
+            document.getElementById('edit-player-vip').value = data.vipLevel || 0;
 
             // Atur tombol Banned
             const btnBan = document.getElementById('btn-ban-player');
@@ -242,14 +245,22 @@ document.getElementById('btn-save-player').addEventListener('click', async () =>
     if (!currentEditingUid) return;
     const newGold = parseInt(document.getElementById('edit-player-gold').value) || 0;
     const newCoin = parseInt(document.getElementById('edit-player-coin').value) || 0;
+    const newLevel = parseInt(document.getElementById('edit-player-level-input').value) || 1;
+    const newExp = parseInt(document.getElementById('edit-player-exp').value) || 0;
+    const newVip = parseInt(document.getElementById('edit-player-vip').value) || 0;
 
     if (!confirm("Yakin ingin mengubah jumlah Gold/Coin pemain ini?")) return;
 
     try {
         await updateDoc(doc(db, "users", currentEditingUid), {
             gold: newGold,
-            coin: newCoin
+            coin: newCoin,
+            level: newLevel,
+            exp: newExp,
+            vipLevel: newVip
         });
+
+        document.getElementById('edit-player-level').innerText = newLevel;
         alert("✅ Data ekonomi pemain berhasil diperbarui!");
     } catch (err) {
         console.error(err);
