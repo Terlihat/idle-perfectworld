@@ -1,6 +1,6 @@
 import { db, auth } from '../../js/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // PERBAIKAN: Import Database Item agar list selalu up-to-date otomatis!
 import { ITEM_DB } from '../../js/data/items.js';
@@ -296,5 +296,62 @@ document.getElementById('btn-ban-player').addEventListener('click', async () => 
     } catch (err) {
         console.error(err);
         alert("Gagal mengubah status ban.");
+    }
+});
+
+// ==========================================
+// 6. FITUR KONTROL WORLD BOSS
+// ==========================================
+document.getElementById('btn-admin-spawn-wb').addEventListener('click', async () => {
+    const bossName = document.getElementById('wb-admin-name').value.trim() || "World Boss Misterius";
+    const bossHp = parseInt(document.getElementById('wb-admin-hp').value) || 5000000;
+
+    if (!confirm(`Yakin ingin memunculkan "${bossName}" dengan total darah ${bossHp.toLocaleString()} HP ke seluruh server?`)) return;
+
+    try {
+        const btnSpawn = document.getElementById('btn-admin-spawn-wb');
+        btnSpawn.innerText = "Memunculkan...";
+        btnSpawn.disabled = true;
+
+        // Menggunakan setDoc untuk me-reset data boss secara utuh
+        await setDoc(doc(db, "events", "worldBoss"), {
+            name: bossName,
+            maxHp: bossHp,
+            currentHp: bossHp,
+            isActive: true,
+            participants: {} // Kosongkan daftar penyerang sebelumnya
+        });
+
+        alert(`✅ World Boss "${bossName}" berhasil dimunculkan! Pemain sekarang bisa melihat dan menyerangnya.`);
+        btnSpawn.innerText = "⚔️ Munculkan Boss";
+        btnSpawn.disabled = false;
+    } catch (err) {
+        console.error(err);
+        alert("Gagal memunculkan boss: " + err.message);
+        document.getElementById('btn-admin-spawn-wb').disabled = false;
+    }
+});
+
+document.getElementById('btn-admin-kill-wb').addEventListener('click', async () => {
+    if (!confirm("Yakin ingin mematikan event World Boss secara paksa? (HP Boss akan menjadi 0)")) return;
+
+    try {
+        const btnKill = document.getElementById('btn-admin-kill-wb');
+        btnKill.innerText = "Mematikan...";
+        btnKill.disabled = true;
+
+        // Menggunakan updateDoc agar hanya mengubah statusnya saja
+        await updateDoc(doc(db, "events", "worldBoss"), {
+            isActive: false,
+            currentHp: 0
+        });
+
+        alert("✅ World Boss berhasil dihentikan (Mati).");
+        btnKill.innerText = "💀 Bunuh / Hentikan Boss";
+        btnKill.disabled = false;
+    } catch (err) {
+        console.error(err);
+        alert("Gagal mematikan boss: " + err.message);
+        document.getElementById('btn-admin-kill-wb').disabled = false;
     }
 });
