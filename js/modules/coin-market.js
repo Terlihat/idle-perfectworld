@@ -1,7 +1,6 @@
 import { db } from '../firebase-config.js';
 import { doc, runTransaction, collection, addDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// --- DEPOSIT & WITHDRAW ---
 window.cmDeposit = async function(type) {
     const amountStr = await window.rpgPrompt(`Berapa banyak ${type.toUpperCase()} yang ingin disetor ke Bursa?`, "Deposit Bursa", "number");
     const amount = parseInt(amountStr);
