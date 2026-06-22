@@ -31,6 +31,9 @@ import './modules/game-state.js';
 import './modules/coin-market.js';
 import { listenToCoinMarket } from './modules/coin-market.js';
 import './modules/refine-transfer.js';
+import './modules/world-boss.js';
+import { listenToWorldBoss } from './modules/world-boss.js';
+
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
 // ==========================================
@@ -277,7 +280,69 @@ function startLiveGameSync() {
             </div>
         `).join('');
     });
-    // --------------------------------------------------------
+
+    // --- LISTENER WORLD BOSS (TAMBAHAN BARU) ---
+    const unsubBoss = listenToWorldBoss((bossData) => {
+        if (!bossData) return;
+
+        const bossNameEl = document.getElementById('wb-name');
+        if (bossNameEl) bossNameEl.innerText = bossData.name + (bossData.isActive ? " (AKTIF)" : " (MATI)");
+
+        const hpBar = document.getElementById('wb-hp-bar');
+        const hpText = document.getElementById('wb-hp-text');
+        const btnAttack = document.getElementById('wb-btn-attack');
+
+        if (bossData.maxHp && hpBar && hpText) {
+            let pct = (bossData.currentHp / bossData.maxHp) * 100;
+            hpBar.style.width = pct + "%";
+            hpText.innerText = `${bossData.currentHp.toLocaleString()} / ${bossData.maxHp.toLocaleString()} HP`;
+        }
+
+        if (!bossData.isActive || bossData.currentHp <= 0) {
+            if (btnAttack) {
+                btnAttack.innerText = "BOSS TELAH MATI";
+                btnAttack.disabled = true;
+                btnAttack.style.background = "#333";
+                btnAttack.style.borderColor = "#111";
+            }
+        } else {
+            if (btnAttack && !btnAttack.innerText.includes("COOLDOWN")) {
+                btnAttack.disabled = false;
+                btnAttack.innerText = "⚔️ SERANG BOSS! ⚔️";
+                btnAttack.style.background = "#8b0000";
+                btnAttack.style.borderColor = "#ff4c4c";
+            }
+        }
+
+        // Render Leaderboard
+        const lbContainer = document.getElementById('wb-leaderboard');
+        if (lbContainer) {
+            let participantsArr = Object.entries(bossData.participants || {}).map(([uid, data]) => ({
+                uid, name: data.name, damage: data.damage
+            }));
+
+            participantsArr.sort((a, b) => b.damage - a.damage);
+
+            if (participantsArr.length > 0) {
+                lbContainer.innerHTML = participantsArr.slice(0, 5).map((p, index) => `
+                    <div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #333;">
+                        <span><strong style="color:${index === 0 ? '#ffcc00' : (index === 1 ? '#aaa' : '#c08a47')}">#${index + 1}</strong> ${p.name}</span>
+                        <span style="color:#ff4c4c; font-weight:bold;">${p.damage.toLocaleString()} DMG</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Render My Damage
+        const myDmgEl = document.getElementById('wb-my-damage');
+        if (myDmgEl) {
+            const myDmg = bossData.participants && bossData.participants[window.currentUserUid]
+                ? bossData.participants[window.currentUserUid].damage : 0;
+            myDmgEl.innerText = `Total Damage Anda: ${myDmg.toLocaleString()}`;
+        }
+    });
+
+
 
     // Mendaftarkan semua fungsi pembatalan listener termasuk unsubCoinMarket
     activeUnsubscribeListeners.push(unsubData, unsubMail, unsubAuction, unsubParties, unsubGuilds, unsubCoinMarket);
@@ -327,6 +392,7 @@ document.addEventListener('click', async (e) => {
     if (targetId === 'btn-toggle-shop') window.togglePanel('panel-shop');
     if (targetId === 'btn-toggle-coin-market') window.togglePanel('panel-coin-market');
     if (targetId === 'btn-toggle-mail') window.togglePanel('panel-mailbox');
+    if (targetId === 'btn-toggle-boss') window.togglePanel('panel-world-boss');
     if (targetId === 'btn-toggle-leaderboard') {
         window.togglePanel('panel-leaderboard');
         const lbContent = document.getElementById('leaderboard-content');
