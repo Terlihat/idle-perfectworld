@@ -692,9 +692,31 @@ window.activateBlacksmithMode = function () {
 };
 
 window.activateTransferMode = function () {
-    window.inventoryMode = 'transfer'; // Tandai bahwa pemain sedang dalam mode Waris
+    const panelTransfer = document.getElementById('panel-refine-transfer');
 
-    // Reset warna semua tombol mode di tas menjadi abu-abu
+    // LOGIKA MATIKAN (OFF): Jika diklik saat sedang aktif
+    if (window.inventoryMode === 'WARIS') {
+        window.inventoryMode = 'EQUIP'; // Kembalikan ke mode default (Pakai)
+
+        if (panelTransfer) panelTransfer.style.display = 'none'; // Sembunyikan panel Waris
+
+        // Kembalikan warna tombol Waris ke abu-abu
+        const btnWaris = document.getElementById('btn-mode-transfer');
+        if (btnWaris) btnWaris.style.background = '#495057';
+
+        // Nyalakan kembali tombol Equip (Pakai) sebagai indikator default
+        const btnEquip = document.getElementById('btn-mode-equip');
+        if (btnEquip) {
+            btnEquip.classList.add('mode-active');
+            btnEquip.style.background = ''; // Menghapus style inline agar kembali ke CSS default
+        }
+        return; // Eksekusi berhenti di sini (Panel berhasil ditutup)
+    }
+
+    // LOGIKA NYALAKAN (ON): Jika diklik saat sedang mati
+    window.inventoryMode = 'WARIS';
+
+    // 1. Matikan dan ubah warna semua tombol menjadi abu-abu
     const modes = ['equip', 'sell', 'dismantle', 'bank', 'auction', 'blacksmith', 'crafting', 'transfer'];
     modes.forEach(m => {
         const btn = document.getElementById('btn-mode-' + m);
@@ -704,18 +726,24 @@ window.activateTransferMode = function () {
         }
     });
 
-    // Nyalakan tombol WARIS menjadi warna ungu/pink aktif
-    const btnWaris = document.getElementById('btn-mode-transfer');
-    if (btnWaris) {
-        btnWaris.style.background = '#e83e8c';
+    // 2. Nyalakan hanya tombol WARIS menjadi aktif (misal: warna pink/ungu)
+    const btnWarisActive = document.getElementById('btn-mode-transfer');
+    if (btnWarisActive) {
+        btnWarisActive.style.background = '#e83e8c';
     }
 
-    // Tampilkan panel transfer & sembunyikan fitur pandai besi lain
-    document.getElementById('panel-refine-transfer').style.display = 'block';
-    if (document.getElementById('panel-blacksmith')) document.getElementById('panel-blacksmith').style.display = 'none';
-    if (document.getElementById('panel-crafting')) document.getElementById('panel-crafting').style.display = 'none';
+    // 3. Tampilkan panel Waris
+    if (panelTransfer) {
+        panelTransfer.style.display = 'block';
+        panelTransfer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
-    document.getElementById('panel-refine-transfer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // 4. Sembunyikan panel Pandai Besi & Crafting lain agar tidak tumpuk
+    const panelBs = document.getElementById('panel-blacksmith');
+    if (panelBs) panelBs.style.display = 'none';
+
+    const panelCraft = document.getElementById('panel-crafting');
+    if (panelCraft) panelCraft.style.display = 'none';
 };
 
 // MENGUBAH EVENT LISTENER INI AGAR ASYNC AWAIT BERJALAN LANCAR
