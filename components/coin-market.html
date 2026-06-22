@@ -1,43 +1,58 @@
-<h2 style="text-align: center; color: #ffcc00; margin-top: 0;">💱 Bursa Koin (Player Market)</h2>
+<h2 style="text-align: center; color: #ffcc00; margin-top: 0;">💱 Bursa Coin (Player Market)</h2>
 
 <div style="display:flex; gap:5px; justify-content:center; margin-bottom:15px;">
-    <button id="btn-tab-cmb" style="flex:1; background:#28a745; color:#fff; font-weight:bold; padding:8px; border:none; border-radius:3px; cursor:pointer;">Beli Koin</button>
-    <button id="btn-tab-cms" style="flex:1; background:#dc3545; color:#fff; font-weight:bold; padding:8px; border:none; border-radius:3px; cursor:pointer;">Jual Koin</button>
-    <button id="btn-tab-cmw" style="flex:1; background:#17a2b8; color:#fff; font-weight:bold; padding:8px; border:none; border-radius:3px; cursor:pointer;">Dompet Bursa</button>
+    <button id="btn-tab-cmb"
+        style="flex:1; background:#28a745; color:#fff; font-weight:bold; padding:8px; border:none; border-radius:3px; cursor:pointer;">Beli
+        Coin</button>
+    <button id="btn-tab-cms"
+        style="flex:1; background:#dc3545; color:#fff; font-weight:bold; padding:8px; border:none; border-radius:3px; cursor:pointer;">Jual
+        Coin</button>
+    <button id="btn-tab-cmw"
+        style="flex:1; background:#17a2b8; color:#fff; font-weight:bold; padding:8px; border:none; border-radius:3px; cursor:pointer;">Dompet
+        Bursa</button>
 </div>
 
-<div id="tab-cm-wallet" style="display:none; background:#121216; border:1px solid #333; padding:15px; border-radius:5px; text-align:center;">
-    <h3 style="margin-top:0; color:#17a2b8;">🏦 Saldo Brankas Bursa</h3>
-    <p style="font-size:12px; color:#aaa;">Pindahkan dana dari Tas ke Bursa agar bisa bertransaksi.</p>
-    
+<div id="tab-cm-wallet"
+    style="display:none; background:#121216; border:1px solid #333; padding:15px; border-radius:5px; text-align:center;">
+    <h3 style="margin-top:0; color:#17a2b8;">🏦 Saldo Bursa</h3>
+    <p style="font-size:12px; color:#aaa;">Pindahkan dana dari Inventory ke Bursa agar bisa bertransaksi.</p>
+
     <div style="display:flex; justify-content:space-around; margin: 15px 0; font-size:16px; font-weight:bold;">
         <div>🪙 <span id="cm-balance-coin" style="color:#ffcc00;">0</span></div>
         <div>💰 <span id="cm-balance-gold" style="color:#ffd700;">0</span></div>
     </div>
 
     <div style="display:flex; gap:5px; justify-content:center; margin-bottom:5px;">
-        <button onclick="window.cmDeposit('coin')" style="flex:1; background:#333; color:#fff; padding:5px; border:1px solid #555;">Setor Coin</button>
-        <button onclick="window.cmWithdraw('coin')" style="flex:1; background:#333; color:#fff; padding:5px; border:1px solid #555;">Tarik Coin</button>
+        <button onclick="window.cmDeposit('coin')"
+            style="flex:1; background:#333; color:#fff; padding:5px; border:1px solid #555;">Setor Coin</button>
+        <button onclick="window.cmWithdraw('coin')"
+            style="flex:1; background:#333; color:#fff; padding:5px; border:1px solid #555;">Tarik Coin</button>
     </div>
     <div style="display:flex; gap:5px; justify-content:center;">
-        <button onclick="window.cmDeposit('gold')" style="flex:1; background:#333; color:#fff; padding:5px; border:1px solid #555;">Setor Gold</button>
-        <button onclick="window.cmWithdraw('gold')" style="flex:1; background:#333; color:#fff; padding:5px; border:1px solid #555;">Tarik Gold</button>
+        <button onclick="window.cmDeposit('gold')"
+            style="flex:1; background:#333; color:#fff; padding:5px; border:1px solid #555;">Setor Gold</button>
+        <button onclick="window.cmWithdraw('gold')"
+            style="flex:1; background:#333; color:#fff; padding:5px; border:1px solid #555;">Tarik Gold</button>
     </div>
 </div>
 
 <div id="tab-cm-sell" style="display:none; background:#121216; border:1px solid #333; padding:15px; border-radius:5px;">
-    <h3 style="margin-top:0; color:#dc3545; text-align:center;">⚖️ Pasang Lelang Koin</h3>
+    <h3 style="margin-top:0; color:#dc3545; text-align:center;">⚖️ Pasang Lelang Coin</h3>
     <div style="background:#1a1a1a; padding:10px; font-size:11px; color:#aaa; margin-bottom:15px; border-radius:3px;">
         <strong>Aturan Harga Pasar:</strong><br>
-        • Patokan: 1 Koin = 100 Gold.<br>
-        • Batas Bawah (50%): 1 Koin Minimal 50 Gold.<br>
-        • Batas Atas (100%): 1 Koin Maksimal 100 Gold.
+        • Patokan: 1 Coin = 100 Gold.<br>
+        • Batas Bawah (50%): 1 Coin Minimal 50 Gold.<br>
+        • Batas Atas (100%): 1 Coin Maksimal 100 Gold.
     </div>
-    
-    <input type="number" id="cm-sell-amount" placeholder="Jumlah Coin yang dijual" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box; background:#0d151e; color:#fff; border:1px solid #555;">
-    <input type="number" id="cm-sell-price" placeholder="Total Harga Gold (Total Keseluruhan)" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box; background:#0d151e; color:#fff; border:1px solid #555;">
-    
-    <button onclick="window.cmSubmitSell()" style="width:100%; background:#dc3545; color:#fff; font-weight:bold; padding:10px; border:none; border-radius:3px; cursor:pointer;">POSTING LELANG</button>
+
+    <input type="number" id="cm-sell-amount" placeholder="Jumlah Coin yang dijual"
+        style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box; background:#0d151e; color:#fff; border:1px solid #555;">
+    <input type="number" id="cm-sell-price" placeholder="Total Harga Gold (Total Keseluruhan)"
+        style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box; background:#0d151e; color:#fff; border:1px solid #555;">
+
+    <button onclick="window.cmSubmitSell()"
+        style="width:100%; background:#dc3545; color:#fff; font-weight:bold; padding:10px; border:none; border-radius:3px; cursor:pointer;">POSTING
+        LELANG</button>
 </div>
 
 <div id="tab-cm-buy" style="display:block;">
