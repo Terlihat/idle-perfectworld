@@ -406,7 +406,7 @@ document.addEventListener('click', async (e) => {
 window.handleInventoryClick = async function (itemName) {
     if (inventoryMode === "transfer" || inventoryMode === "TRANSFER") {
         window.putItemToTransferSlot(itemName);
-        return; // Hentikan fungsi di sini agar item tidak tidak terpakai/terjual
+        return;
     }
 
     if (inventoryMode === "EQUIP") {
