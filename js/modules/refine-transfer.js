@@ -8,24 +8,24 @@ let transferCost = 0;
 
 // Tabel Biaya Universal Stone (Bisa Anda sesuaikan)
 const STONE_COST = {
-    1: 10, 2: 25, 3: 50, 4: 80, 5: 120, 
-    6: 180, 7: 250, 8: 350, 9: 500, 10: 700, 
+    1: 10, 2: 25, 3: 50, 4: 80, 5: 120,
+    6: 180, 7: 250, 8: 350, 9: 500, 10: 700,
     11: 850, 12: 1000 // +12 Butuh 1000 Stone
 };
 
 // Fungsi membuka modal untuk memilih item
-window.openTransferSelect = function(type) {
+window.openTransferSelect = function (type) {
     currentTransferType = type;
     const modal = document.getElementById('transfer-select-modal');
     const title = document.getElementById('transfer-modal-title');
     const list = document.getElementById('transfer-item-list');
-    
+
     title.innerText = type === 'source' ? "Pilih Item Tumbal (+)" : "Pilih Item Penerima";
     list.innerHTML = ""; // Bersihkan list
-    
+
     // Ambil data inventory asli dari window (didapat dari renderPlayerUI/game.js)
-    const inv = window.currentInventoryData || {}; 
-    
+    const inv = window.currentInventoryData || {};
+
     let hasItem = false;
     for (let itemName in inv) {
         // Abaikan item konsumsi/material
@@ -36,13 +36,13 @@ window.openTransferSelect = function(type) {
 
         // Jika mencari SUMBER, hanya tampilkan item yang punya +1 ke atas
         if (type === 'source' && refineLevel === 0) continue;
-        
+
         // Jangan tampilkan item yang sedang dipakai di slot sebelah
         if (type === 'target' && itemName === selectedSource) continue;
         if (type === 'source' && itemName === selectedTarget) continue;
 
         hasItem = true;
-        
+
         const btn = document.createElement('button');
         btn.innerText = `${itemName} (x${inv[itemName]})`;
         btn.style.cssText = "background:#1a1a1a; color:#fff; padding:10px; border:1px solid #333; border-radius:3px; cursor:pointer; text-align:left;";
@@ -65,7 +65,7 @@ function selectTransferItem(itemName, refineLevel) {
         document.getElementById('transfer-name-source').innerText = itemName;
         document.getElementById('transfer-slot-source').style.borderColor = "#ffcc00";
         document.getElementById('transfer-slot-source').innerHTML = "⚔️"; // Icon Dummy (Bisa diganti image icon nanti)
-        
+
         // Hitung Biaya
         transferCost = STONE_COST[refineLevel] || (refineLevel * 100);
         document.getElementById('transfer-cost-amount').innerText = transferCost;
@@ -77,7 +77,7 @@ function selectTransferItem(itemName, refineLevel) {
     }
 }
 
-window.executeTransfer = async function() {
+window.executeTransfer = async function () {
     if (!selectedSource || !selectedTarget) return window.rpgAlert("Pilih Item Sumber dan Target terlebih dahulu!");
 
     if (!await window.rpgConfirm(`Proses ini akan memindahkan tempa dari [${selectedSource}] ke [${selectedTarget}] dengan biaya ${transferCost} Universal Stone. Item sumber akan menjadi +0. Lanjutkan?`, "Konfirmasi Transfer")) return;
@@ -101,7 +101,7 @@ window.executeTransfer = async function() {
             // 3. Bersihkan nama dari +
             const cleanSourceName = selectedSource.replace(/\s\+\d+/, ""); // "Pedang Besi +12" -> "Pedang Besi"
             const cleanTargetName = selectedTarget.replace(/\s\+\d+/, ""); // Bersihkan target jika sudah ada + nya
-            
+
             const newTargetName = `${cleanTargetName} +${refineLevel}`;
 
             // 4. Potong Biaya
@@ -112,7 +112,7 @@ window.executeTransfer = async function() {
             // Kurangi item asli
             inv[selectedSource] -= 1;
             if (inv[selectedSource] <= 0) delete inv[selectedSource];
-            
+
             inv[selectedTarget] -= 1;
             if (inv[selectedTarget] <= 0) delete inv[selectedTarget];
 
@@ -138,4 +138,30 @@ window.executeTransfer = async function() {
         window.rpgAlert("✨ SUCCESS! Pewarisan tempa berhasil dilakukan!", "Sukses");
 
     } catch (err) { window.rpgAlert(err, "Gagal Transfer"); }
+};
+
+// FITUR BARU: Memasukkan item langsung dari klik Tas
+window.putItemToTransferSlot = function (itemName) {
+    // Cari tahu apakah item ini punya angka +
+    const match = itemName.match(/\+(\d+)/);
+    const refineLevel = match ? parseInt(match[1]) : 0;
+
+    // Jika Slot Tumbal (Kiri) BELUM terisi
+    if (!selectedSource) {
+        if (refineLevel === 0) {
+            return window.rpgAlert("Item tumbal harus memiliki tingkat tempa (+1 atau lebih)!", "Peringatan");
+        }
+        currentTransferType = 'source';
+        selectTransferItem(itemName, refineLevel); // Masukkan ke fungsi lama kita
+        window.rpgAlert(`[${itemName}] diletakkan di slot SUMBER.`);
+    }
+    // Jika Slot Tumbal sudah terisi, maka otomatis masuk ke TARGET (Kanan)
+    else {
+        if (itemName === selectedSource) {
+            return window.rpgAlert("Item target tidak boleh sama dengan item tumbal!", "Peringatan");
+        }
+        currentTransferType = 'target';
+        selectTransferItem(itemName, refineLevel);
+        window.rpgAlert(`[${itemName}] diletakkan di slot TARGET.`);
+    }
 };

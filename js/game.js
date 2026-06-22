@@ -687,24 +687,30 @@ window.activateBlacksmithMode = function () {
 };
 
 window.activateTransferMode = function () {
-    // 1. Tampilkan panel transfer
-    const panelTransfer = document.getElementById('panel-refine-transfer');
-    if (panelTransfer) {
-        // Jika sedang tersembunyi, maka munculkan. Jika sudah muncul, sembunyikan (Toggle)
-        if (panelTransfer.style.display === 'none') {
-            panelTransfer.style.display = 'block';
-            panelTransfer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else {
-            panelTransfer.style.display = 'none';
+    window.inventoryMode = 'transfer'; // Tandai bahwa pemain sedang dalam mode Waris
+
+    // Reset warna semua tombol mode di tas menjadi abu-abu
+    const modes = ['equip', 'sell', 'dismantle', 'bank', 'auction', 'blacksmith', 'crafting', 'transfer'];
+    modes.forEach(m => {
+        const btn = document.getElementById('btn-mode-' + m);
+        if (btn) {
+            btn.classList.remove('mode-active');
+            btn.style.background = '#495057';
         }
+    });
+
+    // Nyalakan tombol WARIS menjadi warna ungu/pink aktif
+    const btnWaris = document.getElementById('btn-mode-transfer');
+    if (btnWaris) {
+        btnWaris.style.background = '#e83e8c';
     }
 
-    // 2. (Opsional) Sembunyikan panel Blacksmith / Crafting agar layar tidak penuh
-    const panelBs = document.getElementById('panel-blacksmith');
-    if (panelBs) panelBs.style.display = 'none';
+    // Tampilkan panel transfer & sembunyikan fitur pandai besi lain
+    document.getElementById('panel-refine-transfer').style.display = 'block';
+    if (document.getElementById('panel-blacksmith')) document.getElementById('panel-blacksmith').style.display = 'none';
+    if (document.getElementById('panel-crafting')) document.getElementById('panel-crafting').style.display = 'none';
 
-    const panelCraft = document.getElementById('panel-crafting');
-    if (panelCraft) panelCraft.style.display = 'none';
+    document.getElementById('panel-refine-transfer').scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
 
 // MENGUBAH EVENT LISTENER INI AGAR ASYNC AWAIT BERJALAN LANCAR
