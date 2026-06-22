@@ -170,6 +170,13 @@ function startLiveGameSync() {
     const unsubData = onSnapshot(doc(db, "users", currentUserUid), (docSnap) => {
         if (!docSnap.exists()) return;
         const d = docSnap.data();
+
+        if (d.banned === true) {
+            alert("🚫 Akun Anda telah di-banned oleh Administrator.");
+            window.location.href = 'index.html'; // Sesuaikan dengan nama file halaman login Anda
+            return;
+        }
+
         playerUsername = d.username || "Hero Anonim";
 
         const baseTotal = d.characterClass === 'Warrior' ? 42 : 45;
@@ -345,7 +352,7 @@ function startLiveGameSync() {
 
 
     // Mendaftarkan semua fungsi pembatalan listener termasuk unsubCoinMarket
-    activeUnsubscribeListeners.push(unsubData, unsubMail, unsubAuction, unsubParties, unsubGuilds, unsubCoinMarket);
+    activeUnsubscribeListeners.push(unsubData, unsubMail, unsubAuction, unsubParties, unsubGuilds, unsubCoinMarket, unsubBoss);
 }
 
 document.addEventListener('change', (e) => {

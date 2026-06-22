@@ -184,3 +184,106 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
 document.getElementById('btn-home')?.addEventListener('click', () => {
     window.location.href = '../index.html';
 });
+
+// ==========================================
+// 5. FITUR PLAYER EDITOR & BANNED
+// ==========================================
+let currentEditingUid = null;
+let currentEditingBannedStatus = false;
+
+document.getElementById('btn-search-player').addEventListener('click', async () => {
+    const uid = document.getElementById('editor-search-uid').value.trim();
+    if (!uid) return alert("Masukkan UID terlebih dahulu!");
+
+    const btnSearch = document.getElementById('btn-search-player');
+    btnSearch.innerText = "Mencari...";
+
+    try {
+        const userRef = doc(db, "users", uid);
+        const docSnap = await getDoc(userRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            currentEditingUid = uid;
+            currentEditingBannedStatus = data.banned || false;
+
+            // Masukkan data ke UI
+            document.getElementById('edit-player-name').innerText = data.username || "Hero Anonim";
+            document.getElementById('edit-player-level').innerText = data.level || 1;
+            document.getElementById('edit-player-class').innerText = data.characterClass || "Tidak diketahui";
+            document.getElementById('edit-player-gold').value = data.gold || 0;
+            document.getElementById('edit-player-coin').value = data.coin || 0;
+
+            // Atur tombol Banned
+            const btnBan = document.getElementById('btn-ban-player');
+            if (currentEditingBannedStatus) {
+                btnBan.innerText = "✅ Buka Ban (Un-Ban)";
+                btnBan.style.background = "#28a745"; // Hijau
+            } else {
+                btnBan.innerText = "🚫 Banned Pemain";
+                btnBan.style.background = "#dc3545"; // Merah
+            }
+
+            document.getElementById('editor-results').style.display = "block";
+        } else {
+            alert("❌ Pemain dengan UID tersebut tidak ditemukan!");
+            document.getElementById('editor-results').style.display = "none";
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Terjadi kesalahan saat mencari pemain.");
+    } finally {
+        btnSearch.innerText = "Cari Pemain";
+    }
+});
+
+// Fungsi Menyimpan Perubahan Ekonomi (Gold/Coin)
+document.getElementById('btn-save-player').addEventListener('click', async () => {
+    if (!currentEditingUid) return;
+    const newGold = parseInt(document.getElementById('edit-player-gold').value) || 0;
+    const newCoin = parseInt(document.getElementById('edit-player-coin').value) || 0;
+
+    if (!confirm("Yakin ingin mengubah jumlah Gold/Coin pemain ini?")) return;
+
+    try {
+        await updateDoc(doc(db, "users", currentEditingUid), {
+            gold: newGold,
+            coin: newCoin
+        });
+        alert("✅ Data ekonomi pemain berhasil diperbarui!");
+    } catch (err) {
+        console.error(err);
+        alert("Gagal menyimpan data.");
+    }
+});
+
+// Fungsi Banned / Un-Banned
+document.getElementById('btn-ban-player').addEventListener('click', async () => {
+    if (!currentEditingUid) return;
+    const actionText = currentEditingBannedStatus ? "Membuka Ban (Un-Ban)" : "Membanned";
+
+    if (!confirm(`⚠️ Yakin ingin ${actionText} pemain ini?`)) return;
+
+    try {
+        const newStatus = !currentEditingBannedStatus;
+        await updateDoc(doc(db, "users", currentEditingUid), {
+            banned: newStatus
+        });
+
+        currentEditingBannedStatus = newStatus;
+        alert(`✅ Pemain berhasil di-${newStatus ? "Banned" : "Unban"}!`);
+
+        // Refresh warna tombol
+        const btnBan = document.getElementById('btn-ban-player');
+        if (currentEditingBannedStatus) {
+            btnBan.innerText = "✅ Buka Ban (Un-Ban)";
+            btnBan.style.background = "#28a745";
+        } else {
+            btnBan.innerText = "🚫 Banned Pemain";
+            btnBan.style.background = "#dc3545";
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Gagal mengubah status ban.");
+    }
+});
