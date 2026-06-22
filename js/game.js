@@ -318,6 +318,7 @@ document.addEventListener('click', async (e) => {
     // --- NAVIGASI TOGGLE PANEL ---
     if (targetId === 'btn-toggle-mall') window.togglePanel('panel-mall');
     if (targetId === 'btn-toggle-shop') window.togglePanel('panel-shop');
+    if (targetId === 'btn-toggle-coin-market') window.togglePanel('panel-coin-market');
     if (targetId === 'btn-toggle-mail') window.togglePanel('panel-mailbox');
     if (targetId === 'btn-toggle-leaderboard') {
         window.togglePanel('panel-leaderboard');
