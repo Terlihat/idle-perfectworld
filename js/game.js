@@ -28,6 +28,8 @@ import { executeRefineAction } from './modules/blacksmith.js';
 
 import { MONSTER_DB } from './data/monsters.js';
 import './modules/game-state.js';
+import './modules/coin-market.js';
+import { listenToCoinMarket } from './modules/coin-market.js';
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
 // ==========================================
@@ -193,6 +195,13 @@ function startLiveGameSync() {
             startDynamicChat();
         }
 
+        // --- RENDER SALDO BURSA KOIN (TAMBAHAN BARU) ---
+        const elCmCoin = document.getElementById('cm-balance-coin');
+        const elCmGold = document.getElementById('cm-balance-gold');
+        if (elCmCoin) elCmCoin.innerText = d.auctionBalanceCoin || 0;
+        if (elCmGold) elCmGold.innerText = d.auctionBalanceGold || 0;
+        // ----------------------------------------------
+
         const newStats = renderPlayerUI(d, currentUserUid, globalGuilds, guildUpgradesMap);
         if (newStats) currentPlayerStats = newStats;
 
@@ -238,7 +247,33 @@ function startLiveGameSync() {
         renderPartyUI(parties, currentUserUid);
     });
 
-    activeUnsubscribeListeners.push(unsubData, unsubMail, unsubAuction, unsubParties, unsubGuilds);
+    // --- LISTENER LIVE UPDATE BURSA KOIN (TAMBAHAN BARU) ---
+    const unsubCoinMarket = listenToCoinMarket(db, (items) => {
+        const container = document.getElementById('cm-market-list');
+        if (!container) return;
+
+        if (items.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; margin-top:20px;">Pasar koin sedang kosong...</div>`;
+            return;
+        }
+
+        container.innerHTML = items.map(item => `
+            <div style="background:#1a1a1a; border:1px solid #333; padding:10px; margin-bottom:5px; border-radius:5px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-weight:bold; color:#ffcc00;">🪙 ${item.amount} Coin</div>
+                    <div style="font-size:11px; color:#aaa;">Dijual oleh: ${item.sellerName}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="color:#ffd700; font-weight:bold; margin-bottom:5px;">💰 ${item.price} Gold</div>
+                    <button onclick="window.cmBuyCoin('${item.id}', '${item.sellerUid}', ${item.amount}, ${item.price})" style="background:#28a745; color:#fff; border:none; border-radius:3px; padding:5px 10px; font-weight:bold; cursor:pointer;">BELI</button>
+                </div>
+            </div>
+        `).join('');
+    });
+    // --------------------------------------------------------
+
+    // Mendaftarkan semua fungsi pembatalan listener termasuk unsubCoinMarket
+    activeUnsubscribeListeners.push(unsubData, unsubMail, unsubAuction, unsubParties, unsubGuilds, unsubCoinMarket);
 }
 
 document.addEventListener('change', (e) => {
@@ -1087,5 +1122,22 @@ document.addEventListener('change', (e) => {
             }
             infoBox.style.display = 'block';
         }
+    }
+});
+
+// Navigasi Tab Bursa Koin
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'btn-tab-cmb') {
+        document.getElementById('tab-cm-buy').style.display = 'block';
+        document.getElementById('tab-cm-sell').style.display = 'none';
+        document.getElementById('tab-cm-wallet').style.display = 'none';
+    } else if (e.target.id === 'btn-tab-cms') {
+        document.getElementById('tab-cm-buy').style.display = 'none';
+        document.getElementById('tab-cm-sell').style.display = 'block';
+        document.getElementById('tab-cm-wallet').style.display = 'none';
+    } else if (e.target.id === 'btn-tab-cmw') {
+        document.getElementById('tab-cm-buy').style.display = 'none';
+        document.getElementById('tab-cm-sell').style.display = 'none';
+        document.getElementById('tab-cm-wallet').style.display = 'block';
     }
 });

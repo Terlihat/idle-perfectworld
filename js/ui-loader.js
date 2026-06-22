@@ -21,6 +21,7 @@ export async function loadUIComponents() {
         { id: 'panel-blacksmith', file: './components/blacksmith.html' },
         { id: 'panel-pk', file: './components/pk.html' }, // Komponen Baru
         { id: 'panel-auction', file: './components/auction.html' },
+        { id: 'panel-coin-market', file: './components/coin-market.html' },
 
         // --- Kolom 3 (Kanan) ---
         { id: 'panel-leaderboard', file: './components/leaderboard.html' }, // Komponen Baru
