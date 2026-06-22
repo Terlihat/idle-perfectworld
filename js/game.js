@@ -695,7 +695,7 @@ window.activateTransferMode = function () {
     const panelTransfer = document.getElementById('panel-refine-transfer');
 
     // LOGIKA MATIKAN (OFF): Jika diklik saat sedang aktif
-    if (window.inventoryMode === 'WARIS') {
+    if (window.inventoryMode === 'waris') {
         window.inventoryMode = 'EQUIP'; // Kembalikan ke mode default (Pakai)
 
         if (panelTransfer) panelTransfer.style.display = 'none'; // Sembunyikan panel Waris
@@ -714,7 +714,7 @@ window.activateTransferMode = function () {
     }
 
     // LOGIKA NYALAKAN (ON): Jika diklik saat sedang mati
-    window.inventoryMode = 'WARIS';
+    window.inventoryMode = 'waris';
 
     // 1. Matikan dan ubah warna semua tombol menjadi abu-abu
     const modes = ['equip', 'sell', 'dismantle', 'bank', 'auction', 'blacksmith', 'crafting', 'transfer'];
