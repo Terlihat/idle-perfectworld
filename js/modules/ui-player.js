@@ -13,7 +13,10 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
     document.getElementById('header-coin').innerText = (d.coin || 0).toLocaleString();
     document.getElementById('player-bank').innerText = (d.bankGold || 0).toLocaleString();
     const elUid = document.getElementById('player-uid');
-    if (elUid) elUid.innerText = uid;
+    if (elUid) {
+        const shortUid = uid ? uid.substring(0, 6) + "..." : "-";
+        elUid.innerText = shortUid;
+    }
     const statPoints = d.statPoints || 0;
     document.getElementById('player-stat-points').innerText = statPoints;
     const addStatBtns = document.querySelectorAll('.btn-add-stat');
@@ -37,7 +40,7 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
     document.getElementById('char-mp-text').innerText = `${d.currentMp} / ${d.maxMp}`;
     document.getElementById('char-mp-bar').style.width = `${Math.min((d.currentMp / d.maxMp) * 100, 100)}%`;
     const vipStats = getVipStats(d.vipLevel);
-    const maxStam = (d.maxStamina || 100) + (vipStats?.extraMaxStamina || 0); 
+    const maxStam = (d.maxStamina || 100) + (vipStats?.extraMaxStamina || 0);
     let curStam = d.currentStamina || 0;
     if (curStam > maxStam) curStam = maxStam;
     document.getElementById('char-stam-text').innerText = `${curStam} / ${maxStam}`;
@@ -51,20 +54,20 @@ export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
     document.getElementById('eq-armor').innerText = eq.armor ? `${eq.armor.name}${eq.armor.refine ? ` (+${eq.armor.refine})` : ""}` : "Kosong";
     document.getElementById('eq-acc').innerText = eq.accessory ? `${eq.accessory.name}${eq.accessory.refine ? ` (+${eq.accessory.refine})` : ""}` : "Kosong";
     document.getElementById('eq-mount').innerText = eq.mount ? `${eq.mount.name}` : "Jalan Kaki";
-    let wBonus = 1 + (eq.weapon?.refine || 0) * 0.15; 
+    let wBonus = 1 + (eq.weapon?.refine || 0) * 0.15;
     let aBonus = 1 + (eq.armor?.refine || 0) * 0.15;
     let cBonus = 1 + (eq.accessory?.refine || 0) * 0.10;
-    const patk = 50 + (d.str * 10) + Math.floor((eq.weapon?.patk || 0) * wBonus) + gBuff.atk; 
+    const patk = 50 + (d.str * 10) + Math.floor((eq.weapon?.patk || 0) * wBonus) + gBuff.atk;
     const matk = 50 + (d.int * 10) + Math.floor((eq.weapon?.matk || 0) * wBonus) + gBuff.atk;
-    const def = 10 + (d.con * 5) + Math.floor((eq.armor?.def || 0) * aBonus) + gBuff.def; 
-    document.getElementById('stat-patk').innerText = patk; 
+    const def = 10 + (d.con * 5) + Math.floor((eq.armor?.def || 0) * aBonus) + gBuff.def;
+    document.getElementById('stat-patk').innerText = patk;
     document.getElementById('stat-matk').innerText = matk;
-    document.getElementById('stat-def').innerText = def; 
+    document.getElementById('stat-def').innerText = def;
     document.getElementById('stat-crit').innerText = (d.dex * 0.5).toFixed(1) + "%";
-    document.getElementById('stat-eva').innerText = (d.dex * 0.2).toFixed(1) + "%"; 
+    document.getElementById('stat-eva').innerText = (d.dex * 0.2).toFixed(1) + "%";
     document.getElementById('stat-acc').innerText = (80 + (d.dex * 0.5) + Math.floor((eq.accessory?.accBonus || 0) * cBonus)).toFixed(1) + "%";
-    return { 
-        uid: uid, username: d.username, 
+    return {
+        uid: uid, username: d.username,
         level: d.level, currentHp: curHp, maxHp: effectiveMaxHp, currentStamina: curStam,
         str: d.str, con: d.con, int: d.int, dex: d.dex,
         patk: patk, matk: matk, def: def, equipment: eq,
@@ -84,34 +87,34 @@ export function renderQuestUI(q) {
     if (!qDailyTitle || !qDailyProg || !qBountyTitle || !qBountyProg) return;
     const today = new Date().toLocaleDateString('id-ID');
     if (q.lastReset !== today) {
-        if(btnTake) btnTake.style.display = 'block';
+        if (btnTake) btnTake.style.display = 'block';
         qDailyTitle.innerText = "Belum Diambil";
         qDailyProg.innerText = "0/0";
         qBountyTitle.innerText = "Belum Diambil";
         qBountyProg.innerText = "0/0";
-        if(btnClaimDaily) btnClaimDaily.style.display = 'none';
-        if(btnClaimBounty) btnClaimBounty.style.display = 'none';
+        if (btnClaimDaily) btnClaimDaily.style.display = 'none';
+        if (btnClaimBounty) btnClaimBounty.style.display = 'none';
     } else {
-        if(btnTake) btnTake.style.display = 'none';
+        if (btnTake) btnTake.style.display = 'none';
         qDailyTitle.innerText = q.daily.title;
         qDailyProg.innerText = `${q.daily.progress}/${q.daily.target}`;
-        if (q.daily.isClaimed) { 
-            qDailyProg.innerText = "✅ Selesai"; 
-            if(btnClaimDaily) btnClaimDaily.style.display = 'none'; 
-        } else if (q.daily.progress >= q.daily.target) { 
-            if(btnClaimDaily) btnClaimDaily.style.display = 'inline-block'; 
-        } else { 
-            if(btnClaimDaily) btnClaimDaily.style.display = 'none'; 
+        if (q.daily.isClaimed) {
+            qDailyProg.innerText = "✅ Selesai";
+            if (btnClaimDaily) btnClaimDaily.style.display = 'none';
+        } else if (q.daily.progress >= q.daily.target) {
+            if (btnClaimDaily) btnClaimDaily.style.display = 'inline-block';
+        } else {
+            if (btnClaimDaily) btnClaimDaily.style.display = 'none';
         }
         qBountyTitle.innerText = q.bounty.title;
         qBountyProg.innerText = `${q.bounty.progress}/${q.bounty.target}`;
-        if (q.bounty.isClaimed) { 
-            qBountyProg.innerText = "✅ Selesai"; 
-            if(btnClaimBounty) btnClaimBounty.style.display = 'none'; 
-        } else if (q.bounty.progress >= q.bounty.target) { 
-            if(btnClaimBounty) btnClaimBounty.style.display = 'inline-block'; 
-        } else { 
-            if(btnClaimBounty) btnClaimBounty.style.display = 'none'; 
+        if (q.bounty.isClaimed) {
+            qBountyProg.innerText = "✅ Selesai";
+            if (btnClaimBounty) btnClaimBounty.style.display = 'none';
+        } else if (q.bounty.progress >= q.bounty.target) {
+            if (btnClaimBounty) btnClaimBounty.style.display = 'inline-block';
+        } else {
+            if (btnClaimBounty) btnClaimBounty.style.display = 'none';
         }
     }
 }
