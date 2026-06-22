@@ -1,5 +1,6 @@
 import { db } from '../firebase-config.js';
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getIconHTML } from './ui-utils.js';
 
 let selectedSource = null;
 let selectedTarget = null;
@@ -56,11 +57,14 @@ window.openTransferSelect = function (type) {
 function selectTransferItem(itemName, refineLevel) {
     document.getElementById('transfer-select-modal').style.display = 'none';
 
+    const baseName = itemName.replace(/\s\[\+\d+\]$/, '');
+    const iconHTML = getIconHTML(baseName); // Memanggil sistem icon asli Anda
+
     if (currentTransferType === 'source') {
         selectedSource = itemName;
         document.getElementById('transfer-name-source').innerText = itemName;
         document.getElementById('transfer-slot-source').style.borderColor = "#ffcc00";
-        document.getElementById('transfer-slot-source').innerHTML = "⚔️";
+        document.getElementById('transfer-slot-source').innerHTML = iconHTML;
 
         transferCost = STONE_COST[refineLevel] || (refineLevel * 100);
         document.getElementById('transfer-cost-amount').innerText = transferCost;
@@ -68,7 +72,7 @@ function selectTransferItem(itemName, refineLevel) {
         selectedTarget = itemName;
         document.getElementById('transfer-name-target').innerText = itemName;
         document.getElementById('transfer-slot-target').style.borderColor = "#28a745";
-        document.getElementById('transfer-slot-target').innerHTML = "🛡️";
+        document.getElementById('transfer-slot-target').innerHTML = iconHTML;
     }
 }
 
