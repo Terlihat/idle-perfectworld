@@ -1,4 +1,4 @@
-import { db, auth } from '../../js/firebase-config.js'; 
+import { db, auth } from '../../js/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -16,16 +16,16 @@ onAuthStateChanged(auth, async (user) => {
         try {
             const userRef = doc(db, "users", adminUid);
             const docSnap = await getDoc(userRef);
-            
+
             if (docSnap.exists() && docSnap.data().role === 'admin') {
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('admin-content').style.display = 'block';
-                
+
                 loadServerStats();
                 populateItemDropdown(); // Jalankan fungsi pengisian item otomatis
             } else {
                 alert("Akses Ditolak! Anda bukan Admin.");
-                window.location.href = '../index.html'; 
+                window.location.href = '../index.html';
             }
         } catch (err) {
             console.error(err);
@@ -43,7 +43,7 @@ async function loadServerStats() {
     try {
         const usersCol = collection(db, "users");
         const userSnapshot = await getDocs(usersCol);
-        
+
         let totalPlayers = 0;
         let totalGold = 0;
         let totalCoin = 0;
@@ -51,7 +51,7 @@ async function loadServerStats() {
         userSnapshot.forEach((doc) => {
             totalPlayers++;
             const data = doc.data();
-            totalGold += (data.gold || 0) + (data.bankGold || 0); 
+            totalGold += (data.gold || 0) + (data.bankGold || 0);
             totalCoin += (data.coin || 0);
         });
 
@@ -72,7 +72,7 @@ function populateItemDropdown() {
     if (!selectBox) return;
 
     selectBox.innerHTML = '<option value="">-- Tidak Kirim Item --</option>';
-    
+
     // Melakukan looping ke seluruh data item di items.js
     Object.keys(ITEM_DB).forEach(itemName => {
         selectBox.innerHTML += `<option value="${itemName}">${itemName}</option>`;
@@ -80,7 +80,7 @@ function populateItemDropdown() {
 }
 
 // ==========================================
-// 4. FITUR KIRIM SURAT & HADIAH (KOMPLIT)
+// 4. FITUR KIRIM SURAT & HADIAH (KOMPLIT & BROADCAST)
 // ==========================================
 document.getElementById('btn-send-mail').addEventListener('click', async () => {
     const targetUid = document.getElementById('mail-target-uid').value.trim();
@@ -88,28 +88,26 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
     const message = document.getElementById('mail-message').value.trim();
     const gold = parseInt(document.getElementById('mail-gold').value) || 0;
     const coin = parseInt(document.getElementById('mail-coin').value) || 0;
-    
+
     const itemName = document.getElementById('mail-item-name').value;
     const itemQty = parseInt(document.getElementById('mail-item-qty')?.value) || 1;
 
-    if (!targetUid || !title) {
-        return alert("UID Penerima dan Judul Surat wajib diisi!");
+    // PERBAIKAN: Target UID tidak lagi wajib. Hanya Judul yang wajib.
+    if (!title) {
+        return alert("Judul Surat wajib diisi!");
     }
 
     const btnSend = document.getElementById('btn-send-mail');
     btnSend.disabled = true;
-    btnSend.innerText = "Mengirim...";
+    btnSend.innerText = "Menyiapkan Surat...";
 
     try {
-        // Rute ke sub-koleksi kotak surat user
-        const mailboxRef = collection(db, "users", targetUid, "mailbox"); 
-        
         // Membungkus hadiah ke dalam attachments
         let attachmentsData = null;
         if (itemName && itemName !== "") {
             attachmentsData = {
                 itemName: itemName,
-                qty: itemQty, // Menerapkan jumlah qty
+                qty: itemQty,
                 gold: gold,
                 coin: coin
             };
@@ -130,9 +128,42 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
             timestamp: serverTimestamp()
         };
 
-        await addDoc(mailboxRef, mailData); 
-        alert(`✅ Surat "${title}" beserta hadiah berhasil dikirim ke UID: ${targetUid}`);
-        
+        if (targetUid) {
+            // JIKA UID DIISI: Kirim ke 1 Pemain saja (Logika Lama)
+            const mailboxRef = collection(db, "users", targetUid, "mailbox");
+            await addDoc(mailboxRef, mailData);
+            alert(`✅ Surat "${title}" berhasil dikirim ke UID: ${targetUid}`);
+        } else {
+            // JIKA UID KOSONG: Lakukan Broadcast ke Seluruh Pemain
+            const confirmBroadcast = confirm("⚠️ PERINGATAN BROADCAST: Anda mengosongkan kolom UID. Surat ini akan dikirim ke SELURUH PEMAIN yang terdaftar. Lanjutkan?");
+            if (!confirmBroadcast) {
+                btnSend.disabled = false;
+                btnSend.innerText = "Kirim Surat Sekarang";
+                return;
+            }
+
+            btnSend.innerText = "Mengambil data pemain...";
+
+            // Ambil semua data pemain dari database
+            const usersCol = collection(db, "users");
+            const userSnapshot = await getDocs(usersCol);
+
+            let sendPromises = [];
+
+            // Masukkan perintah pengiriman ke masing-masing kotak surat pemain
+            userSnapshot.forEach((userDoc) => {
+                const mailboxRef = collection(db, "users", userDoc.id, "mailbox");
+                sendPromises.push(addDoc(mailboxRef, mailData));
+            });
+
+            btnSend.innerText = `Mengirim ke ${sendPromises.length} pemain... (Mohon Tunggu)`;
+
+            // Eksekusi semua pengiriman secara serentak (paralel) agar tidak lag
+            await Promise.all(sendPromises);
+
+            alert(`📢 BROADCAST SUKSES! Surat beserta hadiah berhasil dikirim ke ${sendPromises.length} pemain.`);
+        }
+
         // Reset form setelah sukses
         document.getElementById('mail-title').value = "";
         document.getElementById('mail-message').value = "";
@@ -140,7 +171,7 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
         document.getElementById('mail-coin').value = "0";
         document.getElementById('mail-item-name').value = "";
         if (document.getElementById('mail-item-qty')) document.getElementById('mail-item-qty').value = "1";
-        
+
     } catch (err) {
         console.error(err);
         alert("Gagal mengirim surat: " + err.message);
