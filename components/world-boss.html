@@ -1,0 +1,26 @@
+<div style="background: #110000; border: 2px solid #8b0000; padding: 20px; border-radius: 8px; text-align: center; position: relative; overflow: hidden;">
+    <div style="position: absolute; top: -50px; left: -50px; right: -50px; bottom: -50px; background: radial-gradient(circle, rgba(139,0,0,0.2) 0%, rgba(0,0,0,0) 70%); z-index: 0; pointer-events: none;"></div>
+
+    <div style="position: relative; z-index: 1;">
+        <h2 style="color: #ff4c4c; text-shadow: 0 0 10px red; margin-top: 0;">👹 INVASI WORLD BOSS</h2>
+        <h3 id="wb-name" style="color: #fff; margin-bottom: 5px;">Memuat Boss...</h3>
+        
+        <div style="background: #333; width: 100%; height: 25px; border-radius: 12px; border: 2px solid #555; overflow: hidden; margin-bottom: 5px;">
+            <div id="wb-hp-bar" style="background: linear-gradient(90deg, #ff0000, #ff4c4c); width: 100%; height: 100%; transition: width 0.3s ease;"></div>
+        </div>
+        <div id="wb-hp-text" style="color: #ffcc00; font-weight: bold; font-size: 14px; margin-bottom: 15px;">0 / 0 HP</div>
+
+        <button id="wb-btn-attack" onclick="window.attackWorldBoss()" style="background: #8b0000; color: #fff; font-size: 18px; font-weight: bold; padding: 15px 30px; border: 2px solid #ff4c4c; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(255,0,0,0.3); transition: 0.2s; width: 100%;">⚔️ SERANG BOSS! ⚔️</button>
+        <p style="font-size: 11px; color: #aaa; margin-top: 5px;">Setiap serangan tidak memakan Stamina, tetapi memiliki *Cooldown* 2 detik.</p>
+
+        <div style="margin-top: 20px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 5px; border: 1px solid #444;">
+            <h4 style="color: #00d2ff; margin: 0 0 10px 0; border-bottom: 1px solid #333; padding-bottom: 5px;">🏆 Peringkat Damage (Top 5)</h4>
+            <div id="wb-leaderboard" style="font-size: 12px; text-align: left; min-height: 80px;">
+                <div style="text-align:center; color:#777;">Belum ada yang menyerang...</div>
+            </div>
+            <div id="wb-my-damage" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #555; color: #ffcc00; font-weight: bold; font-size: 13px;">
+                Total Damage Anda: 0
+            </div>
+        </div>
+    </div>
+</div>
