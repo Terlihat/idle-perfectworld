@@ -404,6 +404,11 @@ document.addEventListener('click', async (e) => {
 
 // GLOBAL WINDOW ROUTERS ASYNC
 window.handleInventoryClick = async function (itemName) {
+    if (inventoryMode === "transfer" || inventoryMode === "TRANSFER") {
+        window.putItemToTransferSlot(itemName);
+        return; // Hentikan fungsi di sini agar item tidak tidak terpakai/terjual
+    }
+
     if (inventoryMode === "EQUIP") {
         if (itemName === "Tiket Ganti Nama") {
             const inputName = await window.rpgPrompt("Masukkan Nama Karakter Baru:", "Ganti Nama");
