@@ -475,7 +475,7 @@ document.addEventListener('click', async (e) => {
     // --- TOMBOL KATEGORI LEADERBOARD ---
     if (targetId === 'btn-lb-level') window.fetchLeaderboard('level');
     if (targetId === 'btn-lb-gold') window.fetchLeaderboard('gold');
-    if (targetId === 'btn-lb-bp') window.fetchLeaderboard('bp');
+    if (targetId === 'btn-lb-tower') window.fetchLeaderboard('tower');
 
     if (targetId === 'class-warrior') selectCharacterClass(db, currentUserUid, 'Warrior', () => showScreen('screen-game'));
     if (targetId === 'class-mage') selectCharacterClass(db, currentUserUid, 'Mage', () => showScreen('screen-game'));
@@ -1037,7 +1037,7 @@ document.addEventListener('click', async (e) => {
 });
 
 // ==========================================
-// SISTEM GLOBAL LEADERBOARD & KALKULASI BP
+// SISTEM GLOBAL LEADERBOARD 
 // ==========================================
 window.fetchLeaderboard = async function (type) {
     const lbContent = document.getElementById('leaderboard-content');
@@ -1047,27 +1047,19 @@ window.fetchLeaderboard = async function (type) {
 
     try {
         const usersRef = collection(db, "users");
-        const snap = await getDocs(usersRef); // Unduh data pemain (bisa dioptimalkan di masa depan)
+        const snap = await getDocs(usersRef);
         let usersData = [];
 
         snap.forEach(docSnap => {
             const d = docSnap.data();
-            // Hanya masukkan pemain yang sudah membuat karakter (punya username)
             if (d.username) {
-                // RUMUS BATTLE POWER (BP): (Level x 50) + (Semua Status x 10) + (1/5 HP Maksimal)
-                let calculatedBP = (d.level || 1) * 50 +
-                    (d.str || 0) * 10 +
-                    (d.con || 0) * 10 +
-                    (d.dex || 0) * 10 +
-                    (d.int || 0) * 10 +
-                    Math.floor((d.maxHp || 0) / 5);
-
                 usersData.push({
                     name: d.username,
                     level: d.level || 1,
                     gold: d.gold || 0,
                     class: d.characterClass || '-',
-                    bp: calculatedBP
+                    // PERUBAHAN: Tarik data lantai menara pemain (default: Lantai 1)
+                    tower: d.towerFloor || 1
                 });
             }
         });
@@ -1075,12 +1067,13 @@ window.fetchLeaderboard = async function (type) {
         // Urutkan data berdasarkan tombol yang diklik
         if (type === 'level') usersData.sort((a, b) => b.level - a.level);
         if (type === 'gold') usersData.sort((a, b) => b.gold - a.gold);
-        if (type === 'bp') usersData.sort((a, b) => b.bp - a.bp);
+        // PERUBAHAN: Urutkan berdasarkan lantai tertinggi
+        if (type === 'tower') usersData.sort((a, b) => b.tower - a.tower);
 
         // Render HTML Tabel Leaderboard
         let html = '<table style="width:100%; border-collapse:collapse; font-size:12px; text-align:center;">';
         html += '<tr style="background:#222; color:#fff; border-bottom:2px solid #555;">';
-        html += '<th style="padding:8px 5px;">Rank</th><th style="padding:8px 5px; text-align:left;">Nama</th><th style="padding:8px 5px;">Class</th><th style="padding:8px 5px;">Nilai</th></tr>';
+        html += '<th style="padding:8px 5px;">Rank</th><th style="padding:8px 5px; text-align:left;">Nama</th><th style="padding:8px 5px;">Class</th><th style="padding:8px 5px;">Pencapaian</th></tr>';
 
         // Ambil maksimal Top 10
         for (let i = 0; i < Math.min(10, usersData.length); i++) {
@@ -1091,7 +1084,8 @@ window.fetchLeaderboard = async function (type) {
             // Format angka dan ikon berdasar kategori
             if (type === 'level') { valStr = `Lv. ${u.level}`; valColor = '#00d2ff'; }
             if (type === 'gold') { valStr = `💰 ${u.gold.toLocaleString()}`; valColor = '#ffcc00'; }
-            if (type === 'bp') { valStr = `⚔️ ${u.bp.toLocaleString()}`; valColor = '#dc3545'; }
+            // PERUBAHAN: Format teks untuk Menara Ilusi
+            if (type === 'tower') { valStr = `🗼 Lantai ${u.tower}`; valColor = '#e040fb'; }
 
             // Dekorasi Medali Top 3
             let rankColor = '#aaa';
@@ -1102,7 +1096,7 @@ window.fetchLeaderboard = async function (type) {
 
             html += `<tr style="border-bottom:1px solid #333; background: ${i % 2 === 0 ? '#1a1a24' : '#121216'}; transition:0.2s;">
                 <td style="padding:8px 5px; color:${rankColor}; font-weight:bold; font-size:14px;">${rankIcon}</td>
-                <td style="padding:8px 5px; color:#fff; font-weight:bold; text-align:left;">${escapeHTML(u.name)}</td>
+                <td style="padding:8px 5px; color:#fff; font-weight:bold; text-align:left;">${window.escapeHTML ? window.escapeHTML(u.name) : u.name}</td>
                 <td style="padding:8px 5px; color:#aaa;">${u.class}</td>
                 <td style="padding:8px 5px; color:${valColor}; font-weight:bold;">${valStr}</td>
             </tr>`;
