@@ -305,10 +305,16 @@ function startLiveGameSync() {
             hpText.innerText = `${bossData.currentHp.toLocaleString()} / ${bossData.maxHp.toLocaleString()} HP`;
         }
 
-        // --- LOGIKA TOMBOL & COOLDOWN BARU ---
+        // --- LOGIKA TOMBOL & COOLDOWN BARU (DENGAN LIVE TIMER) ---
         let myRecord = bossData.participants && bossData.participants[window.currentUserUid] ? bossData.participants[window.currentUserUid] : null;
         let attackCount = myRecord ? (myRecord.attackCount || 0) : 0;
         let lastTime = myRecord ? (myRecord.lastAttackTime || 0) : 0;
+
+        // Hapus timer lama jika ada agar tidak bentrok (bocor memori)
+        if (window.wbCooldownTimer) {
+            clearInterval(window.wbCooldownTimer);
+            window.wbCooldownTimer = null;
+        }
 
         if (!bossData.isActive || bossData.currentHp <= 0) {
             if (btnAttack) {
@@ -328,12 +334,42 @@ function startLiveGameSync() {
                     btnAttack.style.background = "#555";
                     btnAttack.style.borderColor = "#333";
                 } else if (attackCount > 0 && (now - lastTime < ONE_HOUR)) {
-                    // Update teks secara statis (Pemain harus tutup-buka panel untuk cek sisa waktu)
-                    let sisaMenit = Math.ceil((ONE_HOUR - (now - lastTime)) / 60000);
                     btnAttack.disabled = true;
-                    btnAttack.innerText = `⏳ Cooldown (${sisaMenit} Menit)`;
-                    btnAttack.style.background = "#b8860b"; // Warna Emas/Kuning
+                    btnAttack.style.background = "#b8860b";
                     btnAttack.style.borderColor = "#daa520";
+
+                    // FUNGSI LIVE TIMER
+                    const updateTimer = () => {
+                        let waktuSekarang = Date.now();
+                        let sisaWaktu = ONE_HOUR - (waktuSekarang - lastTime);
+
+                        if (sisaWaktu <= 0) {
+                            // Waktu habis, aktifkan kembali tombol!
+                            clearInterval(window.wbCooldownTimer);
+                            if (btnAttack) {
+                                btnAttack.disabled = false;
+                                btnAttack.innerText = `⚔️ SERANG BOSS! (${5 - attackCount}/5)`;
+                                btnAttack.style.background = "#8b0000";
+                                btnAttack.style.borderColor = "#ff4c4c";
+                            }
+                        } else {
+                            // Ubah milidetik ke format Menit:Detik (MM:SS)
+                            let m = Math.floor(sisaWaktu / 60000);
+                            let s = Math.floor((sisaWaktu % 60000) / 1000);
+
+                            // Tambahkan angka 0 di depan jika di bawah 10 (misal: 09:05)
+                            let mStr = m.toString().padStart(2, '0');
+                            let sStr = s.toString().padStart(2, '0');
+
+                            if (btnAttack) btnAttack.innerText = `⏳ Cooldown (${mStr}:${sStr})`;
+                        }
+                    };
+
+                    // Panggil sekali agar langsung muncul tanpa jeda 1 detik
+                    updateTimer();
+                    // Set interval agar berjalan mundur setiap 1 detik
+                    window.wbCooldownTimer = setInterval(updateTimer, 1000);
+
                 } else {
                     btnAttack.disabled = false;
                     btnAttack.innerText = `⚔️ SERANG BOSS! (${5 - attackCount}/5)`;
