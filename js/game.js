@@ -305,6 +305,11 @@ function startLiveGameSync() {
             hpText.innerText = `${bossData.currentHp.toLocaleString()} / ${bossData.maxHp.toLocaleString()} HP`;
         }
 
+        // --- LOGIKA TOMBOL & COOLDOWN BARU ---
+        let myRecord = bossData.participants && bossData.participants[window.currentUserUid] ? bossData.participants[window.currentUserUid] : null;
+        let attackCount = myRecord ? (myRecord.attackCount || 0) : 0;
+        let lastTime = myRecord ? (myRecord.lastAttackTime || 0) : 0;
+
         if (!bossData.isActive || bossData.currentHp <= 0) {
             if (btnAttack) {
                 btnAttack.innerText = "BOSS TELAH MATI";
@@ -313,11 +318,28 @@ function startLiveGameSync() {
                 btnAttack.style.borderColor = "#111";
             }
         } else {
-            if (btnAttack && !btnAttack.innerText.includes("COOLDOWN")) {
-                btnAttack.disabled = false;
-                btnAttack.innerText = "⚔️ SERANG BOSS! ⚔️";
-                btnAttack.style.background = "#8b0000";
-                btnAttack.style.borderColor = "#ff4c4c";
+            if (btnAttack) {
+                const now = Date.now();
+                const ONE_HOUR = 60 * 60 * 1000;
+
+                if (attackCount >= 5) {
+                    btnAttack.disabled = true;
+                    btnAttack.innerText = "Batas 5x Serangan Tercapai";
+                    btnAttack.style.background = "#555";
+                    btnAttack.style.borderColor = "#333";
+                } else if (attackCount > 0 && (now - lastTime < ONE_HOUR)) {
+                    // Update teks secara statis (Pemain harus tutup-buka panel untuk cek sisa waktu)
+                    let sisaMenit = Math.ceil((ONE_HOUR - (now - lastTime)) / 60000);
+                    btnAttack.disabled = true;
+                    btnAttack.innerText = `⏳ Cooldown (${sisaMenit} Menit)`;
+                    btnAttack.style.background = "#b8860b"; // Warna Emas/Kuning
+                    btnAttack.style.borderColor = "#daa520";
+                } else {
+                    btnAttack.disabled = false;
+                    btnAttack.innerText = `⚔️ SERANG BOSS! (${5 - attackCount}/5)`;
+                    btnAttack.style.background = "#8b0000";
+                    btnAttack.style.borderColor = "#ff4c4c";
+                }
             }
         }
 
