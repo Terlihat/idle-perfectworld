@@ -298,7 +298,20 @@ function startLiveGameSync() {
             return;
         }
 
-        container.innerHTML = items.map(item => `
+        // Kita gunakan kurung kurawal {} di dalam map agar bisa menggunakan logika IF
+        container.innerHTML = items.map(item => {
+
+            // Logika Tombol Dinamis
+            let actionButton = "";
+            if (item.sellerUid === window.currentUserUid) {
+                // Jika ini barang miliknya sendiri, tampilkan tombol BATAL (Merah)
+                actionButton = `<button onclick="window.cmCancelSell('${item.id}')" style="background:#dc3545; color:#fff; border:none; border-radius:3px; padding:5px 10px; font-weight:bold; cursor:pointer;">BATAL</button>`;
+            } else {
+                // Jika ini barang orang lain, tampilkan tombol BELI (Hijau)
+                actionButton = `<button onclick="window.cmBuyCoin('${item.id}', '${item.sellerUid}', ${item.amount}, ${item.price})" style="background:#28a745; color:#fff; border:none; border-radius:3px; padding:5px 10px; font-weight:bold; cursor:pointer;">BELI</button>`;
+            }
+
+            return `
             <div style="background:#1a1a1a; border:1px solid #333; padding:10px; margin-bottom:5px; border-radius:5px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
                     <div style="font-weight:bold; color:#ffcc00;">🪙 ${item.amount} Coin</div>
@@ -306,10 +319,11 @@ function startLiveGameSync() {
                 </div>
                 <div style="text-align:right;">
                     <div style="color:#ffd700; font-weight:bold; margin-bottom:5px;">💰 ${item.price} Gold</div>
-                    <button onclick="window.cmBuyCoin('${item.id}', '${item.sellerUid}', ${item.amount}, ${item.price})" style="background:#28a745; color:#fff; border:none; border-radius:3px; padding:5px 10px; font-weight:bold; cursor:pointer;">BELI</button>
+                    ${actionButton}
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     });
 
     // --- LISTENER WORLD BOSS (TAMBAHAN BARU) ---
