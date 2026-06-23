@@ -37,7 +37,8 @@ export async function selectCharacterClass(db, uid, charClass, callback) {
             equipment: { weapon: null, armor: null, accessory: null },
             statPoints: 0,
             pkKills: 0,
-            inPkZone: false
+            inPkZone: false,
+            quests: null
         });
 
         if (callback) callback();

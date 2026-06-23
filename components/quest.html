@@ -1,18 +1,26 @@
 <h2 style="color: #28a745;">📜 Misi Harian & Bounty</h2>
-<button id="btn-take-quest" style="width:100%; display:none; background:#28a745; margin-bottom:10px; padding:8px;">Ambil Misi Hari Ini</button>
+<button id="btn-take-quest" onclick="window.assignNewQuests()"
+    style="width:100%; display:none; background:#28a745; margin-bottom:10px; padding:8px;">Ambil Misi Hari Ini</button>
 
-<div id="quest-daily-box" style="margin-bottom: 8px; padding: 6px; background: #121216; border: 1px solid #3f3f52; border-radius: 4px;">
+<div id="quest-daily-box"
+    style="margin-bottom: 8px; padding: 6px; background: #121216; border: 1px solid #3f3f52; border-radius: 4px;">
     <strong style="color:#00d2ff; font-size:12px;">Misi Solo: <span id="quest-daily-title">-</span></strong><br>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-top:4px;">
-        <span style="font-size:11px; color:#aaa;">Progress: <strong id="quest-daily-prog" style="color:#fff;">0/0</strong></span>
-        <button id="btn-claim-daily" style="display:none; padding:3px 8px; font-size:10px; background:#ffca28; color:#000; font-weight:bold;">Klaim Hadiah</button>
+        <span style="font-size:11px; color:#aaa;">Progress: <strong id="quest-daily-prog"
+                style="color:#fff;">0/0</strong></span>
+        <button id="btn-claim-daily" onclick="window.claimQuest('daily')"
+            style="display:none; padding:3px 8px; font-size:10px; background:#ffca28; color:#000; font-weight:bold;">Klaim
+            Hadiah</button>
     </div>
 </div>
 
 <div id="quest-bounty-box" style="padding: 6px; background: #121216; border: 1px solid #3f3f52; border-radius: 4px;">
     <strong style="color:#d8b4fe; font-size:12px;">Bounty Fuben: <span id="quest-bounty-title">-</span></strong><br>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-top:4px;">
-        <span style="font-size:11px; color:#aaa;">Progress: <strong id="quest-bounty-prog" style="color:#fff;">0/0</strong></span>
-        <button id="btn-claim-bounty" style="display:none; padding:3px 8px; font-size:10px; background:#ffca28; color:#000; font-weight:bold;">Klaim Hadiah</button>
+        <span style="font-size:11px; color:#aaa;">Progress: <strong id="quest-bounty-prog"
+                style="color:#fff;">0/0</strong></span>
+        <button id="btn-claim-bounty" onclick="window.claimQuest('bounty')"
+            style="display:none; padding:3px 8px; font-size:10px; background:#ffca28; color:#000; font-weight:bold;">Klaim
+            Hadiah</button>
     </div>
 </div>
