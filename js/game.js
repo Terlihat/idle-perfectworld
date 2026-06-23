@@ -35,6 +35,8 @@ import './modules/world-boss.js';
 import { listenToWorldBoss } from './modules/world-boss.js';
 import './modules/tower.js';
 import { renderTowerUI } from './modules/tower.js';
+import './modules/expedition.js';
+import { renderExpeditionUI } from './modules/expedition.js';
 
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
@@ -224,6 +226,7 @@ function startLiveGameSync() {
         renderGuildUI(currentPlayerStats, globalGuilds, guildUpgradesMap);
         renderCraftingUI(d.inventory || {}, d.level || 1, d.gold || 0);
         renderTowerUI(d);
+        renderExpeditionUI(d);
 
         window.currentInventoryData = d.inventory || {};
         const elOwnedStone = document.getElementById('transfer-owned-stone');
@@ -462,6 +465,7 @@ document.addEventListener('click', async (e) => {
     if (targetId === 'btn-toggle-mail') window.togglePanel('panel-mailbox');
     if (targetId === 'btn-toggle-boss') window.togglePanel('panel-world-boss');
     if (targetId === 'btn-toggle-tower') window.togglePanel('panel-tower');
+    if (targetId === 'btn-toggle-afk') window.togglePanel('panel-afk');
     if (targetId === 'btn-toggle-leaderboard') {
         window.togglePanel('panel-leaderboard');
         const lbContent = document.getElementById('leaderboard-content');

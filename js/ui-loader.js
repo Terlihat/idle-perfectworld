@@ -17,6 +17,7 @@ export async function loadUIComponents() {
         // --- Kolom 2 (Tengah) ---
         { id: 'panel-world-boss', file: './components/world-boss.html' },
         { id: 'panel-tower', file: './components/tower.html' },
+        { id: 'panel-afk', file: './components/expedition.html' },
         { id: 'panel-dungeon', file: './components/dungeon.html' },
         { id: 'panel-party', file: './components/party.html' },
         { id: 'panel-quest', file: './components/quest.html' },
