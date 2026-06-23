@@ -142,3 +142,17 @@ async function distributeBossRewards(participantsObj) {
         console.error("Gagal mendistribusikan hadiah: ", err);
     }
 }
+
+// ==========================================
+// FITUR: Listener Real-Time UI Boss (WAJIB ADA)
+// ==========================================
+export function listenToWorldBoss(renderCallback) {
+    const bossRef = doc(db, "events", "worldBoss");
+    return onSnapshot(bossRef, (docSnap) => {
+        if (!docSnap.exists()) {
+            renderCallback(null);
+            return;
+        }
+        renderCallback(docSnap.data());
+    });
+}
