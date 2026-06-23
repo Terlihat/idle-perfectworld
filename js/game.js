@@ -181,6 +181,26 @@ function startLiveGameSync() {
             return;
         }
 
+        let curLevel = d.level || 1;
+        let curExp = d.exp || 0;
+        let maxExp = curLevel * 100;
+        let isLevelUp = false;
+
+        while (curExp >= maxExp) {
+            curExp -= maxExp;
+            curLevel += 1;
+            maxExp = curLevel * 100;
+            isLevelUp = true;
+        }
+
+        if (isLevelUp) {
+            updateDoc(doc(db, "users", currentUserUid), {
+                level: curLevel,
+                exp: curExp
+            });
+            return;
+        }
+
         playerUsername = d.username || "Hero Anonim";
 
         const baseTotal = d.characterClass === 'Warrior' ? 42 : 45;
@@ -210,12 +230,10 @@ function startLiveGameSync() {
             startDynamicChat();
         }
 
-        // --- RENDER SALDO BURSA KOIN (TAMBAHAN BARU) ---
         const elCmCoin = document.getElementById('cm-balance-coin');
         const elCmGold = document.getElementById('cm-balance-gold');
         if (elCmCoin) elCmCoin.innerText = d.auctionBalanceCoin || 0;
         if (elCmGold) elCmGold.innerText = d.auctionBalanceGold || 0;
-        // ----------------------------------------------
 
         const newStats = renderPlayerUI(d, currentUserUid, globalGuilds, guildUpgradesMap);
         if (newStats) currentPlayerStats = newStats;
