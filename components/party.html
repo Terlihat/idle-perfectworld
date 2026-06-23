@@ -1,7 +1,8 @@
-<h2 style="color: #d8b4fe;">🏕️ Fuben Party (FB)</h2>
+<h2 style="color: #d8b4fe; margin-top: 0;">🏕️ Fuben Party (FB)</h2>
+
 <div style="display: flex; gap: 5px; margin-bottom: 10px;">
     <select id="fb-select" onchange="window.showFbDrops()"
-        style="flex: 1; padding: 6px; background: #121216; color: #d8b4fe; border: 1px solid #3f3f52;">
+        style="flex: 1; padding: 6px; background: #121216; color: #d8b4fe; border: 1px solid #3f3f52; border-radius: 3px; cursor: pointer;">
         <option value="fb19">🔥 FB19 (Roiling Terror)</option>
         <option value="fb29">👻 FB29 (Qingzi)</option>
         <option value="fb39">👁️ FB39 (Herculean)</option>
@@ -13,16 +14,23 @@
         <option value="fb99">👑 FB99 (Emperor of Heaven)</option>
         <option value="fb100">🌌 FB100 (Goddess of PW)</option>
     </select>
-    <button id="btn-create-party" style="background: #6f42c1;">Buat / Gabung</button>
+
+    <button id="btn-create-party"
+        style="background: #6f42c1; color: white; border: none; padding: 6px 12px; border-radius: 3px; font-weight: bold; cursor: pointer;">Buat
+        / Gabung</button>
 </div>
 
 <div id="fb-drop-info"
-    style="margin-bottom: 15px; font-size: 11px; color: #ccc; background: #1a1a24; padding: 8px; border-radius: 4px; border: 1px dashed #444; display: none;">
+    style="margin-bottom: 15px; font-size: 12px; color: #ccc; background: #1a1a24; padding: 10px; border-radius: 4px; border: 1px dashed #444; display: none;">
     <span style="color: #ffcc00; font-weight: bold;">🎁 Hadiah Langka:</span>
-    <span id="fb-drop-text" style="color: #00d2ff;"></span>
+    <span id="fb-drop-text" style="color: #00d2ff; font-weight: bold;"></span>
 </div>
 
-<strong style="font-size: 11px; color:#d8b4fe;">Daftar Party Menunggu:</strong>
+<strong style="font-size: 12px; color:#d8b4fe;">Daftar Party Menunggu:</strong>
+
 <div id="party-list"
-    style="max-height: 120px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 11px; border: 1px solid #3f3f52; margin-top: 5px;">
+    style="max-height: 150px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 11px; border: 1px solid #3f3f52; margin-top: 5px;">
 </div>
+
+<img src="x" style="display:none;"
+    onerror="setTimeout(() => { if(typeof window.showFbDrops === 'function') window.showFbDrops(); }, 150);">
