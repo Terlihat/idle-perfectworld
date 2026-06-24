@@ -5,7 +5,7 @@ import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/f
 let afkTimerInterval = null;
 
 // FITUR: Memulai Ekspedisi
-window.startExpedition = async function() {
+window.startExpedition = async function () {
     const hours = parseInt(document.getElementById('afk-duration').value);
     const btn = document.getElementById('btn-start-afk');
     btn.disabled = true;
@@ -42,7 +42,7 @@ window.startExpedition = async function() {
 };
 
 // FITUR: Mengklaim Hadiah
-window.claimExpedition = async function() {
+window.claimExpedition = async function () {
     const btn = document.getElementById('btn-claim-afk');
     btn.disabled = true;
     btn.innerText = "Mengklaim...";
@@ -63,10 +63,11 @@ window.claimExpedition = async function() {
             // --- KALKULASI HADIAH DINAMIS ---
             const h = d.expedition.hours;
             const pLevel = d.level || 1;
-            
-            const rewardGold = h * 800 * pLevel; // Hadiah semakin besar jika level tinggi
-            const rewardExp = h * 300 * pLevel;
-            
+
+            const maxExpNeeded = pLevel * 100;
+            const rewardExp = Math.floor(maxExpNeeded * 0.05 * h);
+            const rewardGold = Math.floor((h * 100) + (h * 25 * pLevel));
+
             let currentInv = d.inventory || {};
             let extraMsg = "";
 
@@ -115,9 +116,9 @@ export function renderExpeditionUI(userData) {
         timerDiv.style.display = 'none';
         statusText.innerText = "Pilih Durasi Ekspedisi";
         statusText.style.color = "#ffca28";
-        
+
         const btnStart = document.getElementById('btn-start-afk');
-        if(btnStart) { btnStart.disabled = false; btnStart.innerText = "🚀 BERANGKAT EKSPEDISI"; }
+        if (btnStart) { btnStart.disabled = false; btnStart.innerText = "🚀 BERANGKAT EKSPEDISI"; }
     } else {
         selectionDiv.style.display = 'none';
         timerDiv.style.display = 'block';
@@ -133,14 +134,14 @@ export function renderExpeditionUI(userData) {
                 claimDiv.style.display = 'block';
                 statusText.innerText = "Ekspedisi Selesai!";
                 statusText.style.color = "#28a745";
-                
+
                 const btnClaim = document.getElementById('btn-claim-afk');
-                if(btnClaim) { btnClaim.disabled = false; btnClaim.innerText = "🎁 KLAIM HADIAH"; }
+                if (btnClaim) { btnClaim.disabled = false; btnClaim.innerText = "🎁 KLAIM HADIAH"; }
             } else {
                 claimDiv.style.display = 'none';
                 statusText.innerText = "Karakter Sedang Dalam Perjalanan...";
                 statusText.style.color = "#4ae3ff";
-                
+
                 let sisaDetik = Math.floor(sisaMs / 1000);
                 let jam = Math.floor(sisaDetik / 3600);
                 let menit = Math.floor((sisaDetik % 3600) / 60);
