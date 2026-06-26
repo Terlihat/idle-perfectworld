@@ -10,7 +10,7 @@ import { sendPartyBattleReport } from './mailbox.js';
 // ==========================================
 // SETTING BIAYA STAMINA FUBEN
 // ==========================================
-const FB_STAMINA_COST = 30; // <<< UBAH ANGKA INI JIKA INGIN MENGGANTI BIAYA
+const FB_STAMINA_COST = 50; // <<< UBAH ANGKA INI JIKA INGIN MENGGANTI BIAYA
 
 export function listenToParties(db, callbackRender) {
     const q = query(collection(db, "parties"));
