@@ -1,5 +1,5 @@
 /* ===================================================
-   MODUL PARTY DUNGEON (Fix Level Up Check, VIP Engine, & Gacha Drop)
+   MODUL PARTY DUNGEON (Fix Level Up Check, VIP Engine, Gacha Drop, & Server Buffs)
    =================================================== */
 import { collection, doc, runTransaction, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { FB_BOSSES } from '../data/monsters.js';
@@ -84,6 +84,7 @@ export async function leaveParty(db, partyId, uid) {
 export async function startFbBattle(db, leaderUid, partyId) {
     if (!partyId) return;
     const partyRef = doc(db, "parties", partyId);
+    const buffRef = doc(db, "events", "serverBuffs"); // Referensi Database Event Global
 
     try {
         const resultMsg = await runTransaction(db, async (ts) => {
@@ -97,12 +98,23 @@ export async function startFbBattle(db, leaderUid, partyId) {
             const boss = FB_BOSSES[party.fbKey];
             if (!boss) throw "Dungeon tidak valid.";
 
+            // --- CEK STATUS EVENT GLOBAL DARI ADMIN ---
+            const buffSnap = await ts.get(buffRef);
+            const buffData = buffSnap.exists() ? buffSnap.data() : {};
+            const isDoubleExp = buffData.doubleExp || false;
+            const isDoubleDrop = buffData.doubleDrop || false;
+
             // 1. --- KALKULASI DAMAGE PARTY VS BOSS ---
             const memberRefs = party.members.map(m => doc(db, "users", m.uid));
             const memberSnaps = await Promise.all(memberRefs.map(ref => ts.get(ref)));
 
             let totalPartyAtk = 0;
-            let log = `⚔️ REKAP PERTARUNGAN MELAWAN [${boss.name}]:\n\n`;
+            let log = `⚔️ REKAP PERTARUNGAN MELAWAN [${boss.name}]:\n`;
+
+            // Notifikasi Event Aktif di Laporan Surat
+            if (isDoubleExp) log += `🌟 (EVENT AKTIF) DOUBLE EXP!\n`;
+            if (isDoubleDrop) log += `🎁 (EVENT AKTIF) DOUBLE DROP RATE!\n`;
+            log += `\n`;
 
             memberSnaps.forEach(snap => {
                 const md = snap.data();
@@ -122,7 +134,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
             log += `[!] Party Total DPS: ${totalPartyAtk} | Boss HP: ${boss.hp} | Dibunuh dalam ${turnsToKill} Putaran.\n\n`;
 
             let survivors = 0;
-            let battleResults = []; // Tempat menyimpan hasil ramalan nyawa
+            let battleResults = [];
 
             // 2. --- PRA-KALKULASI HASIL NYAWA TIAP ANGGOTA ---
             memberSnaps.forEach(snap => {
@@ -134,7 +146,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
                 const goldMult = 1 + (mount?.goldBonus || 0);
 
-                if (md.currentHp <= 0 || md.currentStamina < stamReq) return; // Abaikan yang sudah mati dari awal
+                if (md.currentHp <= 0 || md.currentStamina < stamReq) return;
 
                 const effectiveDef = partyData ? partyData.def : 10;
                 const dmgPerTurn = Math.max(1, boss.atk - effectiveDef);
@@ -146,18 +158,16 @@ export async function startFbBattle(db, leaderUid, partyId) {
 
                 if (!isDead) survivors++;
 
-                // Simpan hasil untuk dieksekusi nanti
                 battleResults.push({
                     snap, md, mRef, goldMult, newHp, newStamina, isDead, totalDmgTaken
                 });
             });
 
-            // 3. --- SISTEM GACHA DROP ACAK (HANYA JIKA ADA YANG HIDUP) ---
+            // 3. --- SISTEM GACHA DROP ACAK ---
             let memberDrops = {};
             let dropLogMsg = "\n\n🎁 HASIL LOOT ACAK:\n";
             let adaDrop = false;
 
-            // Jika ada minimal 1 orang yang selamat, Bos menjatuhkan hartanya!
             if (survivors > 0) {
                 let dropsArray = [];
                 if (boss.drop) dropsArray.push(boss.drop);
@@ -165,7 +175,10 @@ export async function startFbBattle(db, leaderUid, partyId) {
 
                 if (dropsArray.length > 0) {
                     dropsArray.forEach(d => {
-                        if (Math.random() <= d.chance) {
+                        // PENERAPAN EVENT DOUBLE DROP
+                        let chance = isDoubleDrop ? d.chance * 2 : d.chance;
+
+                        if (Math.random() <= chance) {
                             adaDrop = true;
                             const luckyMember = party.members[Math.floor(Math.random() * party.members.length)];
 
@@ -178,7 +191,6 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 }
                 if (!adaDrop) dropLogMsg += "> Sayang sekali, tidak ada barang langka yang jatuh kali ini.\n";
             } else {
-                // Jika semua mati (Wipe Out), hadiah hangus!
                 dropLogMsg = "\n\n❌ LOOT GAGAL: Karena seluruh tim terbunuh, Bos kembali ke sarangnya dan membawa pergi semua hartanya.\n";
             }
 
@@ -186,7 +198,6 @@ export async function startFbBattle(db, leaderUid, partyId) {
             battleResults.forEach(res => {
                 const { snap, md, mRef, goldMult, newHp, newStamina, isDead, totalDmgTaken } = res;
 
-                // PENYISIPAN BARANG GACHA KE DALAM TAS
                 let inv = md.inventory || {};
                 let dropsGot = memberDrops[snap.id] || [];
                 let extraDropText = "";
@@ -196,20 +207,21 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     extraDropText = `\n   💎 (Loot Acak): Dapat ${dropsGot.join(", ")}`;
                 }
 
-                // KALKULASI REWARD DASAR (VIP)
                 const vipStats = getVipStats(md.vipLevel || 0);
+
+                // PENERAPAN EVENT DOUBLE EXP
+                let baseExp = isDoubleExp ? boss.rewardExp * 2 : boss.rewardExp;
                 let baseGold = Math.floor(boss.rewardGold * goldMult);
-                let baseExp = boss.rewardExp;
+
                 let bonusGold = Math.floor(baseGold * (vipStats.goldBonusPct / 100));
                 let bonusExp = Math.floor(baseExp * (vipStats.expBonusPct / 100));
 
                 let finalExpGain = baseExp + bonusExp;
                 let finalGoldGain = baseGold + bonusGold;
 
-                // KOMPENSASI MATI
                 if (isDead) {
-                    finalExpGain = Math.floor(finalExpGain * 0.3); // Hanya dapat 30%
-                    finalGoldGain = Math.floor(finalGoldGain * 0.3); // Hanya dapat 30%
+                    finalExpGain = Math.floor(finalExpGain * 0.3);
+                    finalGoldGain = Math.floor(finalGoldGain * 0.3);
                 }
 
                 let newExp = (md.exp || 0) + finalExpGain;
@@ -223,7 +235,6 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     dropMsg += ` 📉(Penalti Kematian: Hadiah 30%)`;
                 }
 
-                // LOGIKA LEVEL UP
                 let newLevel = md.level || 1;
                 let statPointsGained = 0;
                 let leveledUp = false;
@@ -234,7 +245,6 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     leveledUp = true;
                 }
 
-                // UPDATE DATABASE
                 let updateData = {
                     exp: newExp,
                     gold: newGold,
@@ -268,7 +278,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
             } else {
                 log += `\n❌ PARTY WIPE OUT! Seluruh anggota Party terbunuh oleh Boss.`;
             }
-            log += dropLogMsg; // Cetak pesan gagal loot atau berhasil loot
+            log += dropLogMsg;
 
             ts.delete(partyRef);
 
@@ -295,21 +305,17 @@ window.showFbDrops = function () {
 
     if (!selectEl || !dropInfo || !dropText) return;
 
-    // Ambil data boss berdasarkan pilihan dropdown saat ini
     const fbKey = selectEl.value;
-    const boss = FB_BOSSES[fbKey]; // FB_BOSSES sudah di-import di atas
+    const boss = FB_BOSSES[fbKey];
 
-    // Cek apakah bos memiliki data drop barang
     if (boss && (boss.drop || (boss.drops && boss.drops.length > 0))) {
         let dropsArray = [];
 
-        // Membaca format drop tunggal (jika ada)
         if (boss.drop) {
             let pct = Math.round(boss.drop.chance * 100);
             dropsArray.push(`${boss.drop.item} (${pct}%)`);
         }
 
-        // Membaca format drop ganda/array (jika ada)
         if (boss.drops) {
             boss.drops.forEach(d => {
                 let pct = Math.round(d.chance * 100);
@@ -317,11 +323,9 @@ window.showFbDrops = function () {
             });
         }
 
-        // Gabungkan teks dan munculkan ke layar
         dropText.innerText = dropsArray.join(" | ");
-        dropInfo.style.display = "block"; // Ubah display:none menjadi block
+        dropInfo.style.display = "block";
     } else {
-        // Jika bos tidak memiliki drop, sembunyikan kotak infonya
         dropInfo.style.display = "none";
     }
 };
