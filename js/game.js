@@ -38,6 +38,7 @@ import './modules/tower.js';
 import { renderTowerUI } from './modules/tower.js';
 import './modules/expedition.js';
 import { renderExpeditionUI } from './modules/expedition.js';
+import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend } from './modules/friends.js';
 
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
@@ -270,6 +271,42 @@ function startLiveGameSync() {
         renderCraftingUI(d.inventory || {}, d.level || 1, d.gold || 0);
         renderTowerUI(d);
         renderExpeditionUI(d);
+
+        // --- RENDER SISTEM PERTEMANAN ---
+        const friends = d.friends || {};
+        const reqs = d.friendRequests || {};
+
+        // Render Daftar Teman
+        let fHtml = "";
+        for (let uid in friends) {
+            fHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:#161b22; padding:8px; margin-bottom:5px; border-radius:4px;">
+                        <span><b style="color:#58a6ff;">${friends[uid].username}</b> (Lv.${friends[uid].level})</span>
+                        <button onclick="window.delFriend('${uid}')" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">Hapus</button>
+                      </div>`;
+        }
+        document.getElementById('tab-friend-list').innerHTML = fHtml || `<div style="text-align: center; color: #aaa; margin-top: 20px;">Belum ada teman.</div>`;
+
+        // Render Permintaan
+        let rHtml = "";
+        let reqCount = 0;
+        for (let uid in reqs) {
+            reqCount++;
+            rHtml += `<div style="display:flex; flex-direction:column; background:#161b22; padding:8px; margin-bottom:5px; border-radius:4px;">
+                        <span style="margin-bottom:5px;"><b style="color:#ffca28;">${reqs[uid].username}</b> ingin berteman.</span>
+                        <div style="display:flex; gap:5px;">
+                            <button onclick="window.accFriend('${uid}', '${reqs[uid].username}', ${reqs[uid].level})" style="flex:1; background:#28a745; color:white; border:none; padding:4px; border-radius:3px;">Terima</button>
+                            <button onclick="window.rejFriend('${uid}')" style="flex:1; background:#dc3545; color:white; border:none; padding:4px; border-radius:3px;">Tolak</button>
+                        </div>
+                      </div>`;
+        }
+        document.getElementById('tab-friend-req').innerHTML = rHtml || `<div style="text-align: center; color: #aaa; margin-top: 20px;">Tidak ada permintaan.</div>`;
+
+        // Update Badge Notifikasi Merah
+        const badge = document.getElementById('badge-friend-req');
+        if (badge) {
+            badge.innerText = reqCount;
+            badge.style.display = reqCount > 0 ? 'inline-block' : 'none';
+        }
 
         window.currentInventoryData = d.inventory || {};
         const elOwnedStone = document.getElementById('transfer-owned-stone');
@@ -520,6 +557,7 @@ document.addEventListener('click', async (e) => {
     if (targetId === 'btn-toggle-shop') window.togglePanel('panel-shop');
     if (targetId === 'btn-toggle-coin-market') window.togglePanel('panel-coin-market');
     if (targetId === 'btn-toggle-mail') window.togglePanel('panel-mailbox');
+    if (targetId === 'btn-toggle-friends') window.togglePanel('panel-friends');
     if (targetId === 'btn-toggle-boss') window.togglePanel('panel-world-boss');
     if (targetId === 'btn-toggle-tower') window.togglePanel('panel-tower');
     if (targetId === 'btn-toggle-afk') window.togglePanel('panel-afk');
@@ -1480,5 +1518,40 @@ window.renderQuestUI = function (questData) {
         if (bTitle) bTitle.innerText = "-";
         if (bProg) bProg.innerText = "0/0";
         if (btnClaimB) btnClaimB.style.display = 'none';
+    }
+};
+
+// --- JEMBATAN UI SISTEM PERTEMANAN ---
+window.toggleFriendTab = function (tab) {
+    document.getElementById('tab-friend-list').style.display = tab === 'list' ? 'block' : 'none';
+    document.getElementById('tab-friend-req').style.display = tab === 'req' ? 'block' : 'none';
+    document.getElementById('btn-tab-list').style.background = tab === 'list' ? '#238636' : '#333';
+    document.getElementById('btn-tab-req').style.background = tab === 'req' ? '#8957e5' : '#333';
+};
+
+window.sendFriendReqManual = async function () {
+    const targetUid = document.getElementById('input-add-friend').value.trim();
+    if (!targetUid) return window.rpgAlert("Masukkan UID target!");
+    try {
+        await sendFriendRequest(db, currentUserUid, currentPlayerStats, targetUid);
+        window.rpgAlert("Permintaan berhasil dikirim!", "Sukses");
+        document.getElementById('input-add-friend').value = "";
+    } catch (err) { window.rpgAlert(err, "Gagal"); }
+};
+
+window.accFriend = async function (reqUid, reqName, reqLevel) {
+    try { await acceptFriendRequest(db, currentUserUid, currentPlayerStats, reqUid, { username: reqName, level: reqLevel }); }
+    catch (err) { console.error(err); }
+};
+
+window.rejFriend = async function (reqUid) {
+    try { await rejectFriendRequest(db, currentUserUid, reqUid); }
+    catch (err) { console.error(err); }
+};
+
+window.delFriend = async function (targetUid) {
+    if (await window.rpgConfirm("Yakin ingin menghapus teman ini?", "Hapus Teman")) {
+        try { await removeFriend(db, currentUserUid, targetUid); }
+        catch (err) { console.error(err); }
     }
 };

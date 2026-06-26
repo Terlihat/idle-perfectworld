@@ -27,7 +27,8 @@ export async function loadUIComponents() {
         { id: 'panel-refine-transfer', file: './components/refine-transfer.html' },
 
         // --- Kolom 3 (Kanan) ---
-        { id: 'panel-leaderboard', file: './components/leaderboard.html' }, // Komponen Baru
+        { id: 'panel-friends', file: './components/friends.html' },
+        { id: 'panel-leaderboard', file: './components/leaderboard.html' },
         { id: 'panel-mall', file: './components/mall.html' },
         { id: 'panel-shop', file: './components/shop.html' },
         { id: 'panel-coin-market', file: './components/coin-market.html' },
