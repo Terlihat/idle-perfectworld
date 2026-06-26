@@ -135,6 +135,15 @@ function startDynamicChat() {
     });
 }
 
+// --- FUNGSI GLOBAL UPDATE LOKASI (Panggil ini dari tombol menu) ---
+window.updateMyLocation = function (locationName) {
+    if (currentUserUid) {
+        updateDoc(doc(db, "users", currentUserUid), {
+            currentLocation: locationName
+        }).catch(err => console.error("Gagal update lokasi:", err));
+    }
+};
+
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUid = user.uid;
@@ -150,8 +159,34 @@ onAuthStateChanged(auth, async (user) => {
             startLiveGameSync();
             if (staminaRegenInterval) clearInterval(staminaRegenInterval);
             staminaRegenInterval = startStaminaRegeneration(db, currentUserUid);
+
+            // ==========================================
+            // SISTEM PELACAK STATUS ONLINE (MULAI)
+            // ==========================================
+            // 1. Set status menjadi Online saat berhasil memuat game
+            updateDoc(doc(db, "users", currentUserUid), {
+                isOnline: true,
+                currentLocation: "Kota Aman (Idle)"
+            }).catch(err => console.error("Gagal set online:", err));
+
+            // 2. Set status menjadi Offline jika pemain menutup tab browser
+            window.addEventListener('beforeunload', () => {
+                updateDoc(doc(db, "users", currentUserUid), {
+                    isOnline: false,
+                    currentLocation: "Offline"
+                });
+            });
+            // ==========================================
         }
     } else {
+        // 3. Set status Offline jika pemain menekan tombol Logout manual
+        if (currentUserUid) {
+            updateDoc(doc(db, "users", currentUserUid), {
+                isOnline: false,
+                currentLocation: "Offline"
+            }).catch(e => console.log("Gagal set offline:", e));
+        }
+
         currentUserUid = null;
         if (staminaRegenInterval) clearInterval(staminaRegenInterval);
         activeUnsubscribeListeners.forEach(unsub => unsub());
@@ -272,19 +307,44 @@ function startLiveGameSync() {
         renderTowerUI(d);
         renderExpeditionUI(d);
 
-        // --- RENDER SISTEM PERTEMANAN ---
+        // --- RENDER DAFTAR TEMAN (LIVE STATUS) ---
         const friends = d.friends || {};
         const reqs = d.friendRequests || {};
+        const friendUids = Object.keys(friends);
 
-        // Render Daftar Teman
-        let fHtml = "";
-        for (let uid in friends) {
-            fHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:#161b22; padding:8px; margin-bottom:5px; border-radius:4px;">
-                        <span><b style="color:#58a6ff;">${friends[uid].username}</b> (Lv.${friends[uid].level})</span>
-                        <button onclick="window.delFriend('${uid}')" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">Hapus</button>
-                      </div>`;
+        if (friendUids.length === 0) {
+            document.getElementById('tab-friend-list').innerHTML = `<div style="text-align: center; color: #aaa; margin-top: 20px;">Belum ada teman.</div>`;
+        } else {
+            // Kita buat fungsi async kecil agar bisa fetch data teman
+            const loadLiveFriends = async () => {
+                let fHtml = "";
+                for (let uid of friendUids) {
+                    const fSnap = await getDoc(doc(db, "users", uid));
+                    let isOnline = false;
+                    let loc = "Tidak diketahui";
+
+                    if (fSnap.exists()) {
+                        const fdata = fSnap.data();
+                        isOnline = fdata.isOnline || false;
+                        loc = fdata.currentLocation || "Kota Aman (Idle)";
+                    }
+
+                    // Indikator Warna (Hijau = Online, Abu = Offline)
+                    const statusDot = isOnline ? `<span style="color:#28a745; text-shadow: 0 0 5px #28a745;">●</span>` : `<span style="color:#666;">●</span>`;
+                    const locText = isOnline ? `<span style="font-size:10px; color:#ffca28;">📍 [${loc}]</span>` : `<span style="font-size:10px; color:#666;">[Zzz... Sedang Tidur]</span>`;
+
+                    fHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:#161b22; padding:8px; margin-bottom:5px; border-radius:4px; border-left: 3px solid ${isOnline ? '#28a745' : '#444'};">
+                                <div style="display:flex; flex-direction:column;">
+                                    <span>${statusDot} <b style="color:#58a6ff;">${friends[uid].username}</b> <span style="color:#aaa; font-size:12px;">(Lv.${friends[uid].level})</span></span>
+                                    ${locText}
+                                </div>
+                                <button onclick="window.delFriend('${uid}')" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">Hapus</button>
+                              </div>`;
+                }
+                document.getElementById('tab-friend-list').innerHTML = fHtml;
+            };
+            loadLiveFriends();
         }
-        document.getElementById('tab-friend-list').innerHTML = fHtml || `<div style="text-align: center; color: #aaa; margin-top: 20px;">Belum ada teman.</div>`;
 
         // Render Permintaan
         let rHtml = "";

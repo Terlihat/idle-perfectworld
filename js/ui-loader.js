@@ -58,3 +58,64 @@ export async function loadUIComponents() {
         }
     }
 }
+
+// ==============================================================
+// MANAJEMEN PANEL & RADAR LOKASI PEMAIN
+// ==============================================================
+window.togglePanel = function (panelId) {
+    // 1. Daftar semua panel tengah dan kanan yang bisa diganti-ganti (Toggle)
+    const toggleablePanels = [
+        'panel-world-boss', 'panel-tower', 'panel-afk', 'panel-dungeon',
+        'panel-party', 'panel-quest', 'panel-blacksmith', 'panel-pk',
+        'panel-auction', 'panel-refine-transfer', 'panel-friends',
+        'panel-leaderboard', 'panel-mall', 'panel-shop',
+        'panel-coin-market', 'panel-mailbox', 'panel-bank',
+        'panel-guild'
+    ];
+
+    // 2. Sembunyikan semua panel tersebut
+    toggleablePanels.forEach(id => {
+        const p = document.getElementById(id);
+        if (p) p.style.display = 'none';
+    });
+
+    // 3. Tampilkan hanya panel yang dituju
+    const targetPanel = document.getElementById(panelId);
+    if (targetPanel) {
+        targetPanel.style.display = 'block';
+    }
+
+    // 4. --- SISTEM UPDATE LOKASI RADAR OTOMATIS ---
+    if (typeof window.updateMyLocation === 'function') {
+        if (panelId === 'panel-pk') {
+            window.updateMyLocation("🌲 Dark Forest (Zona PK)");
+        } else if (panelId === 'panel-afk') {
+            window.updateMyLocation("⛺ Ekspedisi AFK");
+        } else if (panelId === 'panel-world-boss') {
+            window.updateMyLocation("👹 Melawan World Boss");
+        } else if (panelId === 'panel-tower') {
+            window.updateMyLocation("🗼 Menara Ilusi");
+        } else if (panelId === 'panel-dungeon') {
+            window.updateMyLocation("🏰 Menjelajah Dungeon");
+        } else if (panelId === 'panel-party') {
+            window.updateMyLocation("👥 Mencari Party Fuben");
+        } else if (panelId === 'panel-auction') {
+            window.updateMyLocation("⚖️ Rumah Lelang");
+        } else if (panelId === 'panel-friends') {
+            window.updateMyLocation("Kota Aman (Mengecek Teman)");
+            // Otomatis reset tab ke 'Daftar Teman' saat panel dibuka
+            if (typeof window.toggleFriendTab === 'function') {
+                window.toggleFriendTab('list');
+            }
+        } else {
+            // Jika buka Mall, Tas, atau panel aman lainnya
+            window.updateMyLocation("Kota Aman (Idle)");
+        }
+    }
+};
+
+// Fungsi tambahan untuk panel khusus yang tumpang tindih (jika dibutuhkan)
+window.bukaPanelKhusus = function (panelId) {
+    const targetPanel = document.getElementById(panelId);
+    if (targetPanel) targetPanel.style.display = 'block';
+};
