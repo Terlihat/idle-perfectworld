@@ -1,6 +1,6 @@
 import { db, auth } from '../../js/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp, updateDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // PERBAIKAN: Import Database Item agar list selalu up-to-date otomatis!
 import { ITEM_DB } from '../../js/data/items.js';
@@ -22,7 +22,8 @@ onAuthStateChanged(auth, async (user) => {
                 document.getElementById('admin-content').style.display = 'block';
 
                 loadServerStats();
-                populateItemDropdown(); // Jalankan fungsi pengisian item otomatis
+                populateItemDropdown();
+                listenToGlobalEvents();
             } else {
                 alert("Akses Ditolak! Anda bukan Admin.");
                 window.location.href = '../index.html';
@@ -354,4 +355,60 @@ document.getElementById('btn-admin-kill-wb').addEventListener('click', async () 
         alert("Gagal mematikan boss: " + err.message);
         document.getElementById('btn-admin-kill-wb').disabled = false;
     }
+});
+
+// FITUR: MANAJER EVENT GLOBAL (SERVER BUFFS)
+let isDoubleExpActive = false;
+let isDoubleDropActive = false;
+
+function listenToGlobalEvents() {
+    const eventsRef = doc(db, "events", "serverBuffs");
+
+    // Dengarkan perubahan secara realtime (jika admin lain mengubahnya, UI Anda ikut berubah)
+    onSnapshot(eventsRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            isDoubleExpActive = !!data.doubleExp;
+            isDoubleDropActive = !!data.doubleDrop;
+
+            // Render UI Event Double EXP
+            const expStatus = document.getElementById('status-exp-event');
+            const btnExp = document.getElementById('btn-toggle-exp');
+            if (isDoubleExpActive) {
+                expStatus.innerText = "[ ON ]"; expStatus.style.color = "#28a745";
+                btnExp.innerText = "Matikan Event"; btnExp.style.background = "#dc3545";
+            } else {
+                expStatus.innerText = "[ OFF ]"; expStatus.style.color = "#dc3545";
+                btnExp.innerText = "🚀 Aktifkan Event"; btnExp.style.background = "#28a745";
+            }
+
+            // Render UI Event Double Drop
+            const dropStatus = document.getElementById('status-drop-event');
+            const btnDrop = document.getElementById('btn-toggle-drop');
+            if (isDoubleDropActive) {
+                dropStatus.innerText = "[ ON ]"; dropStatus.style.color = "#28a745";
+                btnDrop.innerText = "Matikan Event"; btnDrop.style.background = "#dc3545";
+            } else {
+                dropStatus.innerText = "[ OFF ]"; dropStatus.style.color = "#dc3545";
+                btnDrop.innerText = "🚀 Aktifkan Event"; btnDrop.style.background = "#28a745";
+            }
+        } else {
+            // Jika dokumen belum ada di database, buat dokumen default (OFF semua)
+            setDoc(eventsRef, { doubleExp: false, doubleDrop: false });
+        }
+    });
+}
+
+// Tombol Pemicu Event Double EXP
+document.getElementById('btn-toggle-exp').addEventListener('click', async () => {
+    try {
+        await updateDoc(doc(db, "events", "serverBuffs"), { doubleExp: !isDoubleExpActive });
+    } catch (err) { alert("Gagal mengubah status event: " + err.message); }
+});
+
+// Tombol Pemicu Event Double Drop
+document.getElementById('btn-toggle-drop').addEventListener('click', async () => {
+    try {
+        await updateDoc(doc(db, "events", "serverBuffs"), { doubleDrop: !isDoubleDropActive });
+    } catch (err) { alert("Gagal mengubah status event: " + err.message); }
 });
