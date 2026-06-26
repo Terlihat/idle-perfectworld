@@ -1,11 +1,16 @@
 /* ===================================================
-   MODUL PARTY DUNGEON (Fix Level Up Check, VIP Engine, Gacha Drop, & Server Buffs)
+   MODUL PARTY DUNGEON (Fix Stamina, Server Buffs, VIP Engine, & Gacha Drop)
    =================================================== */
 import { collection, doc, runTransaction, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { FB_BOSSES } from '../data/monsters.js';
 import { getUpdatedQuests } from './quest.js';
 import { getVipStats } from './vip.js';
 import { sendPartyBattleReport } from './mailbox.js';
+
+// ==========================================
+// SETTING BIAYA STAMINA FUBEN
+// ==========================================
+const FB_STAMINA_COST = 30; // <<< UBAH ANGKA INI JIKA INGIN MENGGANTI BIAYA
 
 export function listenToParties(db, callbackRender) {
     const q = query(collection(db, "parties"));
@@ -23,8 +28,10 @@ export async function createOrJoinParty(db, fbKey, playerStats) {
     if (playerStats.level < boss.levelReq) return console.error(`Level Anda belum cukup! Butuh Level ${boss.levelReq}.`);
 
     const mount = playerStats.equipment?.mount || null;
-    const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
-    if (playerStats.currentStamina < stamReq) return console.error(`Butuh minimal ${stamReq} Stamina (Efek Mount) untuk masuk FB!`);
+    const stamReq = Math.max(1, FB_STAMINA_COST - (mount?.stamDiscount || 0));
+    const currentStam = playerStats.currentStamina !== undefined ? playerStats.currentStamina : 100;
+
+    if (currentStam < stamReq) return console.error(`Butuh minimal ${stamReq} Stamina (Efek Mount) untuk masuk FB!`);
 
     const partiesRef = collection(db, "parties");
     const q = query(partiesRef, where("fbKey", "==", fbKey), where("status", "==", "waiting"));
@@ -120,9 +127,12 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 const md = snap.data();
                 const partyData = party.members.find(m => m.uid === snap.id);
                 const mount = md.equipment?.mount || null;
-                const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
 
-                if (md.currentHp > 0 && md.currentStamina >= stamReq) {
+                // Pengecekan Stamina Anti NaN (Bug Fix)
+                const stamReq = Math.max(1, FB_STAMINA_COST - (mount?.stamDiscount || 0));
+                const currentStam = md.currentStamina !== undefined ? md.currentStamina : 100;
+
+                if (md.currentHp > 0 && currentStam >= stamReq) {
                     const effectivePAtk = partyData ? partyData.patk : 50;
                     const effectiveMAtk = partyData ? partyData.matk : 50;
                     totalPartyAtk += Math.max(1, (effectivePAtk + effectiveMAtk) - boss.def);
@@ -136,24 +146,29 @@ export async function startFbBattle(db, leaderUid, partyId) {
             let survivors = 0;
             let battleResults = [];
 
-            // 2. --- PRA-KALKULASI HASIL NYAWA TIAP ANGGOTA ---
+            // 2. --- PRA-KALKULASI HASIL NYAWA & STAMINA TIAP ANGGOTA ---
             memberSnaps.forEach(snap => {
                 const md = snap.data();
                 const mRef = snap.ref;
                 const partyData = party.members.find(m => m.uid === snap.id);
 
                 const mount = md.equipment?.mount || null;
-                const stamReq = Math.max(1, 20 - (mount?.stamDiscount || 0));
                 const goldMult = 1 + (mount?.goldBonus || 0);
 
-                if (md.currentHp <= 0 || md.currentStamina < stamReq) return;
+                // Pengecekan Stamina Anti NaN (Bug Fix)
+                const stamReq = Math.max(1, FB_STAMINA_COST - (mount?.stamDiscount || 0));
+                const currentStam = md.currentStamina !== undefined ? md.currentStamina : 100;
+
+                if (md.currentHp <= 0 || currentStam < stamReq) return;
 
                 const effectiveDef = partyData ? partyData.def : 10;
                 const dmgPerTurn = Math.max(1, boss.atk - effectiveDef);
                 const totalDmgTaken = dmgPerTurn * turnsToKill;
 
                 let newHp = md.currentHp - totalDmgTaken;
-                let newStamina = Math.max(0, md.currentStamina - stamReq);
+
+                // Pengurangan Stamina yang sudah pasti berbentuk angka
+                let newStamina = Math.max(0, currentStam - stamReq);
                 let isDead = newHp <= 0;
 
                 if (!isDead) survivors++;
@@ -250,7 +265,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     gold: newGold,
                     inventory: inv,
                     quests: newQuests,
-                    currentStamina: newStamina
+                    currentStamina: newStamina // Stamina Baru yang sudah dikurangi (Bebas NaN)
                 };
 
                 if (leveledUp) {
