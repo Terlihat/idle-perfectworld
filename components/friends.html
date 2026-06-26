@@ -1,21 +1,29 @@
-<h2 style="color: #58a6ff; margin-top: 0;">👥 Sistem Pertemanan</h2>
+<h2 style="color: #58a6ff; margin-top: 0;">👥 Teman Saya</h2>
 
 <div style="display: flex; gap: 5px; margin-bottom: 15px;">
-    <input type="text" id="input-add-friend" placeholder="Masukkan UID Pemain Tujuan..." style="flex: 1; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52; border-radius: 4px;">
-    <button onclick="window.sendFriendReqManual()" style="background: #0366d6; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold;">Tambah</button>
+    <input type="text" id="input-add-friend" placeholder="Masukkan UID Pemain Tujuan..."
+        style="flex: 1; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52; border-radius: 4px;">
+    <button onclick="window.sendFriendReqManual()"
+        style="background: #0366d6; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold;">Tambah</button>
 </div>
 
 <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-    <button onclick="window.toggleFriendTab('list')" id="btn-tab-list" style="flex: 1; background: #238636; color: white; border: none; padding: 8px; cursor: pointer; border-radius: 4px; font-weight: bold;">Daftar Teman</button>
-    <button onclick="window.toggleFriendTab('req')" id="btn-tab-req" style="flex: 1; background: #333; color: white; border: none; padding: 8px; cursor: pointer; border-radius: 4px; font-weight: bold;">
-        Permintaan <span id="badge-friend-req" style="background: #ff4c4c; border-radius: 50%; padding: 2px 6px; font-size: 10px; display: none;">0</span>
+    <button onclick="window.toggleFriendTab('list')" id="btn-tab-list"
+        style="flex: 1; background: #238636; color: white; border: none; padding: 8px; cursor: pointer; border-radius: 4px; font-weight: bold;">Daftar
+        Teman</button>
+    <button onclick="window.toggleFriendTab('req')" id="btn-tab-req"
+        style="flex: 1; background: #333; color: white; border: none; padding: 8px; cursor: pointer; border-radius: 4px; font-weight: bold;">
+        Permintaan <span id="badge-friend-req"
+            style="background: #ff4c4c; border-radius: 50%; padding: 2px 6px; font-size: 10px; display: none;">0</span>
     </button>
 </div>
 
-<div id="tab-friend-list" style="background: #0d1117; border: 1px solid #3f3f52; border-radius: 5px; padding: 10px; min-height: 150px; max-height: 300px; overflow-y: auto;">
+<div id="tab-friend-list"
+    style="background: #0d1117; border: 1px solid #3f3f52; border-radius: 5px; padding: 10px; min-height: 150px; max-height: 300px; overflow-y: auto;">
     <div style="text-align: center; color: #aaa; font-size: 12px; margin-top: 20px;">Belum ada teman.</div>
 </div>
 
-<div id="tab-friend-req" style="display: none; background: #0d1117; border: 1px solid #3f3f52; border-radius: 5px; padding: 10px; min-height: 150px; max-height: 300px; overflow-y: auto;">
+<div id="tab-friend-req"
+    style="display: none; background: #0d1117; border: 1px solid #3f3f52; border-radius: 5px; padding: 10px; min-height: 150px; max-height: 300px; overflow-y: auto;">
     <div style="text-align: center; color: #aaa; font-size: 12px; margin-top: 20px;">Tidak ada permintaan.</div>
 </div>
