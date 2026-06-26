@@ -1,5 +1,5 @@
 import { db, auth } from './firebase-config.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { doc, getDoc, updateDoc, onSnapshot, runTransaction, collection, getDocs, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // IMPORT MODULES UI
@@ -178,7 +178,14 @@ function startLiveGameSync() {
 
         if (d.banned === true) {
             alert("🚫 Akun Anda telah di-banned oleh Administrator.");
-            window.location.href = 'index.html'; // Sesuaikan dengan nama file halaman login Anda
+
+            signOut(auth).then(() => {
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error("Gagal memutus sesi:", error);
+                window.location.href = 'index.html';
+            });
+
             return;
         }
 
