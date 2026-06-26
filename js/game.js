@@ -177,13 +177,30 @@ function startLiveGameSync() {
         const d = docSnap.data();
 
         if (d.banned === true) {
-            alert("🚫 Akun Anda telah di-banned oleh Administrator.");
+            document.body.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #0d1117; color: white; font-family: sans-serif; text-align: center; padding: 20px; box-sizing: border-box;">
+                    <h1 style="color: #ff4c4c; font-size: 36px; margin-bottom: 10px;">🚫 AKSES DITOLAK</h1>
+                    <p style="font-size: 16px; color: #ccc; margin-bottom: 30px; max-width: 400px; line-height: 1.5;">
+                        Akun Anda telah <b>diblokir</b> oleh Administrator karena terindikasi melakukan pelanggaran terhadap aturan game.<br><br>
+                        Silakan hubungi dukungan jika Anda merasa ini adalah sebuah kesalahan.
+                    </p>
+                    <button id="btn-banned-logout" style="padding: 12px 25px; font-size: 16px; font-weight: bold; background: #ff4c4c; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Kembali ke Halaman Utama
+                    </button>
+                </div>
+            `;
 
-            signOut(auth).then(() => {
-                window.location.href = 'index.html';
-            }).catch((error) => {
-                console.error("Gagal memutus sesi:", error);
-                window.location.href = 'index.html';
+            document.getElementById('btn-banned-logout').addEventListener('click', () => {
+                const btn = document.getElementById('btn-banned-logout');
+                btn.innerText = "Memutus sesi...";
+                btn.disabled = true;
+
+                signOut(auth).then(() => {
+                    window.location.href = 'index.html';
+                }).catch((error) => {
+                    console.error("Gagal memutus sesi:", error);
+                    window.location.href = 'index.html';
+                });
             });
 
             return;
