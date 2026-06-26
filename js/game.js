@@ -161,28 +161,40 @@ onAuthStateChanged(auth, async (user) => {
             staminaRegenInterval = startStaminaRegeneration(db, currentUserUid);
 
             // ==========================================
-            // SISTEM PELACAK STATUS ONLINE (MULAI)
+            // SISTEM PELACAK STATUS ONLINE (HEARTBEAT)
             // ==========================================
-            // 1. Set status menjadi Online saat berhasil memuat game
+            // 1. Set status saat baru masuk
             updateDoc(doc(db, "users", currentUserUid), {
-                isOnline: true,
+                lastActive: Date.now(),
                 currentLocation: "Kota Aman (Idle)"
             }).catch(err => console.error("Gagal set online:", err));
 
-            // 2. Set status menjadi Offline jika pemain menutup tab browser
+            // 2. Kirim Detak Jantung setiap 60 detik (1 Menit)
+            if (window.heartbeatInterval) clearInterval(window.heartbeatInterval);
+            window.heartbeatInterval = setInterval(() => {
+                if (currentUserUid) {
+                    updateDoc(doc(db, "users", currentUserUid), {
+                        lastActive: Date.now()
+                    }).catch(e => console.log("Gagal detak jantung:", e));
+                }
+            }, 60000);
+
+            // 3. Tetap simpan beforeunload sebagai cadangan (jika sempat terkirim)
             window.addEventListener('beforeunload', () => {
                 updateDoc(doc(db, "users", currentUserUid), {
-                    isOnline: false,
+                    lastActive: 0, // Set 0 agar langsung dianggap offline
                     currentLocation: "Offline"
                 });
             });
             // ==========================================
         }
     } else {
-        // 3. Set status Offline jika pemain menekan tombol Logout manual
+        // Hentikan detak jantung saat Logout
+        if (window.heartbeatInterval) clearInterval(window.heartbeatInterval);
+
         if (currentUserUid) {
             updateDoc(doc(db, "users", currentUserUid), {
-                isOnline: false,
+                lastActive: 0,
                 currentLocation: "Offline"
             }).catch(e => console.log("Gagal set offline:", e));
         }
@@ -325,8 +337,20 @@ function startLiveGameSync() {
 
                     if (fSnap.exists()) {
                         const fdata = fSnap.data();
-                        isOnline = fdata.isOnline || false;
-                        loc = fdata.currentLocation || "Kota Aman (Idle)";
+
+                        // --- SISTEM DETAK JANTUNG (HEARTBEAT) ---
+                        // Cek apakah detak jantung terakhir kurang dari 2 menit (120.000 ms)
+                        const lastActive = fdata.lastActive || 0;
+                        const timeDiff = Date.now() - lastActive;
+
+                        // Jika selisih waktu di bawah 2 menit dan tidak logout manual
+                        if (timeDiff < 120000 && lastActive !== 0) {
+                            isOnline = true;
+                            loc = fdata.currentLocation || "Kota Aman (Idle)";
+                        } else {
+                            isOnline = false;
+                            loc = "Offline";
+                        }
                     }
 
                     // Indikator Warna (Hijau = Online, Abu = Offline)
