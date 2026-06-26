@@ -1247,6 +1247,10 @@ window.attackPK = async function (targetUid, targetName) {
             if (!enemy.inPkZone || enemy.currentHp <= 0) throw "Target sudah kabur ke kota atau sudah mati.";
             if (me.currentHp <= 0) throw "Anda mati kehabisan darah sebelum menyerang!";
 
+            // --- IMPLEMENTASI POIN 3: BRACKET LEVEL ---
+            const levelDiff = Math.abs((me.level || 1) - (enemy.level || 1));
+            if (levelDiff > 10) throw "Selisih level terlalu jauh (Maks 10 Level)! Hutan ini melarang pembantaian yang terlalu tidak seimbang.";
+
             // Kalkulasi Kekuatan Dasar (BP)
             let myBP = (me.level || 1) * 50 + (me.str || 0) * 10 + (me.dex || 0) * 10 + (me.con || 0) * 10 + (me.int || 0) * 10;
             let enemyBP = (enemy.level || 1) * 50 + (enemy.str || 0) * 10 + (enemy.dex || 0) * 10 + (enemy.con || 0) * 10 + (enemy.int || 0) * 10;
@@ -1264,8 +1268,9 @@ window.attackPK = async function (targetUid, targetName) {
                 let enemyInv = enemy.inventory || {};
                 let myInv = me.inventory || {};
                 let stolenItem = null;
+                let exclusiveDropMsg = "";
 
-                // Penentuan Drop Item (Red Name = 20%, Normal = 5%)
+                // Penentuan Drop Item Curian (Red Name = 20%, Normal = 5%)
                 let dropRate = ((enemy.pkKills || 0) >= 3) ? 0.20 : 0.05;
 
                 if (Math.random() <= dropRate) {
@@ -1276,6 +1281,13 @@ window.attackPK = async function (targetUid, targetName) {
                         if (enemyInv[stolenItem] <= 0) delete enemyInv[stolenItem];
                         myInv[stolenItem] = (myInv[stolenItem] || 0) + 1;
                     }
+                }
+
+                // --- IMPLEMENTASI POIN 2: HARTA KARUN EKSKLUSIF (HIGH REWARD) ---
+                // Peluang 30% mendapatkan material langka khusus Zona PK tiap kali menang
+                if (Math.random() <= 0.30) {
+                    myInv["Kristal Hutan Gelap"] = (myInv["Kristal Hutan Gelap"] || 0) + 1;
+                    exclusiveDropMsg = `\n\n🌲 MYSTIC DROP: Tanah berdarah memberikan Anda [Kristal Hutan Gelap]!`;
                 }
 
                 ts.update(targetRef, {
@@ -1299,14 +1311,16 @@ window.attackPK = async function (targetUid, targetName) {
                     timestamp: Date.now()
                 });
 
-                logMsg = `🔥 KEMENANGAN!\nAnda membantai ${targetName}.\nMencuri 💰 ${goldStolen.toLocaleString()} Gold.` + (stolenItem ? `\n\n🎁 DROP: Anda mendapat [${stolenItem}] dari mayatnya!` : "");
+                logMsg = `🔥 KEMENANGAN!\nAnda membantai ${targetName}.\nMencuri 💰 ${goldStolen.toLocaleString()} Gold.` + (stolenItem ? `\n🎁 RAMPASAN: Anda mendapat [${stolenItem}] dari mayatnya!` : "") + exclusiveDropMsg;
                 return { success: true, log: logMsg };
 
             } else {
+                // --- MUSUH MENANG (AKU KALAH) ---
                 let goldLost = Math.floor((me.gold || 0) * 0.05);
                 let myInv = me.inventory || {};
                 let enemyInv = enemy.inventory || {};
                 let lostItem = null;
+                let exclusiveDropMsg = "";
 
                 let dropRate = ((me.pkKills || 0) >= 3) ? 0.20 : 0.05;
 
@@ -1318,6 +1332,13 @@ window.attackPK = async function (targetUid, targetName) {
                         if (myInv[lostItem] <= 0) delete myInv[lostItem];
                         enemyInv[lostItem] = (enemyInv[lostItem] || 0) + 1;
                     }
+                }
+
+                // --- IMPLEMENTASI POIN 2 UNTUK MUSUH ---
+                // MUSUH mendapatkan reward eksklusif karena berhasil bertahan dan membunuh Anda
+                if (Math.random() <= 0.30) {
+                    enemyInv["Kristal Hutan Gelap"] = (enemyInv["Kristal Hutan Gelap"] || 0) + 1;
+                    exclusiveDropMsg = `\n🌲 MYSTIC DROP: Pertahanan berdarah ini memberikan Anda [Kristal Hutan Gelap]!`;
                 }
 
                 ts.update(myRef, {
@@ -1336,7 +1357,7 @@ window.attackPK = async function (targetUid, targetName) {
                 const enemyMailRef = doc(collection(db, "users", targetUid, "mail"));
                 ts.set(enemyMailRef, {
                     title: "🛡️ Pertahanan PK Berhasil!",
-                    message: `[${me.username}] mencoba menyerang Anda di Dark Forest, namun tewas oleh pertahanan Anda!\n\nAnda menjarah: ${goldLost.toLocaleString()} Gold.` + (lostItem ? `\nBarang dijarah: 1x ${lostItem}` : ""),
+                    message: `[${me.username}] mencoba menyerang Anda di Dark Forest, namun tewas oleh pertahanan Anda!\n\nAnda menjarah: ${goldLost.toLocaleString()} Gold.` + (lostItem ? `\nBarang dijarah: 1x ${lostItem}` : "") + exclusiveDropMsg,
                     date: new Date().toLocaleString('id-ID'),
                     timestamp: Date.now()
                 });
@@ -1347,7 +1368,6 @@ window.attackPK = async function (targetUid, targetName) {
         });
 
         window.rpgAlert(result.log, result.success ? "🏆 PK BERHASIL" : "💀 TRAGEDI");
-
         window.addPKLog(result.log, result.success ? "#28a745" : "#dc3545");
 
     } catch (err) {
