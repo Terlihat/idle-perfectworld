@@ -102,10 +102,10 @@ export async function craftItemAction(db, uid, recipeName) {
             const snap = await ts.get(userRef);
             if (!snap.exists()) throw "User tidak ditemukan!";
             const data = snap.data();
-            
+
             // 1. Cek Level
             if ((data.level || 1) < recipe.reqLevel) throw `Level Anda belum cukup! Butuh Level ${recipe.reqLevel}.`;
-            
+
             // 2. Cek Gold
             if ((data.gold || 0) < recipe.reqGold) throw `Gold tidak cukup! Butuh ${recipe.reqGold.toLocaleString()} Gold.`;
 
@@ -137,3 +137,7 @@ export async function craftItemAction(db, uid, recipeName) {
         alert(err);
     }
 }
+
+// Membuka akses agar bisa dibaca oleh game.js dan tombol HTML
+window.CRAFTING_RECIPES = CRAFTING_RECIPES;
+window.craftItemAction = craftItemAction;

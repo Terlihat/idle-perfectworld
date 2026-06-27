@@ -2090,19 +2090,21 @@ window.claimChatGift = async function (chatId, msgId) {
     }
 };
 
-
 // SISTEM RENDER UI CRAFTING
 window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
     const grid = document.getElementById('crafting-recipe-grid');
     if (!grid) return;
 
+    // 1. Ambil data resep dari window (global)
+    const recipes = window.CRAFTING_RECIPES;
+    if (!recipes) return; // Jika crafting.js belum termuat, jangan paksakan render
+
     if (grid.innerHTML.trim() === "") {
-        Object.keys(CRAFTING_RECIPES).forEach(recipeName => {
-            const recipe = CRAFTING_RECIPES[recipeName];
+        Object.keys(recipes).forEach(recipeName => {
+            const recipe = recipes[recipeName];
             const itemName = recipe.resultItem;
 
             const iconBox = document.createElement('div');
-            // Menyesuaikan dengan gaya kotak gelap ala inventory
             iconBox.style.cssText = `
                 width: 45px; height: 45px; background: #161b22; border: 1px solid #3f3f52; 
                 border-radius: 4px; cursor: pointer; transition: 0.2s;
@@ -2111,11 +2113,14 @@ window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
             `;
             iconBox.title = recipeName;
 
-            // Memanggil fungsi render ikon andalan Anda!
-            // Kita bungkus agar ukurannya proporsional di dalam kotak
+            // Memanggil fungsi icon (dengan pengaman)
+            let iconHtml = "📦";
+            try { iconHtml = (typeof getIconHTML === 'function') ? getIconHTML(itemName) : window.getIconHTML(itemName); }
+            catch (e) { /* Abaikan jika gagal memuat gambar sementara */ }
+
             iconBox.innerHTML = `
                 <div style="transform: scale(1.2); pointer-events: none;">
-                    ${getIconHTML(itemName)}
+                    ${iconHtml}
                 </div>
             `;
 
@@ -2128,7 +2133,7 @@ window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
     } else {
         const activeRecipe = document.getElementById('crafting-details').getAttribute('data-active-recipe');
         if (activeRecipe) {
-            window.showCraftingDetails(activeRecipe, CRAFTING_RECIPES[activeRecipe], playerInvData, playerLevel, playerGold);
+            window.showCraftingDetails(activeRecipe, recipes[activeRecipe], playerInvData, playerLevel, playerGold);
         }
     }
 };
@@ -2137,19 +2142,22 @@ window.showCraftingDetails = function (recipeName, recipe, playerInvData, player
     const detailsContainer = document.getElementById('crafting-details');
     detailsContainer.setAttribute('data-active-recipe', recipeName);
 
-    // Ikon Utama (Blueprint)
-    let mainIconHtml = getIconHTML(recipe.resultItem);
+    // Fungsi Pengaman Icon
+    const safeGetIcon = (name) => {
+        try { return (typeof getIconHTML === 'function') ? getIconHTML(name) : window.getIconHTML(name); }
+        catch (e) { return "📦"; }
+    };
 
+    let mainIconHtml = safeGetIcon(recipe.resultItem);
     let matsHtml = "";
+
     for (const [matName, qtyNeeded] of Object.entries(recipe.materials)) {
         const playerHas = playerInvData[matName] || 0;
         const isEnough = playerHas >= qtyNeeded;
 
         const qtyColor = isEnough ? "#fff" : "#ff4c4c";
         const borderCol = isEnough ? "#3f3f52" : "#ff4c4c";
-
-        // Ikon Material
-        let matIconHtml = getIconHTML(matName);
+        let matIconHtml = safeGetIcon(matName);
 
         matsHtml += `
             <div title="${matName}" style="width: 45px; height: 45px; background: #121216; border: 1px solid ${borderCol}; border-radius: 4px; position: relative; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);">
@@ -2158,7 +2166,6 @@ window.showCraftingDetails = function (recipeName, recipe, playerInvData, player
                     ${matIconHtml}
                 </div>
                 
-                <!-- Angka jumlah di pojok kanan bawah -->
                 <div style="position: absolute; bottom: 2px; right: 4px; font-size: 10px; font-weight: bold; color: ${qtyColor}; text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;">
                     ${playerHas}/${qtyNeeded}
                 </div>
@@ -2188,7 +2195,8 @@ window.showCraftingDetails = function (recipeName, recipe, playerInvData, player
             ${matsHtml}
         </div>
 
-        <button onclick="craftItemAction(db, currentUserUid, '${recipeName}')" 
+        <!-- Pemanggilan craftItemAction sekarang sudah aman karena kita melampirkannya ke window -->
+        <button onclick="window.craftItemAction(db, currentUserUid, '${recipeName}')" 
                 style="background: #238636; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 90%; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
             ⚒️ TEMPA SEKARANG
         </button>
