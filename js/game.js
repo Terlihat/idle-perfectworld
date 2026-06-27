@@ -357,14 +357,22 @@ function startLiveGameSync() {
                     const statusDot = isOnline ? `<span style="color:#28a745; text-shadow: 0 0 5px #28a745;">●</span>` : `<span style="color:#666;">●</span>`;
                     const locText = isOnline ? `<span style="font-size:10px; color:#ffca28;">📍 [${loc}]</span>` : `<span style="font-size:10px; color:#666;">[Zzz... Sedang Tidur]</span>`;
 
+                    // 🔥 LOGIKA BADGE PESAN BARU
+                    const unreadMsgs = d.unreadMessages || {};
+                    const hasUnread = unreadMsgs[uid] === true;
+                    // Jika ada pesan belum dibaca, munculkan lingkaran merah berkedip
+                    const badgeHtml = hasUnread ? `<span style="background:#dc3545; color:white; border-radius:50%; padding:2px 6px; font-size:9px; position:absolute; top:-5px; right:-5px; font-weight:bold; box-shadow:0 0 5px red; animation:pm-blink 1s infinite;">!</span>` : '';
+
                     fHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:#161b22; padding:8px; margin-bottom:5px; border-radius:4px; border-left: 3px solid ${isOnline ? '#28a745' : '#444'};">
                                 <div style="display:flex; flex-direction:column;">
                                     <span>${statusDot} <b style="color:#58a6ff;">${friends[uid].username}</b> <span style="color:#aaa; font-size:12px;">(Lv.${friends[uid].level})</span></span>
                                     ${locText}
                                 </div>
-                                <!-- KITA UBAH BAGIAN INI: Tambahkan div pembungkus dan tombol Pesan -->
                                 <div style="display:flex; gap: 5px;">
-                                    <button onclick="window.openPrivateChat('${uid}', '${friends[uid].username}')" style="background:#0366d6; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">💬 Pesan</button>
+                                    <!-- Tambahkan position:relative agar badge bisa menempel di pojok tombol -->
+                                    <button onclick="window.openPrivateChat('${uid}', '${friends[uid].username}')" style="background:#0366d6; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; position:relative;">
+                                        💬 Pesan ${badgeHtml}
+                                    </button>
                                     <button onclick="window.delFriend('${uid}')" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">Hapus</button>
                                 </div>
                               </div>`;
@@ -1831,6 +1839,11 @@ window.openPrivateChat = function (targetUid, targetName) {
     import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js').then((firestore) => {
         const { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc, updateDoc } = firestore;
 
+        // 🔥 KODE BARU: MATIKAN SAKLAR BADGE SAAT CHAT DIBUKA
+        updateDoc(doc(db, "users", currentUserUid), {
+            [`unreadMessages.${targetUid}`]: false
+        }).catch(err => console.log("Gagal menghapus badge:", err));
+
         // FUNGSI PROSES PENGURANGAN TAS & KIRIM (Disematkan ke window agar bisa diakses tombol)
         window.processSendItem = async function (tUid, itemName, maxAmount) {
             const amountStr = prompt(`Berapa banyak ${itemName} yang ingin dikirim? (Maks: ${maxAmount})`, "1");
@@ -1864,6 +1877,11 @@ window.openPrivateChat = function (targetUid, targetName) {
                     isClaimed: false,
                     timestamp: Date.now()
                 });
+
+                // 🔥 KODE BARU: NYALAKAN SAKLAR BADGE DI LAYAR TEMAN
+                updateDoc(doc(db, "users", tUid), {
+                    [`unreadMessages.${currentUserUid}`]: true
+                }).catch(err => console.log(err));
 
                 document.getElementById('pm-item-picker').style.display = 'none';
             } catch (err) {
@@ -1957,6 +1975,11 @@ window.openPrivateChat = function (targetUid, targetName) {
                 text: text,
                 timestamp: Date.now()
             });
+
+            // 🔥 KODE BARU: NYALAKAN SAKLAR BADGE DI LAYAR TEMAN
+            updateDoc(doc(db, "users", targetUid), {
+                [`unreadMessages.${currentUserUid}`]: true
+            }).catch(err => console.log(err));
         });
 
         inputField.onkeypress = function (e) { if (e.key === 'Enter') newSendBtn.click(); };
