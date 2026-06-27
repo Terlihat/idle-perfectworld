@@ -1618,13 +1618,42 @@ window.toggleFriendTab = function (tab) {
 };
 
 window.sendFriendReqManual = async function () {
-    const targetUid = document.getElementById('input-add-friend').value.trim();
-    if (!targetUid) return window.rpgAlert("Masukkan UID target!");
+    const inputVal = document.getElementById('input-add-friend').value.trim();
+    if (!inputVal) return window.rpgAlert("Masukkan Nickname atau UID target!");
+
+    // Konversi nama inputan menjadi sensitif terhadap huruf besar/kecil (karena Firebase exact match)
+    let targetUid = inputVal;
+
     try {
+        // Import fungsi query tambahan dari Firestore
+        const { collection, query, where, getDocs, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js');
+
+        // 1. Coba cari berdasarkan Nickname (Username) terlebih dahulu
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("username", "==", inputVal));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            // Jika Nickname ketemu, sistem otomatis "mencuri" UID-nya dari balik layar
+            targetUid = querySnapshot.docs[0].id;
+        } else {
+            // Jika Nickname tidak ketemu, sistem mengecek apakah input ini adalah UID langsung
+            const docSnap = await getDoc(doc(db, "users", inputVal));
+            if (!docSnap.exists()) {
+                return window.rpgAlert(`Pemain dengan nama atau UID [${inputVal}] tidak ditemukan! Pastikan huruf besar/kecil sesuai.`, "Gagal");
+            }
+        }
+
+        // 2. Eksekusi pengiriman undangan menggunakan UID yang sudah divalidasi
         await sendFriendRequest(db, currentUserUid, currentPlayerStats, targetUid);
-        window.rpgAlert("Permintaan berhasil dikirim!", "Sukses");
+        window.rpgAlert(`Permintaan pertemanan berhasil dikirim!`, "Sukses");
         document.getElementById('input-add-friend').value = "";
-    } catch (err) { window.rpgAlert(err, "Gagal"); }
+
+    } catch (err) {
+        // Tangkap pesan error spesifik jika mencoba add diri sendiri atau sudah berteman
+        const errorMsg = typeof err === 'string' ? err : "Terjadi kesalahan sistem.";
+        window.rpgAlert(errorMsg, "Gagal");
+    }
 };
 
 window.accFriend = async function (reqUid, reqName, reqLevel) {
