@@ -362,7 +362,11 @@ function startLiveGameSync() {
                                     <span>${statusDot} <b style="color:#58a6ff;">${friends[uid].username}</b> <span style="color:#aaa; font-size:12px;">(Lv.${friends[uid].level})</span></span>
                                     ${locText}
                                 </div>
-                                <button onclick="window.delFriend('${uid}')" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">Hapus</button>
+                                <!-- KITA UBAH BAGIAN INI: Tambahkan div pembungkus dan tombol Pesan -->
+                                <div style="display:flex; gap: 5px;">
+                                    <button onclick="window.openPrivateChat('${uid}', '${friends[uid].username}')" style="background:#0366d6; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">💬 Pesan</button>
+                                    <button onclick="window.delFriend('${uid}')" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">Hapus</button>
+                                </div>
                               </div>`;
                 }
                 document.getElementById('tab-friend-list').innerHTML = fHtml;
@@ -1637,5 +1641,107 @@ window.delFriend = async function (targetUid) {
     if (await window.rpgConfirm("Yakin ingin menghapus teman ini?", "Hapus Teman")) {
         try { await removeFriend(db, currentUserUid, targetUid); }
         catch (err) { console.error(err); }
+    }
+};
+
+// --- SISTEM PESAN PRIBADI (WHISPER) ---
+let unsubPrivateChat = null; // Variabel untuk menghentikan listener chat jika ditutup
+
+window.openPrivateChat = function (targetUid, targetName) {
+    // 1. Buat UI Modal Pop-up secara dinamis
+    let chatModal = document.getElementById('modal-private-chat');
+    if (!chatModal) {
+        chatModal = document.createElement('div');
+        chatModal.id = 'modal-private-chat';
+        chatModal.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:300px; background:#0d1117; border:1px solid #30363d; border-radius:8px; z-index:1000; display:flex; flex-direction:column; box-shadow: 0 0 15px rgba(0,0,0,0.8);";
+
+        chatModal.innerHTML = `
+            <div style="background:#161b22; padding:10px; border-bottom:1px solid #30363d; border-radius:8px 8px 0 0; display:flex; justify-content:space-between; align-items:center;">
+                <b style="color:#58a6ff;">💬 Chat: <span id="pm-target-name"></span></b>
+                <button onclick="window.closePrivateChat()" style="background:transparent; border:none; color:#ff4c4c; font-weight:bold; cursor:pointer;">X</button>
+            </div>
+            <div id="pm-messages" style="height:250px; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px; font-size:12px;">
+                <!-- Pesan akan muncul di sini -->
+            </div>
+            <div style="padding:10px; border-top:1px solid #30363d; display:flex; gap:5px;">
+                <input type="text" id="pm-input" placeholder="Tulis pesan..." style="flex:1; padding:6px; background:#010409; color:white; border:1px solid #30363d; border-radius:4px;">
+                <button id="pm-send-btn" style="background:#238636; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Kirim</button>
+            </div>
+        `;
+        document.body.appendChild(chatModal);
+    }
+
+    document.getElementById('pm-target-name').innerText = targetName;
+    chatModal.style.display = 'flex';
+
+    // 2. Logika Firebase (Membuat ID Ruangan Unik)
+    // Urutkan UID secara alfabet agar Pemain A dan Pemain B menghasilkan ID yang sama
+    const chatId = [currentUserUid, targetUid].sort().join('_');
+    const msgContainer = document.getElementById('pm-messages');
+    msgContainer.innerHTML = '<div style="color:#aaa; text-align:center;">Memuat pesan...</div>';
+
+    // Pastikan import collection, query, orderBy, onSnapshot, addDoc sudah ada di atas file game.js Anda
+    import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js').then((firestore) => {
+        const { collection, query, orderBy, onSnapshot, addDoc } = firestore;
+
+        // Listener Real-time
+        const q = query(collection(db, "privateChats", chatId, "messages"), orderBy("timestamp", "asc"));
+
+        if (unsubPrivateChat) unsubPrivateChat(); // Hentikan listener lama jika ada
+
+        unsubPrivateChat = onSnapshot(q, (snapshot) => {
+            msgContainer.innerHTML = '';
+            if (snapshot.empty) {
+                msgContainer.innerHTML = '<div style="color:#aaa; text-align:center;">Belum ada pesan. Sapa temanmu!</div>';
+            }
+            snapshot.forEach((docSnap) => {
+                const msg = docSnap.data();
+                const isMe = msg.senderUid === currentUserUid;
+
+                msgContainer.innerHTML += `
+                    <div style="align-self: ${isMe ? 'flex-end' : 'flex-start'}; background: ${isMe ? '#238636' : '#1f2428'}; padding:6px 10px; border-radius:8px; max-width:80%; word-wrap:break-word;">
+                        <span style="color:white;">${msg.text}</span>
+                        <div style="font-size:9px; color:#aaa; text-align:${isMe ? 'right' : 'left'}; margin-top:3px;">${new Date(msg.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</div>
+                    </div>
+                `;
+            });
+            // Auto scroll ke bawah
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        });
+
+        // 3. Tombol Kirim Pesan
+        const sendBtn = document.getElementById('pm-send-btn');
+        const inputField = document.getElementById('pm-input');
+
+        // Hapus event listener lama agar tidak dobel mengirim pesan
+        const newSendBtn = sendBtn.cloneNode(true);
+        sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
+
+        newSendBtn.addEventListener('click', async () => {
+            const text = inputField.value.trim();
+            if (!text) return;
+
+            inputField.value = ''; // Kosongkan input
+            await addDoc(collection(db, "privateChats", chatId, "messages"), {
+                senderUid: currentUserUid,
+                senderName: playerUsername,
+                text: text,
+                timestamp: Date.now()
+            });
+        });
+
+        // Bisa kirim pakai tombol Enter
+        inputField.onkeypress = function (e) {
+            if (e.key === 'Enter') newSendBtn.click();
+        };
+    });
+};
+
+window.closePrivateChat = function () {
+    const chatModal = document.getElementById('modal-private-chat');
+    if (chatModal) chatModal.style.display = 'none';
+    if (unsubPrivateChat) {
+        unsubPrivateChat(); // Putuskan koneksi database saat ditutup agar hemat kuota Firebase
+        unsubPrivateChat = null;
     }
 };
