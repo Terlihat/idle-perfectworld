@@ -1645,49 +1645,110 @@ window.delFriend = async function (targetUid) {
 };
 
 // --- SISTEM PESAN PRIBADI (WHISPER) ---
-let unsubPrivateChat = null; // Variabel untuk menghentikan listener chat jika ditutup
+let unsubPrivateChat = null;
 
 window.openPrivateChat = function (targetUid, targetName) {
-    // 1. Buat UI Modal Pop-up secara dinamis
+    // 1. Buat UI Modal Pop-up secara dinamis (Ditambah Header untuk Digeser & Menu Emoji)
     let chatModal = document.getElementById('modal-private-chat');
     if (!chatModal) {
         chatModal = document.createElement('div');
         chatModal.id = 'modal-private-chat';
-        chatModal.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:300px; background:#0d1117; border:1px solid #30363d; border-radius:8px; z-index:1000; display:flex; flex-direction:column; box-shadow: 0 0 15px rgba(0,0,0,0.8);";
+        // Perhatikan: Menghapus transform dan memakai top/left pasti agar tidak melompat saat digeser pertama kali
+        chatModal.style.cssText = "position:fixed; top:20%; left:30%; width:300px; background:#0d1117; border:1px solid #30363d; border-radius:8px; z-index:1000; display:flex; flex-direction:column; box-shadow: 0 5px 25px rgba(0,0,0,0.9);";
+
+        // Daftar emoji yang relevan untuk game RPG
+        const emojis = ['😀', '😂', '😅', '😍', '😎', '😭', '😡', '👍', '🙏', '🎉', '💀', '🔥', '⚔️', '🛡️', '💰', '🌲'];
+        const emojiHtml = emojis.map(e => `<span class="pm-emoji-btn" style="cursor:pointer; font-size:18px; padding:2px; transition:0.2s;">${e}</span>`).join('');
 
         chatModal.innerHTML = `
-            <div style="background:#161b22; padding:10px; border-bottom:1px solid #30363d; border-radius:8px 8px 0 0; display:flex; justify-content:space-between; align-items:center;">
+            <!-- HEADER BISA DIGESER (Drag Handle) -->
+            <div id="pm-drag-handle" style="background:#161b22; padding:10px; border-bottom:1px solid #30363d; border-radius:8px 8px 0 0; display:flex; justify-content:space-between; align-items:center; cursor:grab; user-select:none;">
                 <b style="color:#58a6ff;">💬 Chat: <span id="pm-target-name"></span></b>
-                <button onclick="window.closePrivateChat()" style="background:transparent; border:none; color:#ff4c4c; font-weight:bold; cursor:pointer;">X</button>
+                <button onclick="window.closePrivateChat()" style="background:transparent; border:none; color:#ff4c4c; font-weight:bold; cursor:pointer; font-size:16px;">✖</button>
             </div>
-            <div id="pm-messages" style="height:250px; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px; font-size:12px;">
+            
+            <div id="pm-messages" style="height:250px; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px; font-size:12px; position:relative;">
                 <!-- Pesan akan muncul di sini -->
             </div>
-            <div style="padding:10px; border-top:1px solid #30363d; display:flex; gap:5px;">
-                <input type="text" id="pm-input" placeholder="Tulis pesan..." style="flex:1; padding:6px; background:#010409; color:white; border:1px solid #30363d; border-radius:4px;">
-                <button id="pm-send-btn" style="background:#238636; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Kirim</button>
+            
+            <!-- POPUP EMOJI (Disembunyikan secara default) -->
+            <div id="pm-emoji-picker" style="display:none; position:absolute; bottom:55px; left:10px; background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px; width:220px; flex-wrap:wrap; gap:5px; z-index:1001; box-shadow:0 -5px 15px rgba(0,0,0,0.5);">
+                ${emojiHtml}
+            </div>
+            
+            <div style="padding:10px; border-top:1px solid #30363d; display:flex; gap:5px; align-items:center;">
+                <button id="pm-emoji-toggle" style="background:transparent; border:none; cursor:pointer; font-size:18px; padding:0 5px;" title="Pilih Emoji">😀</button>
+                <input type="text" id="pm-input" placeholder="Tulis pesan..." style="flex:1; padding:8px; background:#010409; color:white; border:1px solid #30363d; border-radius:4px; outline:none;">
+                <button id="pm-send-btn" style="background:#238636; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">Kirim</button>
             </div>
         `;
         document.body.appendChild(chatModal);
+
+        // --- LOGIKA DRAG & DROP ---
+        const dragHandle = chatModal.querySelector('#pm-drag-handle');
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+        dragHandle.onmousedown = function (e) {
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+            dragHandle.style.cursor = 'grabbing'; // Ubah kursor saat ditahan
+        };
+
+        function elementDrag(e) {
+            e.preventDefault();
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            chatModal.style.top = (chatModal.offsetTop - pos2) + "px";
+            chatModal.style.left = (chatModal.offsetLeft - pos1) + "px";
+        }
+
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+            dragHandle.style.cursor = 'grab'; // Kembalikan kursor
+        }
+
+        // --- LOGIKA EMOJI PICKER ---
+        const emojiToggle = chatModal.querySelector('#pm-emoji-toggle');
+        const emojiPicker = chatModal.querySelector('#pm-emoji-picker');
+        const inputField = chatModal.querySelector('#pm-input');
+
+        // Buka/Tutup menu emoji
+        emojiToggle.onclick = () => {
+            emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'flex' : 'none';
+        };
+
+        // Ketik emoji ke kolom input
+        chatModal.querySelectorAll('.pm-emoji-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                inputField.value += e.target.innerText;
+                emojiPicker.style.display = 'none'; // Tutup setelah klik
+                inputField.focus(); // Kembalikan fokus kursor ke input
+            };
+        });
     }
 
     document.getElementById('pm-target-name').innerText = targetName;
     chatModal.style.display = 'flex';
+    // Sembunyikan emoji picker setiap kali panel baru dibuka
+    document.getElementById('pm-emoji-picker').style.display = 'none';
 
     // 2. Logika Firebase (Membuat ID Ruangan Unik)
-    // Urutkan UID secara alfabet agar Pemain A dan Pemain B menghasilkan ID yang sama
     const chatId = [currentUserUid, targetUid].sort().join('_');
     const msgContainer = document.getElementById('pm-messages');
     msgContainer.innerHTML = '<div style="color:#aaa; text-align:center;">Memuat pesan...</div>';
 
-    // Pastikan import collection, query, orderBy, onSnapshot, addDoc sudah ada di atas file game.js Anda
     import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js').then((firestore) => {
         const { collection, query, orderBy, onSnapshot, addDoc } = firestore;
 
-        // Listener Real-time
         const q = query(collection(db, "privateChats", chatId, "messages"), orderBy("timestamp", "asc"));
 
-        if (unsubPrivateChat) unsubPrivateChat(); // Hentikan listener lama jika ada
+        if (unsubPrivateChat) unsubPrivateChat();
 
         unsubPrivateChat = onSnapshot(q, (snapshot) => {
             msgContainer.innerHTML = '';
@@ -1699,21 +1760,20 @@ window.openPrivateChat = function (targetUid, targetName) {
                 const isMe = msg.senderUid === currentUserUid;
 
                 msgContainer.innerHTML += `
-                    <div style="align-self: ${isMe ? 'flex-end' : 'flex-start'}; background: ${isMe ? '#238636' : '#1f2428'}; padding:6px 10px; border-radius:8px; max-width:80%; word-wrap:break-word;">
-                        <span style="color:white;">${msg.text}</span>
-                        <div style="font-size:9px; color:#aaa; text-align:${isMe ? 'right' : 'left'}; margin-top:3px;">${new Date(msg.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div style="align-self: ${isMe ? 'flex-end' : 'flex-start'}; background: ${isMe ? '#238636' : '#1f2428'}; padding:6px 10px; border-radius:8px; max-width:80%; word-wrap:break-word; box-shadow:0 2px 5px rgba(0,0,0,0.2);">
+                        <span style="color:white; font-size:13px;">${msg.text}</span>
+                        <div style="font-size:9px; color:${isMe ? '#a6e3a1' : '#aaa'}; text-align:${isMe ? 'right' : 'left'}; margin-top:4px;">
+                            ${new Date(msg.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
                     </div>
                 `;
             });
-            // Auto scroll ke bawah
             msgContainer.scrollTop = msgContainer.scrollHeight;
         });
 
-        // 3. Tombol Kirim Pesan
         const sendBtn = document.getElementById('pm-send-btn');
         const inputField = document.getElementById('pm-input');
 
-        // Hapus event listener lama agar tidak dobel mengirim pesan
         const newSendBtn = sendBtn.cloneNode(true);
         sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
 
@@ -1721,7 +1781,9 @@ window.openPrivateChat = function (targetUid, targetName) {
             const text = inputField.value.trim();
             if (!text) return;
 
-            inputField.value = ''; // Kosongkan input
+            inputField.value = '';
+            document.getElementById('pm-emoji-picker').style.display = 'none'; // Tutup picker saat ngirim
+
             await addDoc(collection(db, "privateChats", chatId, "messages"), {
                 senderUid: currentUserUid,
                 senderName: playerUsername,
@@ -1730,7 +1792,6 @@ window.openPrivateChat = function (targetUid, targetName) {
             });
         });
 
-        // Bisa kirim pakai tombol Enter
         inputField.onkeypress = function (e) {
             if (e.key === 'Enter') newSendBtn.click();
         };
@@ -1741,7 +1802,7 @@ window.closePrivateChat = function () {
     const chatModal = document.getElementById('modal-private-chat');
     if (chatModal) chatModal.style.display = 'none';
     if (unsubPrivateChat) {
-        unsubPrivateChat(); // Putuskan koneksi database saat ditutup agar hemat kuota Firebase
+        unsubPrivateChat();
         unsubPrivateChat = null;
     }
 };
