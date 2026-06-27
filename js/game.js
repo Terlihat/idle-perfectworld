@@ -355,7 +355,7 @@ function startLiveGameSync() {
 
                     // Indikator Warna (Hijau = Online, Abu = Offline)
                     const statusDot = isOnline ? `<span style="color:#28a745; text-shadow: 0 0 5px #28a745;">●</span>` : `<span style="color:#666;">●</span>`;
-                    const locText = isOnline ? `<span style="font-size:10px; color:#ffca28;">📍 [${loc}]</span>` : `<span style="font-size:10px; color:#666;">[Zzz... Sedang Tidur]</span>`;
+                    const locText = isOnline ? `<span style="font-size:10px; color:#ffca28;">📍 [${loc}]</span>` : `<span style="font-size:10px; color:#666;">[Offline]</span>`;
 
                     // 🔥 LOGIKA BADGE PESAN BARU
                     const unreadMsgs = d.unreadMessages || {};
