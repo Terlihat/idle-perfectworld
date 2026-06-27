@@ -1701,6 +1701,10 @@ if (!document.getElementById('pm-custom-styles')) {
 
 window.openPrivateChat = function (targetUid, targetName) {
     let chatModal = document.getElementById('modal-private-chat');
+
+    // Siapkan ID Chat
+    const chatId = [currentUserUid, targetUid].sort().join('_');
+
     if (!chatModal) {
         chatModal = document.createElement('div');
         chatModal.id = 'modal-private-chat';
@@ -1714,7 +1718,7 @@ window.openPrivateChat = function (targetUid, targetName) {
             <div id="pm-drag-handle" style="background:#161b22; padding:10px; border-bottom:1px solid #30363d; border-radius:8px 8px 0 0; display:flex; justify-content:space-between; align-items:center; cursor:grab; user-select:none; transition: background-color 0.3s;">
                 <b style="color:#58a6ff; pointer-events:none;">💬 <span id="pm-target-name"></span></b>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <button onclick="window.toggleMinimizeChat()" style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:14px;">—</button>
+                    <button onclick="window.toggleMinimizeChat()" style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:14px;">_</button>
                     <button onclick="window.closePrivateChat()" style="background:transparent; border:none; color:#ff4c4c; cursor:pointer; font-size:14px;">✖</button>
                 </div>
             </div>
@@ -1722,14 +1726,11 @@ window.openPrivateChat = function (targetUid, targetName) {
             <div id="pm-body" style="display:flex; flex-direction:column; width:100%;">
                 <div id="pm-messages" style="height:250px; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px; font-size:12px; position:relative;"></div>
                 
-                <!-- MENU EMOJI -->
                 <div id="pm-emoji-picker" style="display:none; position:absolute; bottom:55px; left:10px; background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px; width:220px; flex-wrap:wrap; gap:5px; z-index:1001;">
                     ${emojiHtml}
                 </div>
 
-                <!-- MENU ITEM (INVENTORY) -->
                 <div id="pm-item-picker" style="display:none; position:absolute; bottom:55px; left:10px; background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px; width:260px; max-height:180px; overflow-y:auto; flex-direction:column; gap:5px; z-index:1001;">
-                    <!-- Isi tas akan diload di sini -->
                 </div>
                 
                 <div style="padding:10px; border-top:1px solid #30363d; display:flex; gap:5px; align-items:center;">
@@ -1794,7 +1795,6 @@ window.openPrivateChat = function (targetUid, targetName) {
             };
         });
 
-        // TAMPILKAN TAS UNTUK KIRIM BARANG
         itemToggle.onclick = () => {
             emojiPicker.style.display = 'none';
             if (itemPicker.style.display === 'flex') {
@@ -1824,6 +1824,10 @@ window.openPrivateChat = function (targetUid, targetName) {
         };
     }
 
+    // Simpan UID target dan Chat ID di elemen modal untuk keperluan minimize/maximize
+    chatModal.setAttribute('data-target-uid', targetUid);
+    chatModal.setAttribute('data-chat-id', chatId);
+
     if (chatModal.getAttribute('data-state') === 'minimized') window.toggleMinimizeChat();
 
     document.getElementById('pm-target-name').innerText = targetName;
@@ -1831,63 +1835,48 @@ window.openPrivateChat = function (targetUid, targetName) {
     document.getElementById('pm-emoji-picker').style.display = 'none';
     document.getElementById('pm-item-picker').style.display = 'none';
 
-    // FIREBASE LOGIC & RENDER PESAN ITEM
-    const chatId = [currentUserUid, targetUid].sort().join('_');
+    // FIREBASE LOGIC & RENDER PESAN
     const msgContainer = document.getElementById('pm-messages');
     msgContainer.innerHTML = '<div style="color:#aaa; text-align:center;">Memuat pesan...</div>';
 
     import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js').then((firestore) => {
         const { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc, updateDoc } = firestore;
 
-        // 🔥 KODE BARU: MATIKAN SAKLAR BADGE SAAT CHAT DIBUKA
+        // Matikan saklar badge pesan baru di akun kita saat chat dibuka
         updateDoc(doc(db, "users", currentUserUid), {
             [`unreadMessages.${targetUid}`]: false
         }).catch(err => console.log("Gagal menghapus badge:", err));
 
-        // FUNGSI PROSES PENGURANGAN TAS & KIRIM (Disematkan ke window agar bisa diakses tombol)
         window.processSendItem = async function (tUid, itemName, maxAmount) {
             const amountStr = prompt(`Berapa banyak ${itemName} yang ingin dikirim? (Maks: ${maxAmount})`, "1");
             if (!amountStr) return;
-
             const amount = parseInt(amountStr);
-            if (isNaN(amount) || amount <= 0 || amount > maxAmount) {
-                return window.rpgAlert("Jumlah tidak valid!");
-            }
+            if (isNaN(amount) || amount <= 0 || amount > maxAmount) return window.rpgAlert("Jumlah tidak valid!");
 
             try {
-                // 1. Kurangi item dari tas pengirim
                 const userRef = doc(db, "users", currentUserUid);
                 const userSnap = await getDoc(userRef);
                 let currentInv = userSnap.data().inventory || {};
 
-                if (!currentInv[itemName] || currentInv[itemName] < amount) {
-                    return window.rpgAlert("Item tidak mencukupi saat divalidasi!");
-                }
+                if (!currentInv[itemName] || currentInv[itemName] < amount) return window.rpgAlert("Item tidak mencukupi!");
 
                 currentInv[itemName] -= amount;
                 if (currentInv[itemName] <= 0) delete currentInv[itemName];
                 await updateDoc(userRef, { inventory: currentInv });
 
-                // 2. Kirim pesan ke ruangan chat sebagai 'gift'
                 await addDoc(collection(db, "privateChats", chatId, "messages"), {
                     senderUid: currentUserUid,
                     senderName: playerUsername,
                     type: "gift",
                     gift: { name: itemName, amount: amount },
                     isClaimed: false,
+                    isRead: false, // Status Centang Biru
                     timestamp: Date.now()
                 });
 
-                // 🔥 KODE BARU: NYALAKAN SAKLAR BADGE DI LAYAR TEMAN
-                updateDoc(doc(db, "users", tUid), {
-                    [`unreadMessages.${currentUserUid}`]: true
-                }).catch(err => console.log(err));
-
+                updateDoc(doc(db, "users", tUid), { [`unreadMessages.${currentUserUid}`]: true }).catch(err => console.log(err));
                 document.getElementById('pm-item-picker').style.display = 'none';
-            } catch (err) {
-                console.error(err);
-                window.rpgAlert("Gagal mengirim item.");
-            }
+            } catch (err) { console.error(err); window.rpgAlert("Gagal mengirim item."); }
         };
 
         const q = query(collection(db, "privateChats", chatId, "messages"), orderBy("timestamp", "asc"));
@@ -1898,11 +1887,28 @@ window.openPrivateChat = function (targetUid, targetName) {
             msgContainer.innerHTML = '';
             if (snapshot.empty) msgContainer.innerHTML = '<div style="color:#aaa; text-align:center;">Belum ada pesan. Sapa temanmu!</div>';
 
+            let unreadDocsToUpdate = [];
+
             snapshot.forEach((docSnap) => {
                 const msg = docSnap.data();
                 const isMe = msg.senderUid === currentUserUid;
 
-                // RENDER ISI PESAN BEDA JIKA TIPE NYA GIFT
+                // Jika pesan dari teman belum dibaca dan jendela kita sedang terbuka lebar (maximized), tandai sebagai terbaca
+                if (!isMe && msg.isRead === false) {
+                    const modalState = document.getElementById('modal-private-chat').getAttribute('data-state');
+                    if (modalState === 'maximized') {
+                        unreadDocsToUpdate.push(docSnap.ref);
+                    }
+                }
+
+                // 🌟 FORMAT TANGGAL DAN WAKTU (Contoh: 27 Jun, 13:51)
+                const dateObj = new Date(msg.timestamp);
+                const timeString = dateObj.toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+                // 🌟 LOGIKA CENTANG BIRU (Read Receipt)
+                // Jika isMe (pesan kita), cek status isRead. Jika true: centang dua biru, jika false: centang satu abu
+                const readIcon = isMe ? (msg.isRead ? `<span style="color:#58a6ff; margin-left:4px; font-size:10px;">✔✔</span>` : `<span style="color:#aaa; margin-left:4px; font-size:10px;">✔</span>`) : '';
+
                 let contentHtml = "";
                 if (msg.type === "gift") {
                     const isClaimed = msg.isClaimed;
@@ -1929,19 +1935,21 @@ window.openPrivateChat = function (targetUid, targetName) {
                         }
                     }
                 } else {
-                    // Pesan teks biasa
                     contentHtml = `<span style="color:white; font-size:13px;">${msg.text}</span>`;
                 }
 
                 msgContainer.innerHTML += `
                     <div style="align-self: ${isMe ? 'flex-end' : 'flex-start'}; background: ${isMe ? '#238636' : '#1f2428'}; padding:6px 10px; border-radius:8px; max-width:80%; word-wrap:break-word; box-shadow:0 2px 5px rgba(0,0,0,0.2);">
                         ${contentHtml}
-                        <div style="font-size:9px; color:${isMe ? '#a6e3a1' : '#aaa'}; text-align:${isMe ? 'right' : 'left'}; margin-top:4px;">
-                            ${new Date(msg.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                        <div style="font-size:9px; color:${isMe ? '#a6e3a1' : '#aaa'}; display:flex; justify-content:${isMe ? 'flex-end' : 'flex-start'}; align-items:center; margin-top:4px;">
+                            <span>${timeString}</span> ${readIcon}
                         </div>
                     </div>
                 `;
             });
+
+            // Eksekusi update "Sudah Dibaca" ke database (Trigger centang biru di layar lawan)
+            unreadDocsToUpdate.forEach(ref => updateDoc(ref, { isRead: true }).catch(e => console.log(e)));
 
             if (!isFirstLoad) {
                 snapshot.docChanges().forEach((change) => {
@@ -1955,7 +1963,6 @@ window.openPrivateChat = function (targetUid, targetName) {
             msgContainer.scrollTop = msgContainer.scrollHeight;
         });
 
-        // TEKS PESAN BIASA
         const sendBtn = document.getElementById('pm-send-btn');
         const inputField = document.getElementById('pm-input');
         const newSendBtn = sendBtn.cloneNode(true);
@@ -1971,19 +1978,80 @@ window.openPrivateChat = function (targetUid, targetName) {
             await addDoc(collection(db, "privateChats", chatId, "messages"), {
                 senderUid: currentUserUid,
                 senderName: playerUsername,
-                type: "text", // Tandai sebagai teks biasa
+                type: "text",
                 text: text,
+                isRead: false, // Status Centang Biru
                 timestamp: Date.now()
             });
 
-            // 🔥 KODE BARU: NYALAKAN SAKLAR BADGE DI LAYAR TEMAN
-            updateDoc(doc(db, "users", targetUid), {
-                [`unreadMessages.${currentUserUid}`]: true
-            }).catch(err => console.log(err));
+            updateDoc(doc(db, "users", targetUid), { [`unreadMessages.${currentUserUid}`]: true }).catch(err => console.log(err));
         });
 
         inputField.onkeypress = function (e) { if (e.key === 'Enter') newSendBtn.click(); };
     });
+};
+
+window.toggleMinimizeChat = function () {
+    const chatModal = document.getElementById('modal-private-chat');
+    if (!chatModal) return;
+
+    const state = chatModal.getAttribute('data-state');
+    const body = document.getElementById('pm-body');
+    const dragHandle = document.getElementById('pm-drag-handle');
+
+    if (state === 'maximized') {
+        chatModal.setAttribute('data-last-top', chatModal.style.top);
+        chatModal.setAttribute('data-last-left', chatModal.style.left);
+
+        body.style.display = 'none';
+        chatModal.style.top = 'auto'; chatModal.style.left = 'auto';
+        chatModal.style.bottom = '10px'; chatModal.style.right = '10px';
+        chatModal.style.width = '200px';
+        chatModal.setAttribute('data-state', 'minimized');
+
+        dragHandle.style.cursor = 'pointer';
+        dragHandle.title = "Klik untuk membuka pesan";
+    } else {
+        body.style.display = 'flex';
+        chatModal.style.bottom = 'auto'; chatModal.style.right = 'auto';
+        chatModal.style.top = chatModal.getAttribute('data-last-top') || '20%';
+        chatModal.style.left = chatModal.getAttribute('data-last-left') || '30%';
+        chatModal.style.width = '300px';
+        chatModal.setAttribute('data-state', 'maximized');
+
+        dragHandle.classList.remove('pm-alert');
+        dragHandle.style.cursor = 'grab';
+        dragHandle.title = "";
+
+        const msgContainer = document.getElementById('pm-messages');
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+
+        // 🌟 KODE BARU: Saat jendela di-maximize, matikan notifikasi badge dan picu baca pesan
+        const tUid = chatModal.getAttribute('data-target-uid');
+        const cId = chatModal.getAttribute('data-chat-id');
+        if (tUid && cId) {
+            import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js').then(async ({ doc, updateDoc, collection, query, where, getDocs }) => {
+                // Hapus badge merah di tombol
+                updateDoc(doc(db, "users", currentUserUid), { [`unreadMessages.${tUid}`]: false }).catch(e => console.log(e));
+
+                // Cari pesan yang belum dibaca dan ubah jadi terbaca (Memicu centang biru di layar teman)
+                const qUnread = query(collection(db, "privateChats", cId, "messages"), where("isRead", "==", false));
+                const snaps = await getDocs(qUnread);
+                snaps.forEach(d => {
+                    if (d.data().senderUid === tUid) updateDoc(d.ref, { isRead: true });
+                });
+            });
+        }
+    }
+};
+
+window.closePrivateChat = function () {
+    const chatModal = document.getElementById('modal-private-chat');
+    if (chatModal) chatModal.style.display = 'none';
+    if (unsubPrivateChat) {
+        unsubPrivateChat();
+        unsubPrivateChat = null;
+    }
 };
 
 // --- SISTEM KLAIM HADIAH CHAT ---
@@ -2019,61 +2087,5 @@ window.claimChatGift = async function (chatId, msgId) {
     } catch (err) {
         console.error("Gagal klaim hadiah:", err);
         window.rpgAlert("Terjadi kesalahan saat mengambil hadiah.");
-    }
-};
-
-// --- FUNGSI TOGGLE MINIMIZE / MAXIMIZE ---
-window.toggleMinimizeChat = function () {
-    const chatModal = document.getElementById('modal-private-chat');
-    if (!chatModal) return;
-
-    const state = chatModal.getAttribute('data-state');
-    const body = document.getElementById('pm-body');
-    const dragHandle = document.getElementById('pm-drag-handle');
-
-    if (state === 'maximized') {
-        // Simpan posisi sebelum dikecilkan
-        chatModal.setAttribute('data-last-top', chatModal.style.top);
-        chatModal.setAttribute('data-last-left', chatModal.style.left);
-
-        // Sembunyikan isi chat & lempar ke pojok kanan bawah
-        body.style.display = 'none';
-        chatModal.style.top = 'auto';
-        chatModal.style.left = 'auto';
-        chatModal.style.bottom = '10px';
-        chatModal.style.right = '10px';
-        chatModal.style.width = '200px';
-        chatModal.setAttribute('data-state', 'minimized');
-
-        // Ubah tampilan kursor header agar terlihat bisa di-klik untuk membuka
-        dragHandle.style.cursor = 'pointer';
-        dragHandle.title = "Klik untuk membuka pesan";
-    } else {
-        // Kembalikan isi chat & posisi aslinya
-        body.style.display = 'flex';
-        chatModal.style.bottom = 'auto';
-        chatModal.style.right = 'auto';
-        chatModal.style.top = chatModal.getAttribute('data-last-top') || '20%';
-        chatModal.style.left = chatModal.getAttribute('data-last-left') || '30%';
-        chatModal.style.width = '300px';
-        chatModal.setAttribute('data-state', 'maximized');
-
-        // Matikan kedap-kedip notifikasi jika ada
-        dragHandle.classList.remove('pm-alert');
-        dragHandle.style.cursor = 'grab';
-        dragHandle.title = "";
-
-        // Gulir ke pesan terbawah
-        const msgContainer = document.getElementById('pm-messages');
-        msgContainer.scrollTop = msgContainer.scrollHeight;
-    }
-};
-
-window.closePrivateChat = function () {
-    const chatModal = document.getElementById('modal-private-chat');
-    if (chatModal) chatModal.style.display = 'none';
-    if (unsubPrivateChat) {
-        unsubPrivateChat();
-        unsubPrivateChat = null;
     }
 };
