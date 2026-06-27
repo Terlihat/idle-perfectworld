@@ -1718,7 +1718,7 @@ window.openPrivateChat = function (targetUid, targetName) {
             <div id="pm-drag-handle" style="background:#161b22; padding:10px; border-bottom:1px solid #30363d; border-radius:8px 8px 0 0; display:flex; justify-content:space-between; align-items:center; cursor:grab; user-select:none; transition: background-color 0.3s;">
                 <b style="color:#58a6ff; pointer-events:none;">💬 <span id="pm-target-name"></span></b>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <button onclick="window.toggleMinimizeChat()" style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:14px;">_</button>
+                    <button onclick="window.toggleMinimizeChat()" style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:14px;">—</button>
                     <button onclick="window.closePrivateChat()" style="background:transparent; border:none; color:#ff4c4c; cursor:pointer; font-size:14px;">✖</button>
                 </div>
             </div>
