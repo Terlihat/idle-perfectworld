@@ -1748,6 +1748,9 @@ window.openPrivateChat = function (targetUid, targetName) {
             document.onmouseup = closeDragElement;
             document.onmousemove = elementDrag;
             dragHandle.style.cursor = 'grabbing';
+
+            // 🔥 PERBAIKAN LAG: Matikan animasi transisi saat sedang ditarik
+            chatModal.style.transition = 'none';
         };
 
         function elementDrag(e) {
@@ -1766,6 +1769,9 @@ window.openPrivateChat = function (targetUid, targetName) {
             if (chatModal.getAttribute('data-state') !== 'minimized') {
                 dragHandle.style.cursor = 'grab';
             }
+
+            // 🔥 PERBAIKAN LAG: Nyalakan kembali animasi untuk fungsi Minimize/Maximize
+            chatModal.style.transition = 'width 0.2s, top 0.2s, left 0.2s, bottom 0.2s, right 0.2s';
         }
 
         // --- LOGIKA KLIK HEADER UNTUK MEMBUKA MINIMIZE ---
