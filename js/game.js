@@ -2089,3 +2089,108 @@ window.claimChatGift = async function (chatId, msgId) {
         window.rpgAlert("Terjadi kesalahan saat mengambil hadiah.");
     }
 };
+
+
+// SISTEM RENDER UI CRAFTING
+window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
+    const grid = document.getElementById('crafting-recipe-grid');
+    if (!grid) return;
+
+    if (grid.innerHTML.trim() === "") {
+        Object.keys(CRAFTING_RECIPES).forEach(recipeName => {
+            const recipe = CRAFTING_RECIPES[recipeName];
+            const itemName = recipe.resultItem;
+
+            const iconBox = document.createElement('div');
+            // Menyesuaikan dengan gaya kotak gelap ala inventory
+            iconBox.style.cssText = `
+                width: 45px; height: 45px; background: #161b22; border: 1px solid #3f3f52; 
+                border-radius: 4px; cursor: pointer; transition: 0.2s;
+                display: flex; justify-content: center; align-items: center; flex-direction: column;
+                box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+            `;
+            iconBox.title = recipeName;
+
+            // Memanggil fungsi render ikon andalan Anda!
+            // Kita bungkus agar ukurannya proporsional di dalam kotak
+            iconBox.innerHTML = `
+                <div style="transform: scale(1.2); pointer-events: none;">
+                    ${getIconHTML(itemName)}
+                </div>
+            `;
+
+            iconBox.onmouseover = () => iconBox.style.borderColor = "#ffca28";
+            iconBox.onmouseout = () => iconBox.style.borderColor = "#3f3f52";
+            iconBox.onclick = () => window.showCraftingDetails(recipeName, recipe, playerInvData, playerLevel, playerGold);
+
+            grid.appendChild(iconBox);
+        });
+    } else {
+        const activeRecipe = document.getElementById('crafting-details').getAttribute('data-active-recipe');
+        if (activeRecipe) {
+            window.showCraftingDetails(activeRecipe, CRAFTING_RECIPES[activeRecipe], playerInvData, playerLevel, playerGold);
+        }
+    }
+};
+
+window.showCraftingDetails = function (recipeName, recipe, playerInvData, playerLevel, playerGold) {
+    const detailsContainer = document.getElementById('crafting-details');
+    detailsContainer.setAttribute('data-active-recipe', recipeName);
+
+    // Ikon Utama (Blueprint)
+    let mainIconHtml = getIconHTML(recipe.resultItem);
+
+    let matsHtml = "";
+    for (const [matName, qtyNeeded] of Object.entries(recipe.materials)) {
+        const playerHas = playerInvData[matName] || 0;
+        const isEnough = playerHas >= qtyNeeded;
+
+        const qtyColor = isEnough ? "#fff" : "#ff4c4c";
+        const borderCol = isEnough ? "#3f3f52" : "#ff4c4c";
+
+        // Ikon Material
+        let matIconHtml = getIconHTML(matName);
+
+        matsHtml += `
+            <div title="${matName}" style="width: 45px; height: 45px; background: #121216; border: 1px solid ${borderCol}; border-radius: 4px; position: relative; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);">
+                
+                <div style="pointer-events: none;">
+                    ${matIconHtml}
+                </div>
+                
+                <!-- Angka jumlah di pojok kanan bawah -->
+                <div style="position: absolute; bottom: 2px; right: 4px; font-size: 10px; font-weight: bold; color: ${qtyColor}; text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;">
+                    ${playerHas}/${qtyNeeded}
+                </div>
+            </div>
+        `;
+    }
+
+    const lvlColor = playerLevel >= recipe.reqLevel ? "#fff" : "#ff4c4c";
+    const goldColor = playerGold >= recipe.reqGold ? "#ffca28" : "#ff4c4c";
+
+    detailsContainer.innerHTML = `
+        <div title="${recipeName}" style="width: 60px; height: 60px; background: #0d1117; border: 2px solid #ffca28; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 15px rgba(255, 202, 40, 0.3);">
+            <div style="transform: scale(1.5); pointer-events: none;">
+                ${mainIconHtml}
+            </div>
+        </div>
+        
+        <h4 style="color: #ffca28; margin: 0 0 10px 0;">${recipeName}</h4>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div style="font-size: 11px; background: #1f2428; padding: 4px 10px; border-radius: 3px; border: 1px solid #444; color: ${lvlColor};">🎯 Lv.${recipe.reqLevel}</div>
+            <div style="font-size: 11px; background: #1f2428; padding: 4px 10px; border-radius: 3px; border: 1px solid #444; color: ${goldColor};">💰 ${recipe.reqGold.toLocaleString()}</div>
+        </div>
+
+        <div style="font-size: 11px; color: #aaa; margin-bottom: 8px;">Dibutuhkan:</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">
+            ${matsHtml}
+        </div>
+
+        <button onclick="craftItemAction(db, currentUserUid, '${recipeName}')" 
+                style="background: #238636; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 90%; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            ⚒️ TEMPA SEKARANG
+        </button>
+    `;
+};

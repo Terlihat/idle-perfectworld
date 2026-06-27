@@ -1,3 +1,22 @@
-<h3 style="border-bottom: 1px solid #555; padding-bottom: 5px;">⚒️ Tungku Penempaan</h3>
-<p style="font-size: 11px; color: #aaa; text-align: center;">Kumpulkan Blueprint dari Boss Fuben untuk menempa Senjata Legendary!</p>
-<div id="crafting-list" style="margin-top: 10px;"></div>
+<h3 style="border-bottom: 1px solid #555; padding-bottom: 5px; text-align: center;">⚒️ Tungku Penempaan</h3>
+<p style="font-size: 11px; color: #aaa; text-align: center;">Kumpulkan Blueprint dari Boss Fuben untuk menempa Senjata
+    Legendary!</p>
+
+<div style="display: flex; gap: 10px; margin-top: 15px; height: 380px;">
+    <!-- PANEL KIRI: Grid Resep (Menampilkan Icon Item yang bisa di-craft) -->
+    <div
+        style="flex: 1; background: #161b22; border: 1px solid #30363d; border-radius: 4px; padding: 10px; overflow-y: auto;">
+        <div style="font-size: 10px; color: #aaa; margin-bottom: 10px; text-align: center;">Daftar Blueprint</div>
+        <div id="crafting-recipe-grid" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+            <!-- Icon resep akan di-render di sini oleh JavaScript -->
+        </div>
+    </div>
+
+    <!-- PANEL KANAN: Detail Penempaan (Menampilkan Material & Tombol Craft) -->
+    <div id="crafting-details"
+        style="flex: 1.5; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+        <div style="font-size: 40px; color: #333;">⚒️</div>
+        <p style="color: #666; font-size: 12px; margin-top: 10px;">Pilih resep di sebelah kiri untuk<br>melihat detail
+            penempaan.</p>
+    </div>
+</div>

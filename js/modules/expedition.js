@@ -72,8 +72,8 @@ window.claimExpedition = async function () {
             let extraMsg = "";
 
             // 50% Kesempatan dapat Universal Stone
-            if (Math.random() > 0.5) {
-                const stoneQty = h * 5;
+            if (Math.random() > 0.1) {
+                const stoneQty = h * 1;
                 currentInv['Universal Stone'] = (currentInv['Universal Stone'] || 0) + stoneQty;
                 extraMsg = `<br>💎 <b>${stoneQty} Universal Stone</b>`;
             }

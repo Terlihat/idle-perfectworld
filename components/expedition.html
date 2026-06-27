@@ -1,24 +1,32 @@
 <h2 style="color: #4ae3ff; border-bottom: 1px solid #005f73; margin-top: 0;">⛺ Ekspedisi AFK</h2>
 
-<div style="background: #121216; padding: 15px; border-radius: 6px; margin-bottom: 15px; text-align: center; border: 1px dashed #005f73;">
+<div
+    style="background: #121216; padding: 15px; border-radius: 6px; margin-bottom: 15px; text-align: center; border: 1px dashed #005f73;">
     <h3 id="afk-status-text" style="color: #ffca28; margin: 0 0 10px 0;">Pilih Durasi Ekspedisi</h3>
-    
-    <div id="afk-timer" style="font-size: 26px; font-weight: bold; color: #fff; display: none; margin-bottom: 10px;">00:00:00</div>
+
+    <div id="afk-timer" style="font-size: 26px; font-weight: bold; color: #fff; display: none; margin-bottom: 10px;">
+        00:00:00</div>
 
     <div id="afk-selection">
-        <select id="afk-duration" style="width: 100%; padding: 10px; background: #1a1a24; color: #fff; border: 1px solid #3f3f52; border-radius: 4px; margin-bottom: 15px;">
-            <option value="1">1 Jam (Hutan Biasa - Hadiah Kecil)</option>
-            <option value="4">4 Jam (Gua Gelap - Hadiah Sedang)</option>
-            <option value="8">8 Jam (Reruntuhan Kuno - Hadiah Besar)</option>
+        <select id="afk-duration"
+            style="width: 100%; padding: 10px; background: #1a1a24; color: #fff; border: 1px solid #3f3f52; border-radius: 4px; margin-bottom: 15px;">
+            <option value="1">1 Jam (Hutan Biasa)</option>
+            <option value="4">4 Jam (Gua Gelap)</option>
+            <option value="8">8 Jam (Reruntuhan Kuno)</option>
         </select>
-        <button id="btn-start-afk" onclick="window.startExpedition()" style="width: 100%; background: #005f73; color: #fff; font-weight: bold; padding: 12px; font-size: 14px; border: 1px solid #0a9396; cursor: pointer; border-radius: 4px;">🚀 BERANGKAT EKSPEDISI</button>
+        <button id="btn-start-afk" onclick="window.startExpedition()"
+            style="width: 100%; background: #005f73; color: #fff; font-weight: bold; padding: 12px; font-size: 14px; border: 1px solid #0a9396; cursor: pointer; border-radius: 4px;">🚀
+            BERANGKAT EKSPEDISI</button>
     </div>
 
     <div id="afk-claim-area" style="display: none;">
-        <button id="btn-claim-afk" onclick="window.claimExpedition()" style="width: 100%; background: #28a745; color: #fff; font-weight: bold; padding: 12px; font-size: 16px; border: 1px solid #218838; cursor: pointer; border-radius: 4px;">🎁 KLAIM HADIAH</button>
+        <button id="btn-claim-afk" onclick="window.claimExpedition()"
+            style="width: 100%; background: #28a745; color: #fff; font-weight: bold; padding: 12px; font-size: 16px; border: 1px solid #218838; cursor: pointer; border-radius: 4px;">🎁
+            KLAIM HADIAH</button>
     </div>
 </div>
 
 <div style="font-size: 12px; color: #8b949e; text-align: center;">
-    *Karakter tetap bisa dimainkan saat Ekspedisi berlangsung.<br>Menutup game/browser <b>TIDAK</b> akan menghentikan timer Ekspedisi.
+    *Karakter tetap bisa dimainkan saat Ekspedisi berlangsung.<br>Menutup game/browser <b>TIDAK</b> akan menghentikan
+    timer Ekspedisi.
 </div>
