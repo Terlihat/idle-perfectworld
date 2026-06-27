@@ -1647,54 +1647,78 @@ window.delFriend = async function (targetUid) {
 // --- SISTEM PESAN PRIBADI (WHISPER) ---
 let unsubPrivateChat = null;
 
+// Tambahkan Animasi Berkedip (Blinking) untuk Notifikasi via JavaScript
+if (!document.getElementById('pm-custom-styles')) {
+    const style = document.createElement('style');
+    style.id = 'pm-custom-styles';
+    style.innerHTML = `
+        @keyframes pm-blink {
+            0% { background-color: #161b22; }
+            50% { background-color: #2ea043; } /* Hijau Terang */
+            100% { background-color: #161b22; }
+        }
+        .pm-alert { animation: pm-blink 1.5s infinite !important; }
+    `;
+    document.head.appendChild(style);
+}
+
 window.openPrivateChat = function (targetUid, targetName) {
-    // 1. Buat UI Modal Pop-up secara dinamis (Ditambah Header untuk Digeser & Menu Emoji)
     let chatModal = document.getElementById('modal-private-chat');
     if (!chatModal) {
         chatModal = document.createElement('div');
         chatModal.id = 'modal-private-chat';
-        // Perhatikan: Menghapus transform dan memakai top/left pasti agar tidak melompat saat digeser pertama kali
-        chatModal.style.cssText = "position:fixed; top:20%; left:30%; width:300px; background:#0d1117; border:1px solid #30363d; border-radius:8px; z-index:1000; display:flex; flex-direction:column; box-shadow: 0 5px 25px rgba(0,0,0,0.9);";
+        chatModal.setAttribute('data-state', 'maximized');
+        chatModal.style.cssText = "position:fixed; top:20%; left:30%; width:300px; background:#0d1117; border:1px solid #30363d; border-radius:8px; z-index:1000; display:flex; flex-direction:column; box-shadow: 0 5px 25px rgba(0,0,0,0.9); transition: width 0.2s, top 0.2s, left 0.2s, bottom 0.2s, right 0.2s;";
 
-        // Daftar emoji yang relevan untuk game RPG
         const emojis = ['😀', '😂', '😅', '😍', '😎', '😭', '😡', '👍', '🙏', '🎉', '💀', '🔥', '⚔️', '🛡️', '💰', '🌲'];
         const emojiHtml = emojis.map(e => `<span class="pm-emoji-btn" style="cursor:pointer; font-size:18px; padding:2px; transition:0.2s;">${e}</span>`).join('');
 
         chatModal.innerHTML = `
-            <!-- HEADER BISA DIGESER (Drag Handle) -->
-            <div id="pm-drag-handle" style="background:#161b22; padding:10px; border-bottom:1px solid #30363d; border-radius:8px 8px 0 0; display:flex; justify-content:space-between; align-items:center; cursor:grab; user-select:none;">
-                <b style="color:#58a6ff;">💬 Chat: <span id="pm-target-name"></span></b>
-                <button onclick="window.closePrivateChat()" style="background:transparent; border:none; color:#ff4c4c; font-weight:bold; cursor:pointer; font-size:16px;">✖</button>
+            <!-- HEADER (Bisa digeser & ditekan saat minimize) -->
+            <div id="pm-drag-handle" style="background:#161b22; padding:10px; border-bottom:1px solid #30363d; border-radius:8px 8px 0 0; display:flex; justify-content:space-between; align-items:center; cursor:grab; user-select:none; transition: background-color 0.3s;">
+                <b style="color:#58a6ff; pointer-events:none;">💬 <span id="pm-target-name"></span></b>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button onclick="window.toggleMinimizeChat()" style="background:transparent; border:none; color:#fff; font-weight:bold; cursor:pointer; font-size:14px;" title="Minimize">_</button>
+                    <button onclick="window.closePrivateChat()" style="background:transparent; border:none; color:#ff4c4c; font-weight:bold; cursor:pointer; font-size:14px;" title="Tutup">✖</button>
+                </div>
             </div>
             
-            <div id="pm-messages" style="height:250px; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px; font-size:12px; position:relative;">
-                <!-- Pesan akan muncul di sini -->
-            </div>
-            
-            <!-- POPUP EMOJI (Disembunyikan secara default) -->
-            <div id="pm-emoji-picker" style="display:none; position:absolute; bottom:55px; left:10px; background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px; width:220px; flex-wrap:wrap; gap:5px; z-index:1001; box-shadow:0 -5px 15px rgba(0,0,0,0.5);">
-                ${emojiHtml}
-            </div>
-            
-            <div style="padding:10px; border-top:1px solid #30363d; display:flex; gap:5px; align-items:center;">
-                <button id="pm-emoji-toggle" style="background:transparent; border:none; cursor:pointer; font-size:18px; padding:0 5px;" title="Pilih Emoji">😀</button>
-                <input type="text" id="pm-input" placeholder="Tulis pesan..." style="flex:1; padding:8px; background:#010409; color:white; border:1px solid #30363d; border-radius:4px; outline:none;">
-                <button id="pm-send-btn" style="background:#238636; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">Kirim</button>
+            <!-- BODY CHAT (Disembunyikan saat Minimize) -->
+            <div id="pm-body" style="display:flex; flex-direction:column; width:100%;">
+                <div id="pm-messages" style="height:250px; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px; font-size:12px; position:relative;">
+                    <!-- Pesan -->
+                </div>
+                
+                <!-- POPUP EMOJI -->
+                <div id="pm-emoji-picker" style="display:none; position:absolute; bottom:55px; left:10px; background:#161b22; border:1px solid #30363d; border-radius:6px; padding:8px; width:220px; flex-wrap:wrap; gap:5px; z-index:1001; box-shadow:0 -5px 15px rgba(0,0,0,0.5);">
+                    ${emojiHtml}
+                </div>
+                
+                <!-- INPUT FOOTER -->
+                <div style="padding:10px; border-top:1px solid #30363d; display:flex; gap:5px; align-items:center;">
+                    <button id="pm-emoji-toggle" style="background:transparent; border:none; cursor:pointer; font-size:18px; padding:0 5px;">😀</button>
+                    <input type="text" id="pm-input" placeholder="Tulis pesan..." style="flex:1; padding:8px; background:#010409; color:white; border:1px solid #30363d; border-radius:4px; outline:none;">
+                    <button id="pm-send-btn" style="background:#238636; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">Kirim</button>
+                </div>
             </div>
         `;
         document.body.appendChild(chatModal);
 
-        // --- LOGIKA DRAG & DROP ---
+        // --- LOGIKA DRAG & DROP YANG DISESUAIKAN ---
         const dragHandle = chatModal.querySelector('#pm-drag-handle');
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
 
         dragHandle.onmousedown = function (e) {
+            // Cegah drag jika sedang minimize atau klik tombol di header
+            if (chatModal.getAttribute('data-state') === 'minimized') return;
+            if (e.target.tagName === 'BUTTON') return;
+
             e.preventDefault();
             pos3 = e.clientX;
             pos4 = e.clientY;
             document.onmouseup = closeDragElement;
             document.onmousemove = elementDrag;
-            dragHandle.style.cursor = 'grabbing'; // Ubah kursor saat ditahan
+            dragHandle.style.cursor = 'grabbing';
         };
 
         function elementDrag(e) {
@@ -1710,45 +1734,56 @@ window.openPrivateChat = function (targetUid, targetName) {
         function closeDragElement() {
             document.onmouseup = null;
             document.onmousemove = null;
-            dragHandle.style.cursor = 'grab'; // Kembalikan kursor
+            if (chatModal.getAttribute('data-state') !== 'minimized') {
+                dragHandle.style.cursor = 'grab';
+            }
         }
 
-        // --- LOGIKA EMOJI PICKER ---
+        // --- LOGIKA KLIK HEADER UNTUK MEMBUKA MINIMIZE ---
+        dragHandle.onclick = function (e) {
+            if (e.target.tagName === 'BUTTON') return;
+            if (chatModal.getAttribute('data-state') === 'minimized') {
+                window.toggleMinimizeChat();
+            }
+        };
+
+        // --- LOGIKA EMOJI ---
         const emojiToggle = chatModal.querySelector('#pm-emoji-toggle');
         const emojiPicker = chatModal.querySelector('#pm-emoji-picker');
         const inputField = chatModal.querySelector('#pm-input');
 
-        // Buka/Tutup menu emoji
-        emojiToggle.onclick = () => {
-            emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'flex' : 'none';
-        };
+        emojiToggle.onclick = () => { emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'flex' : 'none'; };
 
-        // Ketik emoji ke kolom input
         chatModal.querySelectorAll('.pm-emoji-btn').forEach(btn => {
             btn.onclick = (e) => {
                 inputField.value += e.target.innerText;
-                emojiPicker.style.display = 'none'; // Tutup setelah klik
-                inputField.focus(); // Kembalikan fokus kursor ke input
+                emojiPicker.style.display = 'none';
+                inputField.focus();
             };
         });
     }
 
+    // Pastikan jika target berubah, kembalikan ke ukuran penuh
+    if (chatModal.getAttribute('data-state') === 'minimized') {
+        window.toggleMinimizeChat();
+    }
+
     document.getElementById('pm-target-name').innerText = targetName;
     chatModal.style.display = 'flex';
-    // Sembunyikan emoji picker setiap kali panel baru dibuka
     document.getElementById('pm-emoji-picker').style.display = 'none';
 
-    // 2. Logika Firebase (Membuat ID Ruangan Unik)
+    // 2. Logika Firebase & Notifikasi Pesan
     const chatId = [currentUserUid, targetUid].sort().join('_');
     const msgContainer = document.getElementById('pm-messages');
     msgContainer.innerHTML = '<div style="color:#aaa; text-align:center;">Memuat pesan...</div>';
 
     import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js').then((firestore) => {
         const { collection, query, orderBy, onSnapshot, addDoc } = firestore;
-
         const q = query(collection(db, "privateChats", chatId, "messages"), orderBy("timestamp", "asc"));
 
         if (unsubPrivateChat) unsubPrivateChat();
+
+        let isFirstLoad = true;
 
         unsubPrivateChat = onSnapshot(q, (snapshot) => {
             msgContainer.innerHTML = '';
@@ -1768,9 +1803,23 @@ window.openPrivateChat = function (targetUid, targetName) {
                     </div>
                 `;
             });
+
+            // LOGIKA NOTIFIKASI KEDAP-KEDIP SAAT MINIMIZE
+            if (!isFirstLoad) {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added" && change.doc.data().senderUid !== currentUserUid) {
+                        const modalState = document.getElementById('modal-private-chat').getAttribute('data-state');
+                        if (modalState === 'minimized') {
+                            document.getElementById('pm-drag-handle').classList.add('pm-alert');
+                        }
+                    }
+                });
+            }
+            isFirstLoad = false;
             msgContainer.scrollTop = msgContainer.scrollHeight;
         });
 
+        // 3. Tombol Kirim Pesan
         const sendBtn = document.getElementById('pm-send-btn');
         const inputField = document.getElementById('pm-input');
 
@@ -1782,7 +1831,7 @@ window.openPrivateChat = function (targetUid, targetName) {
             if (!text) return;
 
             inputField.value = '';
-            document.getElementById('pm-emoji-picker').style.display = 'none'; // Tutup picker saat ngirim
+            document.getElementById('pm-emoji-picker').style.display = 'none';
 
             await addDoc(collection(db, "privateChats", chatId, "messages"), {
                 senderUid: currentUserUid,
@@ -1792,10 +1841,55 @@ window.openPrivateChat = function (targetUid, targetName) {
             });
         });
 
-        inputField.onkeypress = function (e) {
-            if (e.key === 'Enter') newSendBtn.click();
-        };
+        inputField.onkeypress = function (e) { if (e.key === 'Enter') newSendBtn.click(); };
     });
+};
+
+// --- FUNGSI TOGGLE MINIMIZE / MAXIMIZE ---
+window.toggleMinimizeChat = function () {
+    const chatModal = document.getElementById('modal-private-chat');
+    if (!chatModal) return;
+
+    const state = chatModal.getAttribute('data-state');
+    const body = document.getElementById('pm-body');
+    const dragHandle = document.getElementById('pm-drag-handle');
+
+    if (state === 'maximized') {
+        // Simpan posisi sebelum dikecilkan
+        chatModal.setAttribute('data-last-top', chatModal.style.top);
+        chatModal.setAttribute('data-last-left', chatModal.style.left);
+
+        // Sembunyikan isi chat & lempar ke pojok kanan bawah
+        body.style.display = 'none';
+        chatModal.style.top = 'auto';
+        chatModal.style.left = 'auto';
+        chatModal.style.bottom = '10px';
+        chatModal.style.right = '10px';
+        chatModal.style.width = '200px';
+        chatModal.setAttribute('data-state', 'minimized');
+
+        // Ubah tampilan kursor header agar terlihat bisa di-klik untuk membuka
+        dragHandle.style.cursor = 'pointer';
+        dragHandle.title = "Klik untuk membuka pesan";
+    } else {
+        // Kembalikan isi chat & posisi aslinya
+        body.style.display = 'flex';
+        chatModal.style.bottom = 'auto';
+        chatModal.style.right = 'auto';
+        chatModal.style.top = chatModal.getAttribute('data-last-top') || '20%';
+        chatModal.style.left = chatModal.getAttribute('data-last-left') || '30%';
+        chatModal.style.width = '300px';
+        chatModal.setAttribute('data-state', 'maximized');
+
+        // Matikan kedap-kedip notifikasi jika ada
+        dragHandle.classList.remove('pm-alert');
+        dragHandle.style.cursor = 'grab';
+        dragHandle.title = "";
+
+        // Gulir ke pesan terbawah
+        const msgContainer = document.getElementById('pm-messages');
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
 };
 
 window.closePrivateChat = function () {
