@@ -2090,18 +2090,19 @@ window.claimChatGift = async function (chatId, msgId) {
     }
 };
 
+window.craftItemAction = craftItemAction;
+
 // SISTEM RENDER UI CRAFTING
 window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
     const grid = document.getElementById('crafting-recipe-grid');
     if (!grid) return;
 
-    // 1. Ambil data resep dari window (global)
-    const recipes = window.CRAFTING_RECIPES;
-    if (!recipes) return; // Jika crafting.js belum termuat, jangan paksakan render
+    // Kita LANGSUNG gunakan CRAFTING_RECIPES hasil import Anda di atas!
+    if (!CRAFTING_RECIPES) return;
 
     if (grid.innerHTML.trim() === "") {
-        Object.keys(recipes).forEach(recipeName => {
-            const recipe = recipes[recipeName];
+        Object.keys(CRAFTING_RECIPES).forEach(recipeName => {
+            const recipe = CRAFTING_RECIPES[recipeName];
             const itemName = recipe.resultItem;
 
             const iconBox = document.createElement('div');
@@ -2113,10 +2114,9 @@ window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
             `;
             iconBox.title = recipeName;
 
-            // Memanggil fungsi icon (dengan pengaman)
             let iconHtml = "📦";
             try { iconHtml = (typeof getIconHTML === 'function') ? getIconHTML(itemName) : window.getIconHTML(itemName); }
-            catch (e) { /* Abaikan jika gagal memuat gambar sementara */ }
+            catch (e) { }
 
             iconBox.innerHTML = `
                 <div style="transform: scale(1.2); pointer-events: none;">
@@ -2133,7 +2133,7 @@ window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
     } else {
         const activeRecipe = document.getElementById('crafting-details').getAttribute('data-active-recipe');
         if (activeRecipe) {
-            window.showCraftingDetails(activeRecipe, recipes[activeRecipe], playerInvData, playerLevel, playerGold);
+            window.showCraftingDetails(activeRecipe, CRAFTING_RECIPES[activeRecipe], playerInvData, playerLevel, playerGold);
         }
     }
 };
@@ -2142,7 +2142,6 @@ window.showCraftingDetails = function (recipeName, recipe, playerInvData, player
     const detailsContainer = document.getElementById('crafting-details');
     detailsContainer.setAttribute('data-active-recipe', recipeName);
 
-    // Fungsi Pengaman Icon
     const safeGetIcon = (name) => {
         try { return (typeof getIconHTML === 'function') ? getIconHTML(name) : window.getIconHTML(name); }
         catch (e) { return "📦"; }
@@ -2195,14 +2194,9 @@ window.showCraftingDetails = function (recipeName, recipe, playerInvData, player
             ${matsHtml}
         </div>
 
-        <!-- Pemanggilan craftItemAction sekarang sudah aman karena kita melampirkannya ke window -->
         <button onclick="window.craftItemAction(db, currentUserUid, '${recipeName}')" 
                 style="background: #238636; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 90%; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
             ⚒️ TEMPA SEKARANG
         </button>
     `;
 };
-
-// Tempelkan ke window agar sistem UI dan tombol HTML bisa membacanya
-window.CRAFTING_RECIPES = CRAFTING_RECIPES;
-window.craftItemAction = craftItemAction;
