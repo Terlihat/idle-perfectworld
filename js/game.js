@@ -2092,14 +2092,18 @@ window.claimChatGift = async function (chatId, msgId) {
 
 window.craftItemAction = craftItemAction;
 
-// SISTEM RENDER UI CRAFTING
+// SISTEM RENDER UI CRAFTING (PERBAIKAN FATAL)
 window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
     const grid = document.getElementById('crafting-recipe-grid');
     if (!grid) return;
 
     if (!CRAFTING_RECIPES) return;
 
-    if (grid.innerHTML.trim() === "") {
+    // 🔥 PERBAIKAN: Gunakan children.length agar komentar HTML tidak menggagalkan render
+    if (grid.children.length === 0) {
+
+        grid.innerHTML = ""; // Bersihkan komentar HTML sebelum mulai mengisi
+
         Object.keys(CRAFTING_RECIPES).forEach(recipeName => {
             const recipe = CRAFTING_RECIPES[recipeName];
             const itemName = recipe.resultItem;
