@@ -2107,7 +2107,7 @@ window.claimChatGift = async function (chatId, msgId) {
 window.craftItemAction = craftItemAction;
 
 // ===================================================
-// SISTEM RENDER UI CRAFTING (GAYA INVENTORY ENGINE)
+// SISTEM RENDER UI CRAFTING (VERSI FINAL - UKURAN 32x32)
 // ===================================================
 
 window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
@@ -2116,11 +2116,9 @@ window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
 
     if (typeof CRAFTING_RECIPES === 'undefined') return;
 
-    // SIMPAN DATA PEMAIN SECARA GLOBAL UNTUK DETAIL PANEL
-    // (Agar kita tidak perlu mengoper data rumit ke dalam teks HTML)
-    window._craftingCache = { inv: playerInvData, lvl: playerLevel, gold: playerGold };
+    // Simpan data ke cache global agar fungsi detail bisa membacanya tanpa dilempar via HTML
+    window._craftingCache = { inv: playerInvData || {}, lvl: playerLevel || 1, gold: playerGold || 0 };
 
-    // 1. RENDER GRID (Persis seperti logika renderInventoryUI Anda)
     let html = "";
 
     for (const recipeName in CRAFTING_RECIPES) {
@@ -2132,23 +2130,23 @@ window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
             iconHtml = (typeof getIconHTML === 'function') ? getIconHTML(itemName) : window.getIconHTML(itemName);
         } catch (e) { }
 
-        // Kita gunakan string utuh untuk mencetak elemen, dijamin muncul!
+        // Kotak Ikon Blueprint (Diubah menjadi 32x32)
         html += `
         <div title="${recipeName}" 
              onclick="window.showCraftingDetails('${recipeName}')"
              onmouseover="this.style.borderColor='#ffca28'" 
              onmouseout="this.style.borderColor='#3f3f52'"
-             style="width: 45px; height: 45px; background: #161b22; border: 1px solid #3f3f52; border-radius: 4px; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; flex-direction: column; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);">
-             <div style="transform: scale(1.2); pointer-events: none;">
+             style="width: 32px; height: 32px; background: #161b22; border: 1px solid #3f3f52; border-radius: 4px; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);">
+             <div style="pointer-events: none; display: flex; justify-content: center; align-items: center;">
                  ${iconHtml}
              </div>
         </div>`;
     }
 
-    // Paksa cetak ke layar setiap kali data tas berubah
+    // Paksa cetak semua kotak resep ke dalam layar
     grid.innerHTML = html;
 
-    // 2. PERBARUI DETAIL JIKA PANEL KANAN SEDANG DIBUKA
+    // Perbarui detail di panel kanan jika sebelumnya ada resep yang sedang diklik
     const activeRecipe = document.getElementById('crafting-details').getAttribute('data-active-recipe');
     if (activeRecipe && CRAFTING_RECIPES[activeRecipe]) {
         window.showCraftingDetails(activeRecipe);
@@ -2164,7 +2162,7 @@ window.showCraftingDetails = function (recipeName) {
     const recipe = CRAFTING_RECIPES[recipeName];
     if (!recipe) return;
 
-    // Ambil data terbaru dari cache yang kita simpan di atas
+    // Ambil data terbaru dari cache
     const cache = window._craftingCache || { inv: {}, lvl: 1, gold: 0 };
     const playerInvData = cache.inv;
     const playerLevel = cache.lvl;
@@ -2187,12 +2185,14 @@ window.showCraftingDetails = function (recipeName) {
         const borderCol = isEnough ? "#3f3f52" : "#ff4c4c";
         let matIconHtml = safeGetIcon(matName);
 
+        // Kotak Material (Diubah menjadi 32x32 dengan penyesuaian font agar tidak keluar kotak)
         matsHtml += `
-            <div title="${matName}" style="width: 45px; height: 45px; background: #121216; border: 1px solid ${borderCol}; border-radius: 4px; position: relative; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);">
-                <div style="pointer-events: none;">
+            <div title="${matName}" style="width: 32px; height: 32px; background: #121216; border: 1px solid ${borderCol}; border-radius: 4px; position: relative; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);">
+                <div style="pointer-events: none; display: flex; justify-content: center; align-items: center;">
                     ${matIconHtml}
                 </div>
-                <div style="position: absolute; bottom: 2px; right: 4px; font-size: 10px; font-weight: bold; color: ${qtyColor}; text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;">
+                <!-- Angka jumlah dengan latar belakang semi-transparan agar terbaca jelas -->
+                <div style="position: absolute; bottom: 0px; right: 0px; font-size: 9px; font-weight: bold; color: ${qtyColor}; background: rgba(0,0,0,0.7); padding: 0 2px; border-radius: 2px;">
                     ${playerHas}/${qtyNeeded}
                 </div>
             </div>
@@ -2202,9 +2202,10 @@ window.showCraftingDetails = function (recipeName) {
     const lvlColor = playerLevel >= recipe.reqLevel ? "#fff" : "#ff4c4c";
     const goldColor = playerGold >= recipe.reqGold ? "#ffca28" : "#ff4c4c";
 
+    // Panel detail keseluruhan (Ikon Utama sedikit lebih besar: 48x48)
     detailsContainer.innerHTML = `
-        <div title="${recipeName}" style="width: 60px; height: 60px; background: #0d1117; border: 2px solid #ffca28; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 15px rgba(255, 202, 40, 0.3);">
-            <div style="transform: scale(1.5); pointer-events: none;">
+        <div title="${recipeName}" style="width: 48px; height: 48px; background: #0d1117; border: 2px solid #ffca28; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 15px rgba(255, 202, 40, 0.3);">
+            <div style="transform: scale(1.2); pointer-events: none;">
                 ${mainIconHtml}
             </div>
         </div>
