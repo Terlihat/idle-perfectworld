@@ -672,29 +672,6 @@ document.addEventListener('click', async (e) => {
     if (targetId === 'class-warrior') selectCharacterClass(db, currentUserUid, 'Warrior', () => showScreen('screen-game'));
     if (targetId === 'class-mage') selectCharacterClass(db, currentUserUid, 'Mage', () => showScreen('screen-game'));
 
-    if (targetId === 'btn-mode-equip') { inventoryMode = "EQUIP"; clearActiveModeClasses(); target.className = "mode-active"; }
-    if (targetId === 'btn-mode-sell') { inventoryMode = "SELL"; clearActiveModeClasses(); target.className = "mode-sell-active"; }
-    if (targetId === 'btn-mode-dismantle') { inventoryMode = "DISMANTLE"; clearActiveModeClasses(); target.style.backgroundColor = "#dc3545"; }
-
-    if (targetId === 'btn-mode-bank') {
-        inventoryMode = "BANK";
-        clearActiveModeClasses();
-        target.className = "mode-active";
-        window.bukaPanelKhusus('panel-bank');
-    }
-    if (targetId === 'btn-mode-auction') {
-        inventoryMode = "AUCTION";
-        clearActiveModeClasses();
-        target.className = "mode-auction-active";
-        window.bukaPanelKhusus('panel-auction');
-    }
-    if (targetId === 'btn-mode-crafting') {
-        inventoryMode = "CRAFTING";
-        clearActiveModeClasses();
-        target.style.backgroundColor = "#17a2b8";
-        window.bukaPanelKhusus('panel-crafting');
-    }
-
     if (targetId === 'btn-send-chat') {
         const chatInput = document.getElementById('chat-input');
         if (chatInput && chatInput.value.trim()) {

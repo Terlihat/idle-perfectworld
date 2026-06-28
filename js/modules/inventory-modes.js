@@ -3,16 +3,16 @@
 // ===================================================
 window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
     const semuaPanel = ['panel-refine-transfer', 'panel-blacksmith', 'panel-crafting'];
-    
+
     // LOGIKA MATIKAN (KEMBALI KE DEFAULT)
     if (window.inventoryMode === namaMode) {
-        window.inventoryMode = 'EQUIP'; 
-        
+        window.inventoryMode = 'EQUIP';
+
         semuaPanel.forEach(id => {
             const p = document.getElementById(id);
             if (p) p.style.display = 'none';
         });
-        
+
         ['equip', 'sell', 'dismantle', 'bank', 'auction', 'blacksmith', 'transfer', 'crafting'].forEach(m => {
             const btn = document.getElementById('btn-mode-' + m);
             if (btn) {
@@ -20,24 +20,23 @@ window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
                 btn.style.background = '#495057';
             }
         });
-        
+
         const btnEquip = document.getElementById('btn-mode-equip');
         if (btnEquip) {
             btnEquip.classList.add('mode-active');
-            btnEquip.style.background = ''; 
+            btnEquip.style.background = '';
         }
-        
-        return false; 
+
+        return false;
     }
 
-    // LOGIKA NYALAKAN MODE BARU
     window.inventoryMode = namaMode;
-    
+
     semuaPanel.forEach(id => {
         const p = document.getElementById(id);
         if (p) p.style.display = 'none';
     });
-    
+
     if (idPanel) {
         const panel = document.getElementById(idPanel);
         if (panel) {
@@ -45,7 +44,7 @@ window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
             panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
-    
+
     ['equip', 'sell', 'dismantle', 'bank', 'auction', 'blacksmith', 'transfer', 'crafting'].forEach(m => {
         const btn = document.getElementById('btn-mode-' + m);
         if (btn) {
@@ -53,18 +52,14 @@ window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
             btn.style.background = '#495057';
         }
     });
-    
+
     const btnActive = document.getElementById(idTombol);
     if (btnActive) {
         btnActive.style.background = warnaAktif;
     }
-    
-    return true; 
-};
 
-// ===================================================
-// FUNGSI TOMBOL-TOMBOL INVENTORY
-// ===================================================
+    return true;
+};
 
 window.activateTransferMode = function () {
     if (!window.setInventoryMode('waris', 'btn-mode-transfer', 'panel-refine-transfer', '#e83e8c')) return;
@@ -83,14 +78,26 @@ window.activateBlacksmithMode = function () {
     }, 100);
 };
 
+window.activateEquipMode = function () {
+    window.setInventoryMode('EQUIP', 'btn-mode-equip', null, '');
+};
+
+window.activateBankMode = function () {
+    window.setInventoryMode('BANK', 'btn-mode-bank', 'panel-bank', '#007bff');
+};
+
+window.activateAuctionMode = function () {
+    window.setInventoryMode('AUCTION', 'btn-mode-auction', 'panel-auction', '#6f42c1');
+};
+
 window.activateCraftingMode = function () {
     if (!window.setInventoryMode('CRAFTING', 'btn-mode-crafting', 'panel-crafting', '#20c997')) return;
 };
 
 window.activateSellMode = function () {
-    window.setInventoryMode('SELL', 'btn-mode-sell', null, '#dc3545'); 
+    window.setInventoryMode('SELL', 'btn-mode-sell', null, '#dc3545');
 };
 
 window.activateDismantleMode = function () {
-    window.setInventoryMode('DISMANTLE', 'btn-mode-dismantle', null, '#d35400'); 
+    window.setInventoryMode('DISMANTLE', 'btn-mode-dismantle', null, '#d35400');
 };
