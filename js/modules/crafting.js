@@ -137,7 +137,3 @@ export async function craftItemAction(db, uid, recipeName) {
         alert(err);
     }
 }
-
-// Membuka akses agar bisa dibaca oleh game.js dan tombol HTML
-window.CRAFTING_RECIPES = CRAFTING_RECIPES;
-window.craftItemAction = craftItemAction;
