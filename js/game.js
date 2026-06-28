@@ -39,6 +39,7 @@ import { renderTowerUI } from './modules/tower.js';
 import './modules/expedition.js';
 import { renderExpeditionUI } from './modules/expedition.js';
 import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend } from './modules/friends.js';
+import './modules/inventory-modes.js';
 
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
@@ -998,108 +999,6 @@ window.resetCatalyst = function () {
 
 window.actionUnequip = function (slotType) {
     unequipItem(db, currentUserUid, slotType);
-};
-
-window.activateBlacksmithMode = function () {
-    inventoryMode = "BLACKSMITH";
-
-    ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction', 'btn-mode-dismantle', 'btn-mode-blacksmith', 'btn-mode-crafting'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.className = "";
-            if (id !== 'btn-mode-equip') el.style.backgroundColor = "#495057";
-        }
-    });
-
-    const btnEnchant = document.getElementById('btn-mode-blacksmith');
-    if (btnEnchant) btnEnchant.style.backgroundColor = "#ff9800";
-
-    if (typeof window.bukaPanelKhusus === "function") {
-        // 1. Perintahkan sistem untuk membuka HTML Crafting
-        window.bukaPanelKhusus('panel-blacksmith');
-
-        // 🔥 2. SISTEM PELACAK PINTAR (Mencari elemen sampai ketemu)
-        let checkCount = 0;
-        const waitForGrid = setInterval(() => {
-            const grid = document.getElementById('crafting-recipe-grid');
-
-            // Jika elemennya SUDAH ADA di layar, hentikan pelacakan dan langsung gambar!
-            if (grid) {
-                clearInterval(waitForGrid);
-
-                if (typeof window.renderCraftingUI === 'function') {
-                    const invData = window.currentInventoryData || {};
-                    const playerLvl = (typeof currentPlayerStats !== 'undefined' && currentPlayerStats) ? (currentPlayerStats.level || 1) : 1;
-                    const playerGld = (typeof currentPlayerStats !== 'undefined' && currentPlayerStats) ? (currentPlayerStats.gold || 0) : 0;
-
-                    window.renderCraftingUI(invData, playerLvl, playerGld);
-                }
-            }
-
-            checkCount++;
-            // Berhenti melacak jika setelah 2 detik (20x cek) elemen tetap tidak ada agar tidak lag
-            if (checkCount > 20) clearInterval(waitForGrid);
-
-        }, 100); // Cek setiap 100 milidetik
-
-    } else {
-        window.rpgAlert("Sistem gagal menemukan panel tungku!");
-    }
-};
-
-window.activateTransferMode = function () {
-    const panelTransfer = document.getElementById('panel-refine-transfer');
-
-    // LOGIKA MATIKAN (OFF): Jika diklik saat sedang aktif
-    if (window.inventoryMode === 'waris') {
-        window.inventoryMode = 'EQUIP'; // Kembalikan ke mode default (Pakai)
-
-        if (panelTransfer) panelTransfer.style.display = 'none'; // Sembunyikan panel Waris
-
-        // Kembalikan warna tombol Waris ke abu-abu
-        const btnWaris = document.getElementById('btn-mode-transfer');
-        if (btnWaris) btnWaris.style.background = '#495057';
-
-        // Nyalakan kembali tombol Equip (Pakai) sebagai indikator default
-        const btnEquip = document.getElementById('btn-mode-equip');
-        if (btnEquip) {
-            btnEquip.classList.add('mode-active');
-            btnEquip.style.background = ''; // Menghapus style inline agar kembali ke CSS default
-        }
-        return; // Eksekusi berhenti di sini (Panel berhasil ditutup)
-    }
-
-    // LOGIKA NYALAKAN (ON): Jika diklik saat sedang mati
-    window.inventoryMode = 'waris';
-
-    // 1. Matikan dan ubah warna semua tombol menjadi abu-abu
-    const modes = ['equip', 'sell', 'dismantle', 'bank', 'auction', 'blacksmith', 'crafting', 'transfer'];
-    modes.forEach(m => {
-        const btn = document.getElementById('btn-mode-' + m);
-        if (btn) {
-            btn.classList.remove('mode-active');
-            btn.style.background = '#495057';
-        }
-    });
-
-    // 2. Nyalakan hanya tombol WARIS menjadi aktif (misal: warna pink/ungu)
-    const btnWarisActive = document.getElementById('btn-mode-transfer');
-    if (btnWarisActive) {
-        btnWarisActive.style.background = '#e83e8c';
-    }
-
-    // 3. Tampilkan panel Waris
-    if (panelTransfer) {
-        panelTransfer.style.display = 'block';
-        panelTransfer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    // 4. Sembunyikan panel Pandai Besi & Crafting lain agar tidak tumpuk
-    const panelBs = document.getElementById('panel-blacksmith');
-    if (panelBs) panelBs.style.display = 'none';
-
-    const panelCraft = document.getElementById('panel-crafting');
-    if (panelCraft) panelCraft.style.display = 'none';
 };
 
 // MENGUBAH EVENT LISTENER INI AGAR ASYNC AWAIT BERJALAN LANCAR
