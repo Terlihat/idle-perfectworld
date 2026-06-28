@@ -1015,19 +1015,32 @@ window.activateBlacksmithMode = function () {
     if (btnEnchant) btnEnchant.style.backgroundColor = "#ff9800";
 
     if (typeof window.bukaPanelKhusus === "function") {
+        // 1. Perintahkan sistem untuk membuka HTML Crafting
         window.bukaPanelKhusus('panel-blacksmith');
 
-        setTimeout(() => {
-            if (typeof window.renderCraftingUI === 'function') {
-                // Ambil data terbaru dari state global pemain Anda
-                const invData = window.currentInventoryData || {};
-                const playerLvl = (typeof currentPlayerStats !== 'undefined' && currentPlayerStats) ? (currentPlayerStats.level || 1) : 1;
-                const playerGld = (typeof currentPlayerStats !== 'undefined' && currentPlayerStats) ? (currentPlayerStats.gold || 0) : 0;
+        // 🔥 2. SISTEM PELACAK PINTAR (Mencari elemen sampai ketemu)
+        let checkCount = 0;
+        const waitForGrid = setInterval(() => {
+            const grid = document.getElementById('crafting-recipe-grid');
 
-                // Eksekusi fungsi penggambar UI Crafting!
-                window.renderCraftingUI(invData, playerLvl, playerGld);
+            // Jika elemennya SUDAH ADA di layar, hentikan pelacakan dan langsung gambar!
+            if (grid) {
+                clearInterval(waitForGrid);
+
+                if (typeof window.renderCraftingUI === 'function') {
+                    const invData = window.currentInventoryData || {};
+                    const playerLvl = (typeof currentPlayerStats !== 'undefined' && currentPlayerStats) ? (currentPlayerStats.level || 1) : 1;
+                    const playerGld = (typeof currentPlayerStats !== 'undefined' && currentPlayerStats) ? (currentPlayerStats.gold || 0) : 0;
+
+                    window.renderCraftingUI(invData, playerLvl, playerGld);
+                }
             }
-        }, 50); // Jeda 50ms memastikan elemen HTML sudah benar-benar ada di layar
+
+            checkCount++;
+            // Berhenti melacak jika setelah 2 detik (20x cek) elemen tetap tidak ada agar tidak lag
+            if (checkCount > 20) clearInterval(waitForGrid);
+
+        }, 100); // Cek setiap 100 milidetik
 
     } else {
         window.rpgAlert("Sistem gagal menemukan panel tungku!");
