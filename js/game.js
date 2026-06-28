@@ -2097,7 +2097,6 @@ window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
     const grid = document.getElementById('crafting-recipe-grid');
     if (!grid) return;
 
-    // Kita LANGSUNG gunakan CRAFTING_RECIPES hasil import Anda di atas!
     if (!CRAFTING_RECIPES) return;
 
     if (grid.innerHTML.trim() === "") {
