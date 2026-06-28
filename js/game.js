@@ -1016,6 +1016,19 @@ window.activateBlacksmithMode = function () {
 
     if (typeof window.bukaPanelKhusus === "function") {
         window.bukaPanelKhusus('panel-blacksmith');
+
+        setTimeout(() => {
+            if (typeof window.renderCraftingUI === 'function') {
+                // Ambil data terbaru dari state global pemain Anda
+                const invData = window.currentInventoryData || {};
+                const playerLvl = (typeof currentPlayerStats !== 'undefined' && currentPlayerStats) ? (currentPlayerStats.level || 1) : 1;
+                const playerGld = (typeof currentPlayerStats !== 'undefined' && currentPlayerStats) ? (currentPlayerStats.gold || 0) : 0;
+
+                // Eksekusi fungsi penggambar UI Crafting!
+                window.renderCraftingUI(invData, playerLvl, playerGld);
+            }
+        }, 50); // Jeda 50ms memastikan elemen HTML sudah benar-benar ada di layar
+
     } else {
         window.rpgAlert("Sistem gagal menemukan panel tungku!");
     }
