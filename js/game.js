@@ -2090,25 +2090,25 @@ window.claimChatGift = async function (chatId, msgId) {
     }
 };
 
+// Pastikan tombol di HTML bisa mengakses fungsi ini
 window.craftItemAction = craftItemAction;
 
-// SISTEM RENDER UI CRAFTING (PERBAIKAN FATAL)
+// SISTEM RENDER UI CRAFTING
 window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
     const grid = document.getElementById('crafting-recipe-grid');
-    if (!grid) return; // Abaikan jika elemen belum ada di layar
+    if (!grid) return;
 
-    // 🚨 DIAGNOSTIK 1: Cek apakah resep berhasil di-import
-    if (typeof CRAFTING_RECIPES === 'undefined' || !CRAFTING_RECIPES) {
-        grid.innerHTML = `<div style="color: #ff4c4c; font-size: 11px; padding: 10px; text-align: center;">
-            <b>ERROR:</b> Data CRAFTING_RECIPES gagal dimuat dari import.
-        </div>`;
+    // KUNCI PERBAIKAN: Langsung gunakan variabel hasil import, BUKAN dari window
+    if (typeof CRAFTING_RECIPES === 'undefined') {
+        console.error("CRAFTING_RECIPES tidak ditemukan! Pastikan import berhasil.");
         return;
     }
 
-    // 🔥 PAKSA RENDER ULANG KOSONG (Mengabaikan bug komentar HTML sebelumnya)
-    grid.innerHTML = "";
+    // Gunakan children.length agar tidak tertipu oleh komentar HTML
+    if (grid.children.length === 0) {
 
-    try {
+        grid.innerHTML = ""; // Bersihkan komentar HTML
+
         Object.keys(CRAFTING_RECIPES).forEach(recipeName => {
             const recipe = CRAFTING_RECIPES[recipeName];
             const itemName = recipe.resultItem;
@@ -2122,17 +2122,10 @@ window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
             `;
             iconBox.title = recipeName;
 
-            // 🚨 DIAGNOSTIK 2: Pengaman Super Aman untuk Fungsi Ikon
-            let iconHtml = `<span style="font-size:24px;">📦</span>`;
+            let iconHtml = "📦";
             try {
-                if (typeof getIconHTML === 'function') {
-                    iconHtml = getIconHTML(itemName);
-                } else if (typeof window.getIconHTML === 'function') {
-                    iconHtml = window.getIconHTML(itemName);
-                }
-            } catch (e) {
-                console.warn(`Gagal memuat ikon untuk: ${itemName}`, e);
-            }
+                iconHtml = (typeof getIconHTML === 'function') ? getIconHTML(itemName) : window.getIconHTML(itemName);
+            } catch (e) { }
 
             iconBox.innerHTML = `
                 <div style="transform: scale(1.2); pointer-events: none;">
@@ -2146,12 +2139,11 @@ window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
 
             grid.appendChild(iconBox);
         });
-    } catch (criticalError) {
-        // Tangkap jika ada error aneh yang menghentikan sistem
-        console.error("Critical Error di renderCraftingUI:", criticalError);
-        grid.innerHTML = `<div style="color: #ffca28; font-size: 11px; padding: 10px; text-align: center;">
-            <b>ERROR SISTEM:</b> Silakan cek F12 (Console).
-        </div>`;
+    } else {
+        const activeRecipe = document.getElementById('crafting-details').getAttribute('data-active-recipe');
+        if (activeRecipe) {
+            window.showCraftingDetails(activeRecipe, CRAFTING_RECIPES[activeRecipe], playerInvData, playerLevel, playerGold);
+        }
     }
 };
 
