@@ -2120,16 +2120,14 @@ window.claimChatGift = async function (chatId, msgId) {
 window.craftItemAction = craftItemAction;
 
 // ===================================================
-// SISTEM RENDER UI CRAFTING (VERSI FINAL - UKURAN 32x32)
+// SISTEM RENDER UI CRAFTING (VERSI BEBAS BENTROK)
 // ===================================================
 
 window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
     const grid = document.getElementById('crafting-recipe-grid');
     if (!grid) return;
-
     if (typeof CRAFTING_RECIPES === 'undefined') return;
 
-    // Simpan data ke cache global agar fungsi detail bisa membacanya tanpa dilempar via HTML
     window._craftingCache = { inv: playerInvData || {}, lvl: playerLevel || 1, gold: playerGold || 0 };
 
     let html = "";
@@ -2143,23 +2141,19 @@ window.renderCraftingUI = function (playerInvData, playerLevel, playerGold) {
             iconHtml = (typeof getIconHTML === 'function') ? getIconHTML(itemName) : window.getIconHTML(itemName);
         } catch (e) { }
 
-        // Kotak Ikon Blueprint (Diubah menjadi 32x32)
+        // KITA HAPUS KOTAK BUATAN. Cukup gunakan pembungkus transparan agar ikon asli Anda bebas bernapas!
         html += `
         <div title="${recipeName}" 
              onclick="window.showCraftingDetails('${recipeName}')"
-             onmouseover="this.style.borderColor='#ffca28'" 
-             onmouseout="this.style.borderColor='#3f3f52'"
-             style="width: 32px; height: 32px; background: #161b22; border: 1px solid #3f3f52; border-radius: 4px; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);">
-             <div style="pointer-events: none; display: flex; justify-content: center; align-items: center;">
-                 ${iconHtml}
-             </div>
+             style="cursor: pointer; display: inline-block; margin: 2px; transition: 0.2s; filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));"
+             onmouseover="this.style.filter='drop-shadow(0 0 6px #ffca28)'"
+             onmouseout="this.style.filter='drop-shadow(0 0 2px rgba(0,0,0,0.5))'">
+             ${iconHtml}
         </div>`;
     }
 
-    // Paksa cetak semua kotak resep ke dalam layar
     grid.innerHTML = html;
 
-    // Perbarui detail di panel kanan jika sebelumnya ada resep yang sedang diklik
     const activeRecipe = document.getElementById('crafting-details').getAttribute('data-active-recipe');
     if (activeRecipe && CRAFTING_RECIPES[activeRecipe]) {
         window.showCraftingDetails(activeRecipe);
@@ -2175,7 +2169,6 @@ window.showCraftingDetails = function (recipeName) {
     const recipe = CRAFTING_RECIPES[recipeName];
     if (!recipe) return;
 
-    // Ambil data terbaru dari cache
     const cache = window._craftingCache || { inv: {}, lvl: 1, gold: 0 };
     const playerInvData = cache.inv;
     const playerLevel = cache.lvl;
@@ -2189,23 +2182,16 @@ window.showCraftingDetails = function (recipeName) {
     let mainIconHtml = safeGetIcon(recipe.resultItem);
     let matsHtml = "";
 
-    // Render syarat material
     for (const [matName, qtyNeeded] of Object.entries(recipe.materials)) {
         const playerHas = playerInvData[matName] || 0;
-        const isEnough = playerHas >= qtyNeeded;
-
-        const qtyColor = isEnough ? "#fff" : "#ff4c4c";
-        const borderCol = isEnough ? "#3f3f52" : "#ff4c4c";
+        const qtyColor = playerHas >= qtyNeeded ? "#a6e3a1" : "#ff4c4c";
         let matIconHtml = safeGetIcon(matName);
 
-        // Kotak Material (Diubah menjadi 32x32 dengan penyesuaian font agar tidak keluar kotak)
+        // Angka material kini diposisikan mengambang indah di atas ikon asli Anda
         matsHtml += `
-            <div title="${matName}" style="width: 32px; height: 32px; background: #121216; border: 1px solid ${borderCol}; border-radius: 4px; position: relative; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);">
-                <div style="pointer-events: none; display: flex; justify-content: center; align-items: center;">
-                    ${matIconHtml}
-                </div>
-                <!-- Angka jumlah dengan latar belakang semi-transparan agar terbaca jelas -->
-                <div style="position: absolute; bottom: 0px; right: 0px; font-size: 9px; font-weight: bold; color: ${qtyColor}; background: rgba(0,0,0,0.7); padding: 0 2px; border-radius: 2px;">
+            <div title="${matName}" style="position: relative; display: inline-block; margin: 0 4px;">
+                ${matIconHtml}
+                <div style="position: absolute; bottom: -5px; right: -5px; font-size: 11px; font-weight: bold; color: ${qtyColor}; background: rgba(0,0,0,0.85); padding: 2px 5px; border-radius: 4px; border: 1px solid #444; z-index: 10;">
                     ${playerHas}/${qtyNeeded}
                 </div>
             </div>
@@ -2215,10 +2201,9 @@ window.showCraftingDetails = function (recipeName) {
     const lvlColor = playerLevel >= recipe.reqLevel ? "#fff" : "#ff4c4c";
     const goldColor = playerGold >= recipe.reqGold ? "#ffca28" : "#ff4c4c";
 
-    // Panel detail keseluruhan (Ikon Utama sedikit lebih besar: 48x48)
     detailsContainer.innerHTML = `
-        <div title="${recipeName}" style="width: 48px; height: 48px; background: #0d1117; border: 2px solid #ffca28; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 15px rgba(255, 202, 40, 0.3);">
-            <div style="transform: scale(1.2); pointer-events: none;">
+        <div title="${recipeName}" style="margin-bottom: 20px; display: flex; justify-content: center; align-items: center; filter: drop-shadow(0 0 10px rgba(255, 202, 40, 0.4));">
+            <div style="transform: scale(1.3); pointer-events: none;">
                 ${mainIconHtml}
             </div>
         </div>
@@ -2230,8 +2215,8 @@ window.showCraftingDetails = function (recipeName) {
             <div style="font-size: 11px; background: #1f2428; padding: 4px 10px; border-radius: 3px; border: 1px solid #444; color: ${goldColor};">💰 ${recipe.reqGold.toLocaleString()}</div>
         </div>
 
-        <div style="font-size: 11px; color: #aaa; margin-bottom: 8px;">Dibutuhkan:</div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">
+        <div style="font-size: 11px; color: #aaa; margin-bottom: 12px;">Dibutuhkan:</div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">
             ${matsHtml}
         </div>
 
@@ -2241,3 +2226,20 @@ window.showCraftingDetails = function (recipeName) {
         </button>
     `;
 };
+
+// ===================================================
+// PEMICU OTOMATIS SAAT TOMBOL MENU DIKLIK
+// ===================================================
+document.addEventListener('click', function (e) {
+    // Memantau jika tombol Craft atau Tempa ditekan
+    if (e.target.id === 'btn-mode-crafting' || e.target.id === 'btn-mode-blacksmith' || e.target.innerText.includes('CRAFT')) {
+        setTimeout(() => {
+            if (typeof window.renderCraftingUI === 'function') {
+                const inv = window.currentInventoryData || {};
+                const lvl = (typeof currentPlayerStats !== 'undefined' && currentPlayerStats) ? (currentPlayerStats.level || 1) : 1;
+                const gold = (typeof currentPlayerStats !== 'undefined' && currentPlayerStats) ? (currentPlayerStats.gold || 0) : 0;
+                window.renderCraftingUI(inv, lvl, gold);
+            }
+        }, 100); // Tunggu sejenak hingga HTML terbuka, lalu SIRAM dengan data resep!
+    }
+});
