@@ -23,7 +23,7 @@ import { getUpdatedQuests } from './modules/quest.js';
 import './modules/quest.js';
 import { listenToGuilds, createGuild, joinGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, kickMember, disbandGuild } from './modules/guild.js';
 import { listenToMailbox, claimMailReward, deleteMail } from './modules/mailbox.js';
-import { dismantleItemAction, DISMANTLE_CONFIG, craftItemAction } from './modules/crafting.js';
+import { dismantleItemAction, DISMANTLE_CONFIG, CRAFTING_RECIPES, craftItemAction } from './modules/crafting.js';
 import { ITEM_DB } from './data/items.js';
 import { executeRefineAction } from './modules/blacksmith.js';
 
@@ -2202,3 +2202,7 @@ window.showCraftingDetails = function (recipeName, recipe, playerInvData, player
         </button>
     `;
 };
+
+// Tempelkan ke window agar sistem UI dan tombol HTML bisa membacanya
+window.CRAFTING_RECIPES = CRAFTING_RECIPES;
+window.craftItemAction = craftItemAction;
