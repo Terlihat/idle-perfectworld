@@ -5,6 +5,23 @@ window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
     // PERBAIKAN 1: Tambahkan panel-bank dan panel-auction agar bisa disembunyikan otomatis
     const semuaPanel = ['panel-refine-transfer', 'panel-blacksmith', 'panel-crafting', 'panel-bank', 'panel-auction'];
 
+    // FUNGSI RESET: Bersihkan semua tombol ke state awal (abu-abu/mati)
+    const resetSemuaTombol = () => {
+        ['equip', 'sell', 'dismantle', 'bank', 'auction', 'blacksmith', 'transfer', 'crafting'].forEach(m => {
+            const btn = document.getElementById('btn-mode-' + m);
+            if (btn) {
+                // Gunakan cara lama Anda yang terbukti ampuh: hapus class sepenuhnya!
+                btn.className = "";
+
+                if (m !== 'equip') {
+                    btn.style.background = '#495057'; // Tombol lain kembali abu-abu
+                } else {
+                    btn.style.background = ''; // Equip dikosongkan agar mengikuti CSS
+                }
+            }
+        });
+    };
+
     // LOGIKA MATIKAN (KEMBALI KE DEFAULT)
     if (window.inventoryMode === namaMode) {
         window.inventoryMode = 'EQUIP';
