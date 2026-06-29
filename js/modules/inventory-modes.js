@@ -9,11 +9,11 @@ window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
         ['equip', 'sell', 'dismantle', 'bank', 'auction', 'blacksmith', 'transfer', 'crafting'].forEach(m => {
             const btn = document.getElementById('btn-mode-' + m);
             if (btn) {
-                btn.className = ""; // Bersihkan class sepenuhnya
+                btn.className = ""; // Cabut semua border
                 if (m !== 'equip') {
                     btn.style.background = '#495057'; // Tombol lain kembali abu-abu
                 } else {
-                    btn.style.background = ''; // Equip dikosongkan agar mengikuti CSS asli
+                    btn.style.background = ''; // Equip kembali ke default CSS
                 }
             }
         });
@@ -30,13 +30,13 @@ window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
             if (p) p.style.display = 'none';
         });
 
-        // PANGGIL FUNGSI RESET (Hanya 1 baris ini, tidak perlu forEach panjang lagi)
         resetSemuaTombol();
 
-        // Kembalikan class mode-active ke tombol Equip
+        // Kembalikan border ke tombol Equip saja
         const btnEquip = document.getElementById('btn-mode-equip');
         if (btnEquip) {
             btnEquip.className = 'mode-active';
+            btnEquip.style.background = '';
         }
 
         return false;
@@ -60,20 +60,21 @@ window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
         }
     }
 
-    // PANGGIL FUNGSI RESET SEBELUM MEMBERI WARNA
     resetSemuaTombol();
 
-    // Beri warna/class khusus pada tombol yang baru saja diklik
+    // ==========================================
+    // PERBAIKAN BORDER SERAGAM UNTUK SEMUA TOMBOL
+    // ==========================================
     const btnActive = document.getElementById(idTombol);
     if (btnActive) {
-        if (namaMode === 'EQUIP') {
-            btnActive.className = 'mode-active';
-        } else if (namaMode === 'SELL') {
-            btnActive.className = 'mode-sell-active'; // Menyesuaikan CSS Jual Anda
-        } else if (namaMode === 'AUCTION') {
-            btnActive.className = 'mode-auction-active'; // Menyesuaikan CSS Lelang Anda
-        } else {
+        // Berikan class 'mode-active' ke SEMUA tombol yang diklik agar memiliki border dan ukuran yang sama persis
+        btnActive.className = 'mode-active';
+
+        // Lalu, timpa warna latar belakangnya sesuai identitas mode masing-masing
+        if (namaMode !== 'EQUIP') {
             btnActive.style.background = warnaAktif;
+        } else {
+            btnActive.style.background = '';
         }
     }
 
