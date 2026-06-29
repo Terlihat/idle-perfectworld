@@ -2,7 +2,8 @@
 // SISTEM MASTER TOGGLE MODE INVENTORY
 // ===================================================
 window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
-    const semuaPanel = ['panel-refine-transfer', 'panel-blacksmith', 'panel-crafting'];
+    // PERBAIKAN 1: Tambahkan panel-bank dan panel-auction agar bisa disembunyikan otomatis
+    const semuaPanel = ['panel-refine-transfer', 'panel-blacksmith', 'panel-crafting', 'panel-bank', 'panel-auction'];
 
     // LOGIKA MATIKAN (KEMBALI KE DEFAULT)
     if (window.inventoryMode === namaMode) {
@@ -30,6 +31,7 @@ window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
         return false;
     }
 
+    // LOGIKA NYALAKAN MODE BARU
     window.inventoryMode = namaMode;
 
     semuaPanel.forEach(id => {
@@ -61,8 +63,16 @@ window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
     return true;
 };
 
+// ===================================================
+// FUNGSI TOMBOL-TOMBOL INVENTORY
+// ===================================================
+window.activateEquipMode = function () { window.setInventoryMode('EQUIP', 'btn-mode-equip', null, ''); };
+window.activateBankMode = function () { window.setInventoryMode('BANK', 'btn-mode-bank', 'panel-bank', '#007bff'); };
+window.activateAuctionMode = function () { window.setInventoryMode('AUCTION', 'btn-mode-auction', 'panel-auction', '#6f42c1'); };
+
 window.activateTransferMode = function () {
-    if (!window.setInventoryMode('waris', 'btn-mode-transfer', 'panel-refine-transfer', '#e83e8c')) return;
+    // PERBAIKAN 2: Ubah nama mode menjadi 'TRANSFER' agar sesuai dengan game.js
+    if (!window.setInventoryMode('TRANSFER', 'btn-mode-transfer', 'panel-refine-transfer', '#e83e8c')) return;
 };
 
 window.activateBlacksmithMode = function () {
@@ -78,26 +88,6 @@ window.activateBlacksmithMode = function () {
     }, 100);
 };
 
-window.activateEquipMode = function () {
-    window.setInventoryMode('EQUIP', 'btn-mode-equip', null, '');
-};
-
-window.activateBankMode = function () {
-    window.setInventoryMode('BANK', 'btn-mode-bank', 'panel-bank', '#007bff');
-};
-
-window.activateAuctionMode = function () {
-    window.setInventoryMode('AUCTION', 'btn-mode-auction', 'panel-auction', '#6f42c1');
-};
-
-window.activateCraftingMode = function () {
-    if (!window.setInventoryMode('CRAFTING', 'btn-mode-crafting', 'panel-crafting', '#20c997')) return;
-};
-
-window.activateSellMode = function () {
-    window.setInventoryMode('SELL', 'btn-mode-sell', null, '#dc3545');
-};
-
-window.activateDismantleMode = function () {
-    window.setInventoryMode('DISMANTLE', 'btn-mode-dismantle', null, '#d35400');
-};
+window.activateCraftingMode = function () { if (!window.setInventoryMode('CRAFTING', 'btn-mode-crafting', 'panel-crafting', '#20c997')) return; };
+window.activateSellMode = function () { window.setInventoryMode('SELL', 'btn-mode-sell', null, '#dc3545'); };
+window.activateDismantleMode = function () { window.setInventoryMode('DISMANTLE', 'btn-mode-dismantle', null, '#d35400'); };

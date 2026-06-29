@@ -710,14 +710,17 @@ document.addEventListener('click', async (e) => {
 
 });
 
-// GLOBAL WINDOW ROUTERS ASYNC
+// GLOBAL WINDOW ROUTERS ASYNC (PERBAIKAN SINKRONISASI MODE)
 window.handleInventoryClick = async function (itemName) {
-    if (inventoryMode === "transfer" || inventoryMode === "TRANSFER") {
+    // 🔥 PERBAIKAN UTAMA: Memastikan game selalu membaca mode dari master toggle global
+    const modeSaatIni = window.inventoryMode || "EQUIP";
+
+    if (modeSaatIni === "transfer" || modeSaatIni === "TRANSFER") {
         window.putItemToTransferSlot(itemName);
         return;
     }
 
-    if (inventoryMode === "EQUIP") {
+    if (modeSaatIni === "EQUIP") {
         if (itemName === "Tiket Ganti Nama") {
             const inputName = await window.rpgPrompt("Masukkan Nama Karakter Baru:", "Ganti Nama");
             if (inputName && inputName.trim() !== "") equipFromInventory(db, currentUserUid, itemName, inputName);
@@ -736,19 +739,21 @@ window.handleInventoryClick = async function (itemName) {
         }
         else { equipFromInventory(db, currentUserUid, itemName, null); }
     }
-    else if (inventoryMode === "SELL") { sellItemToNPC(db, currentUserUid, itemName); }
-    else if (inventoryMode === "BANK") {
+    else if (modeSaatIni === "SELL") {
+        sellItemToNPC(db, currentUserUid, itemName);
+    }
+    else if (modeSaatIni === "BANK") {
         const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ingin disimpan?`, "Simpan ke Bank", "number");
         const qty = parseInt(qtyStr);
         if (qty > 0) depositItem(db, currentUserUid, itemName, qty);
     }
-    else if (inventoryMode === "AUCTION") {
+    else if (modeSaatIni === "AUCTION") {
         if (itemName.includes("Tiket") || itemName.includes("Buku") || itemName.includes("Ramuan Stamina") || itemName.includes("Naga Terbang")) return window.rpgAlert("Item premium tidak bisa dilelang.");
         const priceStr = await window.rpgPrompt(`Masukkan Harga Beli Langsung (Gold) untuk 1x [${itemName}]:`, "Jual ke Lelang", "number");
         const price = parseInt(priceStr);
         if (price > 0) listAuctionItem(db, currentUserUid, itemName, price, playerUsername);
     }
-    else if (inventoryMode === "DISMANTLE") {
+    else if (modeSaatIni === "DISMANTLE") {
         if (DISMANTLE_CONFIG[itemName]) {
             if (await window.rpgConfirm(`🔥 Yakin ingin MELEBUR [${itemName}]?\nItem akan hancur menjadi material crafting.`, "Peleburan Item")) {
                 dismantleItemAction(db, currentUserUid, itemName);
@@ -757,7 +762,7 @@ window.handleInventoryClick = async function (itemName) {
             window.rpgAlert(`❌ [${itemName}] tidak bisa dilebur!`);
         }
     }
-    else if (inventoryMode === "BLACKSMITH") {
+    else if (modeSaatIni === "BLACKSMITH") {
         const baseName = itemName.replace(/\s\[\+\d+\]$/, '');
         const itemInfo = ITEM_DB[baseName];
 
