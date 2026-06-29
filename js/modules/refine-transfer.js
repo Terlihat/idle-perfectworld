@@ -14,8 +14,60 @@ const STONE_COST = {
     11: 850, 12: 1000 // +12 Butuh 1000 Stone
 };
 
-// Fungsi membuka modal untuk memilih item
+// ==========================================
+// FUNGSI PEMBANTU BARU
+// ==========================================
+
+// 1. Memeriksa apakah item adalah Equipment
+function isEquipment(itemName) {
+    const baseName = itemName.replace(/\s\[\+\d+\]$/, '');
+
+    // Jika data ITEM_DB global tersedia, cek tipenya
+    if (typeof window.ITEM_DB !== 'undefined' && window.ITEM_DB[baseName]) {
+        const type = window.ITEM_DB[baseName].type;
+        return type === 'weapon' || type === 'armor' || type === 'accessory';
+    }
+
+    // Filter Fallback: Tolak keyword yang bukan equipment
+    const invalidKeywords = ["Ramuan", "Stone", "Coin", "Buku", "Tiket", "Mold", "Inti", "Potongan", "Serbuk", "Kayu", "Serpihan", "Botol"];
+    if (invalidKeywords.some(kw => itemName.includes(kw))) return false;
+
+    return true; // Jika lolos, anggap sebagai equipment
+}
+
+// 2. Melepaskan/Mengosongkan Slot
+function resetTransferSlot(type) {
+    if (type === 'source') {
+        selectedSource = null;
+        transferCost = 0;
+        document.getElementById('transfer-name-source').innerText = "Pilih Item";
+        document.getElementById('transfer-slot-source').innerHTML = '<span style="font-size: 24px; color: #555;">+</span>';
+        document.getElementById('transfer-slot-source').style.borderColor = "#555";
+        document.getElementById('transfer-cost-amount').innerText = "0";
+    } else {
+        selectedTarget = null;
+        document.getElementById('transfer-name-target').innerText = "Pilih Item";
+        document.getElementById('transfer-slot-target').innerHTML = '<span style="font-size: 24px; color: #555;">+</span>';
+        document.getElementById('transfer-slot-target').style.borderColor = "#555";
+    }
+}
+
+// ==========================================
+// FUNGSI UTAMA TRANSFER
+// ==========================================
+
 window.openTransferSelect = function (type) {
+    // LOGIKA BARU: Jika slot sudah berisi item, KLIK = LEPASKAN ITEM
+    if (type === 'source' && selectedSource) {
+        resetTransferSlot('source');
+        return;
+    }
+    if (type === 'target' && selectedTarget) {
+        resetTransferSlot('target');
+        return;
+    }
+
+    // Jika slot kosong, buka modal pemilihan
     currentTransferType = type;
     const modal = document.getElementById('transfer-select-modal');
     const title = document.getElementById('transfer-modal-title');
@@ -28,9 +80,9 @@ window.openTransferSelect = function (type) {
 
     let hasItem = false;
     for (let itemName in inv) {
-        if (itemName.includes("Ramuan") || itemName.includes("Stone") || itemName.includes("Coin")) continue;
+        // FILTER: Abaikan jika bukan equipment
+        if (!isEquipment(itemName)) continue;
 
-        // FIX: Ekstrak angka dengan mendeteksi kurung siku [+X]
         const refineMatch = itemName.match(/\[\+(\d+)\]$/);
         const refineLevel = refineMatch ? parseInt(refineMatch[1]) : 0;
 
@@ -48,7 +100,7 @@ window.openTransferSelect = function (type) {
     }
 
     if (!hasItem) {
-        list.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px;">Tidak ada item yang cocok di tas Anda.</div>`;
+        list.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px;">Tidak ada equip yang cocok di tas Anda.</div>`;
     }
 
     modal.style.display = "flex";
@@ -58,7 +110,12 @@ function selectTransferItem(itemName, refineLevel) {
     document.getElementById('transfer-select-modal').style.display = 'none';
 
     const baseName = itemName.replace(/\s\[\+\d+\]$/, '');
-    const iconHTML = getIconHTML(baseName); // Memanggil sistem icon asli Anda
+
+    // Render icon dengan aman
+    let iconHTML = "📦";
+    try {
+        iconHTML = (typeof getIconHTML === 'function') ? getIconHTML(baseName) : window.getIconHTML(baseName);
+    } catch (e) { }
 
     if (currentTransferType === 'source') {
         selectedSource = itemName;
@@ -91,16 +148,13 @@ window.executeTransfer = async function () {
             if (!inv[selectedTarget] || inv[selectedTarget] < 1) throw "Item Target tidak ditemukan di Tas!";
             if ((inv['Universal Stone'] || 0) < transferCost) throw `Universal Stone tidak cukup! Butuh ${transferCost}.`;
 
-            // FIX: Deteksi kurung siku saat membaca nama item dari database
             const sourceMatch = selectedSource.match(/\[\+(\d+)\]$/);
             if (!sourceMatch) throw "Item Sumber tidak memiliki tingkat tempa (+)!";
             const refineLevel = sourceMatch[1];
 
-            // FIX: Bersihkan nama dengan menghapus spasi dan kurung siku " [+X]"
             const cleanSourceName = selectedSource.replace(/\s\[\+\d+\]$/, "");
             const cleanTargetName = selectedTarget.replace(/\s\[\+\d+\]$/, "");
 
-            // FIX: Cetak nama item target dengan menyertakan kurung siku agar dikenali game
             const newTargetName = `${cleanTargetName} [+${refineLevel}]`;
 
             inv['Universal Stone'] -= transferCost;
@@ -118,42 +172,44 @@ window.executeTransfer = async function () {
             ts.update(userRef, { inventory: inv });
         });
 
-        selectedSource = null;
-        selectedTarget = null;
-        transferCost = 0;
-        document.getElementById('transfer-name-source').innerText = "Pilih Item";
-        document.getElementById('transfer-name-target').innerText = "Pilih Item";
-        document.getElementById('transfer-slot-source').innerHTML = "+";
-        document.getElementById('transfer-slot-target').innerHTML = "+";
-        document.getElementById('transfer-slot-source').style.borderColor = "#555";
-        document.getElementById('transfer-slot-target').style.borderColor = "#555";
-        document.getElementById('transfer-cost-amount').innerText = "0";
+        // Kosongkan slot secara otomatis setelah sukses
+        resetTransferSlot('source');
+        resetTransferSlot('target');
 
         window.rpgAlert("✨ SUCCESS! Pewarisan tempa berhasil dilakukan!", "Sukses");
 
     } catch (err) { window.rpgAlert(err, "Gagal Transfer"); }
 };
 
-// FITUR Pemasukan Item via Tas
+// ==========================================
+// INTEGRASI DENGAN KLIK TAS INVENTORY
+// ==========================================
 window.putItemToTransferSlot = function (itemName) {
-    // FIX: Pastikan pemasukan dari tas juga membaca format kurung siku
+    // FILTER KETAT: Jika pemain mengklik item selain Equip dari tas
+    if (!isEquipment(itemName)) {
+        return window.rpgAlert("❌ Hanya Senjata, Zirah, dan Aksesoris yang bisa dimasukkan ke Altar Pewarisan!");
+    }
+
     const match = itemName.match(/\[\+(\d+)\]$/);
     const refineLevel = match ? parseInt(match[1]) : 0;
 
     if (!selectedSource) {
         if (refineLevel === 0) {
-            return window.rpgAlert("Item tumbal harus memiliki tingkat tempa (+1 atau lebih)!", "Peringatan");
+            return window.rpgAlert("Item tumbal (Sumber) harus memiliki tingkat tempa (+1 atau lebih)!", "Peringatan");
         }
         currentTransferType = 'source';
         selectTransferItem(itemName, refineLevel);
         window.rpgAlert(`[${itemName}] diletakkan di slot SUMBER.`);
     }
-    else {
+    else if (!selectedTarget) {
         if (itemName === selectedSource) {
             return window.rpgAlert("Item target tidak boleh sama dengan item tumbal!", "Peringatan");
         }
         currentTransferType = 'target';
         selectTransferItem(itemName, refineLevel);
         window.rpgAlert(`[${itemName}] diletakkan di slot TARGET.`);
+    } else {
+        // Jika kedua slot penuh, peringatkan pemain untuk melepaskan slot
+        window.rpgAlert("❌ Kedua slot sudah penuh! Silakan lepaskan (klik) salah satu slot terlebih dahulu untuk menggantinya.");
     }
 };
