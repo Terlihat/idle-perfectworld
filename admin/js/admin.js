@@ -70,13 +70,14 @@ async function loadServerStats() {
 // ==========================================
 function populateItemDropdown() {
     const selectBox = document.getElementById('mail-item-name');
-    if (!selectBox) return;
+    const injectBox = document.getElementById('inject-item-name'); // Mengisi dropdown Suntik Item
 
-    selectBox.innerHTML = '<option value="">-- Tidak Kirim Item --</option>';
+    if (selectBox) selectBox.innerHTML = '<option value="">-- Tidak Kirim Item --</option>';
+    if (injectBox) injectBox.innerHTML = '<option value="">-- Pilih Item untuk Disuntikkan --</option>';
 
-    // Melakukan looping ke seluruh data item di items.js
     Object.keys(ITEM_DB).forEach(itemName => {
-        selectBox.innerHTML += `<option value="${itemName}">${itemName}</option>`;
+        if (selectBox) selectBox.innerHTML += `<option value="${itemName}">${itemName}</option>`;
+        if (injectBox) injectBox.innerHTML += `<option value="${itemName}">${itemName}</option>`;
     });
 }
 
@@ -227,6 +228,8 @@ document.getElementById('btn-search-player').addEventListener('click', async () 
                 btnBan.innerText = "🚫 Banned Pemain";
                 btnBan.style.background = "#dc3545"; // Merah
             }
+
+            renderPlayerInventory(uid, data.inventory || {});
 
             document.getElementById('editor-results').style.display = "block";
         } else {
@@ -411,4 +414,96 @@ document.getElementById('btn-toggle-drop').addEventListener('click', async () =>
     try {
         await updateDoc(doc(db, "events", "serverBuffs"), { doubleDrop: !isDoubleDropActive });
     } catch (err) { alert("Gagal mengubah status event: " + err.message); }
+});
+
+// ==========================================
+// 7. MANAJEMEN INVENTORY PEMAIN
+// ==========================================
+
+// Fungsi Render Isi Tas ke Layar
+function renderPlayerInventory(uid, inventoryObj) {
+    const listDiv = document.getElementById('player-inventory-list');
+    if (!listDiv) return;
+
+    listDiv.innerHTML = "";
+    const items = Object.keys(inventoryObj);
+
+    if (items.length === 0) {
+        listDiv.innerHTML = `<div style="text-align: center; color: #aaa; padding: 10px; font-size: 13px;">Tas pemain ini kosong.</div>`;
+        return;
+    }
+
+    items.forEach(itemName => {
+        const qty = inventoryObj[itemName];
+        const row = document.createElement('div');
+        row.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #333; transition: 0.2s;";
+
+        row.innerHTML = `
+            <div style="color: #fff; font-size: 13px;">${itemName} <span style="color: #ffca28; font-weight: bold;">(x${qty})</span></div>
+            <button class="btn-delete-item" data-item="${itemName}" style="background: #dc3545; color: white; padding: 5px 12px; font-size: 11px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer;">🗑️ Hapus</button>
+        `;
+        listDiv.appendChild(row);
+    });
+
+    // Pasang Event Listener untuk tombol Hapus
+    document.querySelectorAll('.btn-delete-item').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const itemToRemove = e.target.getAttribute('data-item');
+            if (!confirm(`⚠️ PERINGATAN: Hapus SELURUH [${itemToRemove}] dari tas pemain ini secara paksa?`)) return;
+
+            try {
+                e.target.innerText = "Menghapus...";
+                e.target.disabled = true;
+
+                const userRef = doc(db, "users", uid);
+                const docSnap = await getDoc(userRef);
+
+                if (docSnap.exists()) {
+                    let currentInv = docSnap.data().inventory || {};
+                    delete currentInv[itemToRemove]; // Hapus objek dari database
+
+                    await updateDoc(userRef, { inventory: currentInv });
+                    renderPlayerInventory(uid, currentInv); // Refresh daftar
+                }
+            } catch (err) {
+                alert("Gagal menghapus item: " + err.message);
+                e.target.innerText = "🗑️ Hapus";
+                e.target.disabled = false;
+            }
+        });
+    });
+}
+
+// Fungsi Eksekusi Suntik Item
+document.getElementById('btn-inject-item')?.addEventListener('click', async () => {
+    if (!currentEditingUid) return alert("Cari pemain terlebih dahulu!");
+
+    const itemName = document.getElementById('inject-item-name').value;
+    const itemQty = parseInt(document.getElementById('inject-item-qty').value) || 1;
+
+    if (!itemName) return alert("Pilih item yang ingin disuntikkan dari daftar!");
+
+    const btnInject = document.getElementById('btn-inject-item');
+    btnInject.innerText = "⏳ Menyuntik...";
+    btnInject.disabled = true;
+
+    try {
+        const userRef = doc(db, "users", currentEditingUid);
+        const docSnap = await getDoc(userRef);
+
+        if (docSnap.exists()) {
+            let currentInv = docSnap.data().inventory || {};
+            currentInv[itemName] = (currentInv[itemName] || 0) + itemQty;
+
+            await updateDoc(userRef, { inventory: currentInv });
+
+            alert(`✅ SUKSES! ${itemQty}x [${itemName}] berhasil disuntikkan langsung ke tas pemain.`);
+            renderPlayerInventory(currentEditingUid, currentInv); // Refresh daftar
+        }
+    } catch (err) {
+        alert("Gagal menyuntikkan item: " + err.message);
+    } finally {
+        btnInject.innerText = "➕ Suntik Item";
+        btnInject.disabled = false;
+    }
 });
