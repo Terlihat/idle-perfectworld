@@ -2,7 +2,6 @@
 // SISTEM MASTER TOGGLE MODE INVENTORY
 // ===================================================
 window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
-    // PERBAIKAN 1: Tambahkan panel-bank dan panel-auction agar bisa disembunyikan otomatis
     const semuaPanel = ['panel-refine-transfer', 'panel-blacksmith', 'panel-crafting', 'panel-bank', 'panel-auction'];
 
     // FUNGSI RESET: Bersihkan semua tombol ke state awal (abu-abu/mati)
@@ -10,19 +9,19 @@ window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
         ['equip', 'sell', 'dismantle', 'bank', 'auction', 'blacksmith', 'transfer', 'crafting'].forEach(m => {
             const btn = document.getElementById('btn-mode-' + m);
             if (btn) {
-                // Gunakan cara lama Anda yang terbukti ampuh: hapus class sepenuhnya!
-                btn.className = "";
-
+                btn.className = ""; // Bersihkan class sepenuhnya
                 if (m !== 'equip') {
                     btn.style.background = '#495057'; // Tombol lain kembali abu-abu
                 } else {
-                    btn.style.background = ''; // Equip dikosongkan agar mengikuti CSS
+                    btn.style.background = ''; // Equip dikosongkan agar mengikuti CSS asli
                 }
             }
         });
     };
 
-    // LOGIKA MATIKAN (KEMBALI KE DEFAULT)
+    // ==========================================
+    // LOGIKA MATIKAN (KEMBALI KE DEFAULT/PAKAI)
+    // ==========================================
     if (window.inventoryMode === namaMode) {
         window.inventoryMode = 'EQUIP';
 
@@ -31,24 +30,21 @@ window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
             if (p) p.style.display = 'none';
         });
 
-        ['equip', 'sell', 'dismantle', 'bank', 'auction', 'blacksmith', 'transfer', 'crafting'].forEach(m => {
-            const btn = document.getElementById('btn-mode-' + m);
-            if (btn) {
-                btn.classList.remove('mode-active');
-                btn.style.background = '#495057';
-            }
-        });
+        // PANGGIL FUNGSI RESET (Hanya 1 baris ini, tidak perlu forEach panjang lagi)
+        resetSemuaTombol();
 
+        // Kembalikan class mode-active ke tombol Equip
         const btnEquip = document.getElementById('btn-mode-equip');
         if (btnEquip) {
-            btnEquip.classList.add('mode-active');
-            btnEquip.style.background = '';
+            btnEquip.className = 'mode-active';
         }
 
         return false;
     }
 
+    // ==========================================
     // LOGIKA NYALAKAN MODE BARU
+    // ==========================================
     window.inventoryMode = namaMode;
 
     semuaPanel.forEach(id => {
@@ -64,17 +60,21 @@ window.setInventoryMode = function (namaMode, idTombol, idPanel, warnaAktif) {
         }
     }
 
-    ['equip', 'sell', 'dismantle', 'bank', 'auction', 'blacksmith', 'transfer', 'crafting'].forEach(m => {
-        const btn = document.getElementById('btn-mode-' + m);
-        if (btn) {
-            btn.classList.remove('mode-active');
-            btn.style.background = '#495057';
-        }
-    });
+    // PANGGIL FUNGSI RESET SEBELUM MEMBERI WARNA
+    resetSemuaTombol();
 
+    // Beri warna/class khusus pada tombol yang baru saja diklik
     const btnActive = document.getElementById(idTombol);
     if (btnActive) {
-        btnActive.style.background = warnaAktif;
+        if (namaMode === 'EQUIP') {
+            btnActive.className = 'mode-active';
+        } else if (namaMode === 'SELL') {
+            btnActive.className = 'mode-sell-active'; // Menyesuaikan CSS Jual Anda
+        } else if (namaMode === 'AUCTION') {
+            btnActive.className = 'mode-auction-active'; // Menyesuaikan CSS Lelang Anda
+        } else {
+            btnActive.style.background = warnaAktif;
+        }
     }
 
     return true;
