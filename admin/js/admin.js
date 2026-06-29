@@ -1,6 +1,6 @@
 import { db, auth } from '../../js/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp, updateDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp, updateDoc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // PERBAIKAN: Import Database Item agar list selalu up-to-date otomatis!
 import { ITEM_DB } from '../../js/data/items.js';
@@ -70,14 +70,17 @@ async function loadServerStats() {
 // ==========================================
 function populateItemDropdown() {
     const selectBox = document.getElementById('mail-item-name');
-    const injectBox = document.getElementById('inject-item-name'); // Mengisi dropdown Suntik Item
+    const injectBox = document.getElementById('inject-item-name');
+    const giftBox = document.getElementById('gift-code-item-name');
 
     if (selectBox) selectBox.innerHTML = '<option value="">-- Tidak Kirim Item --</option>';
     if (injectBox) injectBox.innerHTML = '<option value="">-- Pilih Item untuk Disuntikkan --</option>';
+    if (giftBox) giftBox.innerHTML = '<option value="">-- Tidak Ada Item --</option>';
 
     Object.keys(ITEM_DB).forEach(itemName => {
         if (selectBox) selectBox.innerHTML += `<option value="${itemName}">${itemName}</option>`;
         if (injectBox) injectBox.innerHTML += `<option value="${itemName}">${itemName}</option>`;
+        if (giftBox) giftBox.innerHTML += `<option value="${itemName}">${itemName}</option>`;
     });
 }
 
@@ -505,5 +508,119 @@ document.getElementById('btn-inject-item')?.addEventListener('click', async () =
     } finally {
         btnInject.innerText = "➕ Suntik Item";
         btnInject.disabled = false;
+    }
+});
+
+// ==========================================
+// 8. MANAJEMEN KODE REDEEM (GIFT CODES)
+// ==========================================
+
+// Fungsi untuk memuat dan menampilkan kode redeem secara realtime
+function listenToGiftCodes() {
+    const listDiv = document.getElementById('active-giftcodes-list');
+    if (!listDiv) return;
+
+    onSnapshot(collection(db, "giftCodes"), (snapshot) => {
+        listDiv.innerHTML = "";
+
+        if (snapshot.empty) {
+            listDiv.innerHTML = `<div style="text-align: center; color: #aaa; padding: 10px; font-size: 13px;">Belum ada kode redeem yang aktif.</div>`;
+            return;
+        }
+
+        snapshot.forEach((docSnap) => {
+            const code = docSnap.id;
+            const data = docSnap.data();
+            const claimedCount = data.claimedBy ? data.claimedBy.length : 0;
+
+            let rewardText = [];
+            if (data.gold > 0) rewardText.push(`💰 ${data.gold.toLocaleString()}`);
+            if (data.coin > 0) rewardText.push(`🪙 ${data.coin.toLocaleString()}`);
+            if (data.itemName) rewardText.push(`📦 ${data.itemName} (x${data.itemQty})`);
+
+            const row = document.createElement('div');
+            row.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px;";
+
+            row.innerHTML = `
+                <div>
+                    <div style="color: #00d2ff; font-weight: bold; font-size: 16px; letter-spacing: 1px;">${code}</div>
+                    <div style="color: #aaa; font-size: 11px; margin-top: 3px;">Hadiah: <span style="color: #fff;">${rewardText.join(' | ')}</span></div>
+                    <div style="color: #ffca28; font-size: 11px; margin-top: 2px;">Terklaim: ${claimedCount} / ${data.limit}</div>
+                </div>
+                <button class="btn-delete-code" data-code="${code}" style="background: #dc3545; color: white; padding: 6px 12px; font-size: 11px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer;">Hapus Kode</button>
+            `;
+            listDiv.appendChild(row);
+        });
+
+        // Pasang fungsi hapus kode
+        document.querySelectorAll('.btn-delete-code').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const codeToDelete = e.target.getAttribute('data-code');
+                if (!confirm(`Yakin ingin MENGHAPUS kode [${codeToDelete}]?\nPemain tidak akan bisa mengklaimnya lagi.`)) return;
+
+                try {
+                    await deleteDoc(doc(db, "giftCodes", codeToDelete));
+                } catch (err) {
+                    alert("Gagal menghapus kode: " + err.message);
+                }
+            });
+        });
+    });
+}
+
+// Panggil fungsi pemantau saat admin berhasil login
+// (Kita selipkan pemanggilannya di sini agar berjalan otomatis)
+setTimeout(listenToGiftCodes, 1500);
+
+// Fungsi membuat kode redeem baru
+document.getElementById('btn-create-giftcode')?.addEventListener('click', async () => {
+    let codeName = document.getElementById('gift-code-name').value.trim().toUpperCase();
+    codeName = codeName.replace(/\s+/g, ''); // Paksa hapus spasi
+
+    const limit = parseInt(document.getElementById('gift-code-limit').value) || 100;
+    const gold = parseInt(document.getElementById('gift-code-gold').value) || 0;
+    const coin = parseInt(document.getElementById('gift-code-coin').value) || 0;
+    const itemName = document.getElementById('gift-code-item-name').value;
+    const itemQty = parseInt(document.getElementById('gift-code-item-qty').value) || 1;
+
+    if (!codeName) return alert("Kode redeem tidak boleh kosong!");
+    if (codeName.length < 4) return alert("Kode redeem minimal 4 huruf/angka!");
+    if (gold === 0 && coin === 0 && !itemName) return alert("Kode redeem harus memiliki setidaknya 1 hadiah!");
+
+    const btnCreate = document.getElementById('btn-create-giftcode');
+    btnCreate.innerText = "⏳ Menyimpan...";
+    btnCreate.disabled = true;
+
+    try {
+        const codeRef = doc(db, "giftCodes", codeName);
+        const codeSnap = await getDoc(codeRef);
+
+        if (codeSnap.exists()) {
+            alert(`❌ Kode [${codeName}] sudah ada dan masih aktif! Silakan hapus kode lama atau gunakan nama lain.`);
+        } else {
+            // Simpan kode ke database
+            await setDoc(codeRef, {
+                limit: limit,
+                gold: gold,
+                coin: coin,
+                itemName: itemName || null,
+                itemQty: itemName ? itemQty : 0,
+                claimedBy: [], // Array kosong untuk menyimpan UID pemain yang sudah klaim
+                createdAt: serverTimestamp()
+            });
+
+            alert(`✅ SUKSES! Kode Redeem [${codeName}] berhasil dibuat.`);
+
+            // Kosongkan form
+            document.getElementById('gift-code-name').value = "";
+            document.getElementById('gift-code-gold').value = "0";
+            document.getElementById('gift-code-coin').value = "0";
+            document.getElementById('gift-code-item-name').value = "";
+        }
+    } catch (err) {
+        alert("Gagal membuat kode: " + err.message);
+    } finally {
+        btnCreate.innerText = "✨ Buat Kode Redeem";
+        btnCreate.disabled = false;
     }
 });

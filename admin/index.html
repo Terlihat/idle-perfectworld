@@ -210,6 +210,60 @@
 
     </div>
 
+    <!-- ========================================== -->
+    <!-- TAHAP 2: MANAJEMEN KODE REDEEM             -->
+    <!-- ========================================== -->
+    <h2>🎁 Manajemen Kode Redeem (Gift Codes)</h2>
+    <div class="panel">
+        <p style="color: #aaa; font-size: 13px; margin-top: 0;">Buat kode unik yang bisa ditukarkan oleh pemain di dalam
+            game.</p>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div class="form-group">
+                <label>Kode Redeem (Harus Huruf Kapital & Tanpa Spasi)</label>
+                <input type="text" id="gift-code-name" placeholder="Contoh: WELCOME2026"
+                    style="text-transform: uppercase; font-weight: bold; color: #00d2ff;">
+            </div>
+            <div class="form-group">
+                <label>Kuota Klaim (Maksimal)</label>
+                <input type="number" id="gift-code-limit" value="100" min="1">
+            </div>
+        </div>
+
+        <div
+            style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 15px; background: #1c1c24; padding: 15px; border-radius: 6px; border: 1px solid #3f3f52;">
+            <div class="form-group">
+                <label>Hadiah Gold</label>
+                <input type="number" id="gift-code-gold" value="0" min="0">
+            </div>
+            <div class="form-group">
+                <label>Hadiah Coin</label>
+                <input type="number" id="gift-code-coin" value="0" min="0">
+            </div>
+            <div class="form-group">
+                <label>Hadiah Item & Jumlah</label>
+                <div style="display: flex; gap: 5px;">
+                    <select id="gift-code-item-name"
+                        style="flex: 2; padding: 8px; background: #121216; color: #fff; border: 1px solid #333;">
+                        <option value="">-- Tidak Ada Item --</option>
+                    </select>
+                    <input type="number" id="gift-code-item-qty" value="1" min="1"
+                        style="flex: 1; padding: 8px; background: #121216; color: #fff; border: 1px solid #333;">
+                </div>
+            </div>
+        </div>
+
+        <button id="btn-create-giftcode" style="background: #28a745; margin-top: 15px; width: 100%; font-size: 16px;">✨
+            Buat Kode Redeem</button>
+
+        <h3 style="margin-top: 30px; border-top: 1px dashed #30363d; padding-top: 20px; color: #ffca28;">📜 Daftar Kode
+            Aktif</h3>
+        <div id="active-giftcodes-list"
+            style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 50px;">
+            <div style="text-align: center; color: #aaa; font-size: 13px;">Memuat kode aktif...</div>
+        </div>
+    </div>
+
     <div id="loading-screen" style="text-align: center; margin-top: 100px; color: #fff;">
         <h2>Memverifikasi Akses Admin...</h2>
     </div>
