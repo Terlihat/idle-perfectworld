@@ -2,42 +2,47 @@
 <html lang="id">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Admin Dashboard</title>
-    <link rel="icon" type="image/x-icon" href="../favicon.ico">
-    <link rel="stylesheet" href="./css/admin.css">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Game Admin Dashboard</title>
+	<link rel="icon" type="image/x-icon" href="../favicon.ico">
+	<link rel="stylesheet" href="./css/admin.css">
 </head>
 
 <body>
 	<div id="admin-content" style="display: none;">
-        <!-- TOMBOL KEMBALI KE GAME (Di Luar Layout Flex) -->
-        <div style="background: #161b22; padding: 10px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; color: #ffca28;">⚙️ Admin Control Panel</h3>
-            <button id="btn-home" style="background: #dc3545; padding: 5px 15px; border-radius: 4px; color: white; border: none; font-weight: bold; cursor: pointer;">🏠 Kembali ke Game</button>
-        </div>
+		<!-- TOMBOL KEMBALI KE GAME (Di Luar Layout Flex) -->
+		<div
+			style="background: #161b22; padding: 10px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center;">
+			<h3 style="margin: 0; color: #ffca28;">⚙️ Admin Control Panel</h3>
+			<button id="btn-home"
+				style="background: #dc3545; padding: 5px 15px; border-radius: 4px; color: white; border: none; font-weight: bold; cursor: pointer;">🏠
+				Kembali ke Game</button>
+		</div>
 
-        <div class="admin-layout">
-            <!-- BAGIAN KIRI: SIDEBAR MENU -->
-            <div class="admin-sidebar">
-                <button class="tab-link active" onclick="window.openAdminTab('tab-dashboard', this)">📊 Dashboard</button>
-                <button class="tab-link" onclick="window.openAdminTab('tab-mailbox', this)">📬 Kirim Surat</button>
-                <button class="tab-link" onclick="window.openAdminTab('tab-player', this)">🔍 Player Editor</button>
-                <button class="tab-link" onclick="window.openAdminTab('tab-events', this)">🌟 Manajemen Event</button>
-                <button class="tab-link" onclick="window.openAdminTab('tab-boss', this)">👹 Manajemen WB</button>
-                <button class="tab-link" onclick="window.openAdminTab('tab-redeem', this)">🎁 Manajemen Giftcode</button>
+		<div class="admin-layout">
+			<!-- BAGIAN KIRI: SIDEBAR MENU -->
+			<div class="admin-sidebar">
+				<button class="tab-link active" onclick="window.openAdminTab('tab-dashboard', this)">📊
+					Dashboard</button>
+				<button class="tab-link" onclick="window.openAdminTab('tab-mailbox', this)">📬 Kirim Surat</button>
+				<button class="tab-link" onclick="window.openAdminTab('tab-player', this)">🔍 Player Editor</button>
+				<button class="tab-link" onclick="window.openAdminTab('tab-events', this)">🌟 Manajemen Event</button>
+				<button class="tab-link" onclick="window.openAdminTab('tab-boss', this)">👹 Manajemen WB</button>
+				<button class="tab-link" onclick="window.openAdminTab('tab-redeem', this)">🎁 Manajemen
+					Giftcode</button>
 				<button class="tab-link" onclick="window.openAdminTab('tab-market', this)">💱 Monitor Pasar</button>
-                <button class="tab-link" onclick="window.openAdminTab('tab-guild', this)">🏰 Manajemen Guild</button>
-                <button class="tab-link" onclick="window.openAdminTab('tab-logs', this)">📋 Log Aktivitas</button>
-            </div>
+				<button class="tab-link" onclick="window.openAdminTab('tab-guild', this)">🏰 Manajemen Guild</button>
+				<button class="tab-link" onclick="window.openAdminTab('tab-logs', this)">📋 Log Aktivitas</button>
+			</div>
 
-            <!-- BAGIAN KANAN: KONTEN UTAMA -->
-            <div class="admin-main-content">
-                
-                <!-- TAB 1: DASHBOARD -->
-                <div id="tab-dashboard" class="admin-tab-section" style="display: block;">
-                    <h2>📊 Server Analytics</h2>
-                    <div class="grid-stats">
+			<!-- BAGIAN KANAN: KONTEN UTAMA -->
+			<div class="admin-main-content">
+
+				<!-- TAB 1: DASHBOARD -->
+				<div id="tab-dashboard" class="admin-tab-section" style="display: block;">
+					<h2>📊 Server Analytics</h2>
+					<div class="grid-stats">
 						<div class="stat-card">
 							<h3>Total Pemain Terdaftar</h3>
 							<div class="value" id="stat-total-players">0</div>
@@ -50,21 +55,21 @@
 							<h3>Total COIN Beredar</h3>
 							<div class="value" id="stat-total-coin" style="color: #00d2ff;">0</div>
 						</div>
-                        <div class="stat-card">
+						<div class="stat-card">
 							<h3>Akun Dibekukan / Ban</h3>
 							<div class="value" id="stat-total-banned" style="color: #dc3545;">0</div>
 						</div>
-                        <div class="stat-card">
+						<div class="stat-card">
 							<h3>Total Guild Aktif</h3>
 							<div class="value" id="stat-total-guilds" style="color: #28a745;">0</div>
 						</div>
 					</div>
-                </div>
+				</div>
 
-                <!-- TAB 2: MAILBOX -->
-                <div id="tab-mailbox" class="admin-tab-section">
-                    <h2>📬 Kirim Surat & Hadiah</h2>
-                    <div class="panel">
+				<!-- TAB 2: MAILBOX -->
+				<div id="tab-mailbox" class="admin-tab-section">
+					<h2>📬 Kirim Surat & Hadiah</h2>
+					<div class="panel">
 						<div id="mail-alert" class="alert"></div>
 
 						<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -108,21 +113,24 @@
 
 						<button id="btn-send-mail">Kirim Surat Sekarang</button>
 					</div>
-                </div>
+				</div>
 
-                <!-- TAB 3: PLAYER EDITOR -->
-                <div id="tab-player" class="admin-tab-section">
-                    <h2>🔍 Player Editor (Manajemen Pemain)</h2>
-                    <div class="panel">
+				<!-- TAB 3: PLAYER EDITOR -->
+				<div id="tab-player" class="admin-tab-section">
+					<h2>🔍 Player Editor (Manajemen Pemain)</h2>
+					<div class="panel">
 						<div style="display: flex; gap: 10px; margin-bottom: 20px;">
 							<input type="text" id="editor-search-uid" placeholder="Tempel FULL UID Pemain di sini..."
 								style="flex: 1; padding: 10px; background: #121216; color: #fff; border: 1px solid #3f3f52; border-radius: 4px;">
-							<button id="btn-search-player" style="background: #28a745; width: auto; padding: 0 20px;">Cari
+							<button id="btn-search-player"
+								style="background: #28a745; width: auto; padding: 0 20px;">Cari
 								Pemain</button>
 						</div>
 
-						<div id="editor-results" style="display: none; border-top: 1px dashed #30363d; padding-top: 20px;">
-							<h3 id="edit-player-name" style="color: #ffca28; margin-top: 0; font-size: 22px;">Nama Pemain</h3>
+						<div id="editor-results"
+							style="display: none; border-top: 1px dashed #30363d; padding-top: 20px;">
+							<h3 id="edit-player-name" style="color: #ffca28; margin-top: 0; font-size: 22px;">Nama
+								Pemain</h3>
 							<p style="font-size: 14px; color: #8b949e; margin-bottom: 15px;">
 								Level: <strong id="edit-player-level" style="color: #fff;">1</strong> |
 								Class: <strong id="edit-player-class" style="color: #00d2ff;">Warrior</strong>
@@ -152,13 +160,17 @@
 							</div>
 
 							<div style="display: flex; gap: 10px;">
-								<button id="btn-save-player" style="background: #0366d6; flex: 1;">💾 Simpan Perubahan</button>
-								<button id="btn-freeze-player" style="background: #6f42c1; flex: 1;">❄️ Bekukan (Freeze)</button>
-								<button id="btn-ban-player" style="background: #dc3545; flex: 1;">🚫 Banned Pemain</button>
+								<button id="btn-save-player" style="background: #0366d6; flex: 1;">💾 Simpan
+									Perubahan</button>
+								<button id="btn-freeze-player" style="background: #6f42c1; flex: 1;">❄️ Bekukan
+									(Freeze)</button>
+								<button id="btn-ban-player" style="background: #dc3545; flex: 1;">🚫 Banned
+									Pemain</button>
 							</div>
 
 							<div style="margin-top: 30px; border-top: 1px dashed #30363d; padding-top: 20px;">
-								<h3 style="color: #00d2ff; margin-top: 0; font-size: 18px;">🎒 Isi Tas Pemain (Inventory)</h3>
+								<h3 style="color: #00d2ff; margin-top: 0; font-size: 18px;">🎒 Isi Tas Pemain
+									(Inventory)</h3>
 
 								<!-- Form Suntik Item -->
 								<div
@@ -176,27 +188,30 @@
 
 								<div id="player-inventory-list"
 									style="max-height: 250px; overflow-y: auto; background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px;">
-									<div style="text-align: center; color: #aaa; font-size: 13px;">Silakan cari pemain terlebih dahulu.
+									<div style="text-align: center; color: #aaa; font-size: 13px;">Silakan cari pemain
+										terlebih dahulu.
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
-                </div>
+				</div>
 
-                <!-- TAB 4: EVENT & BUFF -->
-                <div id="tab-events" class="admin-tab-section">
-                    <h2>🌟 Manajemen Event</h2>
-                    <div class="panel">
+				<!-- TAB 4: EVENT & BUFF -->
+				<div id="tab-events" class="admin-tab-section">
+					<h2>🌟 Manajemen Event</h2>
+					<div class="panel">
 						<div
 							style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3f3f52; padding-bottom: 15px; margin-bottom: 15px;">
 							<div>
 								<h3 style="margin: 0; color: #00d2ff;">🔥 Double EXP Event</h3>
-								<p style="margin: 5px 0 0 0; font-size: 12px; color: #aaa;">Semua pemain akan mendapatkan 2x lipat EXP
+								<p style="margin: 5px 0 0 0; font-size: 12px; color: #aaa;">Semua pemain akan
+									mendapatkan 2x lipat EXP
 									dari semua aktivitas pertempuran.</p>
 							</div>
 							<div style="display: flex; gap: 15px; align-items: center;">
-								<span id="status-exp-event" style="font-size: 18px; font-weight: bold; color: #dc3545;">[ OFF ]</span>
+								<span id="status-exp-event"
+									style="font-size: 18px; font-weight: bold; color: #dc3545;">[ OFF ]</span>
 								<button id="btn-toggle-exp"
 									style="background: #28a745; padding: 10px 20px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: white;">Aktifkan</button>
 							</div>
@@ -205,21 +220,23 @@
 						<div style="display: flex; justify-content: space-between; align-items: center;">
 							<div>
 								<h3 style="margin: 0; color: #ffca28;">🎁 Double Drop Rate (x2)</h3>
-								<p style="margin: 5px 0 0 0; font-size: 12px; color: #aaa;">Meningkatkan peluang pemain mendapatkan item
+								<p style="margin: 5px 0 0 0; font-size: 12px; color: #aaa;">Meningkatkan peluang pemain
+									mendapatkan item
 									gacha langka di Fuben.</p>
 							</div>
 							<div style="display: flex; gap: 15px; align-items: center;">
-								<span id="status-drop-event" style="font-size: 18px; font-weight: bold; color: #dc3545;">[ OFF ]</span>
+								<span id="status-drop-event"
+									style="font-size: 18px; font-weight: bold; color: #dc3545;">[ OFF ]</span>
 								<button id="btn-toggle-drop"
 									style="background: #28a745; padding: 10px 20px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: white;">Aktifkan</button>
 							</div>
 						</div>
 					</div>
-                </div>
+				</div>
 
-                <!-- TAB 5: WORLD BOSS -->
-                <div id="tab-boss" class="admin-tab-section">
-                    <h2>👹 Manajemen World Boss</h2>
+				<!-- TAB 5: WORLD BOSS -->
+				<div id="tab-boss" class="admin-tab-section">
+					<h2>👹 Manajemen World Boss</h2>
 					<div class="panel">
 						<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
 							<div class="form-group">
@@ -235,19 +252,22 @@
 						</div>
 						<div style="display: flex; gap: 10px;">
 							<button id="btn-admin-spawn-wb"
-								style="background: #8b0000; flex: 1; border: 1px solid #ff4c4c; font-weight: bold;">⚔️ Munculkan
+								style="background: #8b0000; flex: 1; border: 1px solid #ff4c4c; font-weight: bold;">⚔️
+								Munculkan
 								Boss</button>
-							<button id="btn-admin-kill-wb" style="background: #333; flex: 1; border: 1px solid #555;">💀 Bunuh /
+							<button id="btn-admin-kill-wb" style="background: #333; flex: 1; border: 1px solid #555;">💀
+								Bunuh /
 								Hentikan Boss</button>
 						</div>
-					</div>                    
-                </div>
+					</div>
+				</div>
 
-                <!-- TAB 6: REDEEM CODE -->
-                <div id="tab-redeem" class="admin-tab-section">
+				<!-- TAB 6: REDEEM CODE -->
+				<div id="tab-redeem" class="admin-tab-section">
 					<h2>🎁 Manajemen Giftcode</h2>
-                    <div class="panel">
-						<p style="color: #aaa; font-size: 13px; margin-top: 0;">Buat kode unik yang bisa ditukarkan oleh pemain di dalam
+					<div class="panel">
+						<p style="color: #aaa; font-size: 13px; margin-top: 0;">Buat kode unik yang bisa ditukarkan oleh
+							pemain di dalam
 							game.</p>
 
 						<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 15px;">
@@ -285,33 +305,40 @@
 							</div>
 						</div>
 
-						<button id="btn-create-giftcode" style="background: #28a745; margin-top: 15px; width: 100%; font-size: 16px;">✨
+						<button id="btn-create-giftcode"
+							style="background: #28a745; margin-top: 15px; width: 100%; font-size: 16px;">✨
 							Buat Kode Redeem</button>
 
-						<h3 style="margin-top: 30px; border-top: 1px dashed #30363d; padding-top: 20px; color: #ffca28;">📜 Daftar Kode
+						<h3
+							style="margin-top: 30px; border-top: 1px dashed #30363d; padding-top: 20px; color: #ffca28;">
+							📜 Daftar Kode
 							Aktif</h3>
 						<div id="active-giftcodes-list"
 							style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 50px;">
 							<div style="text-align: center; color: #aaa; font-size: 13px;">Memuat kode aktif...</div>
 						</div>
 					</div>
-                </div>
+				</div>
 
-                <!-- TAB 7: GUILD -->
-                <div id="tab-guild" class="admin-tab-section">
-                    <h2>🏰 Manajemen Guild</h2>
+				<!-- TAB 7: GUILD -->
+				<div id="tab-guild" class="admin-tab-section">
+					<h2>🏰 Manajemen Guild</h2>
 					<div class="panel">
-						<p style="color: #aaa; font-size: 13px; margin-top: 0;">Kelola struktur kepemimpinan atau bubarkan Guild yang
+						<p style="color: #aaa; font-size: 13px; margin-top: 0;">Kelola struktur kepemimpinan atau
+							bubarkan Guild yang
 							melanggar aturan.</p>
 
 						<div style="display: flex; gap: 10px; margin-bottom: 20px;">
 							<input type="text" id="admin-search-guild" placeholder="Ketik Nama Guild dengan persis..."
 								style="flex: 1; padding: 10px; background: #121216; color: #fff; border: 1px solid #3f3f52; border-radius: 4px;">
-							<button id="btn-search-guild" style="background: #28a745; width: auto; padding: 0 20px;">Cari Guild</button>
+							<button id="btn-search-guild"
+								style="background: #28a745; width: auto; padding: 0 20px;">Cari Guild</button>
 						</div>
 
-						<div id="admin-guild-results" style="display: none; border-top: 1px dashed #30363d; padding-top: 20px;">
-							<h3 id="admin-guild-name" style="color: #00d2ff; margin-top: 0; font-size: 22px;">Nama Guild</h3>
+						<div id="admin-guild-results"
+							style="display: none; border-top: 1px dashed #30363d; padding-top: 20px;">
+							<h3 id="admin-guild-name" style="color: #00d2ff; margin-top: 0; font-size: 22px;">Nama Guild
+							</h3>
 							<p style="font-size: 14px; color: #8b949e; margin-bottom: 15px;">
 								Level: <strong id="admin-guild-level" style="color: #fff;">1</strong> |
 								Dana: <strong id="admin-guild-gold" style="color: #ffd700;">0</strong> Gold
@@ -322,22 +349,25 @@
 								<div style="display: flex; gap: 10px;">
 									<input type="text" id="admin-guild-leader"
 										style="flex: 1; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
-									<button id="btn-change-leader" style="background: #0366d6; width: auto; padding: 0 15px;">Ganti
+									<button id="btn-change-leader"
+										style="background: #0366d6; width: auto; padding: 0 15px;">Ganti
 										Ketua</button>
 								</div>
 							</div>
 
-							<button id="btn-disband-guild" style="background: #dc3545; width: 100%;">💥 Bubarkan Guild (Hapus
+							<button id="btn-disband-guild" style="background: #dc3545; width: 100%;">💥 Bubarkan Guild
+								(Hapus
 								Paksa)</button>
 						</div>
 					</div>
-                </div>
+				</div>
 
-                <!-- TAB 8: AUDIT LOGS -->
-                <div id="tab-logs" class="admin-tab-section">
-                    <h2>📋 Log Aktivitas Admin (Audit Trail)</h2>
+				<!-- TAB 8: AUDIT LOGS -->
+				<div id="tab-logs" class="admin-tab-section">
+					<h2>📋 Log Aktivitas Admin (Audit Trail)</h2>
 					<div class="panel">
-						<p style="color: #aaa; font-size: 13px; margin-top: 0;">Mencatat semua tindakan krusial yang dilakukan oleh
+						<p style="color: #aaa; font-size: 13px; margin-top: 0;">Mencatat semua tindakan krusial yang
+							dilakukan oleh
 							admin untuk mencegah penyalahgunaan wewenang.</p>
 
 						<div id="admin-log-list"
@@ -345,39 +375,63 @@
 							<div style="text-align: center; color: #aaa; font-size: 13px;">Memuat log aktivitas...</div>
 						</div>
 					</div>
-                </div>
-				
+				</div>
+
 				<!-- TAB 9: MARKET MONITOR -->
-                <div id="tab-market" class="admin-tab-section">
-                    <h2>💱 Monitor Pasar</h2>
-                    <!-- GANTI BAGIAN BAWAH TAB MARKET MENJADI INI -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
-                            <!-- KOLOM KIRI: BURSA COIN -->
-                            <div>
-                                <h3 style="color: #ffca28; margin-top: 0; margin-bottom: 10px;">🪙 Live Bursa Coin</h3>
-                                <div id="admin-coin-list" style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 200px; max-height: 400px; overflow-y: auto;">
-                                    <div style="text-align: center; color: #aaa; font-size: 13px; padding: 20px;">Memuat bursa coin...</div>
-                                </div>
-                            </div>
+				<div id="tab-market" class="admin-tab-section">
+					<h2>💱 Monitor Pasar</h2>
+					<div class="panel">
 
-                            <!-- KOLOM KANAN: LELANG BARANG -->
-                            <div>
-                                <h3 style="color: #00d2ff; margin-top: 0; margin-bottom: 10px;">⚔️ Live Lelang Barang</h3>
-                                <div id="admin-item-list" style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 200px; max-height: 400px; overflow-y: auto;">
-                                    <div style="text-align: center; color: #aaa; font-size: 13px; padding: 20px;">Memuat lelang barang...</div>
-                                </div>
-                            </div>
-                        </div>
-                </div>
+						<!-- 🔥 BAGIAN KILL SWITCH YANG HILANG -->
+						<div
+							style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #3f3f52;">
+							<div>
+								<h3 style="margin: 0; color: #dc3545;">🚨 Global Kill Switch (Pasar)</h3>
+								<p style="margin: 5px 0 0 0; font-size: 12px; color: #aaa;">Bekukan seluruh aktivitas
+									jual beli jika ada indikasi eksploitasi/bug duplikasi.</p>
+							</div>
+							<div style="display: flex; gap: 15px; align-items: center;">
+								<span id="status-market-freeze"
+									style="font-size: 18px; font-weight: bold; color: #28a745;">[ AMAN ]</span>
+								<button id="btn-toggle-market-freeze"
+									style="background: #dc3545; padding: 10px 20px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: white;">Bekukan
+									Pasar</button>
+							</div>
+						</div>
 
-            </div>
-        </div>
-    </div>
+						<!-- BAGIAN GRID 2 KOLOM -->
+						<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+							<div>
+								<h3 style="color: #ffca28; margin-top: 0; margin-bottom: 10px;">Live Bursa Coin</h3>
+								<div id="admin-coin-list"
+									style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 200px; max-height: 400px; overflow-y: auto;">
+									<div style="text-align: center; color: #aaa; font-size: 13px; padding: 20px;">Memuat
+										bursa coin...</div>
+								</div>
+							</div>
 
-    <div id="loading-screen" style="text-align: center; margin-top: 100px; color: #fff;">
-        <h2>Memverifikasi Akses Admin...</h2>
-    </div>
+							<div>
+								<h3 style="color: #00d2ff; margin-top: 0; margin-bottom: 10px;">Live Lelang Barang</h3>
+								<div id="admin-item-list"
+									style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 200px; max-height: 400px; overflow-y: auto;">
+									<div style="text-align: center; color: #aaa; font-size: 13px; padding: 20px;">Memuat
+										lelang barang...</div>
+								</div>
+							</div>
+						</div>
 
-    <script type="module" src="./js/admin.js"></script>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<div id="loading-screen" style="text-align: center; margin-top: 100px; color: #fff;">
+		<h2>Memverifikasi Akses Admin...</h2>
+	</div>
+
+	<script type="module" src="./js/admin.js"></script>
 </body>
+
 </html>

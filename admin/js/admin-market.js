@@ -7,18 +7,17 @@ import { collection, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } fro
 // ==========================================
 let isMarketFrozen = false;
 
-window.listenToMarketStatus = function() {
-    // Menumpang di dokumen serverBuffs untuk menyimpan status global
+window.listenToMarketStatus = function () {
     onSnapshot(doc(db, "events", "serverBuffs"), (docSnap) => {
         if (docSnap.exists()) {
             isMarketFrozen = !!docSnap.data().marketFrozen;
             const statusText = document.getElementById('status-market-freeze');
             const btnToggle = document.getElementById('btn-toggle-market-freeze');
-            
+
             if (statusText && btnToggle) {
                 statusText.innerText = isMarketFrozen ? "[ DIBEKUKAN ]" : "[ AMAN ]";
                 statusText.style.color = isMarketFrozen ? "#dc3545" : "#28a745";
-                
+
                 btnToggle.innerText = isMarketFrozen ? "Buka Kembali Pasar" : "?? Bekukan Pasar";
                 btnToggle.style.background = isMarketFrozen ? "#28a745" : "#dc3545";
             }
@@ -29,10 +28,10 @@ window.listenToMarketStatus = function() {
 document.getElementById('btn-toggle-market-freeze')?.addEventListener('click', async () => {
     const actionText = isMarketFrozen ? "MEMBUKA" : "MEMBEKUKAN";
     if (!confirm(`?? Yakin ingin ${actionText} seluruh aktivitas Bursa Coin?\nPemain tidak akan bisa membeli atau menjual coin selama dibekukan.`)) return;
-    
+
     try {
         await updateDoc(doc(db, "events", "serverBuffs"), { marketFrozen: !isMarketFrozen });
-        if(window.logAdminAction) window.logAdminAction("SYSTEM", `Telah ${actionText} Global Coin Market.`);
+        if (window.logAdminAction) window.logAdminAction("SYSTEM", `Telah ${actionText} Global Coin Market.`);
     } catch (err) {
         alert("Gagal mengubah status bursa: " + err.message);
     }
@@ -41,7 +40,7 @@ document.getElementById('btn-toggle-market-freeze')?.addEventListener('click', a
 /// ==========================================
 // 2. LIVE MONITORING (COIN & ITEM) & TAKEDOWN
 // ==========================================
-window.listenToLiveMarket = function() {
+window.listenToLiveMarket = function () {
     const coinList = document.getElementById('admin-coin-list');
     const itemList = document.getElementById('admin-item-list');
     if (!coinList || !itemList) return;
@@ -52,7 +51,7 @@ window.listenToLiveMarket = function() {
         snapshot.forEach((docSnap) => {
             const data = docSnap.data(); const itemId = docSnap.id;
             const time = data.timestamp ? new Date(data.timestamp).toLocaleString('id-ID') : 'Baru saja';
-            
+
             coinList.innerHTML += `
                 <div style="padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px;">
                     <div style="display: flex; justify-content: space-between;">
@@ -72,13 +71,12 @@ window.listenToLiveMarket = function() {
         });
     });
 
-    // --- B. LISTENER LELANG BARANG ---
     onSnapshot(query(collection(db, "market"), orderBy("timestamp", "desc")), (snapshot) => {
         itemList.innerHTML = snapshot.empty ? `<div style="text-align: center; color: #aaa; padding: 20px;">Kosong</div>` : "";
         snapshot.forEach((docSnap) => {
             const data = docSnap.data(); const itemId = docSnap.id;
             const bidText = data.highestBid ? `Bid: ${data.highestBid.amount}G` : `Harga: ${data.buyoutPrice}G`;
-            
+
             itemList.innerHTML += `
                 <div style="padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px;">
                     <div style="display: flex; justify-content: space-between;">
