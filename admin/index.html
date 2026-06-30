@@ -26,6 +26,7 @@
                 <button class="tab-link" onclick="window.openAdminTab('tab-events', this)">🌟 Manajemen Event</button>
                 <button class="tab-link" onclick="window.openAdminTab('tab-boss', this)">👹 Manajemen WB</button>
                 <button class="tab-link" onclick="window.openAdminTab('tab-redeem', this)">🎁 Manajemen Giftcode</button>
+				<button class="tab-link" onclick="window.openAdminTab('tab-market', this)">💱 Monitor Pasar</button>
                 <button class="tab-link" onclick="window.openAdminTab('tab-guild', this)">🏰 Manajemen Guild</button>
                 <button class="tab-link" onclick="window.openAdminTab('tab-logs', this)">📋 Log Aktivitas</button>
             </div>
@@ -344,6 +345,30 @@
 							<div style="text-align: center; color: #aaa; font-size: 13px;">Memuat log aktivitas...</div>
 						</div>
 					</div>
+                </div>
+				
+				<!-- TAB 9: MARKET MONITOR -->
+                <div id="tab-market" class="admin-tab-section">
+                    <h2>💱 Monitor Pasar Coin</h2>
+                    <div class="panel">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #3f3f52;">
+                            <div>
+                                <h3 style="margin: 0; color: #dc3545;">🚨 Global Kill Switch (Pasar)</h3>
+                                <p style="margin: 5px 0 0 0; font-size: 12px; color: #aaa;">Bekukan seluruh aktivitas jual beli jika ada indikasi eksploitasi/bug duplikasi.</p>
+                            </div>
+                            <div style="display: flex; gap: 15px; align-items: center;">
+                                <span id="status-market-freeze" style="font-size: 18px; font-weight: bold; color: #28a745;">[ AMAN ]</span>
+                                <button id="btn-toggle-market-freeze" style="background: #dc3545; padding: 10px 20px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: white;">Bekukan Pasar</button>
+                            </div>
+                        </div>
+
+                        <h3 style="color: #00d2ff; margin-top: 0;">📋 Live Lelang / Pasar Coin</h3>
+                        <p style="color: #aaa; font-size: 12px; margin-top: -10px;">Monitor transaksi real-time. Takedown item yang dijual dengan harga tidak wajar.</p>
+                        
+                        <div id="admin-market-list" style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 200px; max-height: 400px; overflow-y: auto;">
+                            <div style="text-align: center; color: #aaa; font-size: 13px; padding: 20px;">Memuat data pasar...</div>
+                        </div>
+                    </div>
                 </div>
 
             </div>

@@ -8,6 +8,7 @@ import './admin-mail.js';
 import './admin-player.js';
 import './admin-system.js';
 import './admin-guild.js';
+import './admin-market.js';
 
 window.adminUid = null;
 
@@ -133,6 +134,8 @@ onAuthStateChanged(auth, async (user) => {
                 if(window.populateItemDropdown) window.populateItemDropdown();
                 if(window.listenToGlobalEvents) window.listenToGlobalEvents();
                 if(window.listenToGiftCodes) window.listenToGiftCodes();
+				if(window.listenToMarketStatus) window.listenToMarketStatus();
+                if(window.listenToLiveMarket) window.listenToLiveMarket();
             } else {
                 alert("Akses Ditolak!"); window.location.href = '../index.html';
             }
