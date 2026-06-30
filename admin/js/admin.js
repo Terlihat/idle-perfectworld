@@ -1,34 +1,29 @@
 import { db, auth } from '../../js/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp, updateDoc, setDoc, onSnapshot, deleteDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-// PERBAIKAN: Import Database Item agar list selalu up-to-date otomatis!
 import { ITEM_DB } from '../../js/data/items.js';
 
 let adminUid = null;
 
 // ==========================================
-// SISTEM NAVIGASI SIDEBAR (TAB MENU)
+// 1. SISTEM NAVIGASI SIDEBAR (TAB MENU)
 // ==========================================
 window.openAdminTab = function(tabId, btnElement) {
-    // 1. Sembunyikan semua tab konten
+
     const tabs = document.querySelectorAll('.admin-tab-section');
     tabs.forEach(tab => tab.style.display = 'none');
 
-    // 2. Tampilkan tab yang dipilih
     const activeTab = document.getElementById(tabId);
     if (activeTab) activeTab.style.display = 'block';
 
-    // 3. Hapus class 'active' dari semua tombol di sidebar
     const buttons = document.querySelectorAll('.admin-sidebar .tab-link');
     buttons.forEach(btn => btn.classList.remove('active'));
 
-    // 4. Tambahkan class 'active' ke tombol yang baru diklik
     if (btnElement) btnElement.classList.add('active');
 };
 
 // ==========================================
-// 1. VERIFIKASI AKSES ADMIN
+// 2. VERIFIKASI AKSES ADMIN
 // ==========================================
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -58,7 +53,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // ==========================================
-// 2. SISTEM STATISTIK SERVER
+// 3. SISTEM STATISTIK SERVER
 // ==========================================
 async function loadServerStats() {
     try {
@@ -86,7 +81,7 @@ async function loadServerStats() {
 }
 
 // ==========================================
-// 3. GENERATOR LIST ITEM OTOMATIS
+// 4. GENERATOR LIST ITEM OTOMATIS
 // ==========================================
 function populateItemDropdown() {
     const selectBox = document.getElementById('mail-item-name');
@@ -105,7 +100,7 @@ function populateItemDropdown() {
 }
 
 // ==========================================
-// 4. FITUR KIRIM SURAT & HADIAH (KOMPLIT & BROADCAST)
+// 5. FITUR KIRIM SURAT & HADIAH (KOMPLIT & BROADCAST)
 // ==========================================
 document.getElementById('btn-send-mail').addEventListener('click', async () => {
     const targetUid = document.getElementById('mail-target-uid').value.trim();
@@ -117,7 +112,6 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
     const itemName = document.getElementById('mail-item-name').value;
     const itemQty = parseInt(document.getElementById('mail-item-qty')?.value) || 1;
 
-    // PERBAIKAN: Target UID tidak lagi wajib. Hanya Judul yang wajib.
     if (!title) {
         return alert("Judul Surat wajib diisi!");
     }
@@ -127,7 +121,6 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
     btnSend.innerText = "Menyiapkan Surat...";
 
     try {
-        // Membungkus hadiah ke dalam attachments
         let attachmentsData = null;
         if (itemName && itemName !== "") {
             attachmentsData = {
@@ -154,14 +147,12 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
         };
 
         if (targetUid) {
-            // JIKA UID DIISI: Kirim ke 1 Pemain saja (Logika Lama)
             const mailboxRef = collection(db, "users", targetUid, "mailbox");
             await addDoc(mailboxRef, mailData);
 
             window.logAdminAction("MAIL", `Mengirim surat "${title}" ke UID: ${targetUid}. Lampiran: ${gold}G, ${coin}C, Item: ${itemName}`);
             alert(`✅ Surat "${title}" berhasil dikirim ke UID: ${targetUid}`);
         } else {
-            // JIKA UID KOSONG: Lakukan Broadcast ke Seluruh Pemain
             const confirmBroadcast = confirm("⚠️ PERINGATAN BROADCAST: Anda mengosongkan kolom UID. Surat ini akan dikirim ke SELURUH PEMAIN yang terdaftar. Lanjutkan?");
             if (!confirmBroadcast) {
                 btnSend.disabled = false;
@@ -171,13 +162,11 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
 
             btnSend.innerText = "Mengambil data pemain...";
 
-            // Ambil semua data pemain dari database
             const usersCol = collection(db, "users");
             const userSnapshot = await getDocs(usersCol);
 
             let sendPromises = [];
 
-            // Masukkan perintah pengiriman ke masing-masing kotak surat pemain
             userSnapshot.forEach((userDoc) => {
                 const mailboxRef = collection(db, "users", userDoc.id, "mailbox");
                 sendPromises.push(addDoc(mailboxRef, mailData));
@@ -185,14 +174,12 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
 
             btnSend.innerText = `Mengirim ke ${sendPromises.length} pemain... (Mohon Tunggu)`;
 
-            // Eksekusi semua pengiriman secara serentak (paralel) agar tidak lag
             await Promise.all(sendPromises);
 
             window.logAdminAction("MAIL", `Mengirim surat "${title}" secara BROADCAST ke ${sendPromises.length} pemain. Lampiran: ${gold}G, ${coin}C, Item: ${itemName}`);
             alert(`📢 BROADCAST SUKSES! Surat beserta hadiah berhasil dikirim ke ${sendPromises.length} pemain.`);
         }
 
-        // Reset form setelah sukses
         document.getElementById('mail-title').value = "";
         document.getElementById('mail-message').value = "";
         document.getElementById('mail-gold').value = "0";
@@ -214,7 +201,7 @@ document.getElementById('btn-home')?.addEventListener('click', () => {
 });
 
 // ==========================================
-// 5. FITUR PLAYER EDITOR & BANNED
+// 6. FITUR PLAYER EDITOR & BANNED
 // ==========================================
 let currentEditingUid = null;
 let currentEditingBannedStatus = false;
@@ -235,7 +222,6 @@ document.getElementById('btn-search-player').addEventListener('click', async () 
             currentEditingUid = uid;
             currentEditingBannedStatus = data.banned || false;
 
-            // Masukkan data ke UI
             document.getElementById('edit-player-name').innerText = data.username || "Hero Anonim";
             document.getElementById('edit-player-level').innerText = data.level || 1;
             document.getElementById('edit-player-class').innerText = data.characterClass || "Tidak diketahui";
@@ -245,7 +231,6 @@ document.getElementById('btn-search-player').addEventListener('click', async () 
             document.getElementById('edit-player-exp').value = data.exp || 0;
             document.getElementById('edit-player-vip').value = data.vipLevel || 0;
 
-            // Atur tombol Banned
             const btnBan = document.getElementById('btn-ban-player');
             if (currentEditingBannedStatus) {
                 btnBan.innerText = "✅ Buka Ban (Un-Ban)";
@@ -366,7 +351,7 @@ document.getElementById('btn-freeze-player')?.addEventListener('click', async ()
 });
 
 // ==========================================
-// 6. FITUR KONTROL WORLD BOSS
+// 7. FITUR KONTROL WORLD BOSS
 // ==========================================
 document.getElementById('btn-admin-spawn-wb').addEventListener('click', async () => {
     const bossName = document.getElementById('wb-admin-name').value.trim() || "World Boss Misterius";
@@ -479,7 +464,7 @@ document.getElementById('btn-toggle-drop').addEventListener('click', async () =>
 });
 
 // ==========================================
-// 7. MANAJEMEN INVENTORY PEMAIN
+// 8. MANAJEMEN INVENTORY PEMAIN
 // ==========================================
 
 // Fungsi Render Isi Tas ke Layar
@@ -572,7 +557,7 @@ document.getElementById('btn-inject-item')?.addEventListener('click', async () =
 });
 
 // ==========================================
-// 8. MANAJEMEN KODE REDEEM (GIFT CODES)
+// 9. MANAJEMEN KODE REDEEM (GIFT CODES)
 // ==========================================
 
 // Fungsi untuk memuat dan menampilkan kode redeem secara realtime
@@ -687,7 +672,7 @@ document.getElementById('btn-create-giftcode')?.addEventListener('click', async 
 });
 
 // ==========================================
-// 9. SISTEM AUDIT LOG & KEAMANAN
+// 10. SISTEM AUDIT LOG & KEAMANAN
 // ==========================================
 
 // Fungsi untuk mencatat aktivitas ke database
@@ -752,7 +737,7 @@ function listenToAdminLogs() {
 setTimeout(listenToAdminLogs, 1500);
 
 // ==========================================
-// 10. MANAJEMEN GUILD (KLAN)
+// 11. MANAJEMEN GUILD (KLAN)
 // ==========================================
 let currentEditingGuildId = null;
 
