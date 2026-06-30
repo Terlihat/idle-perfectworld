@@ -52,3 +52,60 @@ button {
 }
 button:hover { background: #2ea043; }
 .alert { padding: 10px; background: #5a1e1e; color: #ff7b72; border-radius: 6px; display: none; margin-bottom: 15px;}
+
+/* SIDEBAR LAYOUT ADMIN*/
+.admin-layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background: #0d1117;
+}
+
+.admin-sidebar {
+    width: 260px;
+    background: #161b22;
+    border-right: 1px solid #30363d;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 10px;
+    gap: 8px;
+}
+
+.admin-sidebar button {
+    background: transparent;
+    color: #c9d1d9;
+    border: 1px solid transparent;
+    text-align: left;
+    padding: 12px 15px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.admin-sidebar button:hover {
+    background: #21262d;
+}
+
+.admin-sidebar button.active {
+    background: #0366d6;
+    color: #ffffff;
+    border: 1px solid #0366d6;
+}
+
+.admin-main-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.admin-tab-section {
+    display: none; /* Sembunyikan semua tab secara default */
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

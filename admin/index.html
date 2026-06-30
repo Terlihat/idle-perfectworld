@@ -10,74 +10,75 @@
 </head>
 
 <body>
-    <div class="container" id="admin-content" style="display: none;">
-
-        <div
-            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 20px;">
-            <h1 style="border: none; padding: 0; margin: 0;">⚙️ Admin Control Panel</h1>
-            <button id="btn-home" style="background: #0366d6;">🏠 Kembali ke Game</button>
+    <div id="admin-content" style="display: none;">
+        <!-- TOMBOL KEMBALI KE GAME (Di Luar Layout Flex) -->
+        <div style="background: #161b22; padding: 10px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; color: #ffca28;">⚙️ Admin Control Panel</h3>
+            <button id="btn-home" style="background: #dc3545; padding: 5px 15px; border-radius: 4px; color: white; border: none; font-weight: bold; cursor: pointer;">🏠 Kembali ke Game</button>
         </div>
 
-        <h2>📊 Server Analytics</h2>
-        <div class="grid-stats">
-            <div class="stat-card">
-                <h3>Total Pemain Terdaftar</h3>
-                <div class="value" id="stat-total-players">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>Total Gold Beredar (Ekonomi)</h3>
-                <div class="value" id="stat-total-gold" style="color: #ffd700;">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>Total COIN Beredar</h3>
-                <div class="value" id="stat-total-coin" style="color: #00d2ff;">0</div>
-            </div>
-        </div>
-
-        <div class="panel">
-            <h2>📬 Kirim Surat & Hadiah (Mailbox System)</h2>
-            <div id="mail-alert" class="alert"></div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="form-group">
-                    <label>UID Pemain Penerima (Kosongkan untuk Broadcast ke Semua)</label>
-                    <input type="text" id="mail-target-uid" placeholder="Contoh: aB3cD5eF...">
-                </div>
-                <div class="form-group">
-                    <label>Judul Surat</label>
-                    <input type="text" id="mail-title" placeholder="Kompensasi Maintenance">
-                </div>
+        <div class="admin-layout">
+            <!-- BAGIAN KIRI: SIDEBAR MENU -->
+            <div class="admin-sidebar">
+                <button class="tab-link active" onclick="window.openAdminTab('tab-dashboard', this)">📊 Dashboard</button>
+                <button class="tab-link" onclick="window.openAdminTab('tab-mailbox', this)">📬 Kirim Surat</button>
+                <button class="tab-link" onclick="window.openAdminTab('tab-player', this)">🔍 Player Editor</button>
+                <button class="tab-link" onclick="window.openAdminTab('tab-events', this)">🌟 Manajemen Event</button>
+                <button class="tab-link" onclick="window.openAdminTab('tab-boss', this)">👹 Kontrol WB</button>
+                <button class="tab-link" onclick="window.openAdminTab('tab-redeem', this)">🎁 Kode Redeem</button>
+                <button class="tab-link" onclick="window.openAdminTab('tab-guild', this)">🏰 Manajemen Guild</button>
+                <button class="tab-link" onclick="window.openAdminTab('tab-logs', this)">📋 Log Aktivitas</button>
             </div>
 
-            <div class="form-group">
-                <label>Pesan Surat</label>
-                <input type="text" id="mail-message" placeholder="Terima kasih telah bermain...">
-            </div>
+            <!-- BAGIAN KANAN: KONTEN UTAMA -->
+            <div class="admin-main-content">
+                
+                <!-- TAB 1: DASHBOARD -->
+                <div id="tab-dashboard" class="admin-tab-section" style="display: block;">
+                    <h2>📊 Server Analytics</h2>
+                    <!-- Pindahkan seluruh blok <div class="grid-stats"> ke sini -->
+                </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
-                <div class="form-group">
-                    <label>Kirim Gold</label>
-                    <input type="number" id="mail-gold" value="0" min="0">
+                <!-- TAB 2: MAILBOX -->
+                <div id="tab-mailbox" class="admin-tab-section">
+                    <h2>📬 Kirim Surat & Hadiah</h2>
+                    <!-- Pindahkan seluruh blok form Kirim Surat ke sini -->
                 </div>
-                <div class="form-group">
-                    <label>Kirim COIN</label>
-                    <input type="number" id="mail-coin" value="0" min="0">
-                </div>
-                <div class="form-group">
-                    <label>Pilih Item Hadiah:</label>
-                    <select id="mail-item-name"
-                        style="width: 100%; padding: 8px; margin-bottom: 10px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
-                        <option value="">-- Sedang Memuat Data Item... --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Jumlah Item (Qty):</label>
-                    <input type="number" id="mail-item-qty" placeholder="Contoh: 5" value="1"
-                        style="width: 100%; padding: 8px; margin-bottom: 10px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
-                </div>
-            </div>
 
-            <button id="btn-send-mail">Kirim Surat Sekarang</button>
+                <!-- TAB 3: PLAYER EDITOR -->
+                <div id="tab-player" class="admin-tab-section">
+                    <h2>🔍 Player Editor (Manajemen Pemain)</h2>
+                    <!-- Pindahkan seluruh blok Editor Pemain ke sini -->
+                </div>
+
+                <!-- TAB 4: EVENT & BUFF -->
+                <div id="tab-events" class="admin-tab-section">
+                    <h2>🌟 Manajer Event Global</h2>
+                    <!-- Pindahkan seluruh blok Double EXP & Drop ke sini -->
+                </div>
+
+                <!-- TAB 5: WORLD BOSS -->
+                <div id="tab-boss" class="admin-tab-section">
+                    <h2>👹 Kontrol World Boss</h2>
+                    <!-- Pindahkan seluruh form Spawn/Kill WB ke sini -->
+                </div>
+
+                <!-- TAB 6: REDEEM CODE -->
+                <div id="tab-redeem" class="admin-tab-section">
+                    <!-- Pindahkan seluruh panel Kode Redeem ke sini -->
+                </div>
+
+                <!-- TAB 7: GUILD -->
+                <div id="tab-guild" class="admin-tab-section">
+                    <!-- Pindahkan seluruh panel Manajemen Guild ke sini -->
+                </div>
+
+                <!-- TAB 8: AUDIT LOGS -->
+                <div id="tab-logs" class="admin-tab-section">
+                    <!-- Pindahkan panel Log Aktivitas ke sini -->
+                </div>
+
+            </div>
         </div>
     </div>
 

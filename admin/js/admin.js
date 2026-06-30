@@ -8,6 +8,26 @@ import { ITEM_DB } from '../../js/data/items.js';
 let adminUid = null;
 
 // ==========================================
+// SISTEM NAVIGASI SIDEBAR (TAB MENU)
+// ==========================================
+window.openAdminTab = function(tabId, btnElement) {
+    // 1. Sembunyikan semua tab konten
+    const tabs = document.querySelectorAll('.admin-tab-section');
+    tabs.forEach(tab => tab.style.display = 'none');
+
+    // 2. Tampilkan tab yang dipilih
+    const activeTab = document.getElementById(tabId);
+    if (activeTab) activeTab.style.display = 'block';
+
+    // 3. Hapus class 'active' dari semua tombol di sidebar
+    const buttons = document.querySelectorAll('.admin-sidebar .tab-link');
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    // 4. Tambahkan class 'active' ke tombol yang baru diklik
+    if (btnElement) btnElement.classList.add('active');
+};
+
+// ==========================================
 // 1. VERIFIKASI AKSES ADMIN
 // ==========================================
 onAuthStateChanged(auth, async (user) => {
