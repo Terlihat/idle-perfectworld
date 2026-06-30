@@ -83,6 +83,12 @@ window.cmSubmitSell = async function () {
             const userRef = doc(db, "users", window.currentUserUid);
             const newMarketRef = doc(collection(db, "coin_market"));
 
+            // CEK STATUS GLOBAL KILL SWITCH
+            const buffSnap = await ts.get(doc(db, "events", "serverBuffs"));
+            if (buffSnap.exists() && buffSnap.data().marketFrozen) {
+                throw "🚨 PASAR SEDANG DIBEKUKAN OLEH ADMIN! Transaksi dihentikan sementara untuk maintenance keamanan.";
+            }
+
             const dataSnap = await ts.get(userRef);
             const data = dataSnap.data();
 
@@ -120,6 +126,12 @@ window.cmBuyCoin = async function (marketId, sellerUid, amount, price) {
             const sellerRef = doc(db, "users", sellerUid);
             const marketRef = doc(db, "coin_market", marketId);
 
+            // CEK STATUS GLOBAL KILL SWITCH
+            const buffSnap = await ts.get(doc(db, "events", "serverBuffs"));
+            if (buffSnap.exists() && buffSnap.data().marketFrozen) {
+                throw "🚨 PASAR SEDANG DIBEKUKAN OLEH ADMIN! Transaksi dihentikan sementara untuk maintenance keamanan.";
+            }
+
             const buyerSnap = await ts.get(buyerRef);
             const sellerSnap = await ts.get(sellerRef);
             const marketSnap = await ts.get(marketRef);
@@ -156,6 +168,12 @@ window.cmCancelSell = async function (marketId) {
         await runTransaction(db, async (ts) => {
             const marketRef = doc(db, "coin_market", marketId);
             const userRef = doc(db, "users", window.currentUserUid);
+
+            // CEK STATUS GLOBAL KILL SWITCH
+            const buffSnap = await ts.get(doc(db, "events", "serverBuffs"));
+            if (buffSnap.exists() && buffSnap.data().marketFrozen) {
+                throw "🚨 PASAR SEDANG DIBEKUKAN OLEH ADMIN! Transaksi dihentikan sementara untuk maintenance keamanan.";
+            }
 
             const marketSnap = await ts.get(marketRef);
             if (!marketSnap.exists()) throw "Barang ini sudah tidak ada di bursa (mungkin sudah terjual).";

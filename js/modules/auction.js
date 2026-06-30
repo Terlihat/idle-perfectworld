@@ -22,6 +22,12 @@ export async function listAuctionItem(db, uid, itemName, price, sellerName) {
 
     try {
         await runTransaction(db, async (ts) => {
+            // CEK STATUS GLOBAL KILL SWITCH
+            const buffSnap = await ts.get(doc(db, "events", "serverBuffs"));
+            if (buffSnap.exists() && buffSnap.data().marketFrozen) {
+                throw "🚨 PASAR SEDANG DIBEKUKAN OLEH ADMIN! Transaksi dihentikan sementara untuk maintenance keamanan.";
+            }
+
             const data = (await ts.get(userRef)).data();
             let inv = data.inventory || {};
             if (!inv[itemName] || inv[itemName] < 1) throw "Item tidak ditemukan di tas!";
@@ -49,6 +55,12 @@ export async function placeBid(db, buyerUid, buyerName, auctionId, bidAmount) {
 
     try {
         await runTransaction(db, async (ts) => {
+            // CEK STATUS GLOBAL KILL SWITCH
+            const buffSnap = await ts.get(doc(db, "events", "serverBuffs"));
+            if (buffSnap.exists() && buffSnap.data().marketFrozen) {
+                throw "🚨 PASAR SEDANG DIBEKUKAN OLEH ADMIN! Transaksi dihentikan sementara untuk maintenance keamanan.";
+            }
+
             const auctionSnap = await ts.get(auctionRef);
             if (!auctionSnap.exists()) throw "Lelang sudah ditarik atau selesai!";
             const auction = auctionSnap.data();
@@ -95,6 +107,12 @@ export async function acceptBid(db, sellerUid, auctionId) {
 
     try {
         await runTransaction(db, async (ts) => {
+            // CEK STATUS GLOBAL KILL SWITCH
+            const buffSnap = await ts.get(doc(db, "events", "serverBuffs"));
+            if (buffSnap.exists() && buffSnap.data().marketFrozen) {
+                throw "🚨 PASAR SEDANG DIBEKUKAN OLEH ADMIN! Transaksi dihentikan sementara untuk maintenance keamanan.";
+            }
+
             const auctionSnap = await ts.get(auctionRef);
             if (!auctionSnap.exists()) throw "Lelang tidak ditemukan!";
             const auction = auctionSnap.data();
@@ -127,6 +145,12 @@ export async function rejectBid(db, sellerUid, auctionId) {
 
     try {
         await runTransaction(db, async (ts) => {
+            // CEK STATUS GLOBAL KILL SWITCH
+            const buffSnap = await ts.get(doc(db, "events", "serverBuffs"));
+            if (buffSnap.exists() && buffSnap.data().marketFrozen) {
+                throw "🚨 PASAR SEDANG DIBEKUKAN OLEH ADMIN! Transaksi dihentikan sementara untuk maintenance keamanan.";
+            }
+
             const auctionSnap = await ts.get(auctionRef);
             if (!auctionSnap.exists()) throw "Lelang tidak ditemukan!";
             const auction = auctionSnap.data();
@@ -156,6 +180,12 @@ export async function buyAuctionItem(db, buyerUid, auctionId, itemName, price, s
 
     try {
         await runTransaction(db, async (ts) => {
+            // CEK STATUS GLOBAL KILL SWITCH
+            const buffSnap = await ts.get(doc(db, "events", "serverBuffs"));
+            if (buffSnap.exists() && buffSnap.data().marketFrozen) {
+                throw "🚨 PASAR SEDANG DIBEKUKAN OLEH ADMIN! Transaksi dihentikan sementara untuk maintenance keamanan.";
+            }
+
             const auctionSnap = await ts.get(auctionRef);
             if (!auctionSnap.exists()) throw "Barang ini sudah terjual atau ditarik!";
             const auction = auctionSnap.data();
@@ -206,6 +236,12 @@ export async function cancelAuction(db, sellerUid, auctionId) {
 
     try {
         await runTransaction(db, async (ts) => {
+            // CEK STATUS GLOBAL KILL SWITCH
+            const buffSnap = await ts.get(doc(db, "events", "serverBuffs"));
+            if (buffSnap.exists() && buffSnap.data().marketFrozen) {
+                throw "🚨 PASAR SEDANG DIBEKUKAN OLEH ADMIN! Transaksi dihentikan sementara untuk maintenance keamanan.";
+            }
+
             const auctionSnap = await ts.get(auctionRef);
             if (!auctionSnap.exists()) throw "Lelang tidak ditemukan!";
             const auction = auctionSnap.data();

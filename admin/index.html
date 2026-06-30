@@ -349,26 +349,25 @@
 				
 				<!-- TAB 9: MARKET MONITOR -->
                 <div id="tab-market" class="admin-tab-section">
-                    <h2>💱 Monitor Pasar Coin</h2>
-                    <div class="panel">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #3f3f52;">
+                    <h2>💱 Monitor Pasar</h2>
+                    <!-- GANTI BAGIAN BAWAH TAB MARKET MENJADI INI -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                            <!-- KOLOM KIRI: BURSA COIN -->
                             <div>
-                                <h3 style="margin: 0; color: #dc3545;">🚨 Global Kill Switch (Pasar)</h3>
-                                <p style="margin: 5px 0 0 0; font-size: 12px; color: #aaa;">Bekukan seluruh aktivitas jual beli jika ada indikasi eksploitasi/bug duplikasi.</p>
+                                <h3 style="color: #ffca28; margin-top: 0; margin-bottom: 10px;">🪙 Live Bursa Coin</h3>
+                                <div id="admin-coin-list" style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 200px; max-height: 400px; overflow-y: auto;">
+                                    <div style="text-align: center; color: #aaa; font-size: 13px; padding: 20px;">Memuat bursa coin...</div>
+                                </div>
                             </div>
-                            <div style="display: flex; gap: 15px; align-items: center;">
-                                <span id="status-market-freeze" style="font-size: 18px; font-weight: bold; color: #28a745;">[ AMAN ]</span>
-                                <button id="btn-toggle-market-freeze" style="background: #dc3545; padding: 10px 20px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: white;">Bekukan Pasar</button>
-                            </div>
-                        </div>
 
-                        <h3 style="color: #00d2ff; margin-top: 0;">📋 Live Lelang / Pasar Coin</h3>
-                        <p style="color: #aaa; font-size: 12px; margin-top: -10px;">Monitor transaksi real-time. Takedown item yang dijual dengan harga tidak wajar.</p>
-                        
-                        <div id="admin-market-list" style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 200px; max-height: 400px; overflow-y: auto;">
-                            <div style="text-align: center; color: #aaa; font-size: 13px; padding: 20px;">Memuat data pasar...</div>
+                            <!-- KOLOM KANAN: LELANG BARANG -->
+                            <div>
+                                <h3 style="color: #00d2ff; margin-top: 0; margin-bottom: 10px;">⚔️ Live Lelang Barang</h3>
+                                <div id="admin-item-list" style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 200px; max-height: 400px; overflow-y: auto;">
+                                    <div style="text-align: center; color: #aaa; font-size: 13px; padding: 20px;">Memuat lelang barang...</div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
                 </div>
 
             </div>

@@ -38,63 +38,61 @@ document.getElementById('btn-toggle-market-freeze')?.addEventListener('click', a
     }
 });
 
-// ==========================================
-// 2. LIVE MONITORING & TAKEDOWN PAKSA (BURSA COIN)
+/// ==========================================
+// 2. LIVE MONITORING (COIN & ITEM) & TAKEDOWN
 // ==========================================
 window.listenToLiveMarket = function() {
-    const listDiv = document.getElementById('admin-market-list');
-    if (!listDiv) return;
+    const coinList = document.getElementById('admin-coin-list');
+    const itemList = document.getElementById('admin-item-list');
+    if (!coinList || !itemList) return;
 
-    // ?? PERBAIKAN: Membaca dari koleksi "coin_market" sesuai sistem game
-    const q = query(collection(db, "coin_market"), orderBy("timestamp", "desc"));
-    
-    onSnapshot(q, (snapshot) => {
-        listDiv.innerHTML = "";
-        
-        if (snapshot.empty) {
-            listDiv.innerHTML = `<div style="text-align: center; color: #aaa; padding: 20px; font-size: 13px;">Tidak ada transaksi di Bursa Coin saat ini.</div>`;
-            return;
-        }
-
+    // --- A. LISTENER BURSA COIN ---
+    onSnapshot(query(collection(db, "coin_market"), orderBy("timestamp", "desc")), (snapshot) => {
+        coinList.innerHTML = snapshot.empty ? `<div style="text-align: center; color: #aaa; padding: 20px;">Kosong</div>` : "";
         snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const itemId = docSnap.id;
-            
-            // ?? PERBAIKAN: Konversi Date.now() dari sistem game menjadi format tanggal terbaca
+            const data = docSnap.data(); const itemId = docSnap.id;
             const time = data.timestamp ? new Date(data.timestamp).toLocaleString('id-ID') : 'Baru saja';
             
-            listDiv.innerHTML += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px;">
-                    <div>
-                        <div style="color: #00d2ff; font-weight: bold; font-size: 15px;">?? ${data.amount.toLocaleString()} Coin</div>
-                        <div style="color: #aaa; font-size: 12px; margin-top: 3px;">
-                            Penjual: <span style="color: #ffca28; font-weight: bold;">${data.sellerName || data.sellerUid}</span> | 
-                            Harga: <span style="color: #28a745; font-weight: bold;">${(data.price || 0).toLocaleString()} Gold</span>
-                        </div>
-                        <div style="color: #777; font-size: 10px; margin-top: 4px;">Waktu: ${time} | ID Lelang: ${itemId}</div>
+            coinList.innerHTML += `
+                <div style="padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div style="color: #ffca28; font-weight: bold; font-size: 14px;">?? ${data.amount.toLocaleString()} Coin</div>
+                        <button class="btn-takedown-coin" data-id="${itemId}" data-amount="${data.amount}" style="background: #dc3545; color: white; padding: 4px 8px; font-size: 10px; font-weight: bold; border: none; border-radius: 3px; cursor: pointer;">Sita</button>
                     </div>
-                    <button class="btn-takedown-item" data-id="${itemId}" data-amount="${data.amount}" data-seller="${data.sellerUid}" style="background: #dc3545; color: white; padding: 8px 12px; font-size: 11px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; transition: 0.2s;">?? Sita Koin</button>
+                    <div style="color: #aaa; font-size: 11px; margin-top: 3px;">Penjual: ${data.sellerName || data.sellerUid} | Harga: ${(data.price || 0).toLocaleString()}G</div>
+                    <div style="color: #777; font-size: 10px; margin-top: 2px;">Waktu: ${time}</div>
                 </div>`;
         });
 
-        // Pasang Event Listener ke tombol Sita Koin (Takedown)
+        document.querySelectorAll('.btn-takedown-coin').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                if (!confirm(`SITA ${e.target.getAttribute('data-amount')} Coin ini tanpa refund?`)) return;
+                await deleteDoc(doc(db, "coin_market", e.target.getAttribute('data-id')));
+            });
+        });
+    });
+
+    // --- B. LISTENER LELANG BARANG ---
+    onSnapshot(query(collection(db, "market"), orderBy("timestamp", "desc")), (snapshot) => {
+        itemList.innerHTML = snapshot.empty ? `<div style="text-align: center; color: #aaa; padding: 20px;">Kosong</div>` : "";
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data(); const itemId = docSnap.id;
+            const bidText = data.highestBid ? `Bid: ${data.highestBid.amount}G` : `Harga: ${data.buyoutPrice}G`;
+            
+            itemList.innerHTML += `
+                <div style="padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div style="color: #00d2ff; font-weight: bold; font-size: 14px;">?? ${data.itemName}</div>
+                        <button class="btn-takedown-item" data-id="${itemId}" data-name="${data.itemName}" style="background: #dc3545; color: white; padding: 4px 8px; font-size: 10px; font-weight: bold; border: none; border-radius: 3px; cursor: pointer;">Sita</button>
+                    </div>
+                    <div style="color: #aaa; font-size: 11px; margin-top: 3px;">Penjual: ${data.sellerName || data.sellerId} | ${bidText}</div>
+                </div>`;
+        });
+
         document.querySelectorAll('.btn-takedown-item').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                const itemId = e.target.getAttribute('data-id');
-                const amount = e.target.getAttribute('data-amount');
-                const sellerUid = e.target.getAttribute('data-seller');
-                
-                if (!confirm(`?? PERINGATAN KERAS: Turunkan paksa [${amount} Coin] dari bursa?\nCatatan: Koin ini akan hangus disita oleh sistem (TIDAK dikembalikan ke saldo deposit penjual).`)) return;
-                
-                try {
-                    // Menghapus langsung dari koleksi coin_market tanpa melakukan pengembalian dana
-                    await deleteDoc(doc(db, "coin_market", itemId));
-                    
-                    if(window.logAdminAction) window.logAdminAction("SYSTEM", `Takedown paksa lelang ${amount} Coin milik UID: ${sellerUid}`);
-                    alert("Koin ilegal berhasil disita dan diturunkan dari Bursa!");
-                } catch (err) {
-                    alert("Gagal menghapus lelang: " + err.message);
-                }
+                if (!confirm(`SITA ${e.target.getAttribute('data-name')} ini dari lelang?`)) return;
+                await deleteDoc(doc(db, "market", e.target.getAttribute('data-id')));
             });
         });
     });
