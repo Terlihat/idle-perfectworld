@@ -75,17 +75,44 @@ window.listenToAdminLogs = function() {
 // ==========================================
 async function loadServerStats() {
     try {
+        // 1. Ambil dan hitung data pemain
         const userSnapshot = await getDocs(collection(db, "users"));
-        let totalPlayers = 0; let totalGold = 0; let totalCoin = 0;
+        let totalPlayers = 0; 
+        let totalGold = 0; 
+        let totalCoin = 0;
+        let totalBannedOrFrozen = 0;
+
         userSnapshot.forEach((doc) => {
-            totalPlayers++; const data = doc.data();
+            totalPlayers++; 
+            const data = doc.data();
             totalGold += (data.gold || 0) + (data.bankGold || 0);
             totalCoin += (data.coin || 0);
+            
+            // Cek integritas akun (Apakah di-ban atau dibekukan?)
+            if (data.banned || data.isFrozen) {
+                totalBannedOrFrozen++;
+            }
         });
+
+        // 2. Ambil dan hitung data Guild
+        const guildSnapshot = await getDocs(collection(db, "guilds"));
+        const totalGuilds = guildSnapshot.size; // .size langsung mengembalikan jumlah dokumen
+
+        // 3. Render angka ke layar Dashboard
         document.getElementById('stat-total-players').innerText = totalPlayers.toLocaleString();
         document.getElementById('stat-total-gold').innerText = totalGold.toLocaleString();
         document.getElementById('stat-total-coin').innerText = totalCoin.toLocaleString();
-    } catch (err) { console.error(err); }
+        
+        // Render UI metrik baru (gunakan if untuk mencegah error jika elemen belum termuat)
+        const statBanned = document.getElementById('stat-total-banned');
+        if (statBanned) statBanned.innerText = totalBannedOrFrozen.toLocaleString();
+        
+        const statGuilds = document.getElementById('stat-total-guilds');
+        if (statGuilds) statGuilds.innerText = totalGuilds.toLocaleString();
+
+    } catch (err) { 
+        console.error("Gagal memuat statistik server:", err); 
+    }
 }
 
 // ==========================================
