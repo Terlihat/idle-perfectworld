@@ -1,6 +1,6 @@
 import { db, auth } from '../../js/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp, updateDoc, setDoc, onSnapshot, deleteDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp, updateDoc, setDoc, onSnapshot, deleteDoc, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // PERBAIKAN: Import Database Item agar list selalu up-to-date otomatis!
 import { ITEM_DB } from '../../js/data/items.js';
@@ -744,11 +744,13 @@ document.getElementById('btn-search-guild')?.addEventListener('click', async () 
     btnSearch.innerText = "Mencari...";
 
     try {
-        // Asumsi struktur database Guild Anda menggunakan Nama Guild sebagai Document ID
-        const guildRef = doc(db, "guilds", searchValue);
-        const docSnap = await getDoc(guildRef);
+        // METODE BARU: Mencari berdasarkan field "name" di dalam database
+        const q = query(collection(db, "guilds"), where("name", "==", searchValue));
+        const querySnapshot = await getDocs(q);
 
-        if (docSnap.exists()) {
+        if (!querySnapshot.empty) {
+            // Guild ditemukan melalui nama field!
+            const docSnap = querySnapshot.docs[0]; // Ambil guild pertama yang cocok
             currentEditingGuildId = docSnap.id;
             const data = docSnap.data();
 
@@ -759,8 +761,24 @@ document.getElementById('btn-search-guild')?.addEventListener('click', async () 
 
             document.getElementById('admin-guild-results').style.display = "block";
         } else {
-            alert("❌ Guild tidak ditemukan! Pastikan huruf besar/kecilnya sesuai.");
-            document.getElementById('admin-guild-results').style.display = "none";
+            // METODE CADANGAN: Jika ternyata ID Dokumennya adalah nama guild
+            const guildRef = doc(db, "guilds", searchValue);
+            const fallbackSnap = await getDoc(guildRef);
+
+            if (fallbackSnap.exists()) {
+                currentEditingGuildId = fallbackSnap.id;
+                const data = fallbackSnap.data();
+
+                document.getElementById('admin-guild-name').innerText = data.name || fallbackSnap.id;
+                document.getElementById('admin-guild-level').innerText = data.level || 1;
+                document.getElementById('admin-guild-gold').innerText = (data.gold || 0).toLocaleString();
+                document.getElementById('admin-guild-leader').value = data.leaderId || "";
+
+                document.getElementById('admin-guild-results').style.display = "block";
+            } else {
+                alert("❌ Guild tidak ditemukan! Pastikan nama persis sama (termasuk huruf besar/kecil dan spasi).");
+                document.getElementById('admin-guild-results').style.display = "none";
+            }
         }
     } catch (err) {
         alert("Gagal mencari Guild: " + err.message);
