@@ -122,6 +122,7 @@
 
             <div style="display: flex; gap: 10px;">
                 <button id="btn-save-player" style="background: #0366d6; flex: 1;">💾 Simpan Perubahan</button>
+                <button id="btn-freeze-player" style="background: #6f42c1; flex: 1;">❄️ Bekukan (Freeze)</button>
                 <button id="btn-ban-player" style="background: #dc3545; flex: 1;">🚫 Banned Pemain</button>
             </div>
 
@@ -261,6 +262,39 @@
         <div id="active-giftcodes-list"
             style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 50px;">
             <div style="text-align: center; color: #aaa; font-size: 13px;">Memuat kode aktif...</div>
+        </div>
+    </div>
+
+    <h2>🏰 Manajemen Guild (Klan)</h2>
+    <div class="panel">
+        <p style="color: #aaa; font-size: 13px; margin-top: 0;">Kelola struktur kepemimpinan atau bubarkan Guild yang
+            melanggar aturan.</p>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <input type="text" id="admin-search-guild" placeholder="Ketik Nama Guild dengan persis..."
+                style="flex: 1; padding: 10px; background: #121216; color: #fff; border: 1px solid #3f3f52; border-radius: 4px;">
+            <button id="btn-search-guild" style="background: #28a745; width: auto; padding: 0 20px;">Cari Guild</button>
+        </div>
+
+        <div id="admin-guild-results" style="display: none; border-top: 1px dashed #30363d; padding-top: 20px;">
+            <h3 id="admin-guild-name" style="color: #00d2ff; margin-top: 0; font-size: 22px;">Nama Guild</h3>
+            <p style="font-size: 14px; color: #8b949e; margin-bottom: 15px;">
+                Level: <strong id="admin-guild-level" style="color: #fff;">1</strong> |
+                Dana: <strong id="admin-guild-gold" style="color: #ffd700;">0</strong> Gold
+            </p>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Ketua Guild Saat Ini (Leader UID)</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="admin-guild-leader"
+                        style="flex: 1; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
+                    <button id="btn-change-leader" style="background: #0366d6; width: auto; padding: 0 15px;">Ganti
+                        Ketua</button>
+                </div>
+            </div>
+
+            <button id="btn-disband-guild" style="background: #dc3545; width: 100%;">💥 Bubarkan Guild (Hapus
+                Paksa)</button>
         </div>
     </div>
 

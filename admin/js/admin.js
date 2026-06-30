@@ -311,6 +311,40 @@ document.getElementById('btn-ban-player').addEventListener('click', async () => 
     }
 });
 
+// Fitur Keamanan: Freeze / Bekukan Akun
+let currentEditingFrozenStatus = false;
+
+document.getElementById('btn-freeze-player')?.addEventListener('click', async () => {
+    if (!currentEditingUid) return;
+    const actionText = currentEditingFrozenStatus ? "Mencairkan (Un-Freeze)" : "Membekukan";
+
+    if (!confirm(`❄️ Yakin ingin ${actionText} akun ini? Pemain tidak akan bisa memindahkan item atau gold saat dibekukan.`)) return;
+
+    try {
+        const newStatus = !currentEditingFrozenStatus;
+        await updateDoc(doc(db, "users", currentEditingUid), {
+            isFrozen: newStatus
+        });
+
+        currentEditingFrozenStatus = newStatus;
+        window.logAdminAction("SYSTEM", `Telah melakukan ${newStatus ? 'FREEZE' : 'UN-FREEZE'} pada UID: ${currentEditingUid}`);
+
+        alert(`✅ Akun berhasil di-${newStatus ? "Bekukan" : "Cairkan"}!`);
+
+        // Refresh visual tombol
+        const btnFreeze = document.getElementById('btn-freeze-player');
+        if (currentEditingFrozenStatus) {
+            btnFreeze.innerText = "🔥 Cairkan Akun (Un-Freeze)";
+            btnFreeze.style.background = "#d35400";
+        } else {
+            btnFreeze.innerText = "❄️ Bekukan (Freeze)";
+            btnFreeze.style.background = "#6f42c1";
+        }
+    } catch (err) {
+        alert("Gagal mengubah status pembekuan: " + err.message);
+    }
+});
+
 // ==========================================
 // 6. FITUR KONTROL WORLD BOSS
 // ==========================================
@@ -696,3 +730,80 @@ function listenToAdminLogs() {
 
 // Panggil pendengar log saat halaman dimuat
 setTimeout(listenToAdminLogs, 1500);
+
+// ==========================================
+// 10. MANAJEMEN GUILD (KLAN)
+// ==========================================
+let currentEditingGuildId = null;
+
+document.getElementById('btn-search-guild')?.addEventListener('click', async () => {
+    const searchValue = document.getElementById('admin-search-guild').value.trim();
+    if (!searchValue) return alert("Masukkan Nama Guild terlebih dahulu!");
+
+    const btnSearch = document.getElementById('btn-search-guild');
+    btnSearch.innerText = "Mencari...";
+
+    try {
+        // Asumsi struktur database Guild Anda menggunakan Nama Guild sebagai Document ID
+        const guildRef = doc(db, "guilds", searchValue);
+        const docSnap = await getDoc(guildRef);
+
+        if (docSnap.exists()) {
+            currentEditingGuildId = docSnap.id;
+            const data = docSnap.data();
+
+            document.getElementById('admin-guild-name').innerText = data.name || docSnap.id;
+            document.getElementById('admin-guild-level').innerText = data.level || 1;
+            document.getElementById('admin-guild-gold').innerText = (data.gold || 0).toLocaleString();
+            document.getElementById('admin-guild-leader').value = data.leaderId || "";
+
+            document.getElementById('admin-guild-results').style.display = "block";
+        } else {
+            alert("❌ Guild tidak ditemukan! Pastikan huruf besar/kecilnya sesuai.");
+            document.getElementById('admin-guild-results').style.display = "none";
+        }
+    } catch (err) {
+        alert("Gagal mencari Guild: " + err.message);
+    } finally {
+        btnSearch.innerText = "Cari Guild";
+    }
+});
+
+// Ganti Ketua Guild Paksa
+document.getElementById('btn-change-leader')?.addEventListener('click', async () => {
+    if (!currentEditingGuildId) return;
+    const newLeaderId = document.getElementById('admin-guild-leader').value.trim();
+    if (!newLeaderId) return alert("UID Ketua baru tidak boleh kosong!");
+
+    if (!confirm(`Yakin ingin memaksa pemindahan kepemimpinan Guild [${currentEditingGuildId}] ke UID: ${newLeaderId}?`)) return;
+
+    try {
+        await updateDoc(doc(db, "guilds", currentEditingGuildId), {
+            leaderId: newLeaderId
+        });
+
+        window.logAdminAction("SYSTEM", `Mengganti paksa Ketua Guild [${currentEditingGuildId}] ke UID: ${newLeaderId}`);
+        alert("✅ Kepemimpinan Guild berhasil dipindahtangankan!");
+    } catch (err) {
+        alert("Gagal mengganti ketua: " + err.message);
+    }
+});
+
+// Bubarkan Guild Paksa
+document.getElementById('btn-disband-guild')?.addEventListener('click', async () => {
+    if (!currentEditingGuildId) return;
+
+    if (!confirm(`⚠️ PERINGATAN KERAS: Yakin ingin MEMBUBARKAN Guild [${currentEditingGuildId}] secara sepihak? Seluruh dana dan level guild akan hangus!`)) return;
+
+    try {
+        await deleteDoc(doc(db, "guilds", currentEditingGuildId));
+
+        window.logAdminAction("SYSTEM", `Membubarkan paksa Guild: [${currentEditingGuildId}]`);
+
+        document.getElementById('admin-guild-results').style.display = "none";
+        document.getElementById('admin-search-guild').value = "";
+        alert("💥 Guild berhasil dibubarkan selamanya!");
+    } catch (err) {
+        alert("Gagal membubarkan Guild: " + err.message);
+    }
+});
