@@ -18,7 +18,7 @@ window.listenToMarketStatus = function () {
                 statusText.innerText = isMarketFrozen ? "[ DIBEKUKAN ]" : "[ AMAN ]";
                 statusText.style.color = isMarketFrozen ? "#dc3545" : "#28a745";
 
-                btnToggle.innerText = isMarketFrozen ? "Buka Kembali Pasar" : "?? Bekukan Pasar";
+                btnToggle.innerText = isMarketFrozen ? "Buka Kembali Pasar" : "🚨 Bekukan Pasar";
                 btnToggle.style.background = isMarketFrozen ? "#28a745" : "#dc3545";
             }
         }
@@ -27,7 +27,7 @@ window.listenToMarketStatus = function () {
 
 document.getElementById('btn-toggle-market-freeze')?.addEventListener('click', async () => {
     const actionText = isMarketFrozen ? "MEMBUKA" : "MEMBEKUKAN";
-    if (!confirm(`?? Yakin ingin ${actionText} seluruh aktivitas Bursa Coin?\nPemain tidak akan bisa membeli atau menjual coin selama dibekukan.`)) return;
+    if (!confirm('⚠️ Yakin ingin ${actionText} seluruh aktivitas Bursa Coin?\nPemain tidak akan bisa membeli atau menjual coin selama dibekukan.')) return;
 
     try {
         await updateDoc(doc(db, "events", "serverBuffs"), { marketFrozen: !isMarketFrozen });
@@ -37,7 +37,7 @@ document.getElementById('btn-toggle-market-freeze')?.addEventListener('click', a
     }
 });
 
-/// ==========================================
+// ==========================================
 // 2. LIVE MONITORING (COIN & ITEM) & TAKEDOWN
 // ==========================================
 window.listenToLiveMarket = function () {
@@ -55,7 +55,7 @@ window.listenToLiveMarket = function () {
             coinList.innerHTML += `
                 <div style="padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px;">
                     <div style="display: flex; justify-content: space-between;">
-                        <div style="color: #ffca28; font-weight: bold; font-size: 14px;">?? ${data.amount.toLocaleString()} Coin</div>
+                        <div style="color: #ffca28; font-weight: bold; font-size: 14px;">🪙 ${data.amount.toLocaleString()} Coin</div>
                         <button class="btn-takedown-coin" data-id="${itemId}" data-amount="${data.amount}" style="background: #dc3545; color: white; padding: 4px 8px; font-size: 10px; font-weight: bold; border: none; border-radius: 3px; cursor: pointer;">Sita</button>
                     </div>
                     <div style="color: #aaa; font-size: 11px; margin-top: 3px;">Penjual: ${data.sellerName || data.sellerUid} | Harga: ${(data.price || 0).toLocaleString()}G</div>
@@ -71,6 +71,7 @@ window.listenToLiveMarket = function () {
         });
     });
 
+    // --- B. LISTENER LELANG BARANG ---
     onSnapshot(query(collection(db, "market"), orderBy("timestamp", "desc")), (snapshot) => {
         itemList.innerHTML = snapshot.empty ? `<div style="text-align: center; color: #aaa; padding: 20px;">Kosong</div>` : "";
         snapshot.forEach((docSnap) => {
@@ -80,7 +81,7 @@ window.listenToLiveMarket = function () {
             itemList.innerHTML += `
                 <div style="padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px;">
                     <div style="display: flex; justify-content: space-between;">
-                        <div style="color: #00d2ff; font-weight: bold; font-size: 14px;">?? ${data.itemName}</div>
+                        <div style="color: #00d2ff; font-weight: bold; font-size: 14px;">⚔️ ${data.itemName}</div>
                         <button class="btn-takedown-item" data-id="${itemId}" data-name="${data.itemName}" style="background: #dc3545; color: white; padding: 4px 8px; font-size: 10px; font-weight: bold; border: none; border-radius: 3px; cursor: pointer;">Sita</button>
                     </div>
                     <div style="color: #aaa; font-size: 11px; margin-top: 3px;">Penjual: ${data.sellerName || data.sellerId} | ${bidText}</div>
