@@ -52,6 +52,7 @@ window.listenToGiftCodes = function() {
         listDiv.innerHTML = snapshot.empty ? `<div style="text-align: center; color: #aaa; padding: 10px;">Belum ada kode aktif.</div>` : "";
         snapshot.forEach((docSnap) => {
             const data = docSnap.data(); const code = docSnap.id;
+			const claimedCount = data.claimedBy ? data.claimedBy.length : 0;
             let rewardText = [];
             if (data.gold) rewardText.push(`💰 ${data.gold}`); if (data.coin) rewardText.push(`🪙 ${data.coin}`); if (data.itemName) rewardText.push(`📦 ${data.itemName}`);
             
