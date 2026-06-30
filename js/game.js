@@ -2124,3 +2124,90 @@ document.addEventListener('click', function (e) {
         }, 100); // Tunggu sejenak hingga HTML terbuka, lalu SIRAM dengan data resep!
     }
 });
+
+// ==========================================
+// SISTEM KLAIM KODE REDEEM (GIFT CODE)
+// ==========================================
+window.claimGiftCode = async function () {
+    const inputEl = document.getElementById('input-redeem-code');
+    if (!inputEl) return;
+
+    let codeName = inputEl.value.trim().toUpperCase();
+    codeName = codeName.replace(/\s+/g, ''); // Hapus spasi jika pemain tidak sengaja mengetiknya
+
+    if (!codeName) return window.rpgAlert("❌ Silakan masukkan kode redeem terlebih dahulu!");
+
+    // Konfirmasi Firebase Firestore (Pastikan import runTransaction dan doc sudah ada di atas file)
+    const { runTransaction, doc } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
+
+    try {
+        // Mengubah kursor jadi loading agar pemain tidak klik berkali-kali
+        inputEl.disabled = true;
+
+        await runTransaction(db, async (transaction) => {
+            const codeRef = doc(db, "giftCodes", codeName);
+            const userRef = doc(db, "users", currentUserUid); // Pastikan variabel currentUserUid milik Anda benar
+
+            const codeSnap = await transaction.get(codeRef);
+            if (!codeSnap.exists()) {
+                throw new Error("❌ Kode tidak valid atau tidak ditemukan.");
+            }
+
+            const codeData = codeSnap.data();
+            const claimedArray = codeData.claimedBy || [];
+
+            // 1. Cek apakah pemain sudah pernah mengklaim kode ini
+            if (claimedArray.includes(currentUserUid)) {
+                throw new Error("⚠️ Anda sudah pernah menukarkan kode ini!");
+            }
+
+            // 2. Cek apakah kuota kode sudah habis
+            if (claimedArray.length >= codeData.limit) {
+                throw new Error("😭 Yah, kuota untuk kode ini sudah habis diklaim pemain lain.");
+            }
+
+            // 3. Ambil data pemain saat ini
+            const userSnap = await transaction.get(userRef);
+            if (!userSnap.exists()) throw new Error("Gagal membaca data pemain.");
+            const userData = userSnap.data();
+
+            // 4. Proses pemberian hadiah
+            let newGold = (userData.gold || 0) + (codeData.gold || 0);
+            let newCoin = (userData.coin || 0) + (codeData.coin || 0);
+            let newInv = userData.inventory || {};
+
+            let rewardMsg = [];
+            if (codeData.gold > 0) rewardMsg.push(`💰 ${codeData.gold.toLocaleString()} Gold`);
+            if (codeData.coin > 0) rewardMsg.push(`🪙 ${codeData.coin.toLocaleString()} Coin`);
+
+            if (codeData.itemName && codeData.itemQty > 0) {
+                newInv[codeData.itemName] = (newInv[codeData.itemName] || 0) + codeData.itemQty;
+                rewardMsg.push(`📦 ${codeData.itemName} (x${codeData.itemQty})`);
+            }
+
+            // 5. Update array claimedBy di dokumen kode (Tambahkan UID pemain ke daftar)
+            claimedArray.push(currentUserUid);
+            transaction.update(codeRef, { claimedBy: claimedArray });
+
+            // 6. Update data pemain (Berikan hadiahnya)
+            transaction.update(userRef, {
+                gold: newGold,
+                coin: newCoin,
+                inventory: newInv
+            });
+
+            // Simpan pesan sukses untuk ditampilkan setelah transaksi selesai
+            window._tempGiftRewardMsg = `🎉 SELAMAT! Anda berhasil menukarkan kode.\n\nMendapatkan:\n${rewardMsg.join('\n')}`;
+        });
+
+        // Tampilkan pesan sukses dari transaksi
+        window.rpgAlert(window._tempGiftRewardMsg, "Klaim Berhasil");
+        inputEl.value = ""; // Kosongkan input
+
+    } catch (err) {
+        // Menangkap error dari validasi transaksi
+        window.rpgAlert(err.message, "Gagal Klaim");
+    } finally {
+        inputEl.disabled = false;
+    }
+};

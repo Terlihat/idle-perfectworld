@@ -6,7 +6,7 @@ export async function loadUIComponents() {
         { id: 'screen-auth', file: './components/auth.html' },
         { id: 'screen-char-select', file: './components/char-select.html' },
 
-        // --- Header & Navigasi (Komponen Baru) ---
+        // --- Header & Navigasi ---
         { id: 'component-navigation', file: './components/navigation.html' },
 
         // --- Kolom 1 (Kiri) ---
@@ -22,7 +22,7 @@ export async function loadUIComponents() {
         { id: 'panel-party', file: './components/party.html' },
         { id: 'panel-quest', file: './components/quest.html' },
         { id: 'panel-blacksmith', file: './components/blacksmith.html' },
-        { id: 'panel-pk', file: './components/pk.html' }, // Komponen Baru
+        { id: 'panel-pk', file: './components/pk.html' },
         { id: 'panel-auction', file: './components/auction.html' },
         { id: 'panel-refine-transfer', file: './components/refine-transfer.html' },
 
@@ -37,7 +37,10 @@ export async function loadUIComponents() {
         { id: 'panel-guild', file: './components/guild.html' },
         { id: 'panel-chat', file: './components/chat-box.html' },
 
-        // --- Sistem Modal & Pop-up (Komponen Baru) ---
+        // 🔥 FITUR BARU: Panel Redeem Code
+        { id: 'panel-redeem-code', file: './components/redeem-code.html' },
+
+        // --- Sistem Modal & Pop-up ---
         { id: 'component-modals', file: './components/modals.html' }
     ];
 
@@ -70,7 +73,8 @@ window.togglePanel = function (panelId) {
         'panel-auction', 'panel-refine-transfer', 'panel-friends',
         'panel-leaderboard', 'panel-mall', 'panel-shop',
         'panel-coin-market', 'panel-mailbox', 'panel-bank',
-        'panel-guild'
+        'panel-guild',
+        'panel-redeem-code' // 🔥 Tambahkan panel redeem agar ikut logika toggle
     ];
 
     // 2. Sembunyikan semua panel tersebut
@@ -103,18 +107,18 @@ window.togglePanel = function (panelId) {
             window.updateMyLocation("⚖️ Rumah Lelang");
         } else if (panelId === 'panel-friends') {
             window.updateMyLocation("Kota Aman (Mengecek Teman)");
-            // Otomatis reset tab ke 'Daftar Teman' saat panel dibuka
             if (typeof window.toggleFriendTab === 'function') {
                 window.toggleFriendTab('list');
             }
+        } else if (panelId === 'panel-redeem-code') {
+            // 🔥 Status Radar untuk Redeem Code
+            window.updateMyLocation("🎁 Menukarkan Kode Redeem");
         } else {
-            // Jika buka Mall, Tas, atau panel aman lainnya
             window.updateMyLocation("Kota Aman (Idle)");
         }
     }
 };
 
-// Fungsi tambahan untuk panel khusus yang tumpang tindih (jika dibutuhkan)
 window.bukaPanelKhusus = function (panelId) {
     const targetPanel = document.getElementById(panelId);
     if (targetPanel) targetPanel.style.display = 'block';
