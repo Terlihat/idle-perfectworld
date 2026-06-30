@@ -744,24 +744,26 @@ document.getElementById('btn-search-guild')?.addEventListener('click', async () 
     btnSearch.innerText = "Mencari...";
 
     try {
-        // METODE BARU: Mencari berdasarkan field "name" di dalam database
+        // METODE BARU: Mencari berdasarkan field "name"
         const q = query(collection(db, "guilds"), where("name", "==", searchValue));
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
-            // Guild ditemukan melalui nama field!
-            const docSnap = querySnapshot.docs[0]; // Ambil guild pertama yang cocok
+            const docSnap = querySnapshot.docs[0];
             currentEditingGuildId = docSnap.id;
             const data = docSnap.data();
 
             document.getElementById('admin-guild-name').innerText = data.name || docSnap.id;
             document.getElementById('admin-guild-level').innerText = data.level || 1;
-            document.getElementById('admin-guild-gold').innerText = (data.gold || 0).toLocaleString();
+
+            // 🔥 PERBAIKAN: Membaca dari field vaultGold
+            document.getElementById('admin-guild-gold').innerText = (data.vaultGold || 0).toLocaleString();
+
             document.getElementById('admin-guild-leader').value = data.leaderId || "";
 
             document.getElementById('admin-guild-results').style.display = "block";
         } else {
-            // METODE CADANGAN: Jika ternyata ID Dokumennya adalah nama guild
+            // METODE CADANGAN: Jika ID Dokumen adalah nama guild
             const guildRef = doc(db, "guilds", searchValue);
             const fallbackSnap = await getDoc(guildRef);
 
@@ -771,7 +773,10 @@ document.getElementById('btn-search-guild')?.addEventListener('click', async () 
 
                 document.getElementById('admin-guild-name').innerText = data.name || fallbackSnap.id;
                 document.getElementById('admin-guild-level').innerText = data.level || 1;
-                document.getElementById('admin-guild-gold').innerText = (data.gold || 0).toLocaleString();
+
+                // 🔥 PERBAIKAN: Membaca dari field vaultGold
+                document.getElementById('admin-guild-gold').innerText = (data.vaultGold || 0).toLocaleString();
+
                 document.getElementById('admin-guild-leader').value = data.leaderId || "";
 
                 document.getElementById('admin-guild-results').style.display = "block";
