@@ -61,6 +61,7 @@ window.listenToGiftCodes = function() {
                     <div>
                         <div style="color: #00d2ff; font-weight: bold; font-size: 16px;">${code}</div>
                         <div style="color: #aaa; font-size: 11px;">Hadiah: ${rewardText.join(' | ')}</div>
+						<div style="color: #ffca28; font-size: 11px; margin-top: 2px;">Terklaim: ${claimedCount} / ${data.limit}</div>
                     </div>
                     <button class="btn-delete-code" data-code="${code}" style="background: #dc3545; color: white; padding: 6px; border: none; cursor: pointer;">Hapus</button>
                 </div>`;
