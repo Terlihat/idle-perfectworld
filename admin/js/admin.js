@@ -1,6 +1,6 @@
 import { db, auth } from '../../js/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp, updateDoc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, addDoc, serverTimestamp, updateDoc, setDoc, onSnapshot, deleteDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // PERBAIKAN: Import Database Item agar list selalu up-to-date otomatis!
 import { ITEM_DB } from '../../js/data/items.js';
@@ -137,6 +137,9 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
             // JIKA UID DIISI: Kirim ke 1 Pemain saja (Logika Lama)
             const mailboxRef = collection(db, "users", targetUid, "mailbox");
             await addDoc(mailboxRef, mailData);
+
+            const targetDesc = targetUid ? `UID: ${targetUid}` : "BROADCAST SEMUA PEMAIN";
+            window.logAdminAction("MAIL", `Mengirim surat "${title}" ke ${targetDesc}. Lampiran: ${gold}G, ${coin}C, Item: ${itemName}`);
             alert(`✅ Surat "${title}" berhasil dikirim ke UID: ${targetUid}`);
         } else {
             // JIKA UID KOSONG: Lakukan Broadcast ke Seluruh Pemain
@@ -166,6 +169,8 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
             // Eksekusi semua pengiriman secara serentak (paralel) agar tidak lag
             await Promise.all(sendPromises);
 
+            const targetDesc = targetUid ? `UID: ${targetUid}` : "BROADCAST SEMUA PEMAIN";
+            window.logAdminAction("MAIL", `Mengirim surat "${title}" ke ${targetDesc}. Lampiran: ${gold}G, ${coin}C, Item: ${itemName}`);
             alert(`📢 BROADCAST SUKSES! Surat beserta hadiah berhasil dikirim ke ${sendPromises.length} pemain.`);
         }
 
@@ -267,6 +272,7 @@ document.getElementById('btn-save-player').addEventListener('click', async () =>
             vipLevel: newVip
         });
 
+        window.logAdminAction("ECONOMY", `Mengubah data UID: ${currentEditingUid} menjadi Level ${newLevel}, Gold: ${newGold}, Coin: ${newCoin}`);
         document.getElementById('edit-player-level').innerText = newLevel;
         alert("✅ Data ekonomi pemain berhasil diperbarui!");
     } catch (err) {
@@ -288,6 +294,7 @@ document.getElementById('btn-ban-player').addEventListener('click', async () => 
             banned: newStatus
         });
 
+        window.logAdminAction("BANNED", `Telah melakukan ${newStatus ? 'Banned' : 'Unban'} pada UID: ${currentEditingUid}`);
         currentEditingBannedStatus = newStatus;
         alert(`✅ Pemain berhasil di-${newStatus ? "Banned" : "Unban"}!`);
 
@@ -500,6 +507,7 @@ document.getElementById('btn-inject-item')?.addEventListener('click', async () =
 
             await updateDoc(userRef, { inventory: currentInv });
 
+            window.logAdminAction("INJECT", `Menyuntikkan item ${itemQty}x [${itemName}] ke tas UID: ${currentEditingUid}`);
             alert(`✅ SUKSES! ${itemQty}x [${itemName}] berhasil disuntikkan langsung ke tas pemain.`);
             renderPlayerInventory(currentEditingUid, currentInv); // Refresh daftar
         }
@@ -609,6 +617,7 @@ document.getElementById('btn-create-giftcode')?.addEventListener('click', async 
                 createdAt: serverTimestamp()
             });
 
+            window.logAdminAction("SYSTEM", `Membuat Kode Redeem [${codeName}] dengan kuota ${limit}. Hadiah: ${gold} Gold, ${coin} Coin, ${itemName || 'Tanpa Item'}`);
             alert(`✅ SUKSES! Kode Redeem [${codeName}] berhasil dibuat.`);
 
             // Kosongkan form
@@ -624,3 +633,68 @@ document.getElementById('btn-create-giftcode')?.addEventListener('click', async 
         btnCreate.disabled = false;
     }
 });
+
+// ==========================================
+// 9. SISTEM AUDIT LOG & KEAMANAN
+// ==========================================
+
+// Fungsi untuk mencatat aktivitas ke database
+window.logAdminAction = async function (actionType, details) {
+    try {
+        await addDoc(collection(db, "adminLogs"), {
+            adminUid: adminUid || "UNKNOWN",
+            actionType: actionType,
+            details: details,
+            timestamp: serverTimestamp()
+        });
+    } catch (err) {
+        console.error("Gagal mencatat log admin:", err);
+    }
+};
+
+// Fungsi untuk membaca dan menampilkan log secara realtime
+function listenToAdminLogs() {
+    const listDiv = document.getElementById('admin-log-list');
+    if (!listDiv) return;
+
+    // Ambil 50 log terbaru, diurutkan dari yang paling baru
+    const q = query(collection(db, "adminLogs"), orderBy("timestamp", "desc"), limit(50));
+
+    onSnapshot(q, (snapshot) => {
+        listDiv.innerHTML = "";
+
+        if (snapshot.empty) {
+            listDiv.innerHTML = `<div style="text-align: center; color: #aaa; padding: 10px; font-size: 13px;">Belum ada catatan aktivitas admin.</div>`;
+            return;
+        }
+
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const time = data.timestamp ? data.timestamp.toDate().toLocaleString('id-ID') : 'Baru saja...';
+
+            // Pewarnaan Badge Kategori
+            let typeColor = "#fff";
+            let typeBg = "#333";
+
+            if (data.actionType === "BANNED") { typeColor = "#fff"; typeBg = "#dc3545"; }
+            else if (data.actionType === "INJECT") { typeColor = "#fff"; typeBg = "#28a745"; }
+            else if (data.actionType === "ECONOMY") { typeColor = "#000"; typeBg = "#ffca28"; }
+            else if (data.actionType === "SYSTEM") { typeColor = "#000"; typeBg = "#00d2ff"; }
+            else if (data.actionType === "MAIL") { typeColor = "#fff"; typeBg = "#6f42c1"; }
+
+            const row = document.createElement('div');
+            row.style.cssText = "padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px;";
+            row.innerHTML = `
+                <div style="font-size: 11px; margin-bottom: 5px; color: #aaa;">
+                    <span style="background: ${typeBg}; color: ${typeColor}; padding: 2px 6px; border-radius: 3px; font-weight: bold; margin-right: 8px;">${data.actionType}</span> 
+                    🕰️ ${time}
+                </div>
+                <div style="color: #fff; font-size: 13px; line-height: 1.4;">${data.details}</div>
+            `;
+            listDiv.appendChild(row);
+        });
+    });
+}
+
+// Panggil pendengar log saat halaman dimuat
+setTimeout(listenToAdminLogs, 1500);
