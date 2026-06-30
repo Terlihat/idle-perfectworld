@@ -89,5 +89,11 @@ document.getElementById('btn-create-giftcode')?.addEventListener('click', async 
         await setDoc(codeRef, { limit, gold, coin, itemName: itemName || null, itemQty: itemName ? itemQty : 0, claimedBy: [], createdAt: serverTimestamp() });
         if(window.logAdminAction) window.logAdminAction("SYSTEM", `Membuat Kode Redeem [${codeName}] limit ${limit}`);
         alert(`✅ Kode Redeem dibuat.`);
+		
+		document.getElementById('gift-code-name').value = "";
+        document.getElementById('gift-code-gold').value = "0";
+        document.getElementById('gift-code-coin').value = "0";
+        document.getElementById('gift-code-item-name').value = "";
+			
     } catch (err) { alert("Gagal: " + err.message); }
 });

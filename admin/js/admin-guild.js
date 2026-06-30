@@ -47,6 +47,7 @@ document.getElementById('btn-disband-guild')?.addEventListener('click', async ()
         await deleteDoc(doc(db, "guilds", currentEditingGuildId));
         if(window.logAdminAction) window.logAdminAction("SYSTEM", `Membubarkan paksa Guild: [${currentEditingGuildId}]`);
         document.getElementById('admin-guild-results').style.display = "none";
+		document.getElementById('admin-search-guild').value = "";
         alert("💥 Guild berhasil dibubarkan!");
     } catch (err) { alert("Gagal membubarkan Guild: " + err.message); }
 });

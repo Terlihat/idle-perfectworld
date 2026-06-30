@@ -57,6 +57,14 @@ document.getElementById('btn-send-mail')?.addEventListener('click', async () => 
             if(window.logAdminAction) window.logAdminAction("MAIL", `BROADCAST surat "${title}" ke ${sendPromises.length} pemain. Lampiran: ${gold}G, ${coin}C, Item: ${itemName}`);
             alert(`📢 BROADCAST SUKSES ke ${sendPromises.length} pemain.`);
         }
+		
+		document.getElementById('mail-title').value = "";
+        document.getElementById('mail-message').value = "";
+        document.getElementById('mail-gold').value = "0";
+        document.getElementById('mail-coin').value = "0";
+        document.getElementById('mail-item-name').value = "";
+        if (document.getElementById('mail-item-qty')) document.getElementById('mail-item-qty').value = "1";
+		
     } catch (err) { alert("Gagal mengirim surat: " + err.message);
     } finally { btnSend.disabled = false; btnSend.innerText = "Kirim Surat Sekarang"; }
 });

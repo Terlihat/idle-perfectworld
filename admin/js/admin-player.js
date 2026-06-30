@@ -65,8 +65,13 @@ document.getElementById('btn-ban-player')?.addEventListener('click', async () =>
         currentEditingBannedStatus = !currentEditingBannedStatus;
         await updateDoc(doc(db, "users", currentEditingUid), { banned: currentEditingBannedStatus });
         if(window.logAdminAction) window.logAdminAction("BANNED", `${currentEditingBannedStatus ? 'Banned' : 'Unban'} pada UID: ${currentEditingUid}`);
-        document.getElementById('btn-search-player').click(); // Refresh UI
-        alert("✅ Status Ban diperbarui!");
+        
+        alert(`✅ Pemain berhasil di-${currentEditingBannedStatus ? "Banned" : "Unban"}!`);
+        
+        const btnBan = document.getElementById('btn-ban-player');
+        btnBan.innerText = currentEditingBannedStatus ? "✅ Buka Ban (Un-Ban)" : "🚫 Banned Pemain";
+        btnBan.style.background = currentEditingBannedStatus ? "#28a745" : "#dc3545";
+
     } catch (err) { alert("Gagal mengubah ban."); }
 });
 
@@ -77,8 +82,13 @@ document.getElementById('btn-freeze-player')?.addEventListener('click', async ()
         currentEditingFrozenStatus = !currentEditingFrozenStatus;
         await updateDoc(doc(db, "users", currentEditingUid), { isFrozen: currentEditingFrozenStatus });
         if(window.logAdminAction) window.logAdminAction("SYSTEM", `${currentEditingFrozenStatus ? 'FREEZE' : 'UN-FREEZE'} pada UID: ${currentEditingUid}`);
-        document.getElementById('btn-search-player').click(); // Refresh UI
-        alert("✅ Status Pembekuan diperbarui!");
+        
+        alert(`✅ Akun berhasil di-${currentEditingFrozenStatus ? "Bekukan" : "Cairkan"}!`);
+        
+        const btnFreeze = document.getElementById('btn-freeze-player');
+        btnFreeze.innerText = currentEditingFrozenStatus ? "🔥 Cairkan Akun (Un-Freeze)" : "❄️ Bekukan (Freeze)";
+        btnFreeze.style.background = currentEditingFrozenStatus ? "#d35400" : "#6f42c1";
+
     } catch (err) { alert("Gagal mengubah freeze."); }
 });
 
