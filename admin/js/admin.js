@@ -138,8 +138,7 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
             const mailboxRef = collection(db, "users", targetUid, "mailbox");
             await addDoc(mailboxRef, mailData);
 
-            const targetDesc = targetUid ? `UID: ${targetUid}` : "BROADCAST SEMUA PEMAIN";
-            window.logAdminAction("MAIL", `Mengirim surat "${title}" ke ${targetDesc}. Lampiran: ${gold}G, ${coin}C, Item: ${itemName}`);
+            window.logAdminAction("MAIL", `Mengirim surat "${title}" ke UID: ${targetUid}. Lampiran: ${gold}G, ${coin}C, Item: ${itemName}`);
             alert(`✅ Surat "${title}" berhasil dikirim ke UID: ${targetUid}`);
         } else {
             // JIKA UID KOSONG: Lakukan Broadcast ke Seluruh Pemain
@@ -169,8 +168,7 @@ document.getElementById('btn-send-mail').addEventListener('click', async () => {
             // Eksekusi semua pengiriman secara serentak (paralel) agar tidak lag
             await Promise.all(sendPromises);
 
-            const targetDesc = targetUid ? `UID: ${targetUid}` : "BROADCAST SEMUA PEMAIN";
-            window.logAdminAction("MAIL", `Mengirim surat "${title}" ke ${targetDesc}. Lampiran: ${gold}G, ${coin}C, Item: ${itemName}`);
+            window.logAdminAction("MAIL", `Mengirim surat "${title}" secara BROADCAST ke ${sendPromises.length} pemain. Lampiran: ${gold}G, ${coin}C, Item: ${itemName}`);
             alert(`📢 BROADCAST SUKSES! Surat beserta hadiah berhasil dikirim ke ${sendPromises.length} pemain.`);
         }
 
