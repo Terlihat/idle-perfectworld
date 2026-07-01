@@ -9,13 +9,14 @@ import './admin-player.js';
 import './admin-system.js';
 import './admin-guild.js';
 import './admin-market.js';
+import './admin-tickets.js';
 
 window.adminUid = null;
 
 // ==========================================
 // SISTEM NAVIGASI SIDEBAR
 // ==========================================
-window.openAdminTab = function(tabId, btnElement) {
+window.openAdminTab = function (tabId, btnElement) {
     const tabs = document.querySelectorAll('.admin-tab-section');
     tabs.forEach(tab => tab.style.display = 'none');
     const activeTab = document.getElementById(tabId);
@@ -41,19 +42,19 @@ window.logAdminAction = async function (actionType, details) {
     } catch (err) { console.error("Gagal mencatat log:", err); }
 };
 
-window.listenToAdminLogs = function() {
+window.listenToAdminLogs = function () {
     const listDiv = document.getElementById('admin-log-list');
     if (!listDiv) return;
     const q = query(collection(db, "adminLogs"), orderBy("timestamp", "desc"), limit(50));
     onSnapshot(q, (snapshot) => {
         listDiv.innerHTML = "";
         if (snapshot.empty) return listDiv.innerHTML = `<div style="text-align: center; color: #aaa; padding: 10px; font-size: 13px;">Belum ada catatan log.</div>`;
-        
+
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
             const time = data.timestamp ? data.timestamp.toDate().toLocaleString('id-ID') : 'Baru saja...';
             let typeColor = "#fff"; let typeBg = "#333";
-            
+
             if (data.actionType === "BANNED") { typeBg = "#dc3545"; }
             else if (data.actionType === "INJECT") { typeBg = "#28a745"; }
             else if (data.actionType === "ECONOMY") { typeColor = "#000"; typeBg = "#ffca28"; }
@@ -78,17 +79,17 @@ async function loadServerStats() {
     try {
         // 1. Ambil dan hitung data pemain
         const userSnapshot = await getDocs(collection(db, "users"));
-        let totalPlayers = 0; 
-        let totalGold = 0; 
+        let totalPlayers = 0;
+        let totalGold = 0;
         let totalCoin = 0;
         let totalBannedOrFrozen = 0;
 
         userSnapshot.forEach((doc) => {
-            totalPlayers++; 
+            totalPlayers++;
             const data = doc.data();
             totalGold += (data.gold || 0) + (data.bankGold || 0);
             totalCoin += (data.coin || 0);
-            
+
             // Cek integritas akun (Apakah di-ban atau dibekukan?)
             if (data.banned || data.isFrozen) {
                 totalBannedOrFrozen++;
@@ -103,16 +104,16 @@ async function loadServerStats() {
         document.getElementById('stat-total-players').innerText = totalPlayers.toLocaleString();
         document.getElementById('stat-total-gold').innerText = totalGold.toLocaleString();
         document.getElementById('stat-total-coin').innerText = totalCoin.toLocaleString();
-        
+
         // Render UI metrik baru (gunakan if untuk mencegah error jika elemen belum termuat)
         const statBanned = document.getElementById('stat-total-banned');
         if (statBanned) statBanned.innerText = totalBannedOrFrozen.toLocaleString();
-        
+
         const statGuilds = document.getElementById('stat-total-guilds');
         if (statGuilds) statGuilds.innerText = totalGuilds.toLocaleString();
 
-    } catch (err) { 
-        console.error("Gagal memuat statistik server:", err); 
+    } catch (err) {
+        console.error("Gagal memuat statistik server:", err);
     }
 }
 
@@ -130,12 +131,14 @@ onAuthStateChanged(auth, async (user) => {
 
                 // Panggil semua fungsi inisialisasi modul
                 loadServerStats();
-                if(window.listenToAdminLogs) window.listenToAdminLogs();
-                if(window.populateItemDropdown) window.populateItemDropdown();
-                if(window.listenToGlobalEvents) window.listenToGlobalEvents();
-                if(window.listenToGiftCodes) window.listenToGiftCodes();
-				if(window.listenToMarketStatus) window.listenToMarketStatus();
-                if(window.listenToLiveMarket) window.listenToLiveMarket();
+                if (window.listenToAdminLogs) window.listenToAdminLogs();
+                if (window.populateItemDropdown) window.populateItemDropdown();
+                if (window.listenToGlobalEvents) window.listenToGlobalEvents();
+                if (window.listenToGiftCodes) window.listenToGiftCodes();
+                if (window.listenToMarketStatus) window.listenToMarketStatus();
+                if (window.listenToLiveMarket) window.listenToLiveMarket();
+                if (window.populateTicketItemDropdown) window.populateTicketItemDropdown();
+                if (window.listenToTickets) window.listenToTickets();
             } else {
                 alert("Akses Ditolak!"); window.location.href = '../index.html';
             }

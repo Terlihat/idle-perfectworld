@@ -33,6 +33,7 @@
 					Giftcode</button>
 				<button class="tab-link" onclick="window.openAdminTab('tab-market', this)">💱 Monitor Pasar</button>
 				<button class="tab-link" onclick="window.openAdminTab('tab-guild', this)">🏰 Manajemen Guild</button>
+				<button class="tab-link" onclick="window.openAdminTab('tab-tickets', this)">🎫 Tiket Bantuan</button>
 				<button class="tab-link" onclick="window.openAdminTab('tab-logs', this)">📋 Log Aktivitas</button>
 			</div>
 
@@ -420,6 +421,77 @@
 							</div>
 						</div>
 
+					</div>
+				</div>
+
+				<!-- TAB 10: Sistem Tiket Bantuan -->
+				<div id="tab-tickets" class="admin-tab-section">
+					<h2>🎫 Manajemen Tiket Bantuan</h2>
+					<p style="color: #aaa; font-size: 13px; margin-top: -10px;">Tanggapi keluhan, laporan bug, atau
+						pertanyaan dari pemain. Anda bisa menyertakan kompensasi (Item/Gold).</p>
+
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+						<div class="panel">
+							<h3 style="color: #ffca28; margin-top: 0;">📩 Tiket Terbuka</h3>
+							<div id="admin-ticket-list"
+								style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 400px; max-height: 500px; overflow-y: auto;">
+								<div style="text-align: center; color: #aaa; padding: 20px; font-size: 13px;">Memuat
+									tiket masuk...</div>
+							</div>
+						</div>
+
+						<div class="panel" id="ticket-reply-panel"
+							style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
+							<h3 style="color: #00d2ff; margin-top: 0;">✉️ Balas & Selesaikan Tiket</h3>
+							<div
+								style="background: #1a1a24; padding: 15px; border-radius: 4px; border: 1px solid #333; margin-bottom: 15px;">
+								<div style="font-size: 12px; color: #aaa; margin-bottom: 5px;">Membalas ke: <b
+										id="ticket-reply-target" style="color: #ffca28;">-</b></div>
+								<div style="font-size: 12px; color: #aaa;">Pesan Pemain:</div>
+								<div id="ticket-reply-message"
+									style="background: #121216; padding: 10px; border-radius: 4px; border: 1px solid #3f3f52; margin-top: 5px; font-style: italic; color: #fff; font-size: 13px; max-height: 100px; overflow-y: auto;">
+									...</div>
+							</div>
+
+							<input type="hidden" id="ticket-active-id">
+							<input type="hidden" id="ticket-active-uid">
+
+							<label style="display: block; margin-bottom: 5px; color: #aaa; font-size: 13px;">Pesan
+								Balasan (Terkirim via Mailbox):</label>
+							<textarea id="ticket-reply-text" rows="4"
+								style="width: 100%; padding: 10px; background: #121216; color: white; border: 1px solid #3f3f52; border-radius: 4px; margin-bottom: 15px; resize: vertical;"
+								placeholder="Tulis solusi atau balasan Anda di sini..."></textarea>
+
+							<h4 style="color: #ffca28; margin-top: 0; margin-bottom: 10px;">🎁 Kompensasi (Opsional)
+							</h4>
+							<div style="display: flex; gap: 10px; margin-bottom: 15px;">
+								<div style="flex: 1;">
+									<label style="font-size: 11px; color: #aaa;">Gold</label>
+									<input type="number" id="ticket-reply-gold" value="0"
+										style="width: 100%; padding: 8px; background: #121216; color: #ffca28; border: 1px solid #3f3f52;">
+								</div>
+								<div style="flex: 1;">
+									<label style="font-size: 11px; color: #aaa;">Coin</label>
+									<input type="number" id="ticket-reply-coin" value="0"
+										style="width: 100%; padding: 8px; background: #121216; color: #00d2ff; border: 1px solid #3f3f52;">
+								</div>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label style="font-size: 11px; color: #aaa;">Kirim Item</label>
+								<div style="display: flex; gap: 10px;">
+									<select id="ticket-reply-item"
+										style="flex: 2; padding: 8px; background: #121216; color: white; border: 1px solid #3f3f52;">
+										<option value="">-- Tidak Kirim Item --</option>
+									</select>
+									<input type="number" id="ticket-reply-qty" value="1" min="1"
+										style="flex: 1; padding: 8px; background: #121216; color: white; border: 1px solid #3f3f52;">
+								</div>
+							</div>
+
+							<button id="btn-submit-ticket-reply"
+								style="background: #28a745; color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer;">Kirim
+								Balasan & Tutup Tiket</button>
+						</div>
 					</div>
 				</div>
 

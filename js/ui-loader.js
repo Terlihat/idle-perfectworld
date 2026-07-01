@@ -36,9 +36,8 @@ export async function loadUIComponents() {
         { id: 'panel-bank', file: './components/bank.html' },
         { id: 'panel-guild', file: './components/guild.html' },
         { id: 'panel-chat', file: './components/chat-box.html' },
-
-        // 🔥 FITUR BARU: Panel Redeem Code
         { id: 'panel-redeem-code', file: './components/redeem-code.html' },
+        { id: 'panel-tickets', file: './components/tickets.html' },
 
         // --- Sistem Modal & Pop-up ---
         { id: 'component-modals', file: './components/modals.html' }
@@ -111,8 +110,9 @@ window.togglePanel = function (panelId) {
                 window.toggleFriendTab('list');
             }
         } else if (panelId === 'panel-redeem-code') {
-            // 🔥 Status Radar untuk Redeem Code
             window.updateMyLocation("🎁 Menukarkan Kode Redeem");
+        } else if (panelId === 'panel-tickets') {
+            window.updateMyLocation("🎫 Meminta Bantuan Admin");
         } else {
             window.updateMyLocation("Kota Aman (Idle)");
         }
