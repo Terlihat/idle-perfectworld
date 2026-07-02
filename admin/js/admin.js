@@ -73,7 +73,7 @@ window.listenToAdminLogs = function () {
 };
 
 // ==========================================
-// STATISTIK SERVER
+// STATISTIK SERVER (DIPERBARUI FULL)
 // ==========================================
 async function loadServerStats() {
     try {
@@ -87,10 +87,16 @@ async function loadServerStats() {
         let totalLevel = 0;
         let active24h = 0;
 
+        // Variabel Baru
+        let totalWarrior = 0;
+        let totalMage = 0;
+        let playersInPK = 0;
+        let totalTowerFloor = 0;
+
         const now = Date.now();
         const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-        // 2. Loop Data Pemain
+        // 2. Loop Data Pemain (Satu putaran untuk semua data, menghemat kuota pembacaan database)
         userSnapshot.forEach((docSnap) => {
             totalPlayers++;
             const data = docSnap.data();
@@ -102,37 +108,53 @@ async function loadServerStats() {
             // Hitung Keamanan
             if (data.banned || data.isFrozen) totalBannedOrFrozen++;
 
-            // Hitung Level
+            // Hitung Level & Tower
             totalLevel += (data.level || 1);
+            totalTowerFloor += (data.towerFloor || 1);
 
-            // Hitung Aktivitas (Jika lastActive ada dan terjadi dalam 24 jam terakhir)
+            // Hitung Class
+            if (data.characterClass === 'Warrior') totalWarrior++;
+            else if (data.characterClass === 'Mage') totalMage++;
+
+            // Hitung Posisi PK
+            if (data.inPkZone === true) playersInPK++;
+
+            // Hitung Aktivitas
             if (data.lastActive && (now - data.lastActive) <= ONE_DAY_MS) {
                 active24h++;
             }
         });
 
         const avgLevel = totalPlayers > 0 ? Math.floor(totalLevel / totalPlayers) : 0;
+        const avgTower = totalPlayers > 0 ? Math.floor(totalTowerFloor / totalPlayers) : 0;
 
-        // 3. Ambil data Guild
+        // 3. Ambil data Eksternal (Guild, Tiket, Pasar) menggunakan .size untuk kecepatan
         const guildSnapshot = await getDocs(collection(db, "guilds"));
         const totalGuilds = guildSnapshot.size;
 
-        // 4. Ambil data Tiket (Hanya hitung yang statusnya "open")
         const ticketSnapshot = await getDocs(query(collection(db, "supportTickets"), where("status", "==", "open")));
         const openTickets = ticketSnapshot.size;
 
-        // 5. Render ke Layar Dashboard
+        const marketSnapshot = await getDocs(collection(db, "market"));
+        const auctionItems = marketSnapshot.size;
+
+        // 4. Render ke Layar Dashboard
         document.getElementById('stat-total-players').innerText = totalPlayers.toLocaleString();
         document.getElementById('stat-total-gold').innerText = totalGold.toLocaleString();
         document.getElementById('stat-total-coin').innerText = totalCoin.toLocaleString();
 
         if (document.getElementById('stat-total-banned')) document.getElementById('stat-total-banned').innerText = totalBannedOrFrozen.toLocaleString();
         if (document.getElementById('stat-total-guilds')) document.getElementById('stat-total-guilds').innerText = totalGuilds.toLocaleString();
-
-        // Render 3 Metrik Baru
         if (document.getElementById('stat-active-players')) document.getElementById('stat-active-players').innerText = active24h.toLocaleString();
         if (document.getElementById('stat-avg-level')) document.getElementById('stat-avg-level').innerText = avgLevel.toLocaleString();
         if (document.getElementById('stat-open-tickets')) document.getElementById('stat-open-tickets').innerText = openTickets.toLocaleString();
+
+        // Render Metrik Baru
+        if (document.getElementById('stat-class-warrior')) document.getElementById('stat-class-warrior').innerText = totalWarrior.toLocaleString();
+        if (document.getElementById('stat-class-mage')) document.getElementById('stat-class-mage').innerText = totalMage.toLocaleString();
+        if (document.getElementById('stat-pk-players')) document.getElementById('stat-pk-players').innerText = playersInPK.toLocaleString();
+        if (document.getElementById('stat-auction-items')) document.getElementById('stat-auction-items').innerText = auctionItems.toLocaleString();
+        if (document.getElementById('stat-avg-tower')) document.getElementById('stat-avg-tower').innerText = avgTower.toLocaleString();
 
     } catch (err) {
         console.error("Gagal memuat statistik server:", err);
