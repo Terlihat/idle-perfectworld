@@ -77,40 +77,62 @@ window.listenToAdminLogs = function () {
 // ==========================================
 async function loadServerStats() {
     try {
-        // 1. Ambil dan hitung data pemain
+        // 1. Variabel Penampung
         const userSnapshot = await getDocs(collection(db, "users"));
         let totalPlayers = 0;
         let totalGold = 0;
         let totalCoin = 0;
         let totalBannedOrFrozen = 0;
 
-        userSnapshot.forEach((doc) => {
-            totalPlayers++;
-            const data = doc.data();
-            totalGold += (data.gold || 0) + (data.bankGold || 0);
-            totalCoin += (data.coin || 0);
+        let totalLevel = 0;
+        let active24h = 0;
 
-            // Cek integritas akun (Apakah di-ban atau dibekukan?)
-            if (data.banned || data.isFrozen) {
-                totalBannedOrFrozen++;
+        const now = Date.now();
+        const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+        // 2. Loop Data Pemain
+        userSnapshot.forEach((docSnap) => {
+            totalPlayers++;
+            const data = docSnap.data();
+
+            // Hitung Ekonomi
+            totalGold += (data.gold || 0) + (data.bankGold || 0) + (data.auctionBalanceGold || 0);
+            totalCoin += (data.coin || 0) + (data.auctionBalanceCoin || 0);
+
+            // Hitung Keamanan
+            if (data.banned || data.isFrozen) totalBannedOrFrozen++;
+
+            // Hitung Level
+            totalLevel += (data.level || 1);
+
+            // Hitung Aktivitas (Jika lastActive ada dan terjadi dalam 24 jam terakhir)
+            if (data.lastActive && (now - data.lastActive) <= ONE_DAY_MS) {
+                active24h++;
             }
         });
 
-        // 2. Ambil dan hitung data Guild
-        const guildSnapshot = await getDocs(collection(db, "guilds"));
-        const totalGuilds = guildSnapshot.size; // .size langsung mengembalikan jumlah dokumen
+        const avgLevel = totalPlayers > 0 ? Math.floor(totalLevel / totalPlayers) : 0;
 
-        // 3. Render angka ke layar Dashboard
+        // 3. Ambil data Guild
+        const guildSnapshot = await getDocs(collection(db, "guilds"));
+        const totalGuilds = guildSnapshot.size;
+
+        // 4. Ambil data Tiket (Hanya hitung yang statusnya "open")
+        const ticketSnapshot = await getDocs(query(collection(db, "supportTickets"), where("status", "==", "open")));
+        const openTickets = ticketSnapshot.size;
+
+        // 5. Render ke Layar Dashboard
         document.getElementById('stat-total-players').innerText = totalPlayers.toLocaleString();
         document.getElementById('stat-total-gold').innerText = totalGold.toLocaleString();
         document.getElementById('stat-total-coin').innerText = totalCoin.toLocaleString();
 
-        // Render UI metrik baru (gunakan if untuk mencegah error jika elemen belum termuat)
-        const statBanned = document.getElementById('stat-total-banned');
-        if (statBanned) statBanned.innerText = totalBannedOrFrozen.toLocaleString();
+        if (document.getElementById('stat-total-banned')) document.getElementById('stat-total-banned').innerText = totalBannedOrFrozen.toLocaleString();
+        if (document.getElementById('stat-total-guilds')) document.getElementById('stat-total-guilds').innerText = totalGuilds.toLocaleString();
 
-        const statGuilds = document.getElementById('stat-total-guilds');
-        if (statGuilds) statGuilds.innerText = totalGuilds.toLocaleString();
+        // Render 3 Metrik Baru
+        if (document.getElementById('stat-active-players')) document.getElementById('stat-active-players').innerText = active24h.toLocaleString();
+        if (document.getElementById('stat-avg-level')) document.getElementById('stat-avg-level').innerText = avgLevel.toLocaleString();
+        if (document.getElementById('stat-open-tickets')) document.getElementById('stat-open-tickets').innerText = openTickets.toLocaleString();
 
     } catch (err) {
         console.error("Gagal memuat statistik server:", err);
