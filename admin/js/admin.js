@@ -10,6 +10,7 @@ import './admin-system.js';
 import './admin-guild.js';
 import './admin-market.js';
 import './admin-tickets.js';
+import './admin-monsters.js';
 
 window.adminUid = null;
 
@@ -183,6 +184,8 @@ onAuthStateChanged(auth, async (user) => {
                 if (window.listenToLiveMarket) window.listenToLiveMarket();
                 if (window.populateTicketItemDropdown) window.populateTicketItemDropdown();
                 if (window.listenToTickets) window.listenToTickets();
+                if (window.populateMonsterItemDropdown) window.populateMonsterItemDropdown();
+                if (window.listenToMonsters) window.listenToMonsters();
             } else {
                 alert("Akses Ditolak!"); window.location.href = '../index.html';
             }
