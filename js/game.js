@@ -2175,6 +2175,43 @@ window.calculateMonsterDrops = function (dropsArray) {
     return obtainedItems; // Mengembalikan array nama item (contoh: ["Ramuan HP", "Pedang Besi"])
 };
 
+// 3. Fungsi untuk memuat daftar monster ke UI Dropdown Dungeon
+window.loadDungeonMonstersList = async function () {
+    const selectBox = document.getElementById('dungeon-select');
+    if (!selectBox) return;
+
+    try {
+        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
+        const querySnapshot = await getDocs(collection(db, "monsters"));
+
+        if (querySnapshot.empty) {
+            selectBox.innerHTML = '<option value="">❌ Belum ada monster di database</option>';
+            return;
+        }
+
+        // Tampung data ke dalam array agar bisa kita urutkan
+        let monstersArray = [];
+        querySnapshot.forEach(doc => {
+            monstersArray.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Urutkan monster berdasarkan Base HP (dari yang terlemah ke terkuat)
+        monstersArray.sort((a, b) => (a.hp || 0) - (b.hp || 0));
+
+        // Bersihkan tulisan "Memuat..." dan masukkan data asli
+        selectBox.innerHTML = '';
+        monstersArray.forEach(m => {
+            const levelText = m.levelReq ? `(Lv. ${m.levelReq})` : '';
+            // Tampilkan Nama, Level, dan Rekomendasi HP
+            selectBox.innerHTML += `<option value="${m.id}">💀 ${m.name} ${levelText} - HP: ${m.hp}</option>`;
+        });
+
+    } catch (err) {
+        console.error("Gagal memuat daftar monster untuk UI:", err);
+        selectBox.innerHTML = '<option value="">⚠️ Gagal terhubung ke server</option>';
+    }
+};
+
 // ==========================================
 // SISTEM KLAIM KODE REDEEM (GIFT CODE)
 // ==========================================
