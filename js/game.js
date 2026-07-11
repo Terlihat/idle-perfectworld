@@ -2130,6 +2130,52 @@ document.addEventListener('click', function (e) {
 });
 
 // ==========================================
+// SISTEM DATABASE MONSTER DINAMIS (FIRESTORE)
+// ==========================================
+
+// 1. Fungsi untuk mengambil data monster sebelum bertarung
+window.fetchMonsterData = async function (monsterId) {
+    try {
+        const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
+        const docRef = doc(db, "monsters", monsterId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            return docSnap.data(); // Mengembalikan data dari Firestore
+        } else {
+            console.warn(`[SISTEM] Monster ID: ${monsterId} tidak ditemukan di Live Database.`);
+            // Fallback (Cadangan): Jika admin belum melakukan Sync, ambil dari file lokal
+            if (typeof MONSTER_DB !== 'undefined' && MONSTER_DB[monsterId]) {
+                return MONSTER_DB[monsterId];
+            }
+            return null;
+        }
+    } catch (error) {
+        console.error("Gagal menarik data monster:", error);
+        return null;
+    }
+};
+
+// 2. Fungsi RNG untuk memproses Drop Item sesuai persentase Admin
+window.calculateMonsterDrops = function (dropsArray) {
+    let obtainedItems = [];
+    if (!dropsArray || dropsArray.length === 0) return obtainedItems;
+
+    // Loop setiap item yang diatur oleh Admin
+    dropsArray.forEach(drop => {
+        // Hasilkan angka acak dari 0.00 hingga 100.00
+        const roll = Math.random() * 100;
+
+        // Jika angka acak lebih kecil atau sama dengan persentase drop admin, pemain dapat itemnya!
+        if (roll <= drop.chance) {
+            obtainedItems.push(drop.item);
+        }
+    });
+
+    return obtainedItems; // Mengembalikan array nama item (contoh: ["Ramuan HP", "Pedang Besi"])
+};
+
+// ==========================================
 // SISTEM KLAIM KODE REDEEM (GIFT CODE)
 // ==========================================
 window.claimGiftCode = async function () {

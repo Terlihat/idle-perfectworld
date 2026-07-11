@@ -1,16 +1,24 @@
-import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { MONSTER_DB } from '../data/monsters.js';
+import { doc, getDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getUpdatedQuests } from './quest.js';
 import { getVipStats } from './vip.js';
 import { sendSoloBattleReport } from './mailbox.js';
 
 export async function attackMonster(db, uid, monsterKey, playerStats) {
     if (!uid) return;
-    const monster = MONSTER_DB[monsterKey];
-    if (!monster) return alert("Monster tidak ditemukan!");
 
-    if ((playerStats.level || 1) < monster.levelReq) {
-        return alert(`Level Anda belum cukup! Butuh Level ${monster.levelReq} untuk melawan ${monster.name}.`);
+    // 🔥 LOGIKA BARU 1: Tarik Data Monster Langsung dari Database Server
+    const monsterRef = doc(db, "monsters", monsterKey);
+    const monsterSnap = await getDoc(monsterRef);
+
+    if (!monsterSnap.exists()) {
+        return alert(`Data Monster [${monsterKey}] tidak ditemukan di Server! Pastikan Admin sudah membuat atau melakukan Sync monster ini.`);
+    }
+
+    const monster = monsterSnap.data();
+
+    // Pengecekan Level (Sifatnya opsional, pastikan di Admin Panel Anda menambahkan field levelReq jika perlu)
+    if ((playerStats.level || 1) < (monster.levelReq || 1)) {
+        return alert(`Level Anda belum cukup! Butuh Level ${monster.levelReq || 1} untuk melawan ${monster.name}.`);
     }
 
     const userRef = doc(db, "users", uid);
@@ -45,13 +53,9 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
             let dmgToPlayer = Math.max(1, mAtk - pDef);
             let totalDmgTaken = dmgToPlayer * totalHit;
 
-            // Perhitungan Drop Rate (RNG)
-            let isItemDrop = Math.random() <= (monster.dropRate || 0.1);
-            let logMessage = "";
-
-            // FIX: Pertahanan nilai EXP dari NaN
-            const expGain = monster.exp || 50;
-            const goldGain = monster.gold || 100;
+            // Pertahanan nilai EXP dari NaN
+            const expGain = monster.expReward || monster.exp || 50;
+            const goldGain = monster.goldReward || monster.gold || 100;
 
             let newHp = Math.max(0, currentHp - totalDmgTaken);
 
@@ -68,39 +72,52 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                 return `💀 TRAGEDI! Anda terbunuh oleh ${monster.name}!\nKehilangan ${expPenalty} EXP.`;
             } else {
                 // PEMAIN MENANG
-                logMessage = `⚔️ BERHASIL! Anda mengalahkan ${monster.name}.\nSisa HP: ${newHp}/${playerStats.maxHp}\n🎁 Dapat: ${expGain} EXP & ${goldGain} Gold`;
+                let logMessage = `⚔️ BERHASIL! Anda mengalahkan ${monster.name}.\nSisa HP: ${newHp}/${playerStats.maxHp}\n🌟 Dapat: ${expGain} EXP & ${goldGain} Gold`;
 
                 let inv = data.inventory || {};
-                if (isItemDrop && monster.drops) {
-                    let droppedItem = monster.drops[Math.floor(Math.random() * monster.drops.length)];
-                    inv[droppedItem] = (inv[droppedItem] || 0) + 1;
-                    logMessage += `\n💎 DROP RARE: Mendapatkan [${droppedItem}]!`;
+
+                // 🔥 LOGIKA BARU 2: Sistem RNG Drop Multi-Item Berdasarkan Persentase Admin
+                let obtainedDrops = [];
+                if (monster.drops && monster.drops.length > 0) {
+                    monster.drops.forEach(drop => {
+                        const roll = Math.random() * 100; // Kocok dadu 0.00 - 100.00
+                        if (roll <= drop.chance) {
+                            obtainedDrops.push(drop.item);
+                        }
+                    });
+                }
+
+                // Masukkan item ke tas jika ada yang didapat
+                if (obtainedDrops.length > 0) {
+                    obtainedDrops.forEach(item => {
+                        inv[item] = (inv[item] || 0) + 1;
+                    });
+                    logMessage += `\n🎁 DROP RARE: Mendapatkan [${obtainedDrops.join(', ')}]!`;
                 }
 
                 // Kalkulasi Quest
                 const newQuests = getUpdatedQuests(data, 'daily', monsterKey, 1);
 
-                // FIX: Kalkulasi EXP Anti-Stuck & Auto-Heal Level Up
+                // Kalkulasi EXP Anti-Stuck & Auto-Heal Level Up
                 let newExp = (data.exp || 0) + expGain;
-                if (isNaN(newExp)) newExp = expGain; // Bypass jika data sebelumnya rusak/NaN
+                if (isNaN(newExp)) newExp = expGain;
 
                 let newGold = (data.gold || 0) + goldGain;
                 let newLevel = data.level || 1;
                 let leveledUp = false;
                 let statPointsGained = 0;
-                let expNeeded = newLevel * 100; // Rumus: Butuh (Level x 100) EXP untuk naik
+                let expNeeded = newLevel * 100;
 
                 // Proses Level Up
                 while (newExp >= expNeeded) {
-                    newExp -= expNeeded;      // Kurangi EXP untuk level up (sisanya disimpan)
-                    newLevel += 1;            // Naikkan 1 level
-                    statPointsGained += 5;    // Tambah 5 poin status
-                    leveledUp = true;         // Tandai bahwa pemain berhasil naik level
+                    newExp -= expNeeded;
+                    newLevel += 1;
+                    statPointsGained += 5;
+                    leveledUp = true;
 
-                    expNeeded = newLevel * 100; // Update target EXP untuk level selanjutnya
+                    expNeeded = newLevel * 100;
                 }
 
-                // Masukkan data dasar yang pasti di-update
                 let updateData = {
                     exp: newExp,
                     gold: newGold,
@@ -108,9 +125,9 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                 };
 
                 if (leveledUp) {
-                    logMessage += `\n🌟 LEVEL UP! Anda sekarang Level ${newLevel}! Mendapat ${statPointsGained} Poin Stat.`;
+                    logMessage += `\n🎉 LEVEL UP! Anda sekarang Level ${newLevel}! Mendapat ${statPointsGained} Poin Stat.`;
                     updateData.level = newLevel;
-                    updateData.currentHp = playerStats.maxHp || 1000; // FULL HEAL!
+                    updateData.currentHp = playerStats.maxHp || 1000;
                     updateData.currentMp = playerStats.maxMp || 200;
                     updateData.currentStamina = maxStam;
                     updateData.statPoints = (data.statPoints || 0) + statPointsGained;
@@ -118,7 +135,6 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                     updateData.currentHp = newHp;
                     updateData.currentStamina = Math.max(0, currentStam - stamReq);
 
-                    // FIX: Jika sebelumnya stamina penuh, paksa mulai waktu perhitungan mundur
                     if (currentStam >= maxStam) {
                         updateData.lastStaminaUpdate = Date.now();
                     }
@@ -136,5 +152,7 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
             const isWin = !resultMsg.includes("terbunuh oleh");
             await sendSoloBattleReport(db, uid, isWin, monster.name, resultMsg);
         }
-    } catch (err) { alert(err); }
+    } catch (err) {
+        alert(err);
+    }
 }
