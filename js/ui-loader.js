@@ -63,66 +63,67 @@ export async function loadUIComponents() {
     if (typeof window.loadDungeonMonstersList === 'function') {
         window.loadDungeonMonstersList();
     }
+}
 
-    // ==============================================================
-    // MANAJEMEN PANEL & RADAR LOKASI PEMAIN
-    // ==============================================================
-    window.togglePanel = function (panelId) {
-        // 1. Daftar semua panel tengah dan kanan yang bisa diganti-ganti (Toggle)
-        const toggleablePanels = [
-            'panel-world-boss', 'panel-tower', 'panel-afk', 'panel-dungeon',
-            'panel-party', 'panel-quest', 'panel-blacksmith', 'panel-pk',
-            'panel-auction', 'panel-refine-transfer', 'panel-friends',
-            'panel-leaderboard', 'panel-mall', 'panel-shop',
-            'panel-coin-market', 'panel-mailbox', 'panel-bank',
-            'panel-guild',
-            'panel-redeem-code' // 🔥 Tambahkan panel redeem agar ikut logika toggle
-        ];
+// ==============================================================
+// MANAJEMEN PANEL & RADAR LOKASI PEMAIN
+// ==============================================================
+window.togglePanel = function (panelId) {
+    // 1. Daftar semua panel tengah dan kanan yang bisa diganti-ganti (Toggle)
+    const toggleablePanels = [
+        'panel-world-boss', 'panel-tower', 'panel-afk', 'panel-dungeon',
+        'panel-party', 'panel-quest', 'panel-blacksmith', 'panel-pk',
+        'panel-auction', 'panel-refine-transfer', 'panel-friends',
+        'panel-leaderboard', 'panel-mall', 'panel-shop',
+        'panel-coin-market', 'panel-mailbox', 'panel-bank',
+        'panel-guild',
+        'panel-redeem-code' // 🔥 Tambahkan panel redeem agar ikut logika toggle
+    ];
 
-        // 2. Sembunyikan semua panel tersebut
-        toggleablePanels.forEach(id => {
-            const p = document.getElementById(id);
-            if (p) p.style.display = 'none';
-        });
+    // 2. Sembunyikan semua panel tersebut
+    toggleablePanels.forEach(id => {
+        const p = document.getElementById(id);
+        if (p) p.style.display = 'none';
+    });
 
-        // 3. Tampilkan hanya panel yang dituju
-        const targetPanel = document.getElementById(panelId);
-        if (targetPanel) {
-            targetPanel.style.display = 'block';
-        }
+    // 3. Tampilkan hanya panel yang dituju
+    const targetPanel = document.getElementById(panelId);
+    if (targetPanel) {
+        targetPanel.style.display = 'block';
+    }
 
-        // 4. --- SISTEM UPDATE LOKASI RADAR OTOMATIS ---
-        if (typeof window.updateMyLocation === 'function') {
-            if (panelId === 'panel-pk') {
-                window.updateMyLocation("🌲 Dark Forest (Zona PK)");
-            } else if (panelId === 'panel-afk') {
-                window.updateMyLocation("⛺ Ekspedisi AFK");
-            } else if (panelId === 'panel-world-boss') {
-                window.updateMyLocation("👹 Melawan World Boss");
-            } else if (panelId === 'panel-tower') {
-                window.updateMyLocation("🗼 Menara Ilusi");
-            } else if (panelId === 'panel-dungeon') {
-                window.updateMyLocation("🏰 Menjelajah Dungeon");
-            } else if (panelId === 'panel-party') {
-                window.updateMyLocation("👥 Mencari Party Fuben");
-            } else if (panelId === 'panel-auction') {
-                window.updateMyLocation("⚖️ Rumah Lelang");
-            } else if (panelId === 'panel-friends') {
-                window.updateMyLocation("Kota Aman (Mengecek Teman)");
-                if (typeof window.toggleFriendTab === 'function') {
-                    window.toggleFriendTab('list');
-                }
-            } else if (panelId === 'panel-redeem-code') {
-                window.updateMyLocation("🎁 Menukarkan Kode Redeem");
-            } else if (panelId === 'panel-tickets') {
-                window.updateMyLocation("🎫 Meminta Bantuan Admin");
-            } else {
-                window.updateMyLocation("Kota Aman (Idle)");
+    // 4. --- SISTEM UPDATE LOKASI RADAR OTOMATIS ---
+    if (typeof window.updateMyLocation === 'function') {
+        if (panelId === 'panel-pk') {
+            window.updateMyLocation("🌲 Dark Forest (Zona PK)");
+        } else if (panelId === 'panel-afk') {
+            window.updateMyLocation("⛺ Ekspedisi AFK");
+        } else if (panelId === 'panel-world-boss') {
+            window.updateMyLocation("👹 Melawan World Boss");
+        } else if (panelId === 'panel-tower') {
+            window.updateMyLocation("🗼 Menara Ilusi");
+        } else if (panelId === 'panel-dungeon') {
+            window.updateMyLocation("🏰 Menjelajah Dungeon");
+        } else if (panelId === 'panel-party') {
+            window.updateMyLocation("👥 Mencari Party Fuben");
+        } else if (panelId === 'panel-auction') {
+            window.updateMyLocation("⚖️ Rumah Lelang");
+        } else if (panelId === 'panel-friends') {
+            window.updateMyLocation("Kota Aman (Mengecek Teman)");
+            if (typeof window.toggleFriendTab === 'function') {
+                window.toggleFriendTab('list');
             }
+        } else if (panelId === 'panel-redeem-code') {
+            window.updateMyLocation("🎁 Menukarkan Kode Redeem");
+        } else if (panelId === 'panel-tickets') {
+            window.updateMyLocation("🎫 Meminta Bantuan Admin");
+        } else {
+            window.updateMyLocation("Kota Aman (Idle)");
         }
-    };
+    }
+};
 
-    window.bukaPanelKhusus = function (panelId) {
-        const targetPanel = document.getElementById(panelId);
-        if (targetPanel) targetPanel.style.display = 'block';
-    };
+window.bukaPanelKhusus = function (panelId) {
+    const targetPanel = document.getElementById(panelId);
+    if (targetPanel) targetPanel.style.display = 'block';
+};
