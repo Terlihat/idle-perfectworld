@@ -2192,11 +2192,20 @@ window.loadDungeonMonstersList = async function () {
         // Tampung data ke dalam array agar bisa kita urutkan
         let monstersArray = [];
         querySnapshot.forEach(doc => {
-            monstersArray.push({ id: doc.id, ...doc.data() });
+            const data = doc.data();
+            const id = doc.id;
+
+            // 🔥 LOGIKA PENYARINGAN (FILTER): Deteksi dan abaikan Boss Fuben
+            const isFubenBoss = id.startsWith("fb") || (data.name && data.name.includes("[FB"));
+
+            // Masukkan ke daftar HANYA jika bukan Boss Fuben
+            if (!isFubenBoss) {
+                monstersArray.push({ id: id, ...data });
+            }
         });
 
-        // Urutkan monster berdasarkan Base HP (dari yang terlemah ke terkuat)
-        monstersArray.sort((a, b) => (a.hp || 0) - (b.hp || 0));
+        // Urutkan monster berdasarkan Level (dari terkecil ke terbesar) agar progresi rapi
+        monstersArray.sort((a, b) => (a.levelReq || 1) - (b.levelReq || 1));
 
         // Bersihkan tulisan "Memuat..." dan masukkan data asli
         selectBox.innerHTML = '';
