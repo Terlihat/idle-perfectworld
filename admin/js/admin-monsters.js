@@ -33,26 +33,29 @@ window.listenToMonsters = function () {
             return;
         }
 
-        // 🔥 LOGIKA BARU: Pindahkan data ke Array agar bisa diurutkan (Sort)
+        // Pindahkan data ke Array agar bisa diurutkan (Sort)
         let monstersArray = [];
         snapshot.forEach((docSnap) => {
             monstersArray.push({ id: docSnap.id, ...docSnap.data() });
         });
 
-        // 🔥 Mengurutkan berdasarkan Level Monster (Terkecil ke Terbesar)
+        // Mengurutkan berdasarkan Level Monster (Terkecil ke Terbesar)
+        // Karena Sync Default sudah otomatis mengatur levelReq, kita cukup baca levelReq
         monstersArray.sort((a, b) => (a.levelReq || 1) - (b.levelReq || 1));
 
         // Render HTML
         monstersArray.forEach((data) => {
             const monsterId = data.id;
             const dropCount = data.drops ? data.drops.length : 0;
+
+            // Ambil data yang sudah distandarisasi oleh sistem Sync yang baru
             const level = data.levelReq || 1;
-            const exp = data.expReward || data.exp || 0;
-            const gold = data.goldReward || data.gold || 0;
+            const exp = data.expReward || 0;
+            const gold = data.goldReward || 0;
 
             const dataString = encodeURIComponent(JSON.stringify(data));
 
-            // Desain List Baru (Menampilkan Level, EXP, dan Gold)
+            // Desain List
             listDiv.innerHTML += `
                 <div style="padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
                     <div style="flex: 1;">
@@ -80,13 +83,11 @@ window.listenToMonsters = function () {
 
                 document.getElementById('editor-monster-id').value = monsterId;
                 document.getElementById('editor-monster-name').value = data.name || monsterId;
-                // 🔥 Sisipkan pengisian nilai Level ke form
                 document.getElementById('editor-monster-level').value = data.levelReq || 1;
                 document.getElementById('editor-monster-hp').value = data.hp || 1000;
                 document.getElementById('editor-monster-atk').value = data.atk || 50;
-                // Mendukung kompatibilitas data lama (exp/gold) dan baru (expReward/goldReward)
-                document.getElementById('editor-monster-exp').value = data.expReward || data.exp || 100;
-                document.getElementById('editor-monster-gold').value = data.goldReward || data.gold || 50;
+                document.getElementById('editor-monster-exp').value = data.expReward || 100;
+                document.getElementById('editor-monster-gold').value = data.goldReward || 50;
 
                 currentMonsterDrops = data.drops || [];
                 renderMonsterDropsUI();
@@ -219,25 +220,39 @@ document.getElementById('btn-delete-monster')?.addEventListener('click', async (
 });
 
 // ==========================================
-// 4. MIGRASI DATA LAMA (SYNC DEFAULT)
+// 4. MIGRASI DATA LAMA (SYNC DEFAULT OTOMATIS)
 // ==========================================
 document.getElementById('btn-sync-default-monsters')?.addEventListener('click', async () => {
     if (typeof MONSTER_DB === 'undefined') return alert("File data/monsters.js tidak ditemukan.");
-    if (!confirm("Tarik semua data dari MONSTER_DB statis ke Firestore?")) return;
+    if (!confirm("Tarik semua data dari MONSTER_DB dan perbaiki format Level secara otomatis?")) return;
 
     try {
+        const { writeBatch } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
         const batch = writeBatch(db);
         let count = 0;
 
         for (const [monsterId, data] of Object.entries(MONSTER_DB)) {
             const ref = doc(db, "monsters", monsterId);
-            batch.set(ref, data, { merge: true });
+
+            // 🔥 LOGIKA OTOMATISASI: Normalisasi Data Lama ke Format Baru
+            const normalizedData = {
+                ...data, // Bawa semua data asli (seperti nama, hp, atk, drops)
+                levelReq: data.levelReq || data.level || 1, // Ambil level lama
+                expReward: data.expReward || data.exp || 100, // Ambil exp lama
+                goldReward: data.goldReward || data.gold || 50 // Ambil gold lama
+            };
+
+            batch.set(ref, normalizedData, { merge: true });
             count++;
         }
 
         await batch.commit();
-        alert(`✅ ${count} monster disinkronkan ke Database Live.`);
+        alert(`✅ Selesai! ${count} monster berhasil disinkronkan dan levelnya telah diperbaiki otomatis!`);
+
+        if (window.logAdminAction) {
+            window.logAdminAction("SYSTEM", `Melakukan Sync & Normalisasi massal ${count} Monster ke Firestore.`);
+        }
     } catch (err) {
-        alert("Gagal Sync: " + err.message);
+        alert("Gagal melakukan Sync: " + err.message);
     }
 });
