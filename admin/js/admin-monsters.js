@@ -2,7 +2,7 @@
 import { db } from '../../js/firebase-config.js';
 import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ITEM_DB } from '../../js/data/items.js';
-import { MONSTER_DB } from '../../js/data/monsters.js';
+import { MONSTER_DB, FB_BOSSES } from '../../js/data/monsters.js';
 
 let currentMonsterDrops = [];
 
@@ -220,39 +220,67 @@ document.getElementById('btn-delete-monster')?.addEventListener('click', async (
 });
 
 // ==========================================
-// 4. MIGRASI DATA LAMA (SYNC DEFAULT OTOMATIS)
+// 4. MIGRASI DATA LAMA (SYNC DEFAULT - OTOMATIS)
 // ==========================================
 document.getElementById('btn-sync-default-monsters')?.addEventListener('click', async () => {
     if (typeof MONSTER_DB === 'undefined') return alert("File data/monsters.js tidak ditemukan.");
-    if (!confirm("Tarik semua data dari MONSTER_DB dan perbaiki format Level secara otomatis?")) return;
+    if (!confirm("Tarik dan PERBARUI OTOMATIS semua data dari MONSTER_DB & FB_BOSSES ke Firestore?")) return;
 
     try {
-        const { writeBatch } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
         const batch = writeBatch(db);
         let count = 0;
 
-        for (const [monsterId, data] of Object.entries(MONSTER_DB)) {
+        // 🔥 FUNGSI HELPER: Menerjemahkan bahasa lama ke bahasa baru
+        const processMonsterData = (monsterId, data) => {
             const ref = doc(db, "monsters", monsterId);
 
-            // 🔥 LOGIKA OTOMATISASI: Normalisasi Data Lama ke Format Baru
-            const normalizedData = {
-                ...data, // Bawa semua data asli (seperti nama, hp, atk, drops)
-                levelReq: data.levelReq || data.level || 1, // Ambil level lama
-                expReward: data.expReward || data.exp || 100, // Ambil exp lama
-                goldReward: data.goldReward || data.gold || 50 // Ambil gold lama
+            // Konversi format drop tunggal (lama) ke format array (baru)
+            let newDrops = [];
+            if (data.drop && data.drop.item) {
+                newDrops.push({
+                    item: data.drop.item,
+                    // Kalikan 100 agar 0.05 berubah jadi 5 (%) sesuai tampilan UI baru
+                    chance: data.drop.chance * 100
+                });
+            } else if (data.drops) {
+                newDrops = data.drops;
+            }
+
+            const autoFormattedData = {
+                ...data,
+                name: data.name || monsterId,
+                levelReq: data.levelReq || data.level || 1,
+                // Baca rewardExp/rewardGold dari DB lama
+                expReward: data.rewardExp || data.expReward || data.exp || 0,
+                goldReward: data.rewardGold || data.goldReward || data.gold || 0,
+                drops: newDrops // Pakai array drop yang sudah dikonversi
             };
 
-            batch.set(ref, normalizedData, { merge: true });
+            // Hapus atribut usang agar database Firestore bersih
+            delete autoFormattedData.rewardExp;
+            delete autoFormattedData.rewardGold;
+            delete autoFormattedData.drop;
+
+            batch.set(ref, autoFormattedData, { merge: true });
             count++;
+        };
+
+        // 1. Eksekusi semua monster di MONSTER_DB (Dungeon)
+        for (const [monsterId, data] of Object.entries(MONSTER_DB)) {
+            processMonsterData(monsterId, data);
+        }
+
+        // 2. Eksekusi semua bos di FB_BOSSES (Fuben Bosses)
+        if (typeof FB_BOSSES !== 'undefined') {
+            for (const [bossId, data] of Object.entries(FB_BOSSES)) {
+                processMonsterData(bossId, data);
+            }
         }
 
         await batch.commit();
-        alert(`✅ Selesai! ${count} monster berhasil disinkronkan dan levelnya telah diperbaiki otomatis!`);
-
-        if (window.logAdminAction) {
-            window.logAdminAction("SYSTEM", `Melakukan Sync & Normalisasi massal ${count} Monster ke Firestore.`);
-        }
+        if (window.logAdminAction) window.logAdminAction("SYSTEM", `Auto-Sync ${count} Monster & Boss ke Firestore.`);
+        alert(`✅ ${count} monster & boss berhasil disinkronkan. EXP, Gold, dan Drop telah disesuaikan!`);
     } catch (err) {
-        alert("Gagal melakukan Sync: " + err.message);
+        alert("Gagal Sync: " + err.message);
     }
 });
