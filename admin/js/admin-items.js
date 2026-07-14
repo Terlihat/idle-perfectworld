@@ -8,7 +8,26 @@ import { ITEM_DB } from '../../js/data/items.js';
 // ==========================================
 window.listenToItemsDb = function () {
     const listDiv = document.getElementById('admin-item-db-list');
+    const searchInput = document.getElementById('search-item-db'); // Ambil elemen input pencarian
     if (!listDiv) return;
+
+    // 🔥 1. Tambahkan Event Listener untuk Pencarian (Pastikan hanya dipasang sekali)
+    if (searchInput && !searchInput.hasAttribute('data-listener')) {
+        searchInput.addEventListener('input', (e) => {
+            const filterText = e.target.value.toLowerCase();
+            const allRows = listDiv.querySelectorAll('.item-row-entry');
+
+            allRows.forEach(row => {
+                const itemName = row.getAttribute('data-name');
+                if (itemName.includes(filterText)) {
+                    row.style.display = 'flex'; // Munculkan jika cocok
+                } else {
+                    row.style.display = 'none'; // Sembunyikan jika tidak cocok
+                }
+            });
+        });
+        searchInput.setAttribute('data-listener', 'true');
+    }
 
     onSnapshot(collection(db, "items"), (snapshot) => {
         listDiv.innerHTML = "";
@@ -26,13 +45,17 @@ window.listenToItemsDb = function () {
 
         itemsArray.forEach((data) => {
             const dataString = encodeURIComponent(JSON.stringify(data));
-            let typeColor = "#aaa";
-            if (data.type === "equipment") typeColor = "#ff4c4c";
-            if (data.type === "consumable") typeColor = "#a6e3a1";
-            if (data.type === "mount") typeColor = "#ffca28";
 
+            // Saya tambahkan sedikit variasi warna untuk weapon, armor, dan catalyst agar lebih rapi
+            let typeColor = "#aaa";
+            if (data.type === "equipment" || data.type === "weapon" || data.type === "armor") typeColor = "#ff4c4c";
+            if (data.type === "consumable" || data.type === "potion") typeColor = "#a6e3a1";
+            if (data.type === "mount") typeColor = "#ffca28";
+            if (data.type === "catalyst") typeColor = "#00d2ff";
+
+            // 🔥 2. Tambahkan class="item-row-entry" dan data-name="${data.id.toLowerCase()}" di div utama ini
             listDiv.innerHTML += `
-                <div style="padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                <div class="item-row-entry" data-name="${data.id.toLowerCase()}" style="padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
                     <div style="flex: 1;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="color: #fff; font-weight: bold; font-size: 14px;">${data.id}</span>
@@ -72,6 +95,11 @@ window.listenToItemsDb = function () {
                 editorPanel.style.pointerEvents = "auto";
             });
         });
+
+        // 🔥 3. Terapkan filter ulang jika admin sedang mengetik saat Firebase me-refresh data
+        if (searchInput && searchInput.value) {
+            searchInput.dispatchEvent(new Event('input'));
+        }
     });
 };
 
