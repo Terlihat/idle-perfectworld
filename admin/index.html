@@ -674,9 +674,9 @@
 
 							<input type="hidden" id="editor-item-original-id">
 
-							<div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 15px;">
+							<div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 10px;">
 								<div class="form-group" style="margin-bottom: 0;">
-									<label>Nama Item (Akan menjadi ID Data)</label>
+									<label>Nama Item (ID Data)</label>
 									<input type="text" id="editor-item-name" placeholder="Contoh: Ramuan HP"
 										style="width: 100%; padding: 8px; background: #121216; color: white; border: 1px solid #3f3f52;">
 								</div>
@@ -685,22 +685,25 @@
 									<label>Kategori (Type)</label>
 									<select id="editor-item-type"
 										style="width: 100%; padding: 8px; background: #121216; color: white; border: 1px solid #3f3f52;">
+										<option value="weapon">⚔️ Weapon (Senjata)</option>
+										<option value="armor">🛡️ Armor (Zirah)</option>
+										<option value="accessory">💍 Accessory (Aksesoris)</option>
 										<option value="consumable">🧪 Consumable (Habis Pakai)</option>
-										<option value="equipment">⚔️ Equipment (Perlengkapan)</option>
-										<option value="material">🧱 Material / Loot</option>
-										<option value="quest">📜 Item Quest</option>
+										<option value="loot">🧱 Loot / Material</option>
+										<option value="catalyst">💎 Catalyst (Bahan Tempa)</option>
+										<option value="special">🎟️ Special (Tiket/Koin)</option>
 										<option value="mount">🐎 Mount (Kendaraan)</option>
 									</select>
 								</div>
 
 								<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
 									<div class="form-group" style="margin-bottom: 0;">
-										<label>Sprite Column (Col)</label>
+										<label>Sprite Col</label>
 										<input type="number" id="editor-item-col" value="0" min="0"
 											style="width: 100%; padding: 8px; background: #121216; color: #00d2ff; border: 1px solid #3f3f52;">
 									</div>
 									<div class="form-group" style="margin-bottom: 0;">
-										<label>Sprite Row (Row)</label>
+										<label>Sprite Row</label>
 										<input type="number" id="editor-item-row" value="0" min="0"
 											style="width: 100%; padding: 8px; background: #121216; color: #ffca28; border: 1px solid #3f3f52;">
 									</div>
@@ -708,26 +711,57 @@
 
 								<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
 									<div class="form-group" style="margin-bottom: 0;">
-										<label>Harga Jual (Gold)</label>
+										<label>Harga (Gold)</label>
 										<input type="number" id="editor-item-price-gold" value="0"
 											style="width: 100%; padding: 8px; background: #121216; color: #ffd700; border: 1px solid #3f3f52;">
 									</div>
 									<div class="form-group" style="margin-bottom: 0;">
-										<label>Harga Jual (Coin)</label>
+										<label>Harga (Coin)</label>
 										<input type="number" id="editor-item-price-coin" value="0"
 											style="width: 100%; padding: 8px; background: #121216; color: #a6e3a1; border: 1px solid #3f3f52;">
 									</div>
 								</div>
+							</div>
 
-								<div class="form-group" style="margin-bottom: 0;">
-									<label>Deskripsi Item</label>
-									<textarea id="editor-item-desc" rows="3"
-										placeholder="Masukkan efek atau fungsi item..."
-										style="width: 100%; padding: 8px; background: #121216; color: white; border: 1px solid #3f3f52; resize: vertical;"></textarea>
+							<!-- 🔥 BAGIAN BARU: STATUS RPG -->
+							<h4
+								style="color: #ff4a4a; margin: 10px 0 5px 0; border-bottom: 1px solid #333; padding-bottom: 5px;">
+								⚔️ Status Tempur & Efek</h4>
+							<div
+								style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+								<div><label style="font-size:10px;">P.ATK</label><input type="number"
+										id="editor-item-patk" value="0"
+										style="width: 100%; padding: 6px; background: #121216; color: white; border: 1px solid #3f3f52;">
+								</div>
+								<div><label style="font-size:10px;">M.ATK</label><input type="number"
+										id="editor-item-matk" value="0"
+										style="width: 100%; padding: 6px; background: #121216; color: white; border: 1px solid #3f3f52;">
+								</div>
+								<div><label style="font-size:10px;">DEF</label><input type="number" id="editor-item-def"
+										value="0"
+										style="width: 100%; padding: 6px; background: #121216; color: white; border: 1px solid #3f3f52;">
+								</div>
+								<div><label style="font-size:10px;">HP Bonus</label><input type="number"
+										id="editor-item-hp-bonus" value="0"
+										style="width: 100%; padding: 6px; background: #121216; color: white; border: 1px solid #3f3f52;">
+								</div>
+								<div><label style="font-size:10px;">Akurasi</label><input type="number"
+										id="editor-item-acc-bonus" value="0"
+										style="width: 100%; padding: 6px; background: #121216; color: white; border: 1px solid #3f3f52;">
+								</div>
+								<div><label style="font-size:10px;">Stam Discount</label><input type="number"
+										id="editor-item-stam-discount" value="0"
+										style="width: 100%; padding: 6px; background: #121216; color: white; border: 1px solid #3f3f52;">
 								</div>
 							</div>
 
-							<div style="display: flex; gap: 10px; margin-top: 20px;">
+							<div class="form-group" style="margin-bottom: 0;">
+								<label>Deskripsi Item</label>
+								<textarea id="editor-item-desc" rows="2" placeholder="Efek atau fungsi item..."
+									style="width: 100%; padding: 8px; background: #121216; color: white; border: 1px solid #3f3f52; resize: vertical;"></textarea>
+							</div>
+
+							<div style="display: flex; gap: 10px; margin-top: 15px;">
 								<button id="btn-save-item"
 									style="background: #28a745; color: white; border: none; padding: 12px; flex: 2; border-radius: 4px; font-weight: bold; cursor: pointer;">💾
 									Simpan Item</button>
