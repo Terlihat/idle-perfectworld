@@ -148,32 +148,46 @@ document.getElementById('btn-delete-item')?.addEventListener('click', async () =
 // 3. MIGRASI CERDAS DATA LAMA (SYNC DEFAULT)
 // ==========================================
 document.getElementById('btn-sync-default-items')?.addEventListener('click', async () => {
-    if (typeof ITEM_DB === 'undefined') return alert("Data statis tidak ditemukan. Pastikan file items.js tersedia.");
-    if (!confirm("Tarik dan PERBARUI OTOMATIS semua data sprite koordinat dari file statis ke Firestore? Data lama tidak akan ditimpa jika sudah diedit.")) return;
+    if (!confirm("Tarik dan PERBARUI OTOMATIS semua data sprite koordinat langsung dari file items.json ke Firestore?")) return;
 
     try {
+        const btn = document.getElementById('btn-sync-default-items');
+        btn.innerText = "⏳ Menarik Data..."; btn.disabled = true;
+
+        // 🔥 LOGIKA BARU: Menarik data langsung dari file items.json
+        // (Pastikan path ini sesuai dengan lokasi file items.json Anda)
+        const response = await fetch('../../js/data/items.json');
+
+        if (!response.ok) {
+            throw new Error("Gagal menemukan file items.json. Pastikan lokasinya benar.");
+        }
+
+        const ITEM_JSON_DB = await response.json();
+
         const batch = writeBatch(db);
         let count = 0;
 
-        // 🔥 Perhatikan: Kita sekarang menggunakan ITEM_DB
-        for (const [itemName, data] of Object.entries(ITEM_DB)) {
+        // Membaca dari data JSON yang baru ditarik
+        for (const [itemName, data] of Object.entries(ITEM_JSON_DB)) {
             const ref = doc(db, "items", itemName);
 
-            // Logika tebakan Tipe Item otomatis berdasarkan namanya
             let guessedType = "material";
             const nameLower = itemName.toLowerCase();
+
+            // Logika tebakan tipe
             if (nameLower.includes("pedang") || nameLower.includes("tongkat") || nameLower.includes("zirah") || nameLower.includes("cincin") || nameLower.includes("helem") || nameLower.includes("arrow") || nameLower.includes("cover") || nameLower.includes("stir") || nameLower.includes("creator")) guessedType = "equipment";
             if (nameLower.includes("ramuan") || nameLower.includes("health") || nameLower.includes("magic") || nameLower.includes("panacea") || nameLower.includes("coca") || nameLower.includes("sprite")) guessedType = "consumable";
             if (nameLower.includes("kuda") || nameLower.includes("beruang") || nameLower.includes("naga") || nameLower.includes("ufo") || nameLower.includes("gajah") || nameLower.includes("leopard")) guessedType = "mount";
 
             const itemData = {
                 name: itemName,
+                // 🔥 Mengambil col dan row langsung dari JSON
                 col: data.col !== undefined ? data.col : 0,
                 row: data.row !== undefined ? data.row : 0,
                 type: guessedType,
                 goldPrice: 10,
                 coinPrice: 0,
-                description: `Diimpor otomatis dari sistem statis.`
+                description: `Diimpor otomatis dari items.json.`
             };
 
             batch.set(ref, itemData, { merge: true });
@@ -181,9 +195,14 @@ document.getElementById('btn-sync-default-items')?.addEventListener('click', asy
         }
 
         await batch.commit();
-        if (window.logAdminAction) window.logAdminAction("SYSTEM", `Auto-Sync ${count} Item Koordinat ke Firestore.`);
-        alert(`✅ ${count} item berhasil disinkronkan. Koordinat Sprite (Col/Row) telah diamankan di Cloud!`);
+        if (window.logAdminAction) window.logAdminAction("SYSTEM", `Auto-Sync ${count} Item dari items.json ke Firestore.`);
+
+        btn.innerText = "♻️ Sync Default"; btn.disabled = false;
+        alert(`✅ ${count} item berhasil disinkronkan. Koordinat Sprite (Col/Row) sekarang sudah tepat!`);
+
     } catch (err) {
         alert("Gagal Sync: " + err.message);
+        document.getElementById('btn-sync-default-items').innerText = "♻️ Sync Default";
+        document.getElementById('btn-sync-default-items').disabled = false;
     }
 });
