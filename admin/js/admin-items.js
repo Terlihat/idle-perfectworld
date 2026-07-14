@@ -60,6 +60,12 @@ window.listenToItemsDb = function () {
                 document.getElementById('editor-item-price-gold').value = data.goldPrice || 0;
                 document.getElementById('editor-item-price-coin').value = data.coinPrice || 0;
                 document.getElementById('editor-item-desc').value = data.description || "";
+                document.getElementById('editor-item-patk').value = data.patk || 0;
+                document.getElementById('editor-item-matk').value = data.matk || 0;
+                document.getElementById('editor-item-def').value = data.def || 0;
+                document.getElementById('editor-item-hp-bonus').value = data.hpBonus || 0;
+                document.getElementById('editor-item-acc-bonus').value = data.accBonus || 0;
+                document.getElementById('editor-item-stam-discount').value = data.stamDiscount || 0;
 
                 const editorPanel = document.getElementById('item-editor-panel');
                 editorPanel.style.opacity = "1";
@@ -81,6 +87,12 @@ document.getElementById('btn-add-new-item')?.addEventListener('click', () => {
     document.getElementById('editor-item-price-gold').value = "0";
     document.getElementById('editor-item-price-coin').value = "0";
     document.getElementById('editor-item-desc').value = "";
+    document.getElementById('editor-item-patk').value = "0";
+    document.getElementById('editor-item-matk').value = "0";
+    document.getElementById('editor-item-def').value = "0";
+    document.getElementById('editor-item-hp-bonus').value = "0";
+    document.getElementById('editor-item-acc-bonus').value = "0";
+    document.getElementById('editor-item-stam-discount').value = "0";
 
     document.getElementById('item-editor-panel').style.opacity = "1";
     document.getElementById('item-editor-panel').style.pointerEvents = "auto";
@@ -101,6 +113,20 @@ document.getElementById('btn-save-item')?.addEventListener('click', async () => 
         coinPrice: parseInt(document.getElementById('editor-item-price-coin').value) || 0,
         description: document.getElementById('editor-item-desc').value.trim()
     };
+
+    const patk = parseInt(document.getElementById('editor-item-patk').value) || 0;
+    const matk = parseInt(document.getElementById('editor-item-matk').value) || 0;
+    const def = parseInt(document.getElementById('editor-item-def').value) || 0;
+    const hpBonus = parseInt(document.getElementById('editor-item-hp-bonus').value) || 0;
+    const accBonus = parseInt(document.getElementById('editor-item-acc-bonus').value) || 0;
+    const stamDiscount = parseInt(document.getElementById('editor-item-stam-discount').value) || 0;
+
+    if (patk > 0) dataToSave.patk = patk; else dataToSave.patk = 0; // atau bisa menggunakan FieldValue.delete() jika mau dihapus total
+    if (matk > 0) dataToSave.matk = matk; else dataToSave.matk = 0;
+    if (def > 0) dataToSave.def = def; else dataToSave.def = 0;
+    if (hpBonus > 0) dataToSave.hpBonus = hpBonus; else dataToSave.hpBonus = 0;
+    if (accBonus > 0) dataToSave.accBonus = accBonus; else dataToSave.accBonus = 0;
+    if (stamDiscount > 0) dataToSave.stamDiscount = stamDiscount; else dataToSave.stamDiscount = 0;
 
     try {
         const btn = document.getElementById('btn-save-item');
@@ -181,6 +207,17 @@ document.getElementById('btn-sync-default-items')?.addEventListener('click', asy
                 const nameLower = itemName.toLowerCase();
                 if (nameLower.includes("pedang") || nameLower.includes("tongkat") || nameLower.includes("zirah")) finalType = "equipment";
                 if (nameLower.includes("ramuan") || nameLower.includes("health")) finalType = "consumable";
+            }
+
+            let finalType = jsInfo.type || "loot"; // default ke loot
+            if (!jsInfo.type) {
+                const nameLower = itemName.toLowerCase();
+                if (nameLower.includes("pedang") || nameLower.includes("tongkat") || nameLower.includes("kapak")) finalType = "weapon";
+                if (nameLower.includes("zirah") || nameLower.includes("jubah") || nameLower.includes("helem")) finalType = "armor";
+                if (nameLower.includes("cincin") || nameLower.includes("kalung") || nameLower.includes("mahkota")) finalType = "accessory";
+                if (nameLower.includes("ramuan") || nameLower.includes("health") || nameLower.includes("magic") || nameLower.includes("panacea") || nameLower.includes("coca") || nameLower.includes("sprite")) finalType = "consumable";
+                if (nameLower.includes("kuda") || nameLower.includes("beruang") || nameLower.includes("naga") || nameLower.includes("ufo") || nameLower.includes("gajah") || nameLower.includes("leopard")) finalType = "mount";
+                if (nameLower.includes("orb") || nameLower.includes("stone")) finalType = "catalyst";
             }
 
             // Susun Data Final
