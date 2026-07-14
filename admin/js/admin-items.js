@@ -201,14 +201,7 @@ document.getElementById('btn-sync-default-items')?.addEventListener('click', asy
             const jsonInfo = ITEM_JSON_DB[itemName] || {};
             const jsInfo = ITEM_DB[itemName] || {};
 
-            // Logika Fallback Tipe (Jika di items.js tidak ada type-nya)
-            let finalType = jsInfo.type || "material";
-            if (!jsInfo.type) {
-                const nameLower = itemName.toLowerCase();
-                if (nameLower.includes("pedang") || nameLower.includes("tongkat") || nameLower.includes("zirah")) finalType = "equipment";
-                if (nameLower.includes("ramuan") || nameLower.includes("health")) finalType = "consumable";
-            }
-
+            // 🔥 LOGIKA FALLBACK TIPE (Hanya pakai versi terbaru ini)
             let finalType = jsInfo.type || "loot"; // default ke loot
             if (!jsInfo.type) {
                 const nameLower = itemName.toLowerCase();
@@ -233,7 +226,6 @@ document.getElementById('btn-sync-default-items')?.addEventListener('click', asy
             };
 
             // 🔥 SELAMATKAN STATUS RPG! 
-            // Jika item punya status ATK/DEF di items.js, masukkan ke Firestore!
             if (jsInfo.patk) itemData.patk = jsInfo.patk;
             if (jsInfo.matk) itemData.matk = jsInfo.matk;
             if (jsInfo.def) itemData.def = jsInfo.def;
