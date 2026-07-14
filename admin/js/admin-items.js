@@ -154,7 +154,7 @@ document.getElementById('btn-sync-default-items')?.addEventListener('click', asy
         btn.innerText = "⏳ Menarik Data..."; btn.disabled = true;
 
         // 1. Tarik Data Gambar (Koordinat Sprite) dari JSON
-        const response = await fetch('../js/data/items.json');
+        const response = await fetch('/js/data/items.json');
         if (!response.ok) throw new Error("Gagal menemukan items.json.");
         const ITEM_JSON_DB = await response.json();
 
