@@ -12,6 +12,7 @@ import './admin-market.js';
 import './admin-tickets.js';
 import './admin-monsters.js';
 import './admin-items.js';
+import './admin-boss.js';
 
 window.adminUid = null;
 
@@ -188,6 +189,7 @@ onAuthStateChanged(auth, async (user) => {
                 if (window.populateMonsterItemDropdown) window.populateMonsterItemDropdown();
                 if (window.listenToMonsters) window.listenToMonsters();
                 if (window.listenToItemsDb) window.listenToItemsDb();
+                if (window.populateWorldBossItemDropdowns) window.populateWorldBossItemDropdowns();
             } else {
                 alert("Akses Ditolak!"); window.location.href = '../index.html';
             }

@@ -275,26 +275,109 @@
 				<div id="tab-boss" class="admin-tab-section">
 					<h2>👹 Manajemen World Boss</h2>
 					<div class="panel">
-						<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+						<p style="color: #aaa; font-size: 13px; margin-top: -10px;">Atur spesifikasi boss, jadwal
+							kemunculan, dan hadiah untuk para pemain yang berpartisipasi.</p>
+
+						<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
 							<div class="form-group">
 								<label>Nama Boss</label>
-								<input type="text" id="wb-admin-name" placeholder="Contoh: Deka Mong dari Neraka"
+								<input type="text" id="wb-admin-name" placeholder="Contoh: Raja Iblis Kegelapan"
 									style="width: 100%; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
 							</div>
 							<div class="form-group">
 								<label>Max HP Boss</label>
 								<input type="number" id="wb-admin-hp" value="5000000" min="1000"
-									style="width: 100%; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
+									style="width: 100%; padding: 8px; background: #121216; color: #a6e3a1; border: 1px solid #3f3f52; font-weight: bold;">
 							</div>
 						</div>
+
+						<!-- PENGATURAN WAKTU & JADWAL -->
+						<h4
+							style="color: #ffca28; border-bottom: 1px solid #333; padding-bottom: 5px; margin-top: 20px;">
+							⏱️ Jadwal Kemunculan</h4>
+						<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px;">
+							<div class="form-group">
+								<label>Waktu Mulai (Spawn)</label>
+								<input type="datetime-local" id="wb-admin-start-time"
+									style="width: 100%; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52; color-scheme: dark;">
+							</div>
+							<div class="form-group">
+								<label>Waktu Berakhir (Despawn)</label>
+								<input type="datetime-local" id="wb-admin-end-time"
+									style="width: 100%; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52; color-scheme: dark;">
+							</div>
+						</div>
+						<div style="margin-bottom: 20px;">
+							<label
+								style="display: flex; align-items: center; gap: 8px; color: #00d2ff; cursor: pointer; font-size: 13px;">
+								<input type="checkbox" id="wb-admin-is-permanent" style="width: 18px; height: 18px;">
+								Jadikan Permanen (Abaikan Waktu Berakhir, Boss menetap sampai dikalahkan)
+							</label>
+						</div>
+
+						<!-- PENGATURAN HADIAH (DROP) -->
+						<h4
+							style="color: #ff4c4c; border-bottom: 1px solid #333; padding-bottom: 5px; margin-top: 20px;">
+							🎁 Pengaturan Hadiah Peringkat</h4>
+
+						<div
+							style="background: #1a1a24; padding: 15px; border-radius: 4px; border: 1px solid #333; margin-bottom: 10px;">
+							<strong style="color: #ffd700;">🥇 Hadiah Rank 1 (Top Attacker)</strong>
+							<div style="display: flex; gap: 10px; margin-top: 10px;">
+								<input type="number" id="wb-reward-1-gold" placeholder="Gold"
+									style="flex: 1; padding: 8px; background: #121216; color: #ffd700; border: 1px solid #3f3f52;">
+								<input type="number" id="wb-reward-1-coin" placeholder="Coin"
+									style="flex: 1; padding: 8px; background: #121216; color: #00d2ff; border: 1px solid #3f3f52;">
+								<select id="wb-reward-1-item"
+									style="flex: 2; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
+									<option value="">-- Pilih Item --</option>
+								</select>
+								<input type="number" id="wb-reward-1-qty" placeholder="Qty" value="1"
+									style="flex: 1; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
+							</div>
+						</div>
+
+						<div
+							style="background: #1a1a24; padding: 15px; border-radius: 4px; border: 1px solid #333; margin-bottom: 10px;">
+							<strong style="color: #c0c0c0;">🥈 Hadiah Rank 2 - 3</strong>
+							<div style="display: flex; gap: 10px; margin-top: 10px;">
+								<input type="number" id="wb-reward-2-gold" placeholder="Gold"
+									style="flex: 1; padding: 8px; background: #121216; color: #ffd700; border: 1px solid #3f3f52;">
+								<input type="number" id="wb-reward-2-coin" placeholder="Coin"
+									style="flex: 1; padding: 8px; background: #121216; color: #00d2ff; border: 1px solid #3f3f52;">
+								<select id="wb-reward-2-item"
+									style="flex: 2; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
+									<option value="">-- Pilih Item --</option>
+								</select>
+								<input type="number" id="wb-reward-2-qty" placeholder="Qty" value="1"
+									style="flex: 1; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
+							</div>
+						</div>
+
+						<div
+							style="background: #1a1a24; padding: 15px; border-radius: 4px; border: 1px solid #333; margin-bottom: 20px;">
+							<strong style="color: #cd7f32;">🥉 Hadiah Partisipasi (Rank 4+)</strong>
+							<div style="display: flex; gap: 10px; margin-top: 10px;">
+								<input type="number" id="wb-reward-3-gold" placeholder="Gold"
+									style="flex: 1; padding: 8px; background: #121216; color: #ffd700; border: 1px solid #3f3f52;">
+								<input type="number" id="wb-reward-3-coin" placeholder="Coin"
+									style="flex: 1; padding: 8px; background: #121216; color: #00d2ff; border: 1px solid #3f3f52;">
+								<select id="wb-reward-3-item"
+									style="flex: 2; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
+									<option value="">-- Pilih Item --</option>
+								</select>
+								<input type="number" id="wb-reward-3-qty" placeholder="Qty" value="1"
+									style="flex: 1; padding: 8px; background: #121216; color: #fff; border: 1px solid #3f3f52;">
+							</div>
+						</div>
+
 						<div style="display: flex; gap: 10px;">
 							<button id="btn-admin-spawn-wb"
-								style="background: #8b0000; flex: 1; border: 1px solid #ff4c4c; font-weight: bold;">⚔️
-								Munculkan
-								Boss</button>
-							<button id="btn-admin-kill-wb" style="background: #333; flex: 1; border: 1px solid #555;">💀
-								Bunuh /
-								Hentikan Boss</button>
+								style="background: #8b0000; flex: 1; border: 1px solid #ff4c4c; font-weight: bold; padding: 12px; border-radius: 4px; cursor: pointer; color: white;">⚔️
+								SIMPAN & JADWALKAN BOSS</button>
+							<button id="btn-admin-kill-wb"
+								style="background: #333; flex: 1; border: 1px solid #555; font-weight: bold; padding: 12px; border-radius: 4px; cursor: pointer; color: white;">💀
+								Hentikan / Hapus Boss Aktif</button>
 						</div>
 					</div>
 				</div>

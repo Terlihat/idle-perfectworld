@@ -1,5 +1,5 @@
 import { db } from '../firebase-config.js';
-import { doc, runTransaction, onSnapshot, setDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, runTransaction, onSnapshot, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // FITUR: Menyerang Boss
 window.attackWorldBoss = async function () {
@@ -9,10 +9,9 @@ window.attackWorldBoss = async function () {
     const stats = window.currentPlayerStats;
     if (!stats) return;
 
-    // Kalkulasi Damage (Dibuat jauh lebih besar karena serangan dibatasi 5x)
     let baseAtk = (stats.patk || 10) + (stats.matk || 10);
     let randomMultiplier = (Math.random() * 0.4) + 0.8;
-    let finalDamage = Math.floor(baseAtk * randomMultiplier * 100); // Dikali 100 agar terasa sakit
+    let finalDamage = Math.floor(baseAtk * randomMultiplier * 100);
 
     btn.disabled = true;
     btn.innerText = "⏳ Menyerang...";
@@ -21,34 +20,40 @@ window.attackWorldBoss = async function () {
         const bossRef = doc(db, "events", "worldBoss");
         let bossDiedJustNow = false;
         let finalParticipants = {};
+        let finalRewards = {}; // Menyimpan template hadiah untuk dikirim nanti
 
         await runTransaction(db, async (ts) => {
             const bossSnap = await ts.get(bossRef);
-            if (!bossSnap.exists()) throw "World Boss belum muncul!";
+            if (!bossSnap.exists()) throw "World Boss belum disiapkan oleh sistem!";
 
             let data = bossSnap.data();
-            if (!data.isActive || data.currentHp <= 0) throw "World Boss sudah dikalahkan!";
+            const now = Date.now();
 
-            // 1. CEK BATASAN PEMAIN
+            // 1. VALIDASI WAKTU JADWAL (Real-time check)
+            if (!data.isActive || data.currentHp <= 0) throw "World Boss sudah dikalahkan atau tidak aktif!";
+
+            if (!data.isPermanent) {
+                const startTimeMs = new Date(data.startTime).getTime();
+                const endTimeMs = new Date(data.endTime).getTime();
+                if (now < startTimeMs) throw "World Boss belum waktunya muncul (Masih bersiap)!";
+                if (now > endTimeMs) throw "Waktu invasi World Boss telah berakhir!";
+            }
+
+            // 2. CEK BATASAN PEMAIN (5x & Cooldown 1 Jam)
             let participants = data.participants || {};
             let myRecord = participants[window.currentUserUid] || { name: window.playerUsername, damage: 0, attackCount: 0, lastAttackTime: 0 };
+            const ONE_HOUR = 60 * 60 * 1000;
 
-            const now = Date.now();
-            const ONE_HOUR = 60 * 60 * 1000; // 1 Jam dalam milidetik
-
-            // Cek apakah sudah 5x
             if (myRecord.attackCount >= 5) {
                 throw "❌ Anda sudah mencapai batas maksimal 5x serangan ke Boss ini!";
             }
-
-            // Cek apakah Cooldown 1 Jam sudah lewat
             if (myRecord.attackCount > 0 && (now - myRecord.lastAttackTime < ONE_HOUR)) {
                 let sisaWaktu = ONE_HOUR - (now - myRecord.lastAttackTime);
                 let menit = Math.ceil(sisaWaktu / 60000);
                 throw `⏳ Senjata masih panas! Tunggu ${menit} menit lagi untuk serangan ke-${myRecord.attackCount + 1}.`;
             }
 
-            // 2. TERAPKAN DAMAGE
+            // 3. TERAPKAN DAMAGE
             let newHp = data.currentHp - finalDamage;
             if (newHp < 0) newHp = 0;
 
@@ -59,15 +64,16 @@ window.attackWorldBoss = async function () {
 
             participants[window.currentUserUid] = myRecord;
 
-            // 3. CEK JIKA BOSS MATI OLEH SERANGAN INI
+            // 4. CEK JIKA BOSS MATI
             let isDead = false;
             if (newHp === 0 && !data.rewardsDistributed) {
                 isDead = true;
                 bossDiedJustNow = true;
-                finalParticipants = participants; // Simpan data untuk dikirim hadiah
+                finalParticipants = participants;
+                finalRewards = data.rewards; // Ambil data hadiah dari Admin
             }
 
-            // 4. UPDATE DATABASE BOSS
+            // 5. UPDATE DATABASE BOSS
             ts.update(bossRef, {
                 currentHp: newHp,
                 participants: participants,
@@ -78,22 +84,22 @@ window.attackWorldBoss = async function () {
 
         window.rpgAlert(`💥 Serangan Sukses! Anda memberikan ${finalDamage} Damage.`, "Serangan WB");
 
-        // 5. EKSEKUSI PEMBAGIAN HADIAH JIKA BOSS MATI
+        // 6. EKSEKUSI PEMBAGIAN HADIAH DINAMIS JIKA BOSS MATI
         if (bossDiedJustNow) {
             window.rpgAlert("🎉 ANDA MEMBERIKAN SERANGAN TERAKHIR! Boss telah mati. Mengirimkan hadiah ke seluruh peserta...", "WORLD BOSS MATI");
-            await distributeBossRewards(finalParticipants);
+            await distributeBossRewards(finalParticipants, finalRewards);
         }
 
     } catch (err) {
         window.rpgAlert(err, "Peringatan");
     } finally {
         btn.disabled = false;
+        btn.innerText = "⚔️ SERANG BOSS! ⚔️";
     }
 };
 
-// FITUR: Distribusi Hadiah Otomatis via Mailbox
-async function distributeBossRewards(participantsObj) {
-    // Ubah Object ke Array dan urutkan berdasarkan damage terbesar
+// FITUR: Distribusi Hadiah Berdasarkan Konfigurasi Admin
+async function distributeBossRewards(participantsObj, rewardsConfig) {
     let players = Object.entries(participantsObj).map(([uid, data]) => ({
         uid: uid,
         name: data.name,
@@ -102,31 +108,32 @@ async function distributeBossRewards(participantsObj) {
 
     let sendPromises = [];
 
-    // Looping pengiriman hadiah berdasarkan peringkat
     players.forEach((p, index) => {
         let rank = index + 1;
         let title = `🏆 Hadiah World Boss - Peringkat #${rank}`;
         let message = `Terima kasih telah berpartisipasi mengalahkan World Boss! Total Damage Anda: ${p.damage}. Berikut hadiah Anda.`;
 
-        let rewardGold = 0;
-        let rewardStone = 0;
+        // Tentukan template hadiah berdasarkan peringkat
+        let reward = {};
+        if (rank === 1) reward = rewardsConfig.rank1;
+        else if (rank >= 2 && rank <= 3) reward = rewardsConfig.rank2_3;
+        else reward = rewardsConfig.rank4_plus;
 
-        // ATURAN HADIAH BISA ANDA UBAH DI SINI:
-        if (rank === 1) { rewardGold = 100000; rewardStone = 3000; }
-        else if (rank >= 2 && rank <= 3) { rewardGold = 50000; rewardStone = 1500; }
-        else if (rank >= 4 && rank <= 10) { rewardGold = 25000; rewardStone = 500; }
-        else { rewardGold = 10000; rewardStone = 100; } // Hadiah partisipasi > Rank 10
+        // Susun lampiran surat
+        let attachments = {};
+        if (reward.gold > 0) attachments.gold = reward.gold;
+        if (reward.coin > 0) attachments.coin = reward.coin; // Tambahan support coin
+        if (reward.item && reward.item !== "") {
+            attachments.itemName = reward.item;
+            attachments.qty = reward.qty || 1;
+        }
 
         const mailData = {
             senderId: "SYSTEM",
             senderName: "Event Master",
             title: title,
             message: message,
-            attachments: {
-                gold: rewardGold,
-                itemName: "Universal Stone",
-                qty: rewardStone
-            },
+            attachments: attachments,
             isClaimed: false,
             timestamp: serverTimestamp()
         };
@@ -143,9 +150,7 @@ async function distributeBossRewards(participantsObj) {
     }
 }
 
-// ==========================================
-// FITUR: Listener Real-Time UI Boss (WAJIB ADA)
-// ==========================================
+// FITUR: Listener Real-Time UI Boss
 export function listenToWorldBoss(renderCallback) {
     const bossRef = doc(db, "events", "worldBoss");
     return onSnapshot(bossRef, (docSnap) => {
@@ -153,6 +158,23 @@ export function listenToWorldBoss(renderCallback) {
             renderCallback(null);
             return;
         }
-        renderCallback(docSnap.data());
+
+        let data = docSnap.data();
+
+        // Sembunyikan UI jika boss memiliki jadwal tetapi belum waktunya muncul atau sudah lewat
+        if (!data.isPermanent && data.isActive && data.currentHp > 0) {
+            const now = Date.now();
+            const startTime = new Date(data.startTime).getTime();
+            const endTime = new Date(data.endTime).getTime();
+
+            // Jika belum waktunya, atau sudah kadaluarsa (hilang otomatis), kirim null ke UI (Sembunyikan)
+            if (now < startTime || now > endTime) {
+                renderCallback(null);
+                return;
+            }
+        }
+
+        // Tampilkan boss jika waktunya tepat, permanen, atau jika boss sudah mati (untuk memunculkan leaderboard terakhir)
+        renderCallback(data);
     });
 }
