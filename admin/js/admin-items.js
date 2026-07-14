@@ -4,6 +4,40 @@ import { collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, getDocs } f
 import { ITEM_DB } from '../../js/data/items.js';
 
 // ==========================================
+// SENSOR FORM STATUS TEMPUR (DYNAMIC UI)
+// ==========================================
+window.toggleCombatStatsVisibility = function () {
+    const typeDropdown = document.getElementById('editor-item-type');
+    const combatSection = document.getElementById('combat-stats-section');
+
+    if (!typeDropdown || !combatSection) return;
+
+    const currentType = typeDropdown.value;
+
+    // Daftar kategori yang DIIZINKAN melihat status tempur
+    const combatTypes = ['weapon', 'armor', 'accessory', 'equipment', 'mount'];
+
+    if (combatTypes.includes(currentType)) {
+        // Tampilkan form jika memilih senjata/armor
+        combatSection.style.display = 'block';
+    } else {
+        // Sembunyikan form jika memilih material/consumable
+        combatSection.style.display = 'none';
+
+        // Reset semua nilai ke 0 secara otomatis
+        document.getElementById('editor-item-patk').value = 0;
+        document.getElementById('editor-item-matk').value = 0;
+        document.getElementById('editor-item-def').value = 0;
+        document.getElementById('editor-item-hp-bonus').value = 0;
+        document.getElementById('editor-item-acc-bonus').value = 0;
+        document.getElementById('editor-item-stam-discount').value = 0;
+    }
+};
+
+// Pantau setiap kali admin mengubah pilihan di dropdown "Tipe Item"
+document.getElementById('editor-item-type')?.addEventListener('change', window.toggleCombatStatsVisibility);
+
+// ==========================================
 // 1. LISTEN DATABASE ITEM DARI FIRESTORE
 // ==========================================
 window.listenToItemsDb = function () {
@@ -90,6 +124,8 @@ window.listenToItemsDb = function () {
                 document.getElementById('editor-item-acc-bonus').value = data.accBonus || 0;
                 document.getElementById('editor-item-stam-discount').value = data.stamDiscount || 0;
 
+                window.toggleCombatStatsVisibility();
+
                 const editorPanel = document.getElementById('item-editor-panel');
                 editorPanel.style.opacity = "1";
                 editorPanel.style.pointerEvents = "auto";
@@ -121,6 +157,8 @@ document.getElementById('btn-add-new-item')?.addEventListener('click', () => {
     document.getElementById('editor-item-hp-bonus').value = "0";
     document.getElementById('editor-item-acc-bonus').value = "0";
     document.getElementById('editor-item-stam-discount').value = "0";
+
+    window.toggleCombatStatsVisibility();
 
     document.getElementById('item-editor-panel').style.opacity = "1";
     document.getElementById('item-editor-panel').style.pointerEvents = "auto";
