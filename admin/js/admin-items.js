@@ -160,9 +160,15 @@ document.getElementById('btn-save-item')?.addEventListener('click', async () => 
         const btn = document.getElementById('btn-save-item');
         btn.innerText = "⏳ Menyimpan..."; btn.disabled = true;
 
-        // Jika pemain mengubah nama (ID), kita harus menghapus ID lama agar tidak duplikat
+        // Jika ADMIN mengubah nama (ID), kita harus menghapus ID lama agar tidak duplikat
         if (originalId && originalId !== newId) {
             await deleteDoc(doc(db, "items", originalId));
+
+            // 🔥 TANYAKAN & JALANKAN MIGRASI MASAL
+            if (confirm(`Anda mengubah nama item dari "${originalId}" menjadi "${newId}".\n\nApakah Anda juga ingin memperbarui nama ini di Tas, Bank, dan Status Equip SELURUH PEMAIN?\n(Sangat disarankan agar item pemain tidak error/hilang)`)) {
+                btn.innerText = "⏳ Menyapu Database Pemain...";
+                await updateItemNameInAllUsers(db, originalId, newId);
+            }
         }
 
         await setDoc(doc(db, "items", newId), dataToSave, { merge: true });
@@ -277,3 +283,72 @@ document.getElementById('btn-sync-default-items')?.addEventListener('click', asy
         document.getElementById('btn-sync-default-items').disabled = false;
     }
 });
+
+// Fungsi untuk mengubah nama item di seluruh database pemain (Tas, Bank, Equip)
+async function updateItemNameInAllUsers(db, oldName, newName) {
+    try {
+        const usersSnap = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js").then(m => m.getDocs(m.collection(db, "users")));
+        const batch = writeBatch(db);
+        let updatedCount = 0;
+
+        usersSnap.forEach((userDoc) => {
+            const data = userDoc.data();
+            let needsUpdate = false;
+            let updates = {};
+
+            // 1. Cek Inventaris (Tas)
+            if (data.inventory) {
+                let inv = { ...data.inventory };
+                // Cek item polos atau item dengan refine [+1], [+2], dll
+                for (const key of Object.keys(inv)) {
+                    if (key === oldName || key.startsWith(oldName + " [+")) {
+                        const newKey = key.replace(oldName, newName);
+                        inv[newKey] = inv[key];
+                        delete inv[key];
+                        needsUpdate = true;
+                    }
+                }
+                if (needsUpdate) updates.inventory = inv;
+            }
+
+            // 2. Cek Bank
+            if (data.bank) {
+                let bnk = { ...data.bank };
+                for (const key of Object.keys(bnk)) {
+                    if (key === oldName || key.startsWith(oldName + " [+")) {
+                        const newKey = key.replace(oldName, newName);
+                        bnk[newKey] = bnk[key];
+                        delete bnk[key];
+                        needsUpdate = true;
+                    }
+                }
+                if (needsUpdate) updates.bank = bnk;
+            }
+
+            // 3. Cek Equipment (Sedang dipakai)
+            if (data.equipment) {
+                let eq = { ...data.equipment };
+                for (const slot in eq) {
+                    if (eq[slot] && eq[slot].name === oldName) {
+                        eq[slot].name = newName;
+                        needsUpdate = true;
+                    }
+                }
+                if (needsUpdate) updates.equipment = eq;
+            }
+
+            // Jika pemain ini memiliki item lama, masukkan ke daftar update
+            if (needsUpdate) {
+                batch.update(userDoc.ref, updates);
+                updatedCount++;
+            }
+        });
+
+        if (updatedCount > 0) {
+            await batch.commit();
+            console.log(`✅ Berhasil memperbarui nama item di ${updatedCount} akun pemain.`);
+        }
+    } catch (err) {
+        console.error("Gagal melakukan update masal ke pemain:", err);
+    }
+}
