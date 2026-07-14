@@ -23,7 +23,25 @@ window.populateMonsterItemDropdown = function () {
 
 window.listenToMonsters = function () {
     const listDiv = document.getElementById('admin-monster-list');
+    const searchInput = document.getElementById('search-monster-db');
     if (!listDiv) return;
+
+    if (searchInput && !searchInput.hasAttribute('data-listener')) {
+        searchInput.addEventListener('input', (e) => {
+            const filterText = e.target.value.toLowerCase();
+            const allRows = listDiv.querySelectorAll('.monster-row-entry');
+
+            allRows.forEach(row => {
+                const monsterName = row.getAttribute('data-name');
+                if (monsterName.includes(filterText)) {
+                    row.style.display = 'flex'; // Munculkan jika cocok
+                } else {
+                    row.style.display = 'none'; // Sembunyikan jika tidak cocok
+                }
+            });
+        });
+        searchInput.setAttribute('data-listener', 'true');
+    }
 
     onSnapshot(collection(db, "monsters"), (snapshot) => {
         listDiv.innerHTML = "";
@@ -52,16 +70,16 @@ window.listenToMonsters = function () {
             const level = data.levelReq || 1;
             const exp = data.expReward || 0;
             const gold = data.goldReward || 0;
-
             const dataString = encodeURIComponent(JSON.stringify(data));
+            const displayName = data.name || monsterId;
 
             // Desain List
             listDiv.innerHTML += `
-                <div style="padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                <div class="monster-row-entry" data-name="${displayName.toLowerCase()}" style="padding: 10px; border-bottom: 1px solid #333; background: #1a1a24; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
                     <div style="flex: 1;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="background: #e040fb; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">Lv.${level}</span>
-                            <span style="color: #ffca28; font-weight: bold; font-size: 14px;">${data.name || monsterId}</span>
+                            <span style="color: #ffca28; font-weight: bold; font-size: 14px;">${displayName}</span>
                         </div>
                         <div style="color: #aaa; font-size: 11px; margin-top: 5px; display: flex; gap: 10px; flex-wrap: wrap;">
                             <span>❤️ ${data.hp}</span>
@@ -97,6 +115,10 @@ window.listenToMonsters = function () {
                 editorPanel.style.pointerEvents = "auto";
             });
         });
+
+        if (searchInput && searchInput.value) {
+            searchInput.dispatchEvent(new Event('input'));
+        }
     });
 };
 
