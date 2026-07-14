@@ -4,19 +4,16 @@ export function escapeHTML(str) {
 
 let ITEM_ICONS = { "default": { col: 0, row: 0 } };
 
-// 🔥 KITA KEMBALIKAN KE LOCAL FETCH AGAR SUPER CEPAT
-// Mencoba dua jalur (../data atau ./data) untuk memastikan tidak ada error 404
-fetch('../data/items.json')
+fetch('./data/items.json')
     .then(response => {
-        if (!response.ok) return fetch('./data/items.json');
-        return response;
+        if (!response.ok) throw new Error("Gagal menemukan file di ./data/items.json");
+        return response.json();
     })
-    .then(response => response.json())
     .then(data => {
         ITEM_ICONS = data;
         console.log("✅ Kamus Ikon UI berhasil dimuat!");
 
-        // 🔥 PELATUK RAHASIA: Setelah ikon dimuat, paksa game menggambar ulang tas!
+        // Memaksa game menggambar ulang tas setelah data ikon siap
         if (typeof window.renderInventoryUI === 'function' && window.currentInventoryData) {
             window.renderInventoryUI(window.currentInventoryData);
         }
