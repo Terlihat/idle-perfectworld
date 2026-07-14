@@ -11,6 +11,7 @@ import './admin-guild.js';
 import './admin-market.js';
 import './admin-tickets.js';
 import './admin-monsters.js';
+import './admin-items.js';
 
 window.adminUid = null;
 
@@ -186,6 +187,7 @@ onAuthStateChanged(auth, async (user) => {
                 if (window.listenToTickets) window.listenToTickets();
                 if (window.populateMonsterItemDropdown) window.populateMonsterItemDropdown();
                 if (window.listenToMonsters) window.listenToMonsters();
+                if (window.listenToItemsDb) window.listenToItemsDb();
             } else {
                 alert("Akses Ditolak!"); window.location.href = '../index.html';
             }

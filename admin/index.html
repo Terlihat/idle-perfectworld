@@ -28,6 +28,7 @@
 				<button class="tab-link" onclick="window.openAdminTab('tab-mailbox', this)">📬 Kirim Surat</button>
 				<button class="tab-link" onclick="window.openAdminTab('tab-player', this)">🔍 Player Editor</button>
 				<button class="tab-link" onclick="window.openAdminTab('tab-events', this)">🌟 Manajemen Event</button>
+				<button class="tab-link" onclick="window.openAdminTab('tab-items', this)">🎒 Database Item</button>
 				<button class="tab-link" onclick="window.openAdminTab('tab-boss', this)">👹 Manajemen WB</button>
 				<button class="tab-link" onclick="window.openAdminTab('tab-monsters', this)">🐉 Database
 					Monster</button>
@@ -634,6 +635,103 @@
 									style="background: #28a745; color: white; border: none; padding: 12px; flex: 2; border-radius: 4px; font-weight: bold; cursor: pointer;">💾
 									Simpan</button>
 								<button id="btn-delete-monster"
+									style="background: #dc3545; color: white; border: none; padding: 12px; flex: 1; border-radius: 4px; font-weight: bold; cursor: pointer;">🗑️
+									Hapus</button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- TAB 12: DATABASE ITEM -->
+				<div id="tab-items" class="admin-tab-section">
+					<h2>🎒 Manajemen Database Item</h2>
+					<p style="color: #aaa; font-size: 13px; margin-top: -10px;">Atur detail, harga, deskripsi, serta
+						koordinat ikon (Sprite) dari setiap item.</p>
+
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+						<!-- KOLOM KIRI: DAFTAR ITEM -->
+						<div class="panel">
+							<h3 style="color: #ffca28; margin-top: 0;">📜 Daftar Item Server</h3>
+							<div style="display: flex; gap: 10px; margin-bottom: 10px;">
+								<button id="btn-add-new-item"
+									style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; flex: 1;">➕
+									Buat Item Baru</button>
+								<button id="btn-sync-default-items"
+									style="background: #6f42c1; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;"
+									title="Tarik data item lama ke Firestore">♻️ Sync Default</button>
+							</div>
+							<div id="admin-item-db-list"
+								style="background: #121216; border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; min-height: 400px; max-height: 500px; overflow-y: auto;">
+								<div style="text-align: center; color: #aaa; padding: 20px; font-size: 13px;">Memuat
+									database item...</div>
+							</div>
+						</div>
+
+						<!-- KOLOM KANAN: FORM EDITOR ITEM -->
+						<div class="panel" id="item-editor-panel"
+							style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
+							<h3 style="color: #00d2ff; margin-top: 0;">🛠️ Editor Item</h3>
+
+							<input type="hidden" id="editor-item-original-id">
+
+							<div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 15px;">
+								<div class="form-group" style="margin-bottom: 0;">
+									<label>Nama Item (Akan menjadi ID Data)</label>
+									<input type="text" id="editor-item-name" placeholder="Contoh: Ramuan HP"
+										style="width: 100%; padding: 8px; background: #121216; color: white; border: 1px solid #3f3f52;">
+								</div>
+
+								<div class="form-group" style="margin-bottom: 0;">
+									<label>Kategori (Type)</label>
+									<select id="editor-item-type"
+										style="width: 100%; padding: 8px; background: #121216; color: white; border: 1px solid #3f3f52;">
+										<option value="consumable">🧪 Consumable (Habis Pakai)</option>
+										<option value="equipment">⚔️ Equipment (Perlengkapan)</option>
+										<option value="material">🧱 Material / Loot</option>
+										<option value="quest">📜 Item Quest</option>
+										<option value="mount">🐎 Mount (Kendaraan)</option>
+									</select>
+								</div>
+
+								<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+									<div class="form-group" style="margin-bottom: 0;">
+										<label>Sprite Column (Col)</label>
+										<input type="number" id="editor-item-col" value="0" min="0"
+											style="width: 100%; padding: 8px; background: #121216; color: #00d2ff; border: 1px solid #3f3f52;">
+									</div>
+									<div class="form-group" style="margin-bottom: 0;">
+										<label>Sprite Row (Row)</label>
+										<input type="number" id="editor-item-row" value="0" min="0"
+											style="width: 100%; padding: 8px; background: #121216; color: #ffca28; border: 1px solid #3f3f52;">
+									</div>
+								</div>
+
+								<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+									<div class="form-group" style="margin-bottom: 0;">
+										<label>Harga Jual (Gold)</label>
+										<input type="number" id="editor-item-price-gold" value="0"
+											style="width: 100%; padding: 8px; background: #121216; color: #ffd700; border: 1px solid #3f3f52;">
+									</div>
+									<div class="form-group" style="margin-bottom: 0;">
+										<label>Harga Jual (Coin)</label>
+										<input type="number" id="editor-item-price-coin" value="0"
+											style="width: 100%; padding: 8px; background: #121216; color: #a6e3a1; border: 1px solid #3f3f52;">
+									</div>
+								</div>
+
+								<div class="form-group" style="margin-bottom: 0;">
+									<label>Deskripsi Item</label>
+									<textarea id="editor-item-desc" rows="3"
+										placeholder="Masukkan efek atau fungsi item..."
+										style="width: 100%; padding: 8px; background: #121216; color: white; border: 1px solid #3f3f52; resize: vertical;"></textarea>
+								</div>
+							</div>
+
+							<div style="display: flex; gap: 10px; margin-top: 20px;">
+								<button id="btn-save-item"
+									style="background: #28a745; color: white; border: none; padding: 12px; flex: 2; border-radius: 4px; font-weight: bold; cursor: pointer;">💾
+									Simpan Item</button>
+								<button id="btn-delete-item"
 									style="background: #dc3545; color: white; border: none; padding: 12px; flex: 1; border-radius: 4px; font-weight: bold; cursor: pointer;">🗑️
 									Hapus</button>
 							</div>
