@@ -20,12 +20,14 @@ export function renderInventoryUI(inventory) {
 
         // 🔥 BACA DARI CLOUD CACHE 
         const itemInfo = window.CLOUD_ITEM_DB[baseName] || { type: 'misc', col: 0, row: 0, goldPrice: 0 };
-        let maxStack = 99;
 
-        // Sesuaikan dengan nama type baru dari sinkronisasi kita
-        if (['weapon', 'armor', 'accessory', 'mount', 'equipment'].includes(itemInfo.type)) maxStack = 1;
-        else if (['catalyst', 'material', 'loot'].includes(itemInfo.type)) maxStack = 1000;
-        else if (['potion', 'consumable'].includes(itemInfo.type)) maxStack = 99;
+        // Atur batas default ke 50000 sesuai keinginan Anda
+        let maxStack = 50000;
+
+        // Pengecualian HANYA untuk Equipment agar sistem Tempa (+1, +2) tidak error
+        if (['weapon', 'armor', 'accessory', 'mount', 'equipment'].includes(itemInfo.type)) {
+            maxStack = 1;
+        }
 
         let remainingQty = totalQty;
         while (remainingQty > 0) {
@@ -45,7 +47,7 @@ export function renderInventoryUI(inventory) {
 
     // 🔥 PENGATURAN CSS SPRITE UNTUK IKON
     const iconSize = 32; // Ganti jika ikon Anda berukuran 36px atau 48px
-    const spriteSheetUrl = "assets/images/items-sprite.png"; // Ganti dengan path file gambar sprite asli Anda
+    const spriteSheetUrl = "assets/interface.webp"; // Ganti dengan path file gambar sprite asli Anda
 
     for (let i = 0; i < renderSlots.length; i++) {
         const slot = renderSlots[i];
@@ -80,7 +82,7 @@ export function renderBankUI(bankInventory) {
     let bankItems = Object.entries(bankInventory || {}).sort((a, b) => a[0].localeCompare(b[0]));
 
     const iconSize = 32;
-    const spriteSheetUrl = "assets/images/items-sprite.png";
+    const spriteSheetUrl = "assets/interface.webp";
 
     for (let i = 0; i < 16; i++) {
         if (i < bankItems.length) {
