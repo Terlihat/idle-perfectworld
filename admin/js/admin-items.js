@@ -2,19 +2,19 @@
 import { db } from '../../js/firebase-config.js';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// Import data lama (Sesuaikan variabel export dari monsters.js Anda)
-import { ITEM_LEGACY_DB } from '../../js/data/monsters.js'; 
+// Mengimpor data dari file items.js yang benar
+import { ITEM_DB } from '../../js/data/items.js';
 
 // ==========================================
 // 1. LISTEN DATABASE ITEM DARI FIRESTORE
 // ==========================================
-window.listenToItemsDb = function() {
+window.listenToItemsDb = function () {
     const listDiv = document.getElementById('admin-item-db-list');
     if (!listDiv) return;
 
     onSnapshot(collection(db, "items"), (snapshot) => {
         listDiv.innerHTML = "";
-        
+
         if (snapshot.empty) {
             listDiv.innerHTML = `<div style="text-align: center; color: #aaa; padding: 30px; font-size: 13px;">Database Item kosong. Klik Sync Default untuk memigrasi data statis.</div>`;
             return;
@@ -53,7 +53,7 @@ window.listenToItemsDb = function() {
         document.querySelectorAll('.btn-edit-item-db').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const data = JSON.parse(decodeURIComponent(e.target.getAttribute('data-info')));
-                
+
                 document.getElementById('editor-item-original-id').value = data.id;
                 document.getElementById('editor-item-name').value = data.id;
                 document.getElementById('editor-item-type').value = data.type || "material";
@@ -62,7 +62,7 @@ window.listenToItemsDb = function() {
                 document.getElementById('editor-item-price-gold').value = data.goldPrice || 0;
                 document.getElementById('editor-item-price-coin').value = data.coinPrice || 0;
                 document.getElementById('editor-item-desc').value = data.description || "";
-                
+
                 const editorPanel = document.getElementById('item-editor-panel');
                 editorPanel.style.opacity = "1";
                 editorPanel.style.pointerEvents = "auto";
@@ -83,7 +83,7 @@ document.getElementById('btn-add-new-item')?.addEventListener('click', () => {
     document.getElementById('editor-item-price-gold').value = "0";
     document.getElementById('editor-item-price-coin').value = "0";
     document.getElementById('editor-item-desc').value = "";
-    
+
     document.getElementById('item-editor-panel').style.opacity = "1";
     document.getElementById('item-editor-panel').style.pointerEvents = "auto";
 });
@@ -91,7 +91,7 @@ document.getElementById('btn-add-new-item')?.addEventListener('click', () => {
 document.getElementById('btn-save-item')?.addEventListener('click', async () => {
     const originalId = document.getElementById('editor-item-original-id').value;
     const newId = document.getElementById('editor-item-name').value.trim(); // Nama item bertindak sebagai ID
-    
+
     if (!newId) return alert("Nama item tidak boleh kosong!");
 
     const dataToSave = {
@@ -114,9 +114,9 @@ document.getElementById('btn-save-item')?.addEventListener('click', async () => 
         }
 
         await setDoc(doc(db, "items", newId), dataToSave, { merge: true });
-        
-        if(window.logAdminAction) window.logAdminAction("SYSTEM", `Menyimpan data Item: [${newId}]`);
-        
+
+        if (window.logAdminAction) window.logAdminAction("SYSTEM", `Menyimpan data Item: [${newId}]`);
+
         btn.innerText = "✅ Tersimpan!";
         setTimeout(() => { btn.innerText = "💾 Simpan Item"; btn.disabled = false; }, 2000);
         document.getElementById('editor-item-original-id').value = newId; // Update ID aktif
@@ -129,14 +129,14 @@ document.getElementById('btn-save-item')?.addEventListener('click', async () => 
 document.getElementById('btn-delete-item')?.addEventListener('click', async () => {
     const itemId = document.getElementById('editor-item-original-id').value;
     if (!itemId) return alert("Pilih item yang sudah ada terlebih dahulu!");
-    
+
     if (!confirm(`YAKIN ingin menghapus item [${itemId}] dari database secara permanen?`)) return;
 
     try {
         await deleteDoc(doc(db, "items", itemId));
-        if(window.logAdminAction) window.logAdminAction("SYSTEM", `MENGHAPUS Item: [${itemId}].`);
+        if (window.logAdminAction) window.logAdminAction("SYSTEM", `MENGHAPUS Item: [${itemId}].`);
         alert("💥 Item berhasil dihapus.");
-        
+
         document.getElementById('item-editor-panel').style.opacity = "0.5";
         document.getElementById('item-editor-panel').style.pointerEvents = "none";
     } catch (err) {
@@ -148,42 +148,40 @@ document.getElementById('btn-delete-item')?.addEventListener('click', async () =
 // 3. MIGRASI CERDAS DATA LAMA (SYNC DEFAULT)
 // ==========================================
 document.getElementById('btn-sync-default-items')?.addEventListener('click', async () => {
-    if (typeof ITEM_LEGACY_DB === 'undefined') return alert("Data statis tidak ditemukan. Pastikan sudah di-import dari file yang benar.");
+    if (typeof ITEM_DB === 'undefined') return alert("Data statis tidak ditemukan. Pastikan file items.js tersedia.");
     if (!confirm("Tarik dan PERBARUI OTOMATIS semua data sprite koordinat dari file statis ke Firestore? Data lama tidak akan ditimpa jika sudah diedit.")) return;
-    
+
     try {
         const batch = writeBatch(db);
         let count = 0;
-        
-        for (const [itemName, data] of Object.entries(ITEM_LEGACY_DB)) {
+
+        // 🔥 Perhatikan: Kita sekarang menggunakan ITEM_DB
+        for (const [itemName, data] of Object.entries(ITEM_DB)) {
             const ref = doc(db, "items", itemName);
-            
+
             // Logika tebakan Tipe Item otomatis berdasarkan namanya
             let guessedType = "material";
             const nameLower = itemName.toLowerCase();
-            if (nameLower.includes("pedang") || nameLower.includes("tongkat") || nameLower.includes("zirah") || nameLower.includes("cincin") || nameLower.includes("helem")) guessedType = "equipment";
-            if (nameLower.includes("ramuan") || nameLower.includes("health") || nameLower.includes("magic") || nameLower.includes("panacea")) guessedType = "consumable";
-            if (nameLower.includes("kuda") || nameLower.includes("beruang") || nameLower.includes("naga terbang") || nameLower.includes("ufo")) guessedType = "mount";
+            if (nameLower.includes("pedang") || nameLower.includes("tongkat") || nameLower.includes("zirah") || nameLower.includes("cincin") || nameLower.includes("helem") || nameLower.includes("arrow") || nameLower.includes("cover") || nameLower.includes("stir") || nameLower.includes("creator")) guessedType = "equipment";
+            if (nameLower.includes("ramuan") || nameLower.includes("health") || nameLower.includes("magic") || nameLower.includes("panacea") || nameLower.includes("coca") || nameLower.includes("sprite")) guessedType = "consumable";
+            if (nameLower.includes("kuda") || nameLower.includes("beruang") || nameLower.includes("naga") || nameLower.includes("ufo") || nameLower.includes("gajah") || nameLower.includes("leopard")) guessedType = "mount";
 
             const itemData = {
                 name: itemName,
                 col: data.col !== undefined ? data.col : 0,
                 row: data.row !== undefined ? data.row : 0,
                 type: guessedType,
-                // Beri nilai standar awal untuk yang belum ada
                 goldPrice: 10,
                 coinPrice: 0,
                 description: `Diimpor otomatis dari sistem statis.`
             };
-            
-            // setDoc dengan merge:true agar col/row ter-update, tetapi jika Anda sudah 
-            // susah-susah membuat deskripsi di UI Admin, deskripsinya tidak hilang.
+
             batch.set(ref, itemData, { merge: true });
             count++;
         }
-        
+
         await batch.commit();
-        if(window.logAdminAction) window.logAdminAction("SYSTEM", `Auto-Sync ${count} Item Koordinat ke Firestore.`);
+        if (window.logAdminAction) window.logAdminAction("SYSTEM", `Auto-Sync ${count} Item Koordinat ke Firestore.`);
         alert(`✅ ${count} item berhasil disinkronkan. Koordinat Sprite (Col/Row) telah diamankan di Cloud!`);
     } catch (err) {
         alert("Gagal Sync: " + err.message);
