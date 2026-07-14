@@ -1,10 +1,16 @@
+// File: admin-boss.js
+// 🔥 IMPORT WAJIB DITAMBAHKAN DI SINI
+import { db } from '../../js/firebase-config.js';
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { ITEM_DB } from '../../js/data/items.js';
+
 // ==========================================
 // 1. MENGISI DROPDOWN HADIAH WORLD BOSS
 // ==========================================
-window.populateWorldBossItemDropdowns = function() {
+window.populateWorldBossItemDropdowns = function () {
     const selects = ['wb-reward-1-item', 'wb-reward-2-item', 'wb-reward-3-item'];
-    
-    // Pastikan ITEM_DB sudah di-import atau tersedia di window
+
+    // Sekarang ITEM_DB sudah terbaca karena sudah di-import di atas
     if (typeof ITEM_DB !== 'undefined') {
         selects.forEach(id => {
             const el = document.getElementById(id);
@@ -18,13 +24,11 @@ window.populateWorldBossItemDropdowns = function() {
     }
 };
 
-// Panggil fungsi ini saat Admin Panel selesai dimuat
-// window.populateWorldBossItemDropdowns(); 
-
 // ==========================================
 // 2. MENYIMPAN & MENJADWALKAN WORLD BOSS
 // ==========================================
-document.getElementById('btn-admin-spawn-wb')?.addEventListener('click', async () => {
+// 🔥 KITA MENGGUNAKAN ID TOMBOL BARU AGAR TIDAK BENTROK DENGAN SCRIPT LAMA
+document.getElementById('btn-save-wb-schedule')?.addEventListener('click', async () => {
     const name = document.getElementById('wb-admin-name').value.trim();
     const hp = parseInt(document.getElementById('wb-admin-hp').value);
     const startTime = document.getElementById('wb-admin-start-time').value;
@@ -32,7 +36,7 @@ document.getElementById('btn-admin-spawn-wb')?.addEventListener('click', async (
     const isPermanent = document.getElementById('wb-admin-is-permanent').checked;
 
     if (!name || isNaN(hp) || hp <= 0) return alert("Nama dan HP Boss tidak valid!");
-    
+
     if (!isPermanent && (!startTime || !endTime)) {
         return alert("Jika boss tidak permanen, Waktu Mulai dan Waktu Berakhir wajib diisi!");
     }
@@ -77,17 +81,16 @@ document.getElementById('btn-admin-spawn-wb')?.addEventListener('click', async (
     };
 
     try {
-        const btn = document.getElementById('btn-admin-spawn-wb');
+        const btn = document.getElementById('btn-save-wb-schedule');
         btn.innerText = "⏳ Menyimpan..."; btn.disabled = true;
 
-        // Import doc & setDoc jika belum ada di file ini
-        const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
+        // Menggunakan koneksi DB yang sudah di-import di baris paling atas
         await setDoc(doc(db, "events", "worldBoss"), bossData);
 
         alert(`✅ World Boss [${name}] berhasil diatur dan dijadwalkan!`);
         btn.innerText = "⚔️ SIMPAN & JADWALKAN BOSS"; btn.disabled = false;
     } catch (err) {
         alert("Gagal menjadwalkan boss: " + err.message);
-        document.getElementById('btn-admin-spawn-wb').disabled = false;
+        document.getElementById('btn-save-wb-schedule').disabled = false;
     }
 });
