@@ -137,3 +137,6 @@ export function renderCraftingUI(inventory, playerLevel, playerGold) {
         </div>`;
     }
 }
+
+window.renderInventoryUI = renderInventoryUI;
+window.renderBankUI = renderBankUI;
