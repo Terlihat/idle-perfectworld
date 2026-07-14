@@ -1,8 +1,6 @@
 // File: admin-items.js
 import { db } from '../../js/firebase-config.js';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-// Mengimpor data dari file items.js yang benar
 import { ITEM_DB } from '../../js/data/items.js';
 
 // ==========================================
@@ -148,57 +146,73 @@ document.getElementById('btn-delete-item')?.addEventListener('click', async () =
 // 3. MIGRASI CERDAS DATA LAMA (SYNC DEFAULT)
 // ==========================================
 document.getElementById('btn-sync-default-items')?.addEventListener('click', async () => {
-    if (!confirm("Tarik dan PERBARUI OTOMATIS semua data sprite koordinat langsung dari file items.json ke Firestore?")) return;
+    if (typeof ITEM_DB === 'undefined') return alert("Data items.js tidak ditemukan.");
+    if (!confirm("Tarik dan GABUNGKAN data dari items.json (Gambar) dan items.js (Status RPG) ke Firestore?")) return;
 
     try {
         const btn = document.getElementById('btn-sync-default-items');
         btn.innerText = "⏳ Menarik Data..."; btn.disabled = true;
 
-        // 🔥 LOGIKA BARU: Menarik data langsung dari file items.json
-        // (Pastikan path ini sesuai dengan lokasi file items.json Anda)
+        // 1. Tarik Data Gambar (Koordinat Sprite) dari JSON
         const response = await fetch('../../js/data/items.json');
-
-        if (!response.ok) {
-            throw new Error("Gagal menemukan file items.json. Pastikan lokasinya benar.");
-        }
-
+        if (!response.ok) throw new Error("Gagal menemukan items.json.");
         const ITEM_JSON_DB = await response.json();
 
         const batch = writeBatch(db);
         let count = 0;
 
-        // Membaca dari data JSON yang baru ditarik
-        for (const [itemName, data] of Object.entries(ITEM_JSON_DB)) {
+        // 2. Kumpulkan SEMUA nama item dari kedua file agar tidak ada yang terlewat
+        const allItemNames = new Set([
+            ...Object.keys(ITEM_JSON_DB),
+            ...Object.keys(ITEM_DB)
+        ]);
+
+        // 3. Mulai Penggabungan (Merge)
+        for (const itemName of allItemNames) {
             const ref = doc(db, "items", itemName);
 
-            let guessedType = "material";
-            const nameLower = itemName.toLowerCase();
+            // Ambil data dari masing-masing file (jika tidak ada, beri objek kosong)
+            const jsonInfo = ITEM_JSON_DB[itemName] || {};
+            const jsInfo = ITEM_DB[itemName] || {};
 
-            // Logika tebakan tipe
-            if (nameLower.includes("pedang") || nameLower.includes("tongkat") || nameLower.includes("zirah") || nameLower.includes("cincin") || nameLower.includes("helem") || nameLower.includes("arrow") || nameLower.includes("cover") || nameLower.includes("stir") || nameLower.includes("creator")) guessedType = "equipment";
-            if (nameLower.includes("ramuan") || nameLower.includes("health") || nameLower.includes("magic") || nameLower.includes("panacea") || nameLower.includes("coca") || nameLower.includes("sprite")) guessedType = "consumable";
-            if (nameLower.includes("kuda") || nameLower.includes("beruang") || nameLower.includes("naga") || nameLower.includes("ufo") || nameLower.includes("gajah") || nameLower.includes("leopard")) guessedType = "mount";
+            // Logika Fallback Tipe (Jika di items.js tidak ada type-nya)
+            let finalType = jsInfo.type || "material";
+            if (!jsInfo.type) {
+                const nameLower = itemName.toLowerCase();
+                if (nameLower.includes("pedang") || nameLower.includes("tongkat") || nameLower.includes("zirah")) finalType = "equipment";
+                if (nameLower.includes("ramuan") || nameLower.includes("health")) finalType = "consumable";
+            }
 
+            // Susun Data Final
             const itemData = {
                 name: itemName,
-                // 🔥 Mengambil col dan row langsung dari JSON
-                col: data.col !== undefined ? data.col : 0,
-                row: data.row !== undefined ? data.row : 0,
-                type: guessedType,
-                goldPrice: 10,
+                col: jsonInfo.col !== undefined ? jsonInfo.col : 0,
+                row: jsonInfo.row !== undefined ? jsonInfo.row : 0,
+                type: finalType,
+                // Ambil harga dari sellValue items.js
+                goldPrice: jsInfo.sellValue !== undefined ? jsInfo.sellValue : 10,
                 coinPrice: 0,
-                description: `Diimpor otomatis dari items.json.`
+                description: jsInfo.desc || `Diimpor otomatis dari sistem statis.`
             };
+
+            // 🔥 SELAMATKAN STATUS RPG! 
+            // Jika item punya status ATK/DEF di items.js, masukkan ke Firestore!
+            if (jsInfo.patk) itemData.patk = jsInfo.patk;
+            if (jsInfo.matk) itemData.matk = jsInfo.matk;
+            if (jsInfo.def) itemData.def = jsInfo.def;
+            if (jsInfo.hpBonus) itemData.hpBonus = jsInfo.hpBonus;
+            if (jsInfo.accBonus) itemData.accBonus = jsInfo.accBonus;
+            if (jsInfo.stamDiscount) itemData.stamDiscount = jsInfo.stamDiscount;
 
             batch.set(ref, itemData, { merge: true });
             count++;
         }
 
         await batch.commit();
-        if (window.logAdminAction) window.logAdminAction("SYSTEM", `Auto-Sync ${count} Item dari items.json ke Firestore.`);
+        if (window.logAdminAction) window.logAdminAction("SYSTEM", `Auto-Sync & Merge ${count} Item ke Firestore.`);
 
         btn.innerText = "♻️ Sync Default"; btn.disabled = false;
-        alert(`✅ ${count} item berhasil disinkronkan. Koordinat Sprite (Col/Row) sekarang sudah tepat!`);
+        alert(`✅ ${count} item berhasil digabungkan! Koordinat, Harga, dan Status RPG sekarang bersatu di Cloud.`);
 
     } catch (err) {
         alert("Gagal Sync: " + err.message);
