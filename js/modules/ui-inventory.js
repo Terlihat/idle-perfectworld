@@ -1,6 +1,6 @@
-import { escapeHTML, getIconHTML } from './ui-utils.js';
-import { ITEM_DB } from '../data/items.js';
+import { escapeHTML } from './ui-utils.js'; // getIconHTML dihapus karena kita pakai sprite
 import { CRAFTING_RECIPES } from './crafting.js';
+// import { ITEM_DB } from '../data/items.js'; // 🔥 Dihapus, beralih ke CLOUD_ITEM_DB
 
 export function renderInventoryUI(inventory) {
     const invGrid = document.getElementById('inventory-grid');
@@ -8,8 +8,8 @@ export function renderInventoryUI(inventory) {
     let html = "";
     let renderSlots = [];
     let items = Object.entries(inventory || {}).sort((a, b) => a[0].localeCompare(b[0]));
-    for (const [name, totalQty] of items) {
 
+    for (const [name, totalQty] of items) {
         if (totalQty <= 0) continue;
         let baseName = name.replace(/\s\[\+\d+\]$/, '');
         let badgeHtml = "";
@@ -18,11 +18,15 @@ export function renderInventoryUI(inventory) {
             badgeHtml = `<div style="position:absolute; top:-5px; right:-5px; background:#dc3545; color:white; font-size:10px; font-weight:bold; padding:2px 4px; border-radius:4px; z-index:10; box-shadow: 0 0 3px black;">+${match[1]}</div>`;
         }
 
-        const itemInfo = ITEM_DB[baseName] || { type: 'misc' };
+        // 🔥 BACA DARI CLOUD CACHE 
+        const itemInfo = window.CLOUD_ITEM_DB[baseName] || { type: 'misc', col: 0, row: 0, goldPrice: 0 };
         let maxStack = 99;
-        if (['weapon', 'armor', 'accessory', 'mount'].includes(itemInfo.type)) maxStack = 1;
-        else if (['catalyst', 'material'].includes(itemInfo.type)) maxStack = 1000;
-        else if (['potion'].includes(itemInfo.type)) maxStack = 99;
+
+        // Sesuaikan dengan nama type baru dari sinkronisasi kita
+        if (['weapon', 'armor', 'accessory', 'mount', 'equipment'].includes(itemInfo.type)) maxStack = 1;
+        else if (['catalyst', 'material', 'loot'].includes(itemInfo.type)) maxStack = 1000;
+        else if (['potion', 'consumable'].includes(itemInfo.type)) maxStack = 99;
+
         let remainingQty = totalQty;
         while (remainingQty > 0) {
             let currentSlotQty = Math.min(remainingQty, maxStack);
@@ -30,19 +34,32 @@ export function renderInventoryUI(inventory) {
                 name: name,
                 baseName: baseName,
                 badgeHtml: badgeHtml,
-                qty: currentSlotQty
+                qty: currentSlotQty,
+                col: itemInfo.col || 0,
+                row: itemInfo.row || 0,
+                goldPrice: itemInfo.goldPrice || 0
             });
             remainingQty -= currentSlotQty;
         }
     }
 
+    // 🔥 PENGATURAN CSS SPRITE UNTUK IKON
+    const iconSize = 32; // Ganti jika ikon Anda berukuran 36px atau 48px
+    const spriteSheetUrl = "assets/images/items-sprite.png"; // Ganti dengan path file gambar sprite asli Anda
+
     for (let i = 0; i < renderSlots.length; i++) {
         const slot = renderSlots[i];
         const qtyText = (slot.qty > 1) ? `<span class="inv-qty">x${slot.qty}</span>` : "";
+
+        // Kalkulasi posisi X dan Y
+        const bgPosX = -(slot.col * iconSize) + "px";
+        const bgPosY = -(slot.row * iconSize) + "px";
+        const iconHtml = `<div style="width: ${iconSize}px; height: ${iconSize}px; background-image: url('${spriteSheetUrl}'); background-position: ${bgPosX} ${bgPosY}; margin: 0 auto;"></div>`;
+
         html += `
-        <div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(slot.name)}')">
+        <div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(slot.name)}')" style="position: relative;" title="Harga Jual: ${slot.goldPrice}G">
             ${slot.badgeHtml}
-            ${getIconHTML(slot.baseName)} 
+            ${iconHtml} 
             <span style="font-size:10px;">${escapeHTML(slot.baseName)}</span>
             ${qtyText}
         </div>`;
@@ -61,12 +78,24 @@ export function renderBankUI(bankInventory) {
     if (!bankGrid) return;
     bankGrid.innerHTML = "";
     let bankItems = Object.entries(bankInventory || {}).sort((a, b) => a[0].localeCompare(b[0]));
+
+    const iconSize = 32;
+    const spriteSheetUrl = "assets/images/items-sprite.png";
+
     for (let i = 0; i < 16; i++) {
         if (i < bankItems.length) {
             const [name, qty] = bankItems[i];
+            let baseName = name.replace(/\s\[\+\d+\]$/, '');
+
+            // 🔥 Terapkan Sprite juga di UI Bank
+            const itemInfo = window.CLOUD_ITEM_DB[baseName] || { col: 0, row: 0 };
+            const bgPosX = -(itemInfo.col * iconSize) + "px";
+            const bgPosY = -(itemInfo.row * iconSize) + "px";
+            const iconHtml = `<div style="width: ${iconSize}px; height: ${iconSize}px; background-image: url('${spriteSheetUrl}'); background-position: ${bgPosX} ${bgPosY}; margin: 0 auto;"></div>`;
+
             bankGrid.innerHTML += `
             <div class="bank-slot filled" onclick="window.handleBankClick('${escapeHTML(name)}')">
-                ${getIconHTML(name)}
+                ${iconHtml}
                 <span style="font-size:10px;">${escapeHTML(name)}</span>
                 <span class="inv-qty">x${qty}</span>
             </div>`;
