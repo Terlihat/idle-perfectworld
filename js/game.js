@@ -2392,3 +2392,22 @@ window.listenToMyTickets = async function () {
         });
     });
 };
+
+// Tempat menyimpan data item dari Cloud
+window.CLOUD_ITEM_DB = {};
+
+// Fungsi untuk menarik semua item dari Firestore ke memori lokal pemain
+window.loadCloudItems = async function (db) {
+    try {
+        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
+        const querySnapshot = await getDocs(collection(db, "items"));
+
+        querySnapshot.forEach(doc => {
+            window.CLOUD_ITEM_DB[doc.id] = doc.data();
+        });
+
+        console.log("🎒 Data Item Cloud berhasil dimuat ke memori pemain!");
+    } catch (err) {
+        console.error("Gagal menarik data item dari Cloud:", err);
+    }
+};
