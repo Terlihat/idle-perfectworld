@@ -1,6 +1,6 @@
 // File: admin-items.js
 import { db } from '../../js/firebase-config.js';
-import { collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ITEM_DB } from '../../js/data/items.js';
 
 // ==========================================
@@ -287,7 +287,8 @@ document.getElementById('btn-sync-default-items')?.addEventListener('click', asy
 // Fungsi untuk mengubah nama item di seluruh database pemain (Tas, Bank, Equip)
 async function updateItemNameInAllUsers(db, oldName, newName) {
     try {
-        const usersSnap = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js").then(m => m.getDocs(m.collection(db, "users")));
+        const usersRef = collection(db, "users");
+        const usersSnap = await getDocs(usersRef);
         const batch = writeBatch(db);
         let updatedCount = 0;
 
@@ -299,7 +300,6 @@ async function updateItemNameInAllUsers(db, oldName, newName) {
             // 1. Cek Inventaris (Tas)
             if (data.inventory) {
                 let inv = { ...data.inventory };
-                // Cek item polos atau item dengan refine [+1], [+2], dll
                 for (const key of Object.keys(inv)) {
                     if (key === oldName || key.startsWith(oldName + " [+")) {
                         const newKey = key.replace(oldName, newName);
@@ -347,8 +347,13 @@ async function updateItemNameInAllUsers(db, oldName, newName) {
         if (updatedCount > 0) {
             await batch.commit();
             console.log(`✅ Berhasil memperbarui nama item di ${updatedCount} akun pemain.`);
+            alert(`✅ Migrasi Selesai! Nama item berhasil diperbarui di ${updatedCount} tas/bank pemain.`);
+        } else {
+            console.log("Tidak ada pemain yang memiliki item ini.");
+            alert("Selesai. Tidak ada pemain yang sedang menyimpan item tersebut.");
         }
     } catch (err) {
         console.error("Gagal melakukan update masal ke pemain:", err);
+        alert("Terjadi kesalahan saat migrasi: " + err.message);
     }
 }
