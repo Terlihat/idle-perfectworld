@@ -2,18 +2,15 @@ export function escapeHTML(str) {
     return str ? str.toString().replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])) : "";
 }
 
-let ITEM_ICONS = { "default": { col: 0, row: 0 } };
-fetch('./data/items.json')
-    .then(response => response.json())
-    .then(data => {
-        ITEM_ICONS = data;
-        console.log("✅ Kamus Ikon berhasil dimuat!");
-    })
-    .catch(err => console.error("❌ Gagal memuat items.json:", err));
-	
 export function getIconHTML(itemName) {
-    const pos = ITEM_ICONS[itemName] || ITEM_ICONS["default"];
+    // 🔥 BACA DARI CLOUD! Jika data belum ada, baru gunakan fallback col: 0, row: 0
+    const pos = (window.CLOUD_ITEM_DB && window.CLOUD_ITEM_DB[itemName])
+        ? window.CLOUD_ITEM_DB[itemName]
+        : { col: 0, row: 0 };
+
     const posX = -(pos.col * 32);
     const posY = -(pos.row * 32);
+
+    // Kembalikan ke format pw-icon andalan Anda
     return `<i class="pw-icon" style="background-position: ${posX}px ${posY}px;"></i>`;
 }

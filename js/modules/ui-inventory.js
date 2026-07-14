@@ -1,6 +1,5 @@
-import { escapeHTML } from './ui-utils.js'; // getIconHTML dihapus karena kita pakai sprite
+import { escapeHTML, getIconHTML } from './ui-utils.js';
 import { CRAFTING_RECIPES } from './crafting.js';
-// import { ITEM_DB } from '../data/items.js'; // 🔥 Dihapus, beralih ke CLOUD_ITEM_DB
 
 export function renderInventoryUI(inventory) {
     const invGrid = document.getElementById('inventory-grid');
@@ -18,15 +17,14 @@ export function renderInventoryUI(inventory) {
             badgeHtml = `<div style="position:absolute; top:-5px; right:-5px; background:#dc3545; color:white; font-size:10px; font-weight:bold; padding:2px 4px; border-radius:4px; z-index:10; box-shadow: 0 0 3px black;">+${match[1]}</div>`;
         }
 
-        // 🔥 BACA DARI CLOUD CACHE 
-        const itemInfo = window.CLOUD_ITEM_DB[baseName] || { type: 'misc', col: 0, row: 0, goldPrice: 0 };
+        // Baca Tipe dan Harga dari Cloud Cache
+        const itemInfo = window.CLOUD_ITEM_DB ? window.CLOUD_ITEM_DB[baseName] : null;
+        const type = itemInfo ? itemInfo.type : 'misc';
+        const goldPrice = itemInfo ? itemInfo.goldPrice : 0;
 
-        // Atur batas default ke 50000 sesuai keinginan Anda
-        let maxStack = 50000;
-
-        // Pengecualian HANYA untuk Equipment agar sistem Tempa (+1, +2) tidak error
-        if (['weapon', 'armor', 'accessory', 'mount', 'equipment'].includes(itemInfo.type)) {
-            maxStack = 1;
+        let maxStack = 9999;
+        if (['weapon', 'armor', 'accessory', 'mount', 'equipment'].includes(type)) {
+            maxStack = 1; // Pengecualian hanya untuk perlengkapan tempur
         }
 
         let remainingQty = totalQty;
@@ -37,31 +35,20 @@ export function renderInventoryUI(inventory) {
                 baseName: baseName,
                 badgeHtml: badgeHtml,
                 qty: currentSlotQty,
-                col: itemInfo.col || 0,
-                row: itemInfo.row || 0,
-                goldPrice: itemInfo.goldPrice || 0
+                goldPrice: goldPrice
             });
             remainingQty -= currentSlotQty;
         }
     }
 
-    // 🔥 PENGATURAN CSS SPRITE UNTUK IKON
-    const iconSize = 32; // Ganti jika ikon Anda berukuran 36px atau 48px
-    const spriteSheetUrl = "assets/interface.webp"; // Ganti dengan path file gambar sprite asli Anda
-
     for (let i = 0; i < renderSlots.length; i++) {
         const slot = renderSlots[i];
         const qtyText = (slot.qty > 1) ? `<span class="inv-qty">x${slot.qty}</span>` : "";
 
-        // Kalkulasi posisi X dan Y
-        const bgPosX = -(slot.col * iconSize) + "px";
-        const bgPosY = -(slot.row * iconSize) + "px";
-        const iconHtml = `<div style="width: ${iconSize}px; height: ${iconSize}px; background-image: url('${spriteSheetUrl}'); background-position: ${bgPosX} ${bgPosY}; margin: 0 auto;"></div>`;
-
         html += `
-        <div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(slot.name)}')" style="position: relative;" title="Harga Jual: ${slot.goldPrice}G">
+        <div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(slot.name)}')" title="Harga Jual: ${slot.goldPrice}G">
             ${slot.badgeHtml}
-            ${iconHtml} 
+            ${getIconHTML(slot.baseName)} 
             <span style="font-size:10px;">${escapeHTML(slot.baseName)}</span>
             ${qtyText}
         </div>`;
@@ -81,23 +68,14 @@ export function renderBankUI(bankInventory) {
     bankGrid.innerHTML = "";
     let bankItems = Object.entries(bankInventory || {}).sort((a, b) => a[0].localeCompare(b[0]));
 
-    const iconSize = 32;
-    const spriteSheetUrl = "assets/interface.webp";
-
     for (let i = 0; i < 16; i++) {
         if (i < bankItems.length) {
             const [name, qty] = bankItems[i];
             let baseName = name.replace(/\s\[\+\d+\]$/, '');
 
-            // 🔥 Terapkan Sprite juga di UI Bank
-            const itemInfo = window.CLOUD_ITEM_DB[baseName] || { col: 0, row: 0 };
-            const bgPosX = -(itemInfo.col * iconSize) + "px";
-            const bgPosY = -(itemInfo.row * iconSize) + "px";
-            const iconHtml = `<div style="width: ${iconSize}px; height: ${iconSize}px; background-image: url('${spriteSheetUrl}'); background-position: ${bgPosX} ${bgPosY}; margin: 0 auto;"></div>`;
-
             bankGrid.innerHTML += `
             <div class="bank-slot filled" onclick="window.handleBankClick('${escapeHTML(name)}')">
-                ${iconHtml}
+                ${getIconHTML(baseName)}
                 <span style="font-size:10px;">${escapeHTML(name)}</span>
                 <span class="inv-qty">x${qty}</span>
             </div>`;
@@ -138,5 +116,6 @@ export function renderCraftingUI(inventory, playerLevel, playerGold) {
     }
 }
 
+// Ekspos fungsi ke global agar bisa dipanggil ulang dari file game.js
 window.renderInventoryUI = renderInventoryUI;
 window.renderBankUI = renderBankUI;
