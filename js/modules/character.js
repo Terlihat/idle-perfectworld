@@ -66,7 +66,7 @@ export async function addCharacterStat(db, uid, statName) {
     }
 }
 
-// FIX: Regenerasi Stamina Cepat + Deteksi VIP + Anti-Corrupt Time
+// FIX: Regenerasi Stamina Cepat + Deteksi VIP + Anti-Corrupt Time (Bebas Bocor Write)
 export function startStaminaRegeneration(db, uid) {
     if (!uid) return;
     const userRef = doc(db, "users", uid);
@@ -82,35 +82,37 @@ export function startStaminaRegeneration(db, uid) {
                 const maxStam = (data.maxStamina || 100) + (vipStats.extraMaxStamina || 0);
                 let currentStam = data.currentStamina !== undefined ? data.currentStamina : maxStam;
 
+                // 🔥 PERBAIKAN 1: Jika stamina penuh, hentikan fungsi. 
+                // Tidak ada lagi updateDoc (Write) ke database saat AFK.
+                if (currentStam >= maxStam) {
+                    return;
+                }
+
                 const now = Date.now();
                 let lastUpdate = data.lastStaminaUpdate;
 
                 if (!lastUpdate) {
                     lastUpdate = now;
                     await updateDoc(userRef, { lastStaminaUpdate: now });
+                    return;
                 }
 
-                if (currentStam < maxStam) {
-                    const diffMs = now - lastUpdate;
+                const diffMs = now - lastUpdate;
 
-                    // Perlindungan: Jika waktu HP/PC pemain error dan nyangkut di masa depan
-                    if (diffMs < 0) {
-                        await updateDoc(userRef, { lastStaminaUpdate: now });
-                        return;
-                    }
-
-                    const diffMinutes = Math.floor(diffMs / 60000); // 1 Stamina = 1 Menit
-
-                    if (diffMinutes > 0) {
-                        const newStam = Math.min(maxStam, currentStam + diffMinutes);
-                        // Jangan gunakan 'now', tapi tambahkan dari waktu terakhir 
-                        // agar sisa detik yang belum genap 1 menit tidak hangus
-                        const newUpdateTime = lastUpdate + (diffMinutes * 60000);
-                        await updateDoc(userRef, { currentStamina: newStam, lastStaminaUpdate: newUpdateTime });
-                    }
-                } else if (currentStam >= maxStam && now - lastUpdate > 60000) {
-                    // Jika stamina kepenuhan / lebih dari batas max, reset waktu hitung
+                // Perlindungan: Jika waktu HP/PC pemain error dan nyangkut di masa depan
+                if (diffMs < 0) {
                     await updateDoc(userRef, { lastStaminaUpdate: now });
+                    return;
+                }
+
+                const diffMinutes = Math.floor(diffMs / 60000); // 1 Stamina = 1 Menit
+
+                if (diffMinutes > 0) {
+                    const newStam = Math.min(maxStam, currentStam + diffMinutes);
+                    const newUpdateTime = lastUpdate + (diffMinutes * 60000);
+
+                    // 🔥 PERBAIKAN 2: Hanya menembak Write jika benar-benar ada penambahan stamina
+                    await updateDoc(userRef, { currentStamina: newStam, lastStaminaUpdate: newUpdateTime });
                 }
             }
         } catch (err) { console.error("Gagal sinkronisasi stamina:", err); }
