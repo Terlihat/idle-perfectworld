@@ -45,10 +45,12 @@ document.getElementById('btn-search-player')?.addEventListener('click', async ()
             document.getElementById('edit-player-level-input').value = data.level || 1;
             document.getElementById('edit-player-exp').value = data.exp || 0;
             document.getElementById('edit-player-vip').value = data.vipLevel || 0;
-            document.getElementById('edit-player-hp').value = data.hp || 100;
-            document.getElementById('edit-player-patk').value = data.patk || 10;
-            document.getElementById('edit-player-matk').value = data.matk || 10;
-            document.getElementById('edit-player-def').value = data.def || 10;
+            document.getElementById('edit-player-maxhp').value = data.maxHp || 100;
+            document.getElementById('edit-player-str').value = data.str || 0;
+            document.getElementById('edit-player-int').value = data.int || 0;
+            document.getElementById('edit-player-dex').value = data.dex || 0;
+            document.getElementById('edit-player-con').value = data.con || 0;
+            document.getElementById('edit-player-statpoints').value = data.statPoints || 0;
             document.getElementById('edit-player-guild-name').value = data.guildName || "Tidak ada Guild";
             document.getElementById('edit-player-guild-role').value = data.guildRole || "-";
             document.getElementById('edit-player-tower').value = data.towerFloor || 1;
@@ -85,11 +87,12 @@ document.getElementById('btn-save-player')?.addEventListener('click', async () =
     const newCoin = parseInt(document.getElementById('edit-player-coin').value) || 0;
     const newLevel = parseInt(document.getElementById('edit-player-level-input').value) || 1;
 
-    // 🔥 Ambil data stats yang baru diketik
-    const newHp = parseInt(document.getElementById('edit-player-hp').value) || 100;
-    const newPatk = parseInt(document.getElementById('edit-player-patk').value) || 10;
-    const newMatk = parseInt(document.getElementById('edit-player-matk').value) || 10;
-    const newDef = parseInt(document.getElementById('edit-player-def').value) || 10;
+    const newMaxHp = parseInt(document.getElementById('edit-player-maxhp').value) || 100;
+    const newStr = parseInt(document.getElementById('edit-player-str').value) || 0;
+    const newInt = parseInt(document.getElementById('edit-player-int').value) || 0;
+    const newDex = parseInt(document.getElementById('edit-player-dex').value) || 0;
+    const newCon = parseInt(document.getElementById('edit-player-con').value) || 0;
+    const newStatPoints = parseInt(document.getElementById('edit-player-statpoints').value) || 0;
 
     const newTower = parseInt(document.getElementById('edit-player-tower').value) || 1;
     const newLocation = document.getElementById('edit-player-location').value || "Kota Utama";
@@ -105,10 +108,12 @@ document.getElementById('btn-save-player')?.addEventListener('click', async () =
             level: newLevel,
             exp: parseInt(document.getElementById('edit-player-exp').value) || 0,
             vipLevel: parseInt(document.getElementById('edit-player-vip').value) || 0,
-            hp: newHp,
-            patk: newPatk,
-            matk: newMatk,
-            def: newDef,
+            maxHp: newMaxHp,
+            str: newStr,
+            int: newInt,
+            dex: newDex,
+            con: newCon,
+            statPoints: newStatPoints,
             towerFloor: newTower,
             lastLocation: newLocation,
             pkPoints: newPkPoints,
