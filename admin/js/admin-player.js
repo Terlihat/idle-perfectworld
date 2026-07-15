@@ -1,19 +1,39 @@
 // File: admin-player.js
 import { db } from '../../js/firebase-config.js';
-import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+// 🔥 PERUBAHAN 1: Tambahkan collection, query, where, getDocs ke dalam import
+import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 let currentEditingUid = null;
 let currentEditingBannedStatus = false;
 let currentEditingFrozenStatus = false;
 
+// ==========================================
+// FITUR PENCARIAN GANDA (UID / NICKNAME)
+// ==========================================
 document.getElementById('btn-search-player')?.addEventListener('click', async () => {
-    const uid = document.getElementById('editor-search-uid').value.trim();
-    if (!uid) return alert("Masukkan UID!");
+    const searchValue = document.getElementById('editor-search-uid').value.trim();
+    if (!searchValue) return alert("Masukkan UID atau Nickname Pemain!");
+
     try {
-        const docSnap = await getDoc(doc(db, "users", uid));
+        let targetUid = searchValue;
+        let docSnap = await getDoc(doc(db, "users", targetUid));
+
+        // 🔥 PERUBAHAN 2: Jika pencarian UID gagal, sistem akan melacak berdasarkan Nickname (username)
+        if (!docSnap.exists()) {
+            const q = query(collection(db, "users"), where("username", "==", searchValue));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                // Ambil data dari pemain pertama yang namanya cocok
+                docSnap = querySnapshot.docs[0];
+                targetUid = docSnap.id; // Dapatkan UID asli dari pemain tersebut
+            }
+        }
+
+        // Jika pemain ditemukan (baik lewat UID maupun Nickname)
         if (docSnap.exists()) {
             const data = docSnap.data();
-            currentEditingUid = uid;
+            currentEditingUid = targetUid; // Kunci UID pemain untuk proses edit selanjutnya
             currentEditingBannedStatus = data.banned || false;
             currentEditingFrozenStatus = data.isFrozen || false;
 
@@ -34,12 +54,21 @@ document.getElementById('btn-search-player')?.addEventListener('click', async ()
             btnFreeze.innerText = currentEditingFrozenStatus ? "🔥 Cairkan Akun" : "❄️ Bekukan (Freeze)";
             btnFreeze.style.background = currentEditingFrozenStatus ? "#d35400" : "#6f42c1";
 
-            renderPlayerInventory(uid, data.inventory || {});
+            renderPlayerInventory(targetUid, data.inventory || {});
             document.getElementById('editor-results').style.display = "block";
-        } else { alert("❌ Pemain tidak ditemukan!"); document.getElementById('editor-results').style.display = "none"; }
-    } catch (err) { console.error(err); }
+        } else {
+            alert("❌ Pemain tidak ditemukan! Pastikan ejaan Nickname (huruf besar/kecil) atau UID sudah benar.");
+            document.getElementById('editor-results').style.display = "none";
+        }
+    } catch (err) {
+        console.error("Error mencari pemain:", err);
+        alert("Terjadi kesalahan saat mencari pemain.");
+    }
 });
 
+// ==========================================
+// SIMPAN, BAN, DAN FREEZE PEMAIN
+// ==========================================
 document.getElementById('btn-save-player')?.addEventListener('click', async () => {
     if (!currentEditingUid) return;
     const newGold = parseInt(document.getElementById('edit-player-gold').value) || 0;
@@ -52,7 +81,7 @@ document.getElementById('btn-save-player')?.addEventListener('click', async () =
             exp: parseInt(document.getElementById('edit-player-exp').value) || 0,
             vipLevel: parseInt(document.getElementById('edit-player-vip').value) || 0
         });
-        if(window.logAdminAction) window.logAdminAction("ECONOMY", `Ubah UID: ${currentEditingUid} | Lvl: ${newLevel}, Gold: ${newGold}, Coin: ${newCoin}`);
+        if (window.logAdminAction) window.logAdminAction("ECONOMY", `Ubah UID: ${currentEditingUid} | Lvl: ${newLevel}, Gold: ${newGold}, Coin: ${newCoin}`);
         document.getElementById('edit-player-level').innerText = newLevel;
         alert("✅ Data diperbarui!");
     } catch (err) { alert("Gagal menyimpan."); }
@@ -64,10 +93,10 @@ document.getElementById('btn-ban-player')?.addEventListener('click', async () =>
     try {
         currentEditingBannedStatus = !currentEditingBannedStatus;
         await updateDoc(doc(db, "users", currentEditingUid), { banned: currentEditingBannedStatus });
-        if(window.logAdminAction) window.logAdminAction("BANNED", `${currentEditingBannedStatus ? 'Banned' : 'Unban'} pada UID: ${currentEditingUid}`);
-        
+        if (window.logAdminAction) window.logAdminAction("BANNED", `${currentEditingBannedStatus ? 'Banned' : 'Unban'} pada UID: ${currentEditingUid}`);
+
         alert(`✅ Pemain berhasil di-${currentEditingBannedStatus ? "Banned" : "Unban"}!`);
-        
+
         const btnBan = document.getElementById('btn-ban-player');
         btnBan.innerText = currentEditingBannedStatus ? "✅ Buka Ban (Un-Ban)" : "🚫 Banned Pemain";
         btnBan.style.background = currentEditingBannedStatus ? "#28a745" : "#dc3545";
@@ -81,10 +110,10 @@ document.getElementById('btn-freeze-player')?.addEventListener('click', async ()
     try {
         currentEditingFrozenStatus = !currentEditingFrozenStatus;
         await updateDoc(doc(db, "users", currentEditingUid), { isFrozen: currentEditingFrozenStatus });
-        if(window.logAdminAction) window.logAdminAction("SYSTEM", `${currentEditingFrozenStatus ? 'FREEZE' : 'UN-FREEZE'} pada UID: ${currentEditingUid}`);
-        
+        if (window.logAdminAction) window.logAdminAction("SYSTEM", `${currentEditingFrozenStatus ? 'FREEZE' : 'UN-FREEZE'} pada UID: ${currentEditingUid}`);
+
         alert(`✅ Akun berhasil di-${currentEditingFrozenStatus ? "Bekukan" : "Cairkan"}!`);
-        
+
         const btnFreeze = document.getElementById('btn-freeze-player');
         btnFreeze.innerText = currentEditingFrozenStatus ? "🔥 Cairkan Akun (Un-Freeze)" : "❄️ Bekukan (Freeze)";
         btnFreeze.style.background = currentEditingFrozenStatus ? "#d35400" : "#6f42c1";
@@ -92,7 +121,9 @@ document.getElementById('btn-freeze-player')?.addEventListener('click', async ()
     } catch (err) { alert("Gagal mengubah freeze."); }
 });
 
-// Sistem Inventory Player
+// ==========================================
+// SISTEM INVENTORY PEMAIN
+// ==========================================
 function renderPlayerInventory(uid, inventoryObj) {
     const listDiv = document.getElementById('player-inventory-list');
     if (!listDiv) return;
@@ -139,7 +170,7 @@ document.getElementById('btn-inject-item')?.addEventListener('click', async () =
             let currentInv = docSnap.data().inventory || {};
             currentInv[itemName] = (currentInv[itemName] || 0) + itemQty;
             await updateDoc(userRef, { inventory: currentInv });
-            if(window.logAdminAction) window.logAdminAction("INJECT", `Suntik ${itemQty}x [${itemName}] ke UID: ${currentEditingUid}`);
+            if (window.logAdminAction) window.logAdminAction("INJECT", `Suntik ${itemQty}x [${itemName}] ke UID: ${currentEditingUid}`);
             alert(`✅ SUKSES menyuntik item!`);
             renderPlayerInventory(currentEditingUid, currentInv);
         }
