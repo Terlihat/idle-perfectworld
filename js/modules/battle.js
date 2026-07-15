@@ -67,7 +67,8 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                 ts.update(userRef, {
                     currentHp: 0,
                     exp: newExpDeath,
-                    currentStamina: Math.max(0, currentStam - stamReq)
+                    currentStamina: Math.max(0, currentStam - stamReq),
+                    lastStaminaUpdate: Date.now()
                 });
                 return `💀 TRAGEDI! Anda terbunuh oleh ${monster.name}!\nKehilangan ${expPenalty} EXP.`;
             } else {
@@ -134,10 +135,7 @@ export async function attackMonster(db, uid, monsterKey, playerStats) {
                 } else {
                     updateData.currentHp = newHp;
                     updateData.currentStamina = Math.max(0, currentStam - stamReq);
-
-                    if (currentStam >= maxStam) {
-                        updateData.lastStaminaUpdate = Date.now();
-                    }
+                    updateData.lastStaminaUpdate = Date.now();
                 }
 
                 if (newQuests !== undefined && newQuests !== null) updateData.quests = newQuests;

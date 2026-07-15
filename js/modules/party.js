@@ -265,7 +265,8 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     gold: newGold,
                     inventory: inv,
                     quests: newQuests,
-                    currentStamina: newStamina // Stamina Baru yang sudah dikurangi (Bebas NaN)
+                    currentStamina: newStamina, // Stamina Baru yang sudah dikurangi (Bebas NaN)
+                    lastStaminaUpdate: Date.now() // Setel default reset waktu
                 };
 
                 if (leveledUp) {
@@ -273,6 +274,9 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     updateData.statPoints = (md.statPoints || 0) + statPointsGained;
                     updateData.currentStamina = (md.maxStamina || 100) + (vipStats.extraMaxStamina || 0);
                     updateData.currentHp = isDead ? 0 : (md.maxHp || 1000);
+
+                    delete updateData.lastStaminaUpdate;
+
                     dropMsg += ` (🌟 LEVEL UP TO ${newLevel}!)`;
                 } else {
                     updateData.currentHp = isDead ? 0 : newHp;
