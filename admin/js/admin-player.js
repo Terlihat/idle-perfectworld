@@ -45,6 +45,16 @@ document.getElementById('btn-search-player')?.addEventListener('click', async ()
             document.getElementById('edit-player-level-input').value = data.level || 1;
             document.getElementById('edit-player-exp').value = data.exp || 0;
             document.getElementById('edit-player-vip').value = data.vipLevel || 0;
+            document.getElementById('edit-player-hp').value = data.hp || 100;
+            document.getElementById('edit-player-patk').value = data.patk || 10;
+            document.getElementById('edit-player-matk').value = data.matk || 10;
+            document.getElementById('edit-player-def').value = data.def || 10;
+            document.getElementById('edit-player-guild-name').value = data.guildName || "Tidak ada Guild";
+            document.getElementById('edit-player-guild-role').value = data.guildRole || "-";
+            document.getElementById('edit-player-tower').value = data.towerFloor || 1;
+            document.getElementById('edit-player-location').value = data.lastLocation || "Kota Utama";
+            document.getElementById('edit-player-pk').value = data.pkPoints || 0;
+            document.getElementById('edit-player-in-pk-zone').value = data.inPkZone ? "true" : "false";
 
             const btnBan = document.getElementById('btn-ban-player');
             btnBan.innerText = currentEditingBannedStatus ? "✅ Buka Ban" : "🚫 Banned Pemain";
@@ -74,17 +84,47 @@ document.getElementById('btn-save-player')?.addEventListener('click', async () =
     const newGold = parseInt(document.getElementById('edit-player-gold').value) || 0;
     const newCoin = parseInt(document.getElementById('edit-player-coin').value) || 0;
     const newLevel = parseInt(document.getElementById('edit-player-level-input').value) || 1;
-    if (!confirm("Yakin ingin mengubah data?")) return;
+
+    // 🔥 Ambil data stats yang baru diketik
+    const newHp = parseInt(document.getElementById('edit-player-hp').value) || 100;
+    const newPatk = parseInt(document.getElementById('edit-player-patk').value) || 10;
+    const newMatk = parseInt(document.getElementById('edit-player-matk').value) || 10;
+    const newDef = parseInt(document.getElementById('edit-player-def').value) || 10;
+
+    const newTower = parseInt(document.getElementById('edit-player-tower').value) || 1;
+    const newLocation = document.getElementById('edit-player-location').value || "Kota Utama";
+    const newPkPoints = parseInt(document.getElementById('edit-player-pk').value) || 0;
+    const inPkZone = document.getElementById('edit-player-in-pk-zone').value === "true";
+
+    if (!confirm("Yakin ingin mengubah data pemain ini?")) return;
+
     try {
         await updateDoc(doc(db, "users", currentEditingUid), {
-            gold: newGold, coin: newCoin, level: newLevel,
+            gold: newGold,
+            coin: newCoin,
+            level: newLevel,
             exp: parseInt(document.getElementById('edit-player-exp').value) || 0,
-            vipLevel: parseInt(document.getElementById('edit-player-vip').value) || 0
+            vipLevel: parseInt(document.getElementById('edit-player-vip').value) || 0,
+            hp: newHp,
+            patk: newPatk,
+            matk: newMatk,
+            def: newDef,
+            towerFloor: newTower,
+            lastLocation: newLocation,
+            pkPoints: newPkPoints,
+            inPkZone: inPkZone
         });
-        if (window.logAdminAction) window.logAdminAction("ECONOMY", `Ubah UID: ${currentEditingUid} | Lvl: ${newLevel}, Gold: ${newGold}, Coin: ${newCoin}`);
+
+        if (window.logAdminAction) {
+            window.logAdminAction("ECONOMY", `Edit Pemain [UID: ${currentEditingUid}] | Lvl: ${newLevel}, Gold: ${newGold}, P.ATK: ${newPatk}`);
+        }
+
         document.getElementById('edit-player-level').innerText = newLevel;
-        alert("✅ Data diperbarui!");
-    } catch (err) { alert("Gagal menyimpan."); }
+        alert("✅ Data pemain berhasil diperbarui!");
+    } catch (err) {
+        console.error(err);
+        alert("Gagal menyimpan data pemain.");
+    }
 });
 
 document.getElementById('btn-ban-player')?.addEventListener('click', async () => {

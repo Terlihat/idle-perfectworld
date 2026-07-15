@@ -195,6 +195,87 @@
 								</div>
 							</div>
 
+							<!-- 🔥 TAMBAHKAN KODE INI DI SINI -->
+							<h4
+								style="color: #ff4c4c; border-bottom: 1px solid #333; padding-bottom: 5px; margin-top: 20px;">
+								⚔️ Status Tempur (Base Stats)</h4>
+							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+								<div class="form-group">
+									<label>Max HP</label>
+									<input type="number" id="edit-player-hp" min="1"
+										style="background: #121216; color: #a6e3a1; border: 1px solid #3f3f52; padding: 8px; width: 100%;">
+								</div>
+								<div class="form-group">
+									<label>Physical ATK (P.ATK)</label>
+									<input type="number" id="edit-player-patk" min="0"
+										style="background: #121216; color: #ff4c4c; border: 1px solid #3f3f52; padding: 8px; width: 100%;">
+								</div>
+								<div class="form-group">
+									<label>Magic ATK (M.ATK)</label>
+									<input type="number" id="edit-player-matk" min="0"
+										style="background: #121216; color: #00d2ff; border: 1px solid #3f3f52; padding: 8px; width: 100%;">
+								</div>
+								<div class="form-group">
+									<label>Defense (DEF)</label>
+									<input type="number" id="edit-player-def" min="0"
+										style="background: #121216; color: #ffca28; border: 1px solid #3f3f52; padding: 8px; width: 100%;">
+								</div>
+							</div>
+
+							<h4
+								style="color: #00d2ff; border-bottom: 1px solid #333; padding-bottom: 5px; margin-top: 20px;">
+								🏰 Afiliasi Guild & Sosial</h4>
+							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 5px;">
+								<div class="form-group">
+									<label>Nama Guild (Read-Only)</label>
+									<input type="text" id="edit-player-guild-name" disabled
+										style="background: #1a1a24; color: #aaa; border: 1px solid #333; padding: 8px; width: 100%;">
+								</div>
+								<div class="form-group">
+									<label>Role / Jabatan (Read-Only)</label>
+									<input type="text" id="edit-player-guild-role" disabled
+										style="background: #1a1a24; color: #aaa; border: 1px solid #333; padding: 8px; width: 100%;">
+								</div>
+							</div>
+							<p style="font-size: 11px; color: #777; margin-top: 0; margin-bottom: 25px;">*Gunakan Tab
+								Manajemen Guild untuk mengedit faksi/mengeluarkan pemain.
+							</p>
+
+							<h4
+								style="color: #a6e3a1; border-bottom: 1px solid #333; padding-bottom: 5px; margin-top: 20px;">
+								🗼 Progresi & Lokasi</h4>
+							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+								<div class="form-group">
+									<label>Lantai Menara (Tower Floor)</label>
+									<input type="number" id="edit-player-tower" min="1"
+										style="background: #121216; color: #a6e3a1; border: 1px solid #3f3f52; padding: 8px; width: 100%;">
+								</div>
+								<div class="form-group">
+									<label>Lokasi Map Terakhir</label>
+									<input type="text" id="edit-player-location" placeholder="Contoh: Kota Utama"
+										style="background: #121216; color: #fff; border: 1px solid #3f3f52; padding: 8px; width: 100%;">
+								</div>
+							</div>
+
+							<h4
+								style="color: #ff9800; border-bottom: 1px solid #333; padding-bottom: 5px; margin-top: 20px;">
+								⚔️ Reputasi & Kejahatan (PK)</h4>
+							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+								<div class="form-group">
+									<label>Poin Kejahatan (Karma)</label>
+									<input type="number" id="edit-player-pk" min="0"
+										style="background: #121216; color: #ff9800; border: 1px solid #3f3f52; padding: 8px; width: 100%;">
+								</div>
+								<div class="form-group">
+									<label>Posisi Zona Saat Ini</label>
+									<select id="edit-player-in-pk-zone"
+										style="background: #121216; color: #fff; border: 1px solid #3f3f52; padding: 8px; width: 100%;">
+										<option value="false">🛡️ Aman (Safe Zone)</option>
+										<option value="true">☠️ Bahaya (PK Zone)</option>
+									</select>
+								</div>
+							</div>
+
 							<div style="display: flex; gap: 10px;">
 								<button id="btn-save-player" style="background: #0366d6; flex: 1;">💾 Simpan
 									Perubahan</button>
