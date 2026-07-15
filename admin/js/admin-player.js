@@ -83,10 +83,15 @@ document.getElementById('btn-search-player')?.addEventListener('click', async ()
 // ==========================================
 document.getElementById('btn-save-player')?.addEventListener('click', async () => {
     if (!currentEditingUid) return;
+
+    // Data Utama
     const newGold = parseInt(document.getElementById('edit-player-gold').value) || 0;
     const newCoin = parseInt(document.getElementById('edit-player-coin').value) || 0;
     const newLevel = parseInt(document.getElementById('edit-player-level-input').value) || 1;
+    const newExp = parseInt(document.getElementById('edit-player-exp').value) || 0;
+    const newVip = parseInt(document.getElementById('edit-player-vip').value) || 0;
 
+    // Data Base Stats (Format Baru)
     const newMaxHp = parseInt(document.getElementById('edit-player-maxhp').value) || 100;
     const newStr = parseInt(document.getElementById('edit-player-str').value) || 0;
     const newInt = parseInt(document.getElementById('edit-player-int').value) || 0;
@@ -94,6 +99,7 @@ document.getElementById('btn-save-player')?.addEventListener('click', async () =
     const newCon = parseInt(document.getElementById('edit-player-con').value) || 0;
     const newStatPoints = parseInt(document.getElementById('edit-player-statpoints').value) || 0;
 
+    // Data Progresi & Reputasi
     const newTower = parseInt(document.getElementById('edit-player-tower').value) || 1;
     const newLocation = document.getElementById('edit-player-location').value || "Kota Utama";
     const newPkPoints = parseInt(document.getElementById('edit-player-pk').value) || 0;
@@ -106,29 +112,34 @@ document.getElementById('btn-save-player')?.addEventListener('click', async () =
             gold: newGold,
             coin: newCoin,
             level: newLevel,
-            exp: parseInt(document.getElementById('edit-player-exp').value) || 0,
-            vipLevel: parseInt(document.getElementById('edit-player-vip').value) || 0,
+            exp: newExp,
+            vipLevel: newVip,
+
+            // Simpan Base Stats ke database sesuai struktur aslinya
             maxHp: newMaxHp,
             str: newStr,
             int: newInt,
             dex: newDex,
             con: newCon,
             statPoints: newStatPoints,
+
+            // Progresi & Reputasi
             towerFloor: newTower,
             lastLocation: newLocation,
             pkPoints: newPkPoints,
             inPkZone: inPkZone
         });
 
+        // 🔥 PERBAIKAN: Menghapus newPatk dan menggantinya dengan info log yang baru (STR dan Tower)
         if (window.logAdminAction) {
-            window.logAdminAction("ECONOMY", `Edit Pemain [UID: ${currentEditingUid}] | Lvl: ${newLevel}, Gold: ${newGold}, P.ATK: ${newPatk}`);
+            window.logAdminAction("ECONOMY", `Edit Pemain [UID: ${currentEditingUid}] | Lvl: ${newLevel}, Gold: ${newGold}, STR: ${newStr}`);
         }
 
         document.getElementById('edit-player-level').innerText = newLevel;
-        alert("✅ Data pemain berhasil diperbarui!");
+        alert("✅ Data pemain berhasil diperbarui secara menyeluruh!");
     } catch (err) {
-        console.error(err);
-        alert("Gagal menyimpan data pemain.");
+        console.error("Gagal menyimpan data:", err);
+        alert("Gagal menyimpan data pemain. Silakan cek console untuk detail.");
     }
 });
 
