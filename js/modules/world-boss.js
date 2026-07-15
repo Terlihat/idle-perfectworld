@@ -1,5 +1,5 @@
 import { db } from '../firebase-config.js';
-import { doc, runTransaction, onSnapshot, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, runTransaction, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // FITUR: Menyerang Boss
 window.attackWorldBoss = async function () {
@@ -201,51 +201,69 @@ async function distributeBossRewards(participantsObj, rewardsConfig, extraDrops)
     }
 }
 
-// FITUR: Listener Real-Time UI Boss & PEMICU ANTREAN (QUEUE PROMOTER)
+// FITUR: Listener Polling UI Boss & PEMICU ANTREAN (Menggantikan onSnapshot)
 export function listenToWorldBoss(renderCallback) {
     const bossRef = doc(db, "events", "worldBoss");
-    return onSnapshot(bossRef, (docSnap) => {
-        if (!docSnap.exists()) {
-            renderCallback(null);
-            return;
-        }
+    let pollingInterval = null;
 
-        let data = docSnap.data();
-        const now = Date.now();
-
-        // 1. Deteksi apakah Boss saat ini sudah Kedaluwarsa atau Mati
-        let isCurrentInvalid = false;
-        if (!data.isActive || data.currentHp <= 0) isCurrentInvalid = true;
-        if (!data.isPermanent && data.endTime) {
-            if (now > new Date(data.endTime).getTime()) isCurrentInvalid = true;
-        }
-
-        // 2. CEK ANTREAN (Auto-Promote System)
-        // Jika boss saat ini mati/hilang, dan ADA antrean boss berikutnya
-        if (isCurrentInvalid && data.queue && data.queue.length > 0) {
-            const nextBoss = data.queue[0];
-            const nextStartTime = new Date(nextBoss.startTime).getTime();
-
-            // Jika jadwal boss pertama di antrean sudah tiba, jalankan pergantian!
-            if (now >= nextStartTime) {
-                promoteNextBoss(); // Panggil fungsi pergantian
-                renderCallback(null); // Sembunyikan UI sejenak menghindari bentrok klik
-                return;
-            }
-        }
-
-        // 3. Logika Menampilkan UI Boss Saat Ini
-        if (!data.isPermanent && data.isActive && data.currentHp > 0) {
-            const startTime = new Date(data.startTime).getTime();
-            const endTime = new Date(data.endTime).getTime();
-
-            if (now < startTime || now > endTime) {
+    // Fungsi async untuk menarik data dari server
+    const fetchBossData = async () => {
+        try {
+            const docSnap = await getDoc(bossRef);
+            if (!docSnap.exists()) {
                 renderCallback(null);
                 return;
             }
+
+            let data = docSnap.data();
+            const now = Date.now();
+
+            // 1. Deteksi apakah Boss saat ini sudah Kedaluwarsa atau Mati
+            let isCurrentInvalid = false;
+            if (!data.isActive || data.currentHp <= 0) isCurrentInvalid = true;
+            if (!data.isPermanent && data.endTime) {
+                if (now > new Date(data.endTime).getTime()) isCurrentInvalid = true;
+            }
+
+            // 2. CEK ANTREAN (Auto-Promote System)
+            if (isCurrentInvalid && data.queue && data.queue.length > 0) {
+                const nextBoss = data.queue[0];
+                const nextStartTime = new Date(nextBoss.startTime).getTime();
+
+                if (now >= nextStartTime) {
+                    promoteNextBoss();
+                    renderCallback(null);
+                    return;
+                }
+            }
+
+            // 3. Logika Menampilkan UI Boss Saat Ini
+            if (!data.isPermanent && data.isActive && data.currentHp > 0) {
+                const startTime = new Date(data.startTime).getTime();
+                const endTime = new Date(data.endTime).getTime();
+
+                if (now < startTime || now > endTime) {
+                    renderCallback(null);
+                    return;
+                }
+            }
+            renderCallback(data);
+        } catch (err) {
+            console.error("Gagal menarik data Boss:", err);
         }
-        renderCallback(data);
-    });
+    };
+
+    // 1. Eksekusi pertama kali secara langsung saat pemain membuka menu Boss
+    fetchBossData();
+
+    // 2. Atur interval untuk menarik data setiap 3 detik (3000 milidetik)
+    pollingInterval = setInterval(fetchBossData, 3000);
+
+    // 3. Kembalikan fungsi pembersih agar interval berhenti saat pemain menutup menu Boss
+    // (Ini menjaga agar tidak memakan kuota saat pemain pergi memancing / ke Fuben)
+    return () => {
+        if (pollingInterval) clearInterval(pollingInterval);
+    };
 }
 
 // FUNGSI AUTO-PROMOTE: Mengangkat Boss dari Antrean ke Panggung Utama
