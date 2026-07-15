@@ -141,3 +141,94 @@ document.getElementById('btn-save-wb-schedule')?.addEventListener('click', async
         document.getElementById('btn-save-wb-schedule').disabled = false;
     }
 });
+
+// ==========================================
+// 4. MANAJEMEN ANTREAN (QUEUE) WORLD BOSS
+// ==========================================
+window.currentGlobalQueue = []; // Penampung antrean sementara
+
+// Menampilkan Daftar Antrean secara Real-Time
+onSnapshot(doc(db, "events", "worldBoss"), (docSnap) => {
+    const list = document.getElementById('wb-queue-list');
+    if (!list || !docSnap.exists()) return;
+
+    let data = docSnap.data();
+    let queue = data.queue || [];
+    window.currentGlobalQueue = queue;
+
+    list.innerHTML = "";
+    if (queue.length === 0) {
+        list.innerHTML = `<div style="text-align: center; color: #777; font-size: 12px; font-style: italic;">Antrean kosong. Sistem aman.</div>`;
+        return;
+    }
+
+    queue.forEach((q, idx) => {
+        list.innerHTML += `
+            <div style="padding: 10px; background: #1a1a24; border: 1px solid #333; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong style="color: #ffca28; font-size: 15px;">${q.name}</strong><br>
+                    <small style="color:#aaa;">Mulai: ${new Date(q.startTime).toLocaleString('id-ID')}</small>
+                </div>
+                <button onclick="window.removeQueuedBoss(${idx})" style="background: #dc3545; color: white; border: none; padding: 6px 12px; font-weight: bold; border-radius: 3px; cursor: pointer;">Hapus</button>
+            </div>`;
+    });
+});
+
+// Menghapus Boss dari Antrean
+window.removeQueuedBoss = async function (index) {
+    if (!confirm("Yakin ingin menghapus boss ini dari antrean?")) return;
+    const bossToRemove = window.currentGlobalQueue[index];
+    try {
+        await updateDoc(doc(db, "events", "worldBoss"), {
+            queue: arrayRemove(bossToRemove)
+        });
+    } catch (err) { alert("Gagal menghapus antrean: " + err.message); }
+};
+
+// Menambahkan Boss Baru ke Antrean
+document.getElementById('btn-queue-wb')?.addEventListener('click', async () => {
+    const name = document.getElementById('wb-admin-name').value.trim();
+    const hp = parseInt(document.getElementById('wb-admin-hp').value);
+    const startTime = document.getElementById('wb-admin-start-time').value;
+    const endTime = document.getElementById('wb-admin-end-time').value;
+    const isPermanent = document.getElementById('wb-admin-is-permanent').checked;
+
+    if (!name || isNaN(hp) || hp <= 0) return alert("Nama dan HP Boss tidak valid!");
+    if (isPermanent) return alert("Boss Permanen tidak bisa dimasukkan ke antrean! Boss antrean harus memiliki waktu mulai dan akhir.");
+    if (!startTime || !endTime) return alert("Waktu Mulai dan Waktu Berakhir wajib diisi untuk antrean!");
+    if (new Date(startTime).getTime() >= new Date(endTime).getTime()) return alert("Waktu Berakhir harus lebih lambat!");
+
+    // Ambil struktur rewards dari form (sama seperti tombol simpan utama)
+    const rewards = {
+        rank1: { gold: parseInt(document.getElementById('wb-reward-1-gold').value) || 0, coin: parseInt(document.getElementById('wb-reward-1-coin').value) || 0, item: document.getElementById('wb-reward-1-item').value || "", qty: parseInt(document.getElementById('wb-reward-1-qty').value) || 1 },
+        rank2_3: { gold: parseInt(document.getElementById('wb-reward-2-gold').value) || 0, coin: parseInt(document.getElementById('wb-reward-2-coin').value) || 0, item: document.getElementById('wb-reward-2-item').value || "", qty: parseInt(document.getElementById('wb-reward-2-qty').value) || 1 },
+        rank4_plus: { gold: parseInt(document.getElementById('wb-reward-3-gold').value) || 0, coin: parseInt(document.getElementById('wb-reward-3-coin').value) || 0, item: document.getElementById('wb-reward-3-item').value || "", qty: parseInt(document.getElementById('wb-reward-3-qty').value) || 1 }
+    };
+
+    // Format Data Boss Antrean (Mirip Active Boss, tapi tanpa currentHp dan status aktif)
+    const queuedBossData = {
+        name: name,
+        maxHp: hp,
+        startTime: startTime,
+        endTime: endTime,
+        isPermanent: false,
+        rewards: rewards,
+        extraDrops: window.currentWbDrops || []
+    };
+
+    try {
+        const btn = document.getElementById('btn-queue-wb');
+        btn.innerText = "⏳ Memproses..."; btn.disabled = true;
+
+        // Gunakan setDoc dengan merge agar array 'queue' bertambah tanpa merusak data Boss Aktif
+        await setDoc(doc(db, "events", "worldBoss"), {
+            queue: arrayUnion(queuedBossData)
+        }, { merge: true });
+
+        alert(`✅ Boss [${name}] dimasukkan ke Antrean! Sistem akan otomatis memunculkannya saat jadwal tiba.`);
+        btn.innerText = "➕ MASUKKAN KE ANTREAN"; btn.disabled = false;
+    } catch (err) {
+        alert("Gagal menambahkan antrean: " + err.message);
+        document.getElementById('btn-queue-wb').disabled = false;
+    }
+});

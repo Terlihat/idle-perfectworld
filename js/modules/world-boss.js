@@ -201,7 +201,7 @@ async function distributeBossRewards(participantsObj, rewardsConfig, extraDrops)
     }
 }
 
-// FITUR: Listener Real-Time UI Boss
+// FITUR: Listener Real-Time UI Boss & PEMICU ANTREAN (QUEUE PROMOTER)
 export function listenToWorldBoss(renderCallback) {
     const bossRef = doc(db, "events", "worldBoss");
     return onSnapshot(bossRef, (docSnap) => {
@@ -211,23 +211,77 @@ export function listenToWorldBoss(renderCallback) {
         }
 
         let data = docSnap.data();
+        const now = Date.now();
 
-        // Sembunyikan UI jika boss memiliki jadwal tetapi belum waktunya muncul atau sudah lewat
+        // 1. Deteksi apakah Boss saat ini sudah Kedaluwarsa atau Mati
+        let isCurrentInvalid = false;
+        if (!data.isActive || data.currentHp <= 0) isCurrentInvalid = true;
+        if (!data.isPermanent && data.endTime) {
+            if (now > new Date(data.endTime).getTime()) isCurrentInvalid = true;
+        }
+
+        // 2. CEK ANTREAN (Auto-Promote System)
+        // Jika boss saat ini mati/hilang, dan ADA antrean boss berikutnya
+        if (isCurrentInvalid && data.queue && data.queue.length > 0) {
+            const nextBoss = data.queue[0];
+            const nextStartTime = new Date(nextBoss.startTime).getTime();
+
+            // Jika jadwal boss pertama di antrean sudah tiba, jalankan pergantian!
+            if (now >= nextStartTime) {
+                promoteNextBoss(); // Panggil fungsi pergantian
+                renderCallback(null); // Sembunyikan UI sejenak menghindari bentrok klik
+                return;
+            }
+        }
+
+        // 3. Logika Menampilkan UI Boss Saat Ini
         if (!data.isPermanent && data.isActive && data.currentHp > 0) {
-            const now = Date.now();
             const startTime = new Date(data.startTime).getTime();
             const endTime = new Date(data.endTime).getTime();
 
-            // Jika belum waktunya, atau sudah kadaluarsa (hilang otomatis), kirim null ke UI (Sembunyikan)
             if (now < startTime || now > endTime) {
                 renderCallback(null);
                 return;
             }
         }
-
-        // Tampilkan boss jika waktunya tepat, permanen, atau jika boss sudah mati (untuk memunculkan leaderboard terakhir)
         renderCallback(data);
     });
+}
+
+// FUNGSI AUTO-PROMOTE: Mengangkat Boss dari Antrean ke Panggung Utama
+async function promoteNextBoss() {
+    try {
+        const bossRef = doc(db, "events", "worldBoss");
+        await runTransaction(db, async (ts) => {
+            const snap = await ts.get(bossRef);
+            let data = snap.data();
+
+            // Cek ganda agar transaksi aman (berjaga-jaga jika 2 pemain memicunya bersamaan)
+            if (data.queue && data.queue.length > 0) {
+                const nextBoss = data.queue[0];
+                if (Date.now() >= new Date(nextBoss.startTime).getTime()) {
+
+                    // Salin dan buang boss pertama dari antrean
+                    let newQueue = [...data.queue];
+                    newQueue.shift();
+
+                    // Bangun struktur Boss Aktif Baru
+                    const newActiveBoss = {
+                        ...nextBoss,
+                        currentHp: nextBoss.maxHp, // Isi darah sampai penuh
+                        participants: {}, // Kosongkan peserta
+                        rewardsDistributed: false,
+                        isActive: true,
+                        queue: newQueue // Simpan sisa antrean yang belum dipanggil
+                    };
+
+                    ts.update(bossRef, newActiveBoss);
+                }
+            }
+        });
+    } catch (err) {
+        console.error("Gagal auto-promote antrean boss:", err);
+    }
 }
 
 // ==========================================

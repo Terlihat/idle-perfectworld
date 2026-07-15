@@ -371,14 +371,28 @@
 							</div>
 						</div>
 
+						<!-- TOMBOL SIMPAN DAN ANTREAN -->
 						<div style="display: flex; gap: 10px;">
-							<!-- 🔥 UBAH ID TOMBOL INI -->
 							<button id="btn-save-wb-schedule"
 								style="background: #8b0000; flex: 1; border: 1px solid #ff4c4c; font-weight: bold; padding: 12px; border-radius: 4px; cursor: pointer; color: white;">⚔️
-								Simpan Boss</button>
-							<button id="btn-admin-kill-wb"
-								style="background: #333; flex: 1; border: 1px solid #555; font-weight: bold; padding: 12px; border-radius: 4px; cursor: pointer; color: white;">💀
-								Hapus Boss</button>
+								TIMPA BOS</button>
+							<button id="btn-queue-wb"
+								style="background: #28a745; flex: 1; border: 1px solid #218838; font-weight: bold; padding: 12px; border-radius: 4px; cursor: pointer; color: white;">➕
+								ANTREAN</button>
+						</div>
+						<button id="btn-admin-kill-wb"
+							style="background: #333; width: 100%; margin-top: 10px; border: 1px solid #555; font-weight: bold; padding: 12px; border-radius: 4px; cursor: pointer; color: white;">💀
+							HAPUS BOS
+						</button>
+
+						<!-- 🔥 FITUR BARU: DAFTAR ANTREAN BOSS -->
+						<h4
+							style="color: #ffca28; border-bottom: 1px solid #333; padding-bottom: 5px; margin-top: 20px;">
+							📜 Daftar Antrean Boss Mendatang</h4>
+						<div id="wb-queue-list"
+							style="background: #121216; padding: 10px; border-radius: 4px; border: 1px solid #3f3f52; min-height: 80px; max-height: 300px; overflow-y: auto;">
+							<div style="text-align: center; color: #777; font-size: 12px; font-style: italic;">Memuat
+								antrean...</div>
 						</div>
 
 						<!-- 🔥 FITUR BARU: MULTI-DROP GACHA -->
