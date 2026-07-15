@@ -1,6 +1,7 @@
 // File: admin-boss.js
 import { db } from '../../js/firebase-config.js';
-import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+// KODE YANG BENAR:
+import { doc, setDoc, updateDoc, arrayUnion, arrayRemove, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ITEM_DB } from '../../js/data/items.js';
 
 // Variabel penampung Multi-Drop
