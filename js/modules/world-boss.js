@@ -20,8 +20,12 @@ window.attackWorldBoss = async function () {
         const bossRef = doc(db, "events", "worldBoss");
         let bossDiedJustNow = false;
         let finalParticipants = {};
-        let finalRewards = {}; // Menyimpan template hadiah untuk dikirim nanti
+        let finalRewards = {};
+        let finalExtraDrops = []; // Pindahkan deklarasi ke sini agar bisa dibaca di luar transaksi
 
+        // =======================================
+        // BLOK TRANSAKSI DATABASE (KHUSUS DATA)
+        // =======================================
         await runTransaction(db, async (ts) => {
             const bossSnap = await ts.get(bossRef);
             if (!bossSnap.exists()) throw "World Boss belum disiapkan oleh sistem!";
@@ -29,7 +33,7 @@ window.attackWorldBoss = async function () {
             let data = bossSnap.data();
             const now = Date.now();
 
-            // 1. VALIDASI WAKTU JADWAL (Real-time check)
+            // 1. VALIDASI WAKTU JADWAL
             if (!data.isActive || data.currentHp <= 0) throw "World Boss sudah dikalahkan atau tidak aktif!";
 
             if (!data.isPermanent) {
@@ -39,16 +43,20 @@ window.attackWorldBoss = async function () {
                 if (now > endTimeMs) throw "Waktu invasi World Boss telah berakhir!";
             }
 
-            // 2. CEK BATASAN PEMAIN (5x & Cooldown 1 Jam)
+            // 2. CEK BATASAN PEMAIN & RESET HARIAN
             let participants = data.participants || {};
             let myRecord = participants[window.currentUserUid] || { name: window.playerUsername, damage: 0, attackCount: 0, lastAttackTime: 0 };
             const ONE_HOUR = 60 * 60 * 1000;
 
-            // 🔥 LOGIKA RESET HARIAN
-            const todayStr = new Date(now).toLocaleDateString('id-ID'); // Mendapatkan format tanggal lokal (contoh: 15/7/2026)
+            const todayStr = new Date(now).toLocaleDateString('id-ID');
+
+            // Reset otomatis jika beda hari
+            if (myRecord.lastAttackDate && myRecord.lastAttackDate !== todayStr) {
+                myRecord.attackCount = 0;
+            }
 
             if (myRecord.attackCount >= 5) {
-                throw "❌ Anda sudah mencapai batas maksimal 5x serangan ke Boss ini!";
+                throw "❌ Anda sudah mencapai batas maksimal 5x serangan ke Boss ini untuk hari ini!";
             }
             if (myRecord.attackCount > 0 && (now - myRecord.lastAttackTime < ONE_HOUR)) {
                 let sisaWaktu = ONE_HOUR - (now - myRecord.lastAttackTime);
@@ -64,7 +72,7 @@ window.attackWorldBoss = async function () {
             myRecord.name = window.playerUsername;
             myRecord.attackCount += 1;
             myRecord.lastAttackTime = now;
-            myRecord.lastAttackDate = todayStr; // 🔥 Simpan tanggal hari ini ke database pemain
+            myRecord.lastAttackDate = todayStr;
 
             participants[window.currentUserUid] = myRecord;
 
@@ -74,7 +82,8 @@ window.attackWorldBoss = async function () {
                 isDead = true;
                 bossDiedJustNow = true;
                 finalParticipants = participants;
-                finalRewards = data.rewards; // Ambil data hadiah dari Admin
+                finalRewards = data.rewards;
+                finalExtraDrops = data.extraDrops || [];
             }
 
             // 5. UPDATE DATABASE BOSS
@@ -83,17 +92,24 @@ window.attackWorldBoss = async function () {
                 participants: participants,
                 isActive: newHp > 0,
                 rewardsDistributed: isDead ? true : (data.rewardsDistributed || false)
-            });
+            }); // 🔥 PERBAIKAN: Kurung tutup ini sebelumnya hilang
         });
+        // Akhir dari blok transaksi.
 
+        // =======================================
+        // BLOK EFEK VISUAL & PENGIRIMAN HADIAH
+        // =======================================
+
+        // Panggil efek getar dan angka melayang
         showDamageVisuals(finalDamage);
 
         window.rpgAlert(`💥 Serangan Sukses! Anda memberikan ${finalDamage} Damage.`, "Serangan WB");
 
-        // 6. EKSEKUSI PEMBAGIAN HADIAH DINAMIS JIKA BOSS MATI
+        // 6. EKSEKUSI PEMBAGIAN HADIAH DINAMIS & GACHA
         if (bossDiedJustNow) {
             window.rpgAlert("🎉 ANDA MEMBERIKAN SERANGAN TERAKHIR! Boss telah mati. Mengirimkan hadiah ke seluruh peserta...", "WORLD BOSS MATI");
-            await distributeBossRewards(finalParticipants, finalRewards);
+            // 🔥 PERBAIKAN: Mengirim 3 parameter, termasuk finalExtraDrops (Gacha)
+            await distributeBossRewards(finalParticipants, finalRewards, finalExtraDrops);
         }
 
     } catch (err) {
@@ -105,7 +121,7 @@ window.attackWorldBoss = async function () {
 };
 
 // FITUR: Distribusi Hadiah Berdasarkan Konfigurasi Admin
-async function distributeBossRewards(participantsObj, rewardsConfig) {
+async function distributeBossRewards(participantsObj, rewardsConfig, extraDrops) {
     let players = Object.entries(participantsObj).map(([uid, data]) => ({
         uid: uid,
         name: data.name,
@@ -146,11 +162,40 @@ async function distributeBossRewards(participantsObj, rewardsConfig) {
 
         const mailboxRef = collection(db, "users", p.uid, "mailbox");
         sendPromises.push(addDoc(mailboxRef, mailData));
+
+        // =========================================================
+        // PERUBAHAN 2: TAMBAHAN LOGIKA GACHA MULTI-DROP DI SINI
+        // =========================================================
+        if (extraDrops && extraDrops.length > 0) {
+            extraDrops.forEach(drop => {
+                // Kocok angka acak dari 0.00 sampai 100.00
+                const roll = Math.random() * 100;
+
+                // Jika hasil dadu masuk ke dalam persentase, kirim item gacha!
+                if (roll <= drop.chance) {
+                    const gachaMail = {
+                        senderId: "SYSTEM",
+                        senderName: "Loot System",
+                        title: `🎲 Extra Drop Boss: ${drop.item}`,
+                        message: `Selamat! Anda sangat beruntung, Boss menjatuhkan item extra saat dikalahkan.`,
+                        attachments: {
+                            itemName: drop.item,
+                            qty: 1
+                        },
+                        isClaimed: false,
+                        timestamp: serverTimestamp()
+                    };
+                    // Kirim surat gacha sebagai surat terpisah (tambahan)
+                    sendPromises.push(addDoc(mailboxRef, gachaMail));
+                }
+            });
+        }
+        // =========================================================
     });
 
     try {
         await Promise.all(sendPromises);
-        console.log(`Berhasil mengirimkan hadiah World Boss ke ${players.length} pemain!`);
+        console.log(`Berhasil mengirimkan hadiah World Boss & Gacha ke ${players.length} pemain!`);
     } catch (err) {
         console.error("Gagal mendistribusikan hadiah: ", err);
     }

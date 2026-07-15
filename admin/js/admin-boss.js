@@ -1,21 +1,23 @@
 // File: admin-boss.js
-// 🔥 IMPORT WAJIB DITAMBAHKAN DI SINI
 import { db } from '../../js/firebase-config.js';
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ITEM_DB } from '../../js/data/items.js';
+
+// Variabel penampung Multi-Drop
+window.currentWbDrops = [];
 
 // ==========================================
 // 1. MENGISI DROPDOWN HADIAH WORLD BOSS
 // ==========================================
 window.populateWorldBossItemDropdowns = function () {
-    const selects = ['wb-reward-1-item', 'wb-reward-2-item', 'wb-reward-3-item'];
+    // Tambahkan id 'wb-drop-item-select' ke daftar ini
+    const selects = ['wb-reward-1-item', 'wb-reward-2-item', 'wb-reward-3-item', 'wb-drop-item-select'];
 
-    // Sekarang ITEM_DB sudah terbaca karena sudah di-import di atas
     if (typeof ITEM_DB !== 'undefined') {
         selects.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
-                el.innerHTML = '<option value="">-- Tidak Kirim Item --</option>';
+                el.innerHTML = '<option value="">-- Pilih Item --</option>';
                 Object.keys(ITEM_DB).forEach(itemName => {
                     el.innerHTML += `<option value="${itemName}">${itemName}</option>`;
                 });
@@ -25,9 +27,55 @@ window.populateWorldBossItemDropdowns = function () {
 };
 
 // ==========================================
-// 2. MENYIMPAN & MENJADWALKAN WORLD BOSS
+// 2. MANAJEMEN UI EXTRA DROP (MULTI-DROP)
 // ==========================================
-// 🔥 KITA MENGGUNAKAN ID TOMBOL BARU AGAR TIDAK BENTROK DENGAN SCRIPT LAMA
+window.renderWbDropsUI = function () {
+    const list = document.getElementById('wb-admin-drops-list');
+    if (!list) return;
+
+    list.innerHTML = "";
+    if (window.currentWbDrops.length === 0) {
+        list.innerHTML = `<div style="text-align: center; color: #777; font-size: 12px; font-style: italic;">Belum ada drop extra.</div>`;
+        return;
+    }
+
+    window.currentWbDrops.forEach((d, index) => {
+        list.innerHTML += `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px; background: #010409; border: 1px solid #333; margin-bottom: 5px; border-radius: 3px;">
+                <div style="font-size: 12px; color: #fff;">
+                    <span style="color: #ffca28;">${d.item}</span> 
+                    <span style="color: #a6e3a1; margin-left: 5px;">(${d.chance}%)</span>
+                </div>
+                <button onclick="window.removeWbDrop(${index})" style="background: #dc3545; color: white; border: none; padding: 2px 6px; font-size: 10px; border-radius: 2px; cursor: pointer;">X</button>
+            </div>
+        `;
+    });
+};
+
+document.getElementById('btn-add-wb-drop')?.addEventListener('click', () => {
+    const item = document.getElementById('wb-drop-item-select').value;
+    const chance = parseFloat(document.getElementById('wb-drop-chance').value);
+
+    if (!item || isNaN(chance) || chance <= 0) {
+        return alert("Pilih item dan masukkan persentase peluang dengan benar (contoh: 90 atau 1.5).");
+    }
+
+    // Cek apakah item sudah ada, jika ada timpa peluangnya
+    const exists = window.currentWbDrops.find(d => d.item === item);
+    if (exists) exists.chance = chance;
+    else window.currentWbDrops.push({ item: item, chance: chance });
+
+    window.renderWbDropsUI();
+});
+
+window.removeWbDrop = function (index) {
+    window.currentWbDrops.splice(index, 1);
+    window.renderWbDropsUI();
+};
+
+// ==========================================
+// 3. MENYIMPAN & MENJADWALKAN WORLD BOSS
+// ==========================================
 document.getElementById('btn-save-wb-schedule')?.addEventListener('click', async () => {
     const name = document.getElementById('wb-admin-name').value.trim();
     const hp = parseInt(document.getElementById('wb-admin-hp').value);
@@ -45,7 +93,6 @@ document.getElementById('btn-save-wb-schedule')?.addEventListener('click', async
         return alert("Waktu Berakhir harus lebih lambat dari Waktu Mulai!");
     }
 
-    // Menyusun struktur hadiah dinamis
     const rewards = {
         rank1: {
             gold: parseInt(document.getElementById('wb-reward-1-gold').value) || 0,
@@ -75,6 +122,7 @@ document.getElementById('btn-save-wb-schedule')?.addEventListener('click', async
         endTime: isPermanent ? null : endTime,
         isPermanent: isPermanent,
         rewards: rewards,
+        extraDrops: window.currentWbDrops, // 🔥 DAFTAR ITEM GACHA DISIMPAN DI SINI
         isActive: true,
         participants: {},
         rewardsDistributed: false
@@ -84,7 +132,6 @@ document.getElementById('btn-save-wb-schedule')?.addEventListener('click', async
         const btn = document.getElementById('btn-save-wb-schedule');
         btn.innerText = "⏳ Menyimpan..."; btn.disabled = true;
 
-        // Menggunakan koneksi DB yang sudah di-import di baris paling atas
         await setDoc(doc(db, "events", "worldBoss"), bossData);
 
         alert(`✅ World Boss [${name}] berhasil diatur dan dijadwalkan!`);
