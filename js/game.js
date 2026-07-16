@@ -2431,30 +2431,36 @@ function pantauMaintenanceServer() {
         if (docSnap.exists()) {
             const data = docSnap.data();
 
+            // 1. Cari atau buat elemen Layar Hitam (Overlay) secara dinamis
+            let mtOverlay = document.getElementById('maintenance-overlay');
+            if (!mtOverlay) {
+                mtOverlay = document.createElement('div');
+                mtOverlay.id = 'maintenance-overlay';
+                // CSS Absolut untuk menutupi 100% layar di atas segalanya
+                mtOverlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0d1117; color: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 999999; text-align: center; padding: 20px;";
+                document.body.appendChild(mtOverlay);
+            }
+
             if (data.isMaintenance === true) {
-                // 1. Tendang (Logout) pemain agar tidak ada data nyangkut atau koneksi tertinggal
+                // 2. Jika maintenance ON: Tendang pemain dan TAMPILKAN layar
                 if (auth.currentUser) {
                     signOut(auth);
                 }
 
-                // 2. Hancurkan seluruh antarmuka Game dan ganti dengan Layar Perbaikan
-                document.body.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #0d1117; color: white; font-family: sans-serif; text-align: center; padding: 20px; box-sizing: border-box;">
-                        <h1 style="color: #ffca28; font-size: 36px; margin-bottom: 10px;">🛠️ SERVER MAINTENANCE</h1>
-                        <p style="font-size: 16px; color: #ccc; margin-bottom: 30px; max-width: 400px; line-height: 1.5;">
-                            ${data.message || "Server sedang dalam perbaikan rutin. Harap bersabar dan kembali lagi nanti."}
-                        </p>
-                    </div>
+                mtOverlay.innerHTML = `
+                    <h1 style="color: #ffca28; font-size: 36px; margin-bottom: 10px;">🛠️ SERVER MAINTENANCE</h1>
+                    <p style="font-size: 16px; color: #ccc; max-width: 400px; line-height: 1.5;">
+                        ${data.message || "Server sedang dalam perbaikan rutin. Harap bersabar dan kembali lagi nanti."}
+                    </p>
                 `;
+                mtOverlay.style.display = 'flex'; // Munculkan layar hitam
             } else {
-                // 3. Jika maintenance dimatikan, dan pemain masih melihat layar perbaikan, paksa refresh browser mereka!
-                if (document.body.innerHTML.includes("SERVER MAINTENANCE")) {
-                    window.location.reload();
-                }
+                // 3. Jika maintenance OFF: SEMBUNYIKAN layar (Pemain bisa login normal)
+                mtOverlay.style.display = 'none';
             }
         }
     });
 }
 
-// EKSEKUSI: Panggil fungsinya segera saat game diluncurkan
+// EKSEKUSI: Panggil segera saat file game.js dimuat
 pantauMaintenanceServer();
