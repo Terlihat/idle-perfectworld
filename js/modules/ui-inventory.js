@@ -18,18 +18,20 @@ export function renderInventoryUI(inventory) {
             badgeHtml = `<div style="position:absolute; top:-5px; right:-5px; background:#dc3545; color:white; font-size:10px; font-weight:bold; padding:2px 4px; border-radius:4px; z-index:10; box-shadow: 0 0 3px black;">+${match[1]}</div>`;
         }
 
-        // 🔥 PERBAIKAN 2: Prioritaskan CLOUD_ITEM_DB, jika kosong, ambil dari ITEM_DB lokal
-        const itemInfo = (window.CLOUD_ITEM_DB && window.CLOUD_ITEM_DB[baseName])
-            ? window.CLOUD_ITEM_DB[baseName]
-            : ITEM_DB[baseName];
+        // 🔥 PERBAIKAN: Teknik "Merge" Data Lokal dan Cloud
+        const localData = ITEM_DB[baseName] || {};
+        const cloudData = (window.CLOUD_ITEM_DB && window.CLOUD_ITEM_DB[baseName]) ? window.CLOUD_ITEM_DB[baseName] : {};
 
-        const type = itemInfo ? itemInfo.type : 'misc';
+        // Gabungkan keduanya! (Jika ada data yang sama, cloudData dari Firebase akan menangkal lokal)
+        const itemInfo = { ...localData, ...cloudData };
 
-        // 🔥 PERBAIKAN 3: Sesuaikan dengan nama properti di items.js (sellValue)
-        const sellValue = itemInfo && itemInfo.sellValue !== undefined ? itemInfo.sellValue : 0;
-        const desc = itemInfo && itemInfo.desc ? itemInfo.desc : "";
+        const type = itemInfo.type || 'misc';
 
-        // 🔥 PERBAIKAN 4: Sesuaikan status pembacaan dengan items.js
+        // 🔥 Cek sellValue. Jika tidak ada, coba cari goldPrice sebagai cadangan
+        const sellValue = itemInfo.sellValue !== undefined ? itemInfo.sellValue : (itemInfo.goldPrice || 0);
+        const desc = itemInfo.desc || itemInfo.description || "";
+
+        // 🔥 Status pembacaan
         let statsText = "";
         if (itemInfo) {
             if (itemInfo.patk) statsText += `\n⚔️ P.ATK: +${itemInfo.patk}`;
