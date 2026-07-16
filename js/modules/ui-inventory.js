@@ -1,6 +1,6 @@
 import { escapeHTML, getIconHTML } from './ui-utils.js';
 import { CRAFTING_RECIPES } from './crafting.js';
-import { ITEM_DB } from './data/items.js';
+import { ITEM_DB } from '../data/items.js';
 
 export function renderInventoryUI(inventory) {
     const invGrid = document.getElementById('inventory-grid');
