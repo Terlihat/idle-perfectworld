@@ -57,8 +57,8 @@ export function renderInventoryUI(inventory) {
             tooltip += `📦 Jumlah: ${currentSlotQty}\n`;
             tooltip += `🏷️ Tipe: ${type.toUpperCase()}\n`;
 
-            if (desc !== "") tooltip += `\n📝 ${desc}`;
-            if (statsText !== "") tooltip += `\n--- Status ---${statsText}`;
+            if (desc !== "") tooltip += `\n📝 ${desc}\n`;
+            if (statsText !== "") tooltip += `\n--- Stats ---${statsText}`;
 
             tooltip += `\n\n💰 Harga Jual: ${sellValue} Gold`;
 
