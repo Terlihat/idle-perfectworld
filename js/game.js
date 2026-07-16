@@ -2424,3 +2424,37 @@ window.loadCloudItems = async function (db) {
         console.error("Gagal menarik data item dari Cloud:", err);
     }
 };
+
+// Fungsi untuk melakukan pemantauan status maintenance server secara real-time
+function pantauMaintenanceServer() {
+    onSnapshot(doc(db, "server", "status"), (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+
+            if (data.isMaintenance === true) {
+                // 1. Tendang (Logout) pemain agar tidak ada data nyangkut atau koneksi tertinggal
+                if (auth.currentUser) {
+                    signOut(auth);
+                }
+
+                // 2. Hancurkan seluruh antarmuka Game dan ganti dengan Layar Perbaikan
+                document.body.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #0d1117; color: white; font-family: sans-serif; text-align: center; padding: 20px; box-sizing: border-box;">
+                        <h1 style="color: #ffca28; font-size: 36px; margin-bottom: 10px;">🛠️ SERVER MAINTENANCE</h1>
+                        <p style="font-size: 16px; color: #ccc; margin-bottom: 30px; max-width: 400px; line-height: 1.5;">
+                            ${data.message || "Server sedang dalam perbaikan rutin. Harap bersabar dan kembali lagi nanti."}
+                        </p>
+                    </div>
+                `;
+            } else {
+                // 3. Jika maintenance dimatikan, dan pemain masih melihat layar perbaikan, paksa refresh browser mereka!
+                if (document.body.innerHTML.includes("SERVER MAINTENANCE")) {
+                    window.location.reload();
+                }
+            }
+        }
+    });
+}
+
+// EKSEKUSI: Panggil fungsinya segera saat game diluncurkan
+pantauMaintenanceServer();

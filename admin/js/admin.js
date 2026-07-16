@@ -13,6 +13,7 @@ import './admin-tickets.js';
 import './admin-monsters.js';
 import './admin-items.js';
 import './admin-boss.js';
+import './admin-maintenance.js';
 
 window.adminUid = null;
 
@@ -178,6 +179,7 @@ onAuthStateChanged(auth, async (user) => {
 
                 // Panggil semua fungsi inisialisasi modul
                 loadServerStats();
+                if (window.listenToMaintenanceStatus) window.listenToMaintenanceStatus();
                 if (window.listenToAdminLogs) window.listenToAdminLogs();
                 if (window.populateItemDropdown) window.populateItemDropdown();
                 if (window.listenToGlobalEvents) window.listenToGlobalEvents();

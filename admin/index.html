@@ -11,13 +11,31 @@
 
 <body>
 	<div id="admin-content" style="display: none;">
-		<!-- TOMBOL KEMBALI KE GAME (Di Luar Layout Flex) -->
+		<!-- HEADER ADMIN CONTROL PANEL -->
 		<div
 			style="background: #161b22; padding: 10px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center;">
+
+			<!-- Bagian Kiri: Judul Panel -->
 			<h3 style="margin: 0; color: #ffca28;">⚙️ Admin Control Panel</h3>
-			<button id="btn-home"
-				style="background: #dc3545; padding: 5px 15px; border-radius: 4px; color: white; border: none; font-weight: bold; cursor: pointer;">🏠
-				Kembali ke Game</button>
+
+			<!-- Bagian Kanan: Bungkus Saklar dan Tombol agar berdampingan -->
+			<div style="display: flex; align-items: center; gap: 15px;">
+
+				<!-- SAKLAR MAINTENANCE -->
+				<label
+					style="color: #ffca28; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; background: #2d2d2d; padding: 4px 10px; border-radius: 4px; border: 1px solid #444;">
+					<input type="checkbox" id="toggle-maintenance" onchange="window.toggleMaintenanceMode(this.checked)"
+						style="width: 16px; height: 16px; cursor: pointer; margin: 0;">
+					🛠️ Mode Maintenance
+				</label>
+
+				<!-- TOMBOL KEMBALI KE GAME -->
+				<button id="btn-home"
+					style="background: #dc3545; padding: 6px 15px; border-radius: 4px; color: white; border: none; font-weight: bold; cursor: pointer;">
+					🏠 Kembali ke Game
+				</button>
+
+			</div>
 		</div>
 
 		<div class="admin-layout">
