@@ -1,6 +1,6 @@
-/* ===================================================
-   MODUL INVENTORY (Fix Equip Refined Items)
-   =================================================== */
+/* ====================
+   MODUL INVENTORY
+   ==================== */
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ITEM_DB } from '../data/items.js';
 
@@ -12,14 +12,11 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
     const match = itemName.match(/\[\+(\d+)\]$/);
     if (match) currentRefine = parseInt(match[1]);
 
-    // 🔥 PERBAIKAN: Gunakan teknik "Merge" yang sama seperti di tas!
     const localData = ITEM_DB[baseName] || {};
     const cloudData = (window.CLOUD_ITEM_DB && window.CLOUD_ITEM_DB[baseName]) ? window.CLOUD_ITEM_DB[baseName] : {};
 
-    // Gabungkan data
     let itemData = { ...localData, ...cloudData };
 
-    // Jika tipe tidak ditemukan di mana pun, anggap sebagai 'misc'
     if (!itemData.type) itemData.type = "misc";
 
     const userRef = doc(db, "users", uid);
@@ -79,18 +76,15 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
                 throw `[${itemName}] tidak bisa dipakai atau digunakan secara langsung dari tas.`;
             }
 
-            // A. Kembalikan item yang sedang dipakai ke tas
             if (eq[slotType] && eq[slotType].name) {
                 let oldItemName = eq[slotType].name;
                 if (eq[slotType].refine > 0) oldItemName += ` [+${eq[slotType].refine}]`;
                 inv[oldItemName] = (inv[oldItemName] || 0) + 1;
             }
 
-            // B. Tarik item baru dari tas
             inv[itemName] -= 1;
             if (inv[itemName] === 0) delete inv[itemName];
 
-            // C. Pasang ke badan 
             eq[slotType] = { name: baseName, refine: currentRefine, ...itemData };
             ts.update(userRef, { inventory: inv, equipment: eq });
         });
@@ -107,10 +101,19 @@ export async function sellItemToNPC(db, uid, itemName) {
     if (!uid || !itemName) return;
     const userRef = doc(db, "users", uid);
     const baseName = itemName.replace(/\s\[\+\d+\]$/, '');
-    const itemData = window.CLOUD_ITEM_DB[baseName] || { goldPrice: 10 };
-    const sellPrice = itemData.goldPrice !== undefined ? itemData.goldPrice : 10;
 
-    if (itemData.sellValue === 0) return alert("Item ini tidak bisa dijual!");
+    const localData = ITEM_DB[baseName] || {};
+    const cloudData = (window.CLOUD_ITEM_DB && window.CLOUD_ITEM_DB[baseName]) ? window.CLOUD_ITEM_DB[baseName] : {};
+    const itemData = { ...localData, ...cloudData };
+
+    let finalSellPrice = 10;
+    if (itemData.sellValue !== undefined) {
+        finalSellPrice = itemData.sellValue;
+    } else if (itemData.goldPrice !== undefined) {
+        finalSellPrice = itemData.goldPrice;
+    }
+
+    if (finalSellPrice === 0) return alert("Item ini tidak bisa dijual!");
 
     try {
         await runTransaction(db, async (ts) => {
@@ -122,9 +125,9 @@ export async function sellItemToNPC(db, uid, itemName) {
             if (inv[itemName] === 0) delete inv[itemName];
 
             const currentGold = data.gold || 0;
-            ts.update(userRef, { inventory: inv, gold: currentGold + itemData.sellValue });
+            ts.update(userRef, { inventory: inv, gold: currentGold + finalSellPrice });
         });
-        alert(`Berhasil menjual ${itemName} seharga ${itemData.sellValue} Gold.`);
+        alert(`Berhasil menjual ${itemName} seharga ${finalSellPrice} Gold.`);
     } catch (err) { alert(err); }
 }
 
@@ -140,20 +143,16 @@ export async function unequipItem(db, uid, slotType) {
 
             if (!eq[slotType] || !eq[slotType].name) throw "Slot ini sudah kosong.";
 
-            // Ambil nama item beserta tingkat + nya
             let oldItemName = eq[slotType].name;
             if (eq[slotType].refine && eq[slotType].refine > 0) {
                 oldItemName += ` [+${eq[slotType].refine}]`;
             }
 
-            // Masukkan kembali ke tas
             inv[oldItemName] = (inv[oldItemName] || 0) + 1;
 
-            // Kosongkan slot di badan
             eq[slotType] = null;
 
             ts.update(userRef, { inventory: inv, equipment: eq });
         });
-        // Kita buat tanpa alert agar senyap dan mulus
     } catch (err) { alert(err); }
 }
