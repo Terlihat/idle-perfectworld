@@ -6,13 +6,14 @@ import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/f
 export async function equipFromInventory(db, uid, itemName, specialInput) {
     if (!uid) return;
 
-    // 1. Ekstrak nama asli dan tingkat plus (Contoh: "Pedang Besi [+1]")
+    // 1. Ekstrak nama asli dan tingkat plus
     let baseName = itemName.replace(/\s\[\+\d+\]$/, '');
     let currentRefine = 0;
     const match = itemName.match(/\[\+(\d+)\]$/);
     if (match) currentRefine = parseInt(match[1]);
 
-    const itemData = window.CLOUD_ITEM_DB[baseName] || { type: "special" };
+    // 🔥 PERBAIKAN 1: Default tipe diganti menjadi 'misc' agar tidak dianggap tiket
+    const itemData = window.CLOUD_ITEM_DB[baseName] || { type: "misc" };
     const userRef = doc(db, "users", uid);
 
     try {
@@ -46,7 +47,11 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
                     updates.str = 0; updates.con = 0; updates.dex = 0; updates.int = 0;
                     const baseTotal = data.characterClass === 'Warrior' ? 42 : 45;
                     updates.statPoints = baseTotal + ((data.level || 1) - 1) * 5;
+                } else {
+                    // Jika terdeteksi special tapi tidak ada di daftar atas, batalkan (rollback)!
+                    throw `Item [${itemName}] belum memiliki fungsi yang aktif.`;
                 }
+
                 ts.update(userRef, updates); return;
             } else if (itemData.type === "consumable") {
                 inv[itemName] -= 1;
@@ -62,6 +67,12 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
             // --- 2. LOGIKA MEMAKAI PERLENGKAPAN ---
             const slotType = itemData.type;
 
+            // 🔥 PERBAIKAN 2: Whitelist (Blokir pemakaian jika bukan perlengkapan)
+            const validEquipTypes = ["weapon", "armor", "accessory", "mount"];
+            if (!validEquipTypes.includes(slotType)) {
+                throw `[${itemName}] tidak bisa dipakai atau digunakan secara langsung dari tas.`;
+            }
+
             // A. Kembalikan item yang sedang dipakai (beserta plusnya) ke tas
             if (eq[slotType] && eq[slotType].name) {
                 let oldItemName = eq[slotType].name;
@@ -73,12 +84,18 @@ export async function equipFromInventory(db, uid, itemName, specialInput) {
             inv[itemName] -= 1;
             if (inv[itemName] === 0) delete inv[itemName];
 
-            // C. Pasang ke badan (Simpan tingkat refine ke badan agar status bertambah)
+            // C. Pasang ke badan 
             eq[slotType] = { name: baseName, refine: currentRefine, ...itemData };
             ts.update(userRef, { inventory: inv, equipment: eq });
         });
-        alert(`🛡️ Berhasil memakai ${itemName}`);
-    } catch (err) { alert(err); }
+
+        // Peringatan ini hanya muncul jika berhasil melewati proses transaksi
+        if (itemData.type !== "consumable" && itemData.type !== "special") {
+            alert(`🛡️ Berhasil memakai ${itemName}`);
+        }
+    } catch (err) {
+        alert(err);
+    }
 }
 
 export async function sellItemToNPC(db, uid, itemName) {
