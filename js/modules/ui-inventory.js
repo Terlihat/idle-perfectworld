@@ -17,10 +17,21 @@ export function renderInventoryUI(inventory) {
             badgeHtml = `<div style="position:absolute; top:-5px; right:-5px; background:#dc3545; color:white; font-size:10px; font-weight:bold; padding:2px 4px; border-radius:4px; z-index:10; box-shadow: 0 0 3px black;">+${match[1]}</div>`;
         }
 
-        // Baca Tipe dan Harga dari Cloud Cache
+        // 1. Baca Tipe, Harga, dan Deskripsi dari Cloud Cache
         const itemInfo = window.CLOUD_ITEM_DB ? window.CLOUD_ITEM_DB[baseName] : null;
         const type = itemInfo ? itemInfo.type : 'misc';
-        const goldPrice = itemInfo ? itemInfo.goldPrice : 0;
+        const goldPrice = itemInfo && itemInfo.goldPrice !== undefined ? itemInfo.goldPrice : 0;
+        const desc = itemInfo && itemInfo.desc ? itemInfo.desc : (itemInfo && itemInfo.description ? itemInfo.description : "Tidak ada deskripsi spesifik.");
+
+        // 2. Susun teks status tambahan (jika item adalah senjata/armor/aksesoris)
+        let statsText = "";
+        if (itemInfo) {
+            if (itemInfo.patk) statsText += `\n⚔️ P.ATK: +${itemInfo.patk}`;
+            if (itemInfo.matk) statsText += `\n🔮 M.ATK: +${itemInfo.matk}`;
+            if (itemInfo.def) statsText += `\n🛡️ DEF: +${itemInfo.def}`;
+            if (itemInfo.hp) statsText += `\n❤️ Max HP: +${itemInfo.hp}`;
+            if (itemInfo.mp) statsText += `\n💧 Max MP: +${itemInfo.mp}`;
+        }
 
         let maxStack = 9999;
         if (['weapon', 'armor', 'accessory', 'mount', 'equipment'].includes(type)) {
@@ -30,23 +41,36 @@ export function renderInventoryUI(inventory) {
         let remainingQty = totalQty;
         while (remainingQty > 0) {
             let currentSlotQty = Math.min(remainingQty, maxStack);
+
+            // 🔥 3. RAKIT TOOLTIP MULTI-BARIS
+            let tooltip = `[ ${name} ]\n`;
+            tooltip += `📦 Jumlah: ${currentSlotQty}\n`;
+            tooltip += `🏷️ Tipe: ${type.toUpperCase()}\n\n`;
+            tooltip += `📝 ${desc}`;
+            if (statsText !== "") {
+                tooltip += `\n${statsText}`;
+            }
+            tooltip += `\n\n💰 Harga Jual: ${goldPrice} Gold`;
+
             renderSlots.push({
                 name: name,
                 baseName: baseName,
                 badgeHtml: badgeHtml,
                 qty: currentSlotQty,
-                goldPrice: goldPrice
+                tooltip: tooltip // Simpan data tooltip ke dalam memori render
             });
             remainingQty -= currentSlotQty;
         }
     }
 
+    // 4. Render ke HTML
     for (let i = 0; i < renderSlots.length; i++) {
         const slot = renderSlots[i];
         const qtyText = (slot.qty > 1) ? `<span class="inv-qty">x${slot.qty}</span>` : "";
 
+        // 🔥 Masukkan slot.tooltip ke dalam atribut title HTML
         html += `
-        <div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(slot.name)}')" title="Harga Jual: ${slot.goldPrice}G">
+        <div class="inv-slot filled" onclick="window.handleInventoryClick('${escapeHTML(slot.name)}')" title="${escapeHTML(slot.tooltip)}">
             ${slot.badgeHtml}
             ${getIconHTML(slot.baseName)} 
             <span style="font-size:10px;">${escapeHTML(slot.baseName)}</span>
