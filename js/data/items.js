@@ -1,3 +1,5 @@
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
 export const ITEM_DB = {
     "Pedang Besi": { type: "weapon", patk: 30, sellValue: 1000 },
     "Tongkat Sihir": { type: "weapon", matk: 30, sellValue: 1000 },
@@ -91,3 +93,20 @@ export const REFINE_RATES = {
     "Underworld Stone": [0.533, 0.335, 0.335, 0.335, 0.335, 0.335, 0.335, 0.335, 0.150, 0.050],
     "Universal Stone":  [1.000, 0.250, 0.100, 0.040, 0.020, 0.008, 0.005, 0.003, 0.001, 0.000]
 };
+
+export async function syncItemsFromFirebase(db) {
+    try {
+        const itemsRef = collection(db, "items"); 
+        const snapshot = await getDocs(itemsRef);
+        
+        window.CLOUD_ITEM_DB = {}; 
+        
+        snapshot.forEach((doc) => {
+            window.CLOUD_ITEM_DB[doc.id] = doc.data();
+        });
+        
+        console.log("✅ Berhasil menyinkronkan " + snapshot.size + " item dari Firebase!");
+    } catch (err) {
+        console.error("❌ Gagal menarik data item dari Firebase:", err);
+    }
+}

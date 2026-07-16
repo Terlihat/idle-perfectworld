@@ -24,7 +24,7 @@ import './modules/quest.js';
 import { listenToGuilds, createGuild, joinGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, kickMember, disbandGuild } from './modules/guild.js';
 import { listenToMailbox, claimMailReward, deleteMail } from './modules/mailbox.js';
 import { dismantleItemAction, DISMANTLE_CONFIG, CRAFTING_RECIPES, craftItemAction } from './modules/crafting.js';
-import { ITEM_DB } from './data/items.js';
+import { ITEM_DB, syncItemsFromFirebase } from './data/items.js';
 import { executeRefineAction } from './modules/blacksmith.js';
 
 import { MONSTER_DB } from './data/monsters.js';
@@ -150,6 +150,7 @@ onAuthStateChanged(auth, async (user) => {
         currentUserUid = user.uid;
 
         await loadUIComponents();
+        await syncItemsFromFirebase(db);
 
         const docSnap = await getDoc(doc(db, "users", currentUserUid));
         if (!docSnap.exists() || !docSnap.data().characterClass) {
