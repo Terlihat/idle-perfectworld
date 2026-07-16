@@ -10,8 +10,6 @@ import { sendPartyBattleReport } from './mailbox.js';
 // ==========================================
 // SETTING BIAYA STAMINA FUBEN
 // ==========================================
-const FB_STAMINA_COST = 50; // <<< UBAH ANGKA INI JIKA INGIN MENGGANTI BIAYA
-
 export function listenToParties(db, callbackRender) {
     const q = query(collection(db, "parties"));
     return onSnapshot(q, (snapshot) => {
@@ -27,11 +25,13 @@ export async function createOrJoinParty(db, fbKey, playerStats) {
     if (!boss) return console.error("Dungeon tidak valid!");
     if (playerStats.level < boss.levelReq) return console.error(`Level Anda belum cukup! Butuh Level ${boss.levelReq}.`);
 
-    const mount = playerStats.equipment?.mount || null;
-    const stamReq = Math.max(1, FB_STAMINA_COST - (mount?.stamDiscount || 0));
-    const currentStam = playerStats.currentStamina !== undefined ? playerStats.currentStamina : 100;
+    const inv = playerStats.inventory || {};
+    const ticketCount = inv["Batu Dungeon"] || 0;
 
-    if (currentStam < stamReq) return console.error(`Butuh minimal ${stamReq} Stamina (Efek Mount) untuk masuk FB!`);
+    if (ticketCount < 1) {
+        alert("❌ Gagal! Anda membutuhkan minimal 1x [Batu Dungeon] untuk masuk ke FB.");
+        return console.error("Tidak punya Batu Dungeon!");
+    }
 
     const partiesRef = collection(db, "parties");
     const q = query(partiesRef, where("fbKey", "==", fbKey), where("status", "==", "waiting"));
@@ -91,7 +91,7 @@ export async function leaveParty(db, partyId, uid) {
 export async function startFbBattle(db, leaderUid, partyId) {
     if (!partyId) return;
     const partyRef = doc(db, "parties", partyId);
-    const buffRef = doc(db, "events", "serverBuffs"); // Referensi Database Event Global
+    const buffRef = doc(db, "events", "serverBuffs");
 
     try {
         const resultMsg = await runTransaction(db, async (ts) => {
@@ -105,76 +105,69 @@ export async function startFbBattle(db, leaderUid, partyId) {
             const boss = FB_BOSSES[party.fbKey];
             if (!boss) throw "Dungeon tidak valid.";
 
-            // --- CEK STATUS EVENT GLOBAL DARI ADMIN ---
             const buffSnap = await ts.get(buffRef);
             const buffData = buffSnap.exists() ? buffSnap.data() : {};
             const isDoubleExp = buffData.doubleExp || false;
             const isDoubleDrop = buffData.doubleDrop || false;
 
-            // 1. --- KALKULASI DAMAGE PARTY VS BOSS ---
             const memberRefs = party.members.map(m => doc(db, "users", m.uid));
             const memberSnaps = await Promise.all(memberRefs.map(ref => ts.get(ref)));
 
             let totalPartyAtk = 0;
             let log = `⚔️ REKAP PERTARUNGAN MELAWAN [${boss.name}]:\n`;
 
-            // Notifikasi Event Aktif di Laporan Surat
             if (isDoubleExp) log += `🌟 (EVENT AKTIF) DOUBLE EXP!\n`;
             if (isDoubleDrop) log += `🎁 (EVENT AKTIF) DOUBLE DROP RATE!\n`;
             log += `\n`;
 
+            // 1. --- KALKULASI DAMAGE PARTY VS BOSS ---
             memberSnaps.forEach(snap => {
                 const md = snap.data();
                 const partyData = party.members.find(m => m.uid === snap.id);
-                const mount = md.equipment?.mount || null;
 
-                // Pengecekan Stamina Anti NaN (Bug Fix)
-                const stamReq = Math.max(1, FB_STAMINA_COST - (mount?.stamDiscount || 0));
-                const currentStam = md.currentStamina !== undefined ? md.currentStamina : 100;
+                // 🔥 LOGIKA BARU: Cek apakah tiket Batu Dungeon tersedia
+                const inv = md.inventory || {};
+                const hasTicket = (inv["Batu Dungeon"] || 0) >= 1;
 
-                if (md.currentHp > 0 && currentStam >= stamReq) {
+                if (md.currentHp > 0 && hasTicket) {
                     const effectivePAtk = partyData ? partyData.patk : 50;
                     const effectiveMAtk = partyData ? partyData.matk : 50;
                     totalPartyAtk += Math.max(1, (effectivePAtk + effectiveMAtk) - boss.def);
                 }
             });
 
-            if (totalPartyAtk <= 0) throw "Semua anggota kekurangan HP/Stamina! Pertarungan dibatalkan.";
+            if (totalPartyAtk <= 0) throw "Semua anggota kekurangan HP atau tidak punya Batu Dungeon! Pertarungan dibatalkan.";
             const turnsToKill = Math.ceil(boss.hp / totalPartyAtk);
             log += `[!] Party Total DPS: ${totalPartyAtk} | Boss HP: ${boss.hp} | Dibunuh dalam ${turnsToKill} Putaran.\n\n`;
 
             let survivors = 0;
             let battleResults = [];
 
-            // 2. --- PRA-KALKULASI HASIL NYAWA & STAMINA TIAP ANGGOTA ---
+            // 2. --- PRA-KALKULASI HASIL NYAWA ---
             memberSnaps.forEach(snap => {
                 const md = snap.data();
                 const mRef = snap.ref;
                 const partyData = party.members.find(m => m.uid === snap.id);
-
                 const mount = md.equipment?.mount || null;
                 const goldMult = 1 + (mount?.goldBonus || 0);
 
-                // Pengecekan Stamina Anti NaN (Bug Fix)
-                const stamReq = Math.max(1, FB_STAMINA_COST - (mount?.stamDiscount || 0));
-                const currentStam = md.currentStamina !== undefined ? md.currentStamina : 100;
+                // 🔥 LOGIKA BARU: Cek tiket lagi sebelum mengeksekusi damage
+                let inv = md.inventory || {};
+                let hasTicket = (inv["Batu Dungeon"] || 0) >= 1;
 
-                if (md.currentHp <= 0 || currentStam < stamReq) return;
+                if (md.currentHp <= 0 || !hasTicket) return; // Abaikan jika mati atau tidak punya tiket
 
                 const effectiveDef = partyData ? partyData.def : 10;
                 const dmgPerTurn = Math.max(1, boss.atk - effectiveDef);
                 const totalDmgTaken = dmgPerTurn * turnsToKill;
 
                 let newHp = md.currentHp - totalDmgTaken;
-
-                // Pengurangan Stamina yang sudah pasti berbentuk angka
-                let newStamina = Math.max(0, currentStam - stamReq);
                 let isDead = newHp <= 0;
 
                 if (!isDead) survivors++;
 
                 battleResults.push({
-                    snap, md, mRef, goldMult, newHp, newStamina, isDead, totalDmgTaken
+                    snap, md, mRef, goldMult, newHp, isDead, totalDmgTaken
                 });
             });
 
@@ -190,16 +183,12 @@ export async function startFbBattle(db, leaderUid, partyId) {
 
                 if (dropsArray.length > 0) {
                     dropsArray.forEach(d => {
-                        // PENERAPAN EVENT DOUBLE DROP
                         let chance = isDoubleDrop ? d.chance * 2 : d.chance;
-
                         if (Math.random() <= chance) {
                             adaDrop = true;
                             const luckyMember = party.members[Math.floor(Math.random() * party.members.length)];
-
                             if (!memberDrops[luckyMember.uid]) memberDrops[luckyMember.uid] = [];
                             memberDrops[luckyMember.uid].push(d.item);
-
                             dropLogMsg += `> 💎 [${d.item}] didapatkan oleh ${luckyMember.username}!\n`;
                         }
                     });
@@ -211,9 +200,14 @@ export async function startFbBattle(db, leaderUid, partyId) {
 
             // 4. --- EKSEKUSI UPDATE DATABASE KE SEMUA ANGGOTA ---
             battleResults.forEach(res => {
-                const { snap, md, mRef, goldMult, newHp, newStamina, isDead, totalDmgTaken } = res;
+                const { snap, md, mRef, goldMult, newHp, isDead, totalDmgTaken } = res;
 
                 let inv = md.inventory || {};
+
+                // 🔥 LOGIKA BARU: Potong 1 Batu Dungeon dari tas
+                inv["Batu Dungeon"] -= 1;
+                if (inv["Batu Dungeon"] <= 0) delete inv["Batu Dungeon"];
+
                 let dropsGot = memberDrops[snap.id] || [];
                 let extraDropText = "";
 
@@ -223,8 +217,6 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 }
 
                 const vipStats = getVipStats(md.vipLevel || 0);
-
-                // PENERAPAN EVENT DOUBLE EXP
                 let baseExp = isDoubleExp ? boss.rewardExp * 2 : boss.rewardExp;
                 let baseGold = Math.floor(boss.rewardGold * goldMult);
 
@@ -253,6 +245,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 let newLevel = md.level || 1;
                 let statPointsGained = 0;
                 let leveledUp = false;
+
                 while (newExp >= newLevel * 100) {
                     newExp -= (newLevel * 100);
                     newLevel += 1;
@@ -264,18 +257,17 @@ export async function startFbBattle(db, leaderUid, partyId) {
                     exp: newExp,
                     gold: newGold,
                     inventory: inv,
-                    quests: newQuests,
-                    currentStamina: newStamina, // Stamina Baru yang sudah dikurangi (Bebas NaN)
-                    lastStaminaUpdate: Date.now() // Setel default reset waktu
+                    quests: newQuests
                 };
 
                 if (leveledUp) {
                     updateData.level = newLevel;
                     updateData.statPoints = (md.statPoints || 0) + statPointsGained;
+
                     updateData.currentStamina = (md.maxStamina || 100) + (vipStats.extraMaxStamina || 0);
                     updateData.currentHp = isDead ? 0 : (md.maxHp || 1000);
 
-                    delete updateData.lastStaminaUpdate;
+                    updateData.lastStaminaUpdate = Date.now();
 
                     dropMsg += ` (🌟 LEVEL UP TO ${newLevel}!)`;
                 } else {
@@ -311,6 +303,7 @@ export async function startFbBattle(db, leaderUid, partyId) {
 
     } catch (err) {
         console.error("Battle Error:", err);
+        alert(err);
     }
 }
 

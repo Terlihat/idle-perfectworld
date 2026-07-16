@@ -31,7 +31,7 @@ export async function selectCharacterClass(db, uid, charClass, callback) {
             maxMp: baseStats.maxMp,
             currentStamina: 100,
             maxStamina: 100,
-            lastStaminaUpdate: Date.now(), // FIX: Langsung catat waktu lahir!
+            lastStaminaUpdate: Date.now(),
             inventory: { "Pedang Besi": 1, "Ramuan HP": 5 },
             bankInventory: {},
             equipment: { weapon: null, armor: null, accessory: null },
@@ -122,8 +122,15 @@ export function startStaminaRegeneration(db, uid) {
     return setInterval(syncStamina, 60000); // Jalankan otomatis tiap 1 menit
 }
 
-// FITUR BARU: Minum Ramuan
+// FITUR BARU: Minum Ramuan (DENGAN PROTEKSI ITEM)
 export async function consumePotion(db, uid, itemName, playerMaxHp, playerMaxMp) {
+    const consumableItems = ["Ramuan HP", "Ramuan MP"];
+
+    if (!consumableItems.includes(itemName)) {
+        window.rpgAlert(`[${itemName}] tidak bisa digunakan secara langsung dari tas.`, "Info Item");
+        return false;
+    }
+
     const userRef = doc(db, "users", uid);
     try {
         await runTransaction(db, async (ts) => {
@@ -139,10 +146,10 @@ export async function consumePotion(db, uid, itemName, playerMaxHp, playerMaxMp)
 
             if (itemName === "Ramuan HP") {
                 if (currentHp >= maxHp) throw "HP Anda masih penuh!";
-                currentHp = maxHp; // Full Heal
+                currentHp = maxHp;
             } else if (itemName === "Ramuan MP") {
                 if (currentMp >= maxMp) throw "MP Anda masih penuh!";
-                currentMp = maxMp; // Full Heal
+                currentMp = maxMp;
             }
 
             inv[itemName] -= 1;
