@@ -25,7 +25,7 @@ export async function createOrJoinParty(db, fbKey, playerStats) {
     if (!boss) return console.error("Dungeon tidak valid!");
     if (playerStats.level < boss.levelReq) return console.error(`Level Anda belum cukup! Butuh Level ${boss.levelReq}.`);
 
-    const inv = playerStats.inventory || {};
+    const inv = playerStats.inventory || window.currentInventoryData || {};
     const ticketCount = inv["Batu Dungeon"] || 0;
 
     if (ticketCount < 1) {
