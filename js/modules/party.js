@@ -1,5 +1,5 @@
 /* ===================================================
-   MODUL PARTY DUNGEON (Fix Stamina, Server Buffs, VIP Engine, & Gacha Drop)
+   Fuben Party Server Buffs, VIP Engine, & Gacha Drop
    =================================================== */
 import { collection, doc, runTransaction, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { FB_BOSSES } from '../data/monsters.js';
@@ -7,9 +7,6 @@ import { getUpdatedQuests } from './quest.js';
 import { getVipStats } from './vip.js';
 import { sendPartyBattleReport } from './mailbox.js';
 
-// ==========================================
-// SETTING BIAYA STAMINA FUBEN
-// ==========================================
 export function listenToParties(db, callbackRender) {
     const q = query(collection(db, "parties"));
     return onSnapshot(q, (snapshot) => {
@@ -120,12 +117,10 @@ export async function startFbBattle(db, leaderUid, partyId) {
             if (isDoubleDrop) log += `🎁 (EVENT AKTIF) DOUBLE DROP RATE!\n`;
             log += `\n`;
 
-            // 1. --- KALKULASI DAMAGE PARTY VS BOSS ---
             memberSnaps.forEach(snap => {
                 const md = snap.data();
                 const partyData = party.members.find(m => m.uid === snap.id);
 
-                // 🔥 LOGIKA BARU: Cek apakah tiket Batu Dungeon tersedia
                 const inv = md.inventory || {};
                 const hasTicket = (inv["Batu Dungeon"] || 0) >= 1;
 
@@ -143,7 +138,6 @@ export async function startFbBattle(db, leaderUid, partyId) {
             let survivors = 0;
             let battleResults = [];
 
-            // 2. --- PRA-KALKULASI HASIL NYAWA ---
             memberSnaps.forEach(snap => {
                 const md = snap.data();
                 const mRef = snap.ref;
@@ -151,11 +145,10 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 const mount = md.equipment?.mount || null;
                 const goldMult = 1 + (mount?.goldBonus || 0);
 
-                // 🔥 LOGIKA BARU: Cek tiket lagi sebelum mengeksekusi damage
                 let inv = md.inventory || {};
                 let hasTicket = (inv["Batu Dungeon"] || 0) >= 1;
 
-                if (md.currentHp <= 0 || !hasTicket) return; // Abaikan jika mati atau tidak punya tiket
+                if (md.currentHp <= 0 || !hasTicket) return;
 
                 const effectiveDef = partyData ? partyData.def : 10;
                 const dmgPerTurn = Math.max(1, boss.atk - effectiveDef);
@@ -171,12 +164,11 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 });
             });
 
-            // 3. --- SISTEM GACHA DROP ACAK ---
             let memberDrops = {};
             let dropLogMsg = "\n\n🎁 HASIL LOOT ACAK:\n";
             let adaDrop = false;
 
-            if (survivors > 0) {
+            if (survivors > 0 && battleResults.length > 0) {
                 let dropsArray = [];
                 if (boss.drop) dropsArray.push(boss.drop);
                 if (boss.drops) dropsArray = dropsArray.concat(boss.drops);
@@ -186,10 +178,14 @@ export async function startFbBattle(db, leaderUid, partyId) {
                         let chance = isDoubleDrop ? d.chance * 2 : d.chance;
                         if (Math.random() <= chance) {
                             adaDrop = true;
-                            const luckyMember = party.members[Math.floor(Math.random() * party.members.length)];
-                            if (!memberDrops[luckyMember.uid]) memberDrops[luckyMember.uid] = [];
-                            memberDrops[luckyMember.uid].push(d.item);
-                            dropLogMsg += `> 💎 [${d.item}] didapatkan oleh ${luckyMember.username}!\n`;
+
+                            const luckyRes = battleResults[Math.floor(Math.random() * battleResults.length)];
+                            const luckyUid = luckyRes.snap.id;
+                            const luckyUsername = luckyRes.md.username;
+
+                            if (!memberDrops[luckyUid]) memberDrops[luckyUid] = [];
+                            memberDrops[luckyUid].push(d.item);
+                            dropLogMsg += `> 💎 [${d.item}] didapatkan oleh ${luckyUsername}!\n`;
                         }
                     });
                 }
@@ -198,13 +194,11 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 dropLogMsg = "\n\n❌ LOOT GAGAL: Karena seluruh tim terbunuh, Bos kembali ke sarangnya dan membawa pergi semua hartanya.\n";
             }
 
-            // 4. --- EKSEKUSI UPDATE DATABASE KE SEMUA ANGGOTA ---
             battleResults.forEach(res => {
                 const { snap, md, mRef, goldMult, newHp, isDead, totalDmgTaken } = res;
 
                 let inv = md.inventory || {};
 
-                // 🔥 LOGIKA BARU: Potong 1 Batu Dungeon dari tas
                 inv["Batu Dungeon"] -= 1;
                 if (inv["Batu Dungeon"] <= 0) delete inv["Batu Dungeon"];
 
@@ -225,22 +219,24 @@ export async function startFbBattle(db, leaderUid, partyId) {
 
                 let finalExpGain = baseExp + bonusExp;
                 let finalGoldGain = baseGold + bonusGold;
+                let dropMsg = extraDropText;
 
-                if (isDead) {
-                    finalExpGain = Math.floor(finalExpGain * 0.3);
-                    finalGoldGain = Math.floor(finalGoldGain * 0.3);
+                if (survivors === 0) {
+                    finalExpGain = 0;
+                    finalGoldGain = 0;
+                    dropMsg += ` 📉(Wipe Out: Tidak ada hadiah didapatkan)`;
+                } else {
+                    if (isDead) {
+                        dropMsg += ` 👻(Gugur tapi Party Menang: Hadiah 100%)`;
+                    }
+                    if (bonusGold > 0 || bonusExp > 0) {
+                        dropMsg += ` ✨(VIP +${bonusGold}G / +${bonusExp}XP)`;
+                    }
                 }
 
                 let newExp = (md.exp || 0) + finalExpGain;
                 let newGold = (md.gold || 0) + finalGoldGain;
                 let newQuests = getUpdatedQuests(md, 'bounty', party.fbKey, 1);
-
-                let dropMsg = extraDropText;
-                if (!isDead && (bonusGold > 0 || bonusExp > 0)) {
-                    dropMsg += ` ✨(VIP +${bonusGold}G / +${bonusExp}XP)`;
-                } else if (isDead) {
-                    dropMsg += ` 📉(Penalti Kematian: Hadiah 30%)`;
-                }
 
                 let newLevel = md.level || 1;
                 let statPointsGained = 0;
@@ -263,12 +259,9 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 if (leveledUp) {
                     updateData.level = newLevel;
                     updateData.statPoints = (md.statPoints || 0) + statPointsGained;
-
                     updateData.currentStamina = (md.maxStamina || 100) + (vipStats.extraMaxStamina || 0);
                     updateData.currentHp = isDead ? 0 : (md.maxHp || 1000);
-
                     updateData.lastStaminaUpdate = Date.now();
-
                     dropMsg += ` (🌟 LEVEL UP TO ${newLevel}!)`;
                 } else {
                     updateData.currentHp = isDead ? 0 : newHp;
@@ -283,7 +276,6 @@ export async function startFbBattle(db, leaderUid, partyId) {
                 }
             });
 
-            // 5. PENUTUP SURAT
             if (survivors > 0) {
                 log += `\n🎉 FB BERHASIL! ${survivors} orang selamat.`;
             } else {

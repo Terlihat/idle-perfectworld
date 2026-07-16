@@ -25,6 +25,7 @@ export async function loadUIComponents() {
         { id: 'panel-pk', file: './components/pk.html' },
         { id: 'panel-auction', file: './components/auction.html' },
         { id: 'panel-refine-transfer', file: './components/refine-transfer.html' },
+        { id: 'panel-reincarnation', file: './components/reincarnation.html' },
 
         // --- Kolom 3 (Kanan) ---
         { id: 'panel-friends', file: './components/friends.html' },
@@ -77,7 +78,8 @@ window.togglePanel = function (panelId) {
         'panel-leaderboard', 'panel-mall', 'panel-shop',
         'panel-coin-market', 'panel-mailbox', 'panel-bank',
         'panel-guild',
-        'panel-redeem-code' // 🔥 Tambahkan panel redeem agar ikut logika toggle
+        'panel-redeem-code',
+        'panel-reincarnation'
     ];
 
     // 2. Sembunyikan semua panel tersebut
@@ -117,6 +119,8 @@ window.togglePanel = function (panelId) {
             window.updateMyLocation("🎁 Menukarkan Kode Redeem");
         } else if (panelId === 'panel-tickets') {
             window.updateMyLocation("🎫 Meminta Bantuan Admin");
+        } else if (panelId === 'panel-reincarnation') {
+            window.updateMyLocation("🔄 Kuil Reinkarnasi");
         } else {
             window.updateMyLocation("Kota Aman (Idle)");
         }

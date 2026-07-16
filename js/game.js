@@ -40,6 +40,7 @@ import './modules/expedition.js';
 import { renderExpeditionUI } from './modules/expedition.js';
 import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend } from './modules/friends.js';
 import './modules/inventory-modes.js';
+import { processReincarnation } from './modules/reincarnation.js';
 
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
@@ -741,6 +742,9 @@ window.handleInventoryClick = async function (itemName) {
         else if (itemName === "Ramuan HP" || itemName === "Ramuan MP") {
             const sukses = await consumePotion(db, currentUserUid, itemName, currentPlayerStats.maxHp, currentPlayerStats.maxMp);
             if (sukses) window.rpgAlert(`Glug glug glug...\nAnda meminum [${itemName}]! Nyawa/Mana kembali penuh.`, "Berhasil Diteguk");
+        }
+        else if (itemName === "Item Renkarnasi") {
+            window.rpgAlert("Item ini tidak bisa dipakai langsung dari tas. Pergilah ke menu Kuil Reinkarnasi (Rebirth) untuk menggunakannya!", "Info Item");
         }
         else { equipFromInventory(db, currentUserUid, itemName, null); }
     }
@@ -2494,3 +2498,10 @@ function pantauMaintenanceServer() {
 
 // EKSEKUSI: Panggil fungsinya
 pantauMaintenanceServer();
+
+// function untuk memproses reinkarnasi karakter
+// Mendaftarkan fungsi ke window agar bisa dipanggil oleh tombol onclick di HTML
+window.processReincarnation = function () {
+    // Kita mengirimkan db dan auth dari game.js ke dalam modul
+    processReincarnation(db, auth);
+};
