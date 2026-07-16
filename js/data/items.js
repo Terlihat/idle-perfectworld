@@ -12,11 +12,12 @@ export const ITEM_DB = {
     "Ramuan HP": { type: "consumable", sellValue: 250 },
     "Ramuan MP": { type: "consumable", sellValue: 250 },
     "Batu Dungeon": { type: "loot", sellValue: 300 },
+	"Item Renkarnasi": { type: "loot", sellValue: 300 },
     
     // MOUNT / TUNGGANGAN BARU
     "Kuda Coklat": { type: "mount", stamDiscount: 2, goldBonus: 0.10, sellValue: 2500 },
     "Beruang Kutub": { type: "mount", stamDiscount: 4, goldBonus: 0.25, sellValue: 12500 },
-    "Naga Terbang": { type: "mount", stamDiscount: 8, goldBonus: 0.50, sellValue: 0 }, // Premium
+    "Naga Terbang": { type: "mount", stamDiscount: 8, goldBonus: 0.50, sellValue: 0 },
     
     // ITEM MALL & SPECIAL
     "Mirage Stone": { type: "catalyst", sellValue: 0 },
