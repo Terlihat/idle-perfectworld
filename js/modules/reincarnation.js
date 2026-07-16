@@ -4,7 +4,7 @@ import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/f
 export async function processReincarnation(db, auth) {
     // Pastikan pemain sudah login
     if (!auth.currentUser) return;
-    
+
     const uid = auth.currentUser.uid;
     const userRef = doc(db, "users", uid);
 
@@ -33,15 +33,15 @@ export async function processReincarnation(db, auth) {
 
             // 3. Kalkulasi Keuntungan
             const newRebirth = rebirthCount + 1;
-            
+
             // Pengali EXP (Mulai dari 1.0, tambah 0.1 tiap rebirth, mentok di 1.5)
             let currentExpMult = data.expMultiplier || 1.0;
             if (currentExpMult < 1.5) {
-                currentExpMult = Math.min(1.5, currentExpMult + 0.1); 
+                currentExpMult = Math.min(1.5, currentExpMult + 0.1);
             }
 
             // Bonus Stat (Misal: 50 poin stat untuk didistribusikan)
-            const bonusStat = 50; 
+            const bonusStat = 50;
             const currentStatPoints = data.statPoints || 0;
 
             // 4. Update Database (Reset Level ke 1)
@@ -56,12 +56,14 @@ export async function processReincarnation(db, auth) {
         });
 
         alert("🎉 SELAMAT! Anda telah berhasil bereinkarnasi. Kekuatan besar kini mengalir di tubuh baru Anda!");
-        
+
         // Tutup panel dan arahkan pemain kembali ke profil
         if (typeof window.togglePanel === 'function') {
-            window.togglePanel('panel-profile'); 
+            window.togglePanel('panel-profile');
         }
-        
+
+        window.location.reload();
+
     } catch (err) {
         alert("❌ Reinkarnasi Gagal: " + err);
     }

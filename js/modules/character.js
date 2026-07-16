@@ -66,7 +66,6 @@ export async function addCharacterStat(db, uid, statName) {
     }
 }
 
-// FIX: Regenerasi Stamina Cepat + Deteksi VIP + Anti-Corrupt Time (Bebas Bocor Write)
 export function startStaminaRegeneration(db, uid) {
     if (!uid) return;
     const userRef = doc(db, "users", uid);
@@ -77,13 +76,10 @@ export function startStaminaRegeneration(db, uid) {
             if (snap.exists()) {
                 const data = snap.data();
 
-                // Kalkulasi Batas Maksimal dengan VIP
                 const vipStats = getVipStats(data.vipLevel || 0);
                 const maxStam = (data.maxStamina || 100) + (vipStats.extraMaxStamina || 0);
                 let currentStam = data.currentStamina !== undefined ? data.currentStamina : maxStam;
 
-                // 🔥 PERBAIKAN 1: Jika stamina penuh, hentikan fungsi. 
-                // Tidak ada lagi updateDoc (Write) ke database saat AFK.
                 if (currentStam >= maxStam) {
                     return;
                 }
@@ -99,7 +95,6 @@ export function startStaminaRegeneration(db, uid) {
 
                 const diffMs = now - lastUpdate;
 
-                // Perlindungan: Jika waktu HP/PC pemain error dan nyangkut di masa depan
                 if (diffMs < 0) {
                     await updateDoc(userRef, { lastStaminaUpdate: now });
                     return;
@@ -111,15 +106,14 @@ export function startStaminaRegeneration(db, uid) {
                     const newStam = Math.min(maxStam, currentStam + diffMinutes);
                     const newUpdateTime = lastUpdate + (diffMinutes * 60000);
 
-                    // 🔥 PERBAIKAN 2: Hanya menembak Write jika benar-benar ada penambahan stamina
                     await updateDoc(userRef, { currentStamina: newStam, lastStaminaUpdate: newUpdateTime });
                 }
             }
         } catch (err) { console.error("Gagal sinkronisasi stamina:", err); }
     };
 
-    syncStamina(); // Tembak langsung saat game dimuat
-    return setInterval(syncStamina, 60000); // Jalankan otomatis tiap 1 menit
+    syncStamina();
+    return setInterval(syncStamina, 60000);
 }
 
 // FITUR BARU: Minum Ramuan (DENGAN PROTEKSI ITEM)

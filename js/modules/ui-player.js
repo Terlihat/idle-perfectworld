@@ -4,11 +4,37 @@ import { getVipStats } from './vip.js';
 export function renderPlayerUI(d, uid, globalGuilds, guildUpgradesMap) {
     const btnAdmin = document.getElementById('btn-admin-panel');
     if (btnAdmin) btnAdmin.style.display = (d.role === 'admin') ? 'inline-block' : 'none';
+
+    const btnRebirth = document.getElementById('btn-toggle-reincarnation');
+    if (btnRebirth) {
+        if (d.level >= 100) {
+            btnRebirth.style.display = 'inline-block'; // Munculkan jika level 100+
+        } else {
+            btnRebirth.style.display = 'none'; // Sembunyikan jika di bawah 100
+        }
+    }
+
     if (!document.getElementById('player-name')) return null;
     const vipHtml = (d.vipLevel && d.vipLevel > 0) ? `<span class="vip-badge">VIP ${d.vipLevel}</span>` : "";
     document.getElementById('player-name').innerHTML = `${vipHtml}${escapeHTML(d.username || "Hero Anonim")}`;
     document.getElementById('player-class').innerText = d.characterClass;
     document.getElementById('player-level').innerText = d.level || 1;
+
+    function toRoman(num) {
+        const roman = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+        return roman[num] || num;
+    }
+    const rebirthBadge = document.getElementById('player-rebirth');
+    if (rebirthBadge) {
+        const rebirthCount = d.rebirth || 0;
+        if (rebirthCount > 0) {
+            rebirthBadge.innerText = `[RW ${toRoman(rebirthCount)}]`;
+            rebirthBadge.style.display = 'inline-block';
+        } else {
+            rebirthBadge.style.display = 'none';
+        }
+    }
+
     document.getElementById('header-gold').innerText = (d.gold || 0).toLocaleString();
     document.getElementById('header-coin').innerText = (d.coin || 0).toLocaleString();
     document.getElementById('player-bank').innerText = (d.bankGold || 0).toLocaleString();
