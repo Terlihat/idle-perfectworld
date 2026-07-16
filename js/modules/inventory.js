@@ -125,8 +125,6 @@ export async function sellItemToNPC(db, uid, itemName) {
 
 export async function unequipItem(db, uid, slotType) {
     if (!uid) return;
-
-    slotType = slotType.toLowerCase();
     const userRef = doc(db, "users", uid);
 
     try {
