@@ -743,7 +743,7 @@ window.handleInventoryClick = async function (itemName) {
             const sukses = await consumePotion(db, currentUserUid, itemName, currentPlayerStats.maxHp, currentPlayerStats.maxMp);
             if (sukses) window.rpgAlert(`Glug glug glug...\nAnda meminum [${itemName}]! Nyawa/Mana kembali penuh.`, "Berhasil Diteguk");
         }
-        else if (itemName === "Item Renkarnasi") {
+        else if (itemName.startsWith("Item Renkarnasi")) {
             window.rpgAlert("Item ini tidak bisa dipakai langsung dari tas. Pergilah ke menu Kuil Reinkarnasi (Rebirth) untuk menggunakannya!", "Info Item");
         }
         else { equipFromInventory(db, currentUserUid, itemName, null); }
