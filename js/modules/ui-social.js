@@ -1,7 +1,7 @@
 import { escapeHTML, getIconHTML } from './ui-utils.js';
 
 export function renderMailboxUI(mails) {
-    const mailboxPanel = document.getElementById('mailbox-list') || document.getElementById('panel-mailbox'); 
+    const mailboxPanel = document.getElementById('mailbox-list') || document.getElementById('panel-mailbox');
     if (!mailboxPanel) return;
     const mailList = Array.isArray(mails) ? mails : [];
     let html = `
@@ -12,7 +12,7 @@ export function renderMailboxUI(mails) {
     if (mailList.length === 0) {
         html += `<p style="text-align:center; color:#aaa; font-size:11px; margin-top:15px;">Tidak ada surat.</p>`;
     } else {
-        const sortedMails = [...mailList].sort((a, b) => b.id.localeCompare(a.id)); 
+        const sortedMails = [...mailList].sort((a, b) => b.id.localeCompare(a.id));
         html += `<div style="max-height: 300px; overflow-y: auto; display:flex; flex-direction:column; gap:8px;">`;
         sortedMails.forEach(mail => {
             const icon = mail.isRead ? "📭" : "📩";
@@ -30,8 +30,8 @@ export function renderMailboxUI(mails) {
                 if (rewards.length > 0) {
                     rewardText = `<div style="color:#28a745; font-size:11px; margin-top:5px; font-weight:bold;">🎁 Hadiah: ${rewards.join(', ')}</div>`;
                 }
-                if (!mail.isClaimed) { 
-                    btnKlaim = `<button onclick="event.stopPropagation(); window.claimMail('${mail.id}')" style="flex:1; background: #28a745; color: white; border: none; padding: 6px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold;">🎁 Klaim Hadiah</button>`; 
+                if (!mail.isClaimed) {
+                    btnKlaim = `<button onclick="event.stopPropagation(); window.claimMail('${mail.id}')" style="flex:1; background: #28a745; color: white; border: none; padding: 6px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold;">🎁 Klaim Hadiah</button>`;
                 } else {
                     btnKlaim = `<button disabled style="flex:1; background: #555; color: #888; border: none; padding: 6px; border-radius: 3px; font-size: 10px;">✅ Diklaim</button>`;
                 }
@@ -78,7 +78,7 @@ export function renderPartyUI(parties, currentUserUid) {
 export function renderGuildUI(stats, globalGuilds, guildUpgradesMap) {
     const unjoinedView = document.getElementById('guild-unjoined-view');
     const joinedView = document.getElementById('guild-joined-view');
-    if (!stats || !stats.uid || !unjoinedView || !joinedView) return; 
+    if (!stats || !stats.uid || !unjoinedView || !joinedView) return;
     if (!stats.guildId || !globalGuilds[stats.guildId]) {
         unjoinedView.style.display = 'block';
         joinedView.style.display = 'none';
@@ -120,12 +120,26 @@ export function renderGuildUI(stats, globalGuilds, guildUpgradesMap) {
         }
         const memberList = document.getElementById('guild-member-list');
         memberList.innerHTML = "";
+
+        function toRoman(num) {
+            const roman = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+            return roman[num] || num;
+        }
+
         myGuild.members.forEach(m => {
             const isMe = m.uid === stats.uid;
             const kickBtn = (isLeader && !isMe) ? `<button onclick="window.kickMemberAction('${m.uid}')" style="padding:1px 4px; font-size:8px; background:#dc3545; margin-left:5px;">Kick</button>` : '';
+
+            // 🔥 3. Logika untuk RW Badge
+            const rebirthCount = m.rebirth || 0;
+            const rwBadge = rebirthCount > 0
+                ? `<span style="color: #ff5722; font-weight: bold; font-size: 11px; margin-left: 5px;">[RW ${toRoman(rebirthCount)}]</span>`
+                : "";
+
+            // 🔥 4. Menyisipkan rwBadge di sebelah nama pemain
             memberList.innerHTML += `
             <div style="border-bottom:1px solid #333; padding:3px 0; display:flex; justify-content:space-between; align-items:center;">
-                <div><span style="color:${isMe ? '#ffca28' : '#fff'};">${escapeHTML(m.name)}</span> (Lv.${m.level}) ${kickBtn}</div>
+                <div><span style="color:${isMe ? '#ffca28' : '#fff'};">${escapeHTML(m.name)}</span>${rwBadge} (Lv.${m.level}) ${kickBtn}</div>
                 <div style="color:#aaa;">Donasi: ${m.contribution.toLocaleString()} G</div>
             </div>`;
         });
@@ -134,14 +148,14 @@ export function renderGuildUI(stats, globalGuilds, guildUpgradesMap) {
 
 export function renderChatUI(messages, currentChatChannel) {
     const chatBox = document.getElementById('chat-box');
-    if (!chatBox) return; 
+    if (!chatBox) return;
     chatBox.innerHTML = "";
     let chColor = '#aaa';
     let chLabel = 'DUNIA';
     if (currentChatChannel === 'guild') { chColor = '#28a745'; chLabel = 'GUILD'; }
     if (currentChatChannel === 'party') { chColor = '#00d2ff'; chLabel = 'PARTY'; }
-    messages.forEach(m => { 
+    messages.forEach(m => {
         const vipBadge = (m.vipLevel && m.vipLevel > 0) ? `<span class="vip-badge vip-chat">V${m.vipLevel}</span>` : "";
-        chatBox.innerHTML += `<div><strong style="color:${chColor}; font-size:9px;">[${chLabel}]</strong> ${vipBadge} <span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`; 
+        chatBox.innerHTML += `<div><strong style="color:${chColor}; font-size:9px;">[${chLabel}]</strong> ${vipBadge} <span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`;
     });
 }

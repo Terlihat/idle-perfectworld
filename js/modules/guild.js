@@ -44,8 +44,8 @@ export async function createGuild(db, uid, playerStats, guildName) {
                 leaderId: uid,
                 leaderName: uData.username,
                 vaultGold: 0,
-                announcement: "Selamat datang di klan kami!",
-                members: [{ uid: uid, name: uData.username, level: uData.level, contribution: 0 }],
+                announcement: "Selamat datang di guild kami!",
+                members: [{ uid: uid, name: uData.username, level: uData.level, rebirth: uData.rebirth || 0, contribution: 0 }],
                 createdAt: serverTimestamp()
             });
 
@@ -65,7 +65,7 @@ export async function joinGuild(db, uid, playerStats, guildId) {
         await runTransaction(db, async (ts) => {
             const uSnap = await ts.get(userRef);
             const gSnap = await ts.get(guildRef);
-            
+
             if (!uSnap.exists() || !gSnap.exists()) throw "Data tidak valid.";
             const uData = uSnap.data();
             const gData = gSnap.data();
@@ -74,8 +74,8 @@ export async function joinGuild(db, uid, playerStats, guildId) {
             const maxM = GUILD_UPGRADES[gData.level].maxMembers;
             if (gData.members.length >= maxM) throw "Guild sudah penuh!";
 
-            let newMembers = [...gData.members, { uid: uid, name: uData.username, level: uData.level, contribution: 0 }];
-            
+            let newMembers = [...gData.members, { uid: uid, name: uData.username, level: uData.level, rebirth: uData.rebirth || 0, contribution: 0 }];
+
             ts.update(guildRef, { members: newMembers });
             ts.update(userRef, { guildId: guildId, guildName: gData.name });
         });
@@ -93,7 +93,7 @@ export async function leaveGuild(db, uid, guildId) {
             const uSnap = await ts.get(userRef);
             const gSnap = await ts.get(guildRef);
             if (!uSnap.exists() || !gSnap.exists()) return;
-            
+
             const gData = gSnap.data();
             if (gData.leaderId === uid) throw "Ketua tidak bisa keluar! Bubarkan Guild atau pindahkan jabatan (segera hadir).";
 
@@ -160,7 +160,7 @@ export async function updateMotd(db, leaderUid, guildId, newText) {
             if (!gSnap.exists() || gSnap.data().leaderId !== leaderUid) throw "Ditolak.";
             ts.update(guildRef, { announcement: newText });
         });
-    } catch (err) {}
+    } catch (err) { }
 }
 
 export async function kickMember(db, leaderUid, guildId, targetUid) {
@@ -185,11 +185,11 @@ export async function disbandGuild(db, leaderUid, guildId) {
         await runTransaction(db, async (ts) => {
             const gSnap = await ts.get(guildRef);
             if (!gSnap.exists() || gSnap.data().leaderId !== leaderUid) throw "Ditolak.";
-            
+
             // Hapus guildId dari semua anggota (Idealnya memanggil backend Cloud Functions untuk array besar, tapi kita looping aman karena limit max 30)
             const members = gSnap.data().members;
             for (let m of members) { ts.update(doc(db, "users", m.uid), { guildId: null, guildName: null }); }
-            
+
             ts.delete(guildRef);
         });
         alert("Guild berhasil dibubarkan.");
