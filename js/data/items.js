@@ -13,6 +13,9 @@ export const ITEM_DB = {
     "Ramuan MP": { type: "consumable", sellValue: 250 },
     "Batu Dungeon": { type: "loot", sellValue: 300 },
 	"Item Renkarnasi": { type: "loot", sellValue: 300 },
+	"Item Renkarnasi 2": { type: "loot", sellValue: 300 },
+	"Item Renkarnasi 3": { type: "loot", sellValue: 300 },
+	"Item Renkarnasi 4": { type: "loot", sellValue: 300 },
     
     // MOUNT / TUNGGANGAN BARU
     "Kuda Coklat": { type: "mount", stamDiscount: 2, goldBonus: 0.10, sellValue: 2500 },

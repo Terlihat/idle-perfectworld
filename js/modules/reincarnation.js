@@ -21,15 +21,27 @@ export async function processReincarnation(db, auth) {
             const inv = data.inventory || {};
             const rebirthCount = data.rebirth || 0; // Hitungan rebirth saat ini
 
-            // 1. Cek Persyaratan
-            if (level < 100) throw "Level Anda belum mencapai 100!";
-            if (!inv["Item Renkarnasi"] || inv["Item Renkarnasi"] < 1) {
-                throw "Anda tidak memiliki [Item Renkarnasi] di dalam tas!";
+            // 🔥 LOGIKA BARU: Penentuan Syarat Item berdasarkan tingkat Rebirth saat ini
+            if (rebirthCount >= 4) {
+                throw "Anda sudah mencapai batas kekuatan fana! (Maksimal RW IV)";
             }
 
-            // 2. Potong Item Renkarnasi
-            inv["Item Renkarnasi"] -= 1;
-            if (inv["Item Renkarnasi"] <= 0) delete inv["Item Renkarnasi"];
+            // Tentukan nama item yang dicari oleh sistem
+            let reqItem = "Item Renkarnasi"; // Default untuk masuk ke RW 1
+            if (rebirthCount === 1) reqItem = "Item Renkarnasi 2"; // Untuk masuk ke RW 2
+            if (rebirthCount === 2) reqItem = "Item Renkarnasi 3"; // Untuk masuk ke RW 3
+            if (rebirthCount === 3) reqItem = "Item Renkarnasi 4"; // Untuk masuk ke RW 4
+
+            // 1. Cek Persyaratan
+            if (level < 100) throw "Level Anda belum mencapai 100!";
+            if (!inv[reqItem] || inv[reqItem] < 1) {
+                // Pesan error sekarang dinamis memberi tahu item spesifik yang kurang
+                throw `Gagal! Anda membutuhkan 1x [${reqItem}] di dalam tas untuk tingkat Reinkarnasi ini.`;
+            }
+
+            // 2. Potong Item Renkarnasi yang sesuai
+            inv[reqItem] -= 1;
+            if (inv[reqItem] <= 0) delete inv[reqItem];
 
             // 3. Kalkulasi Keuntungan
             const newRebirth = rebirthCount + 1;
