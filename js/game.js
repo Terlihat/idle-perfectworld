@@ -757,7 +757,38 @@ window.handleInventoryClick = async function (itemName) {
         if (qty > 0) depositItem(db, currentUserUid, itemName, qty);
     }
     else if (modeSaatIni === "AUCTION") {
-        if (itemName.includes("Tiket") || itemName.includes("Buku") || itemName.includes("Ramuan Stamina")) return window.rpgAlert("Item premium tidak bisa dilelang.");
+        // 1. Daftarkan item yang namanya harus SAMA PERSIS agar diblokir
+        const itemDilarangPersis = [
+            "Dragon Orb (1 Star)",
+            "Dragon Orb (2 Star)",
+            "Dragon Orb (3 Star)",
+            "Dragon Orb (4 Star)",
+            "Dragon Orb (5 Star)",
+            "Dragon Orb (6 Star)",
+            "Dragon Orb (7 Star)",
+            "Dragon Orb (8 Star)",
+            "Dragon Orb (9 Star)",
+            "Dragon Orb Ocean",
+            "Dragon Orb Mirage",
+            "Dragon Orb Flame",
+            "Mahkota Kaisar Surga",
+            "Pedang Kaisar Langit",
+            "Senjata Dewa: Ragnarok",
+            "Senjata Dewa: Nirvana",
+            "Zirah Dewa: Aegis",
+            "Naga Terbang",
+            "Ramuan Stamina"
+        ];
+
+        // 2. Cek apakah item masuk daftar persis ATAU berawalan kata tertentu
+        if (
+            itemDilarangPersis.includes(itemName) ||
+            itemName.startsWith("Tiket") ||
+            itemName.startsWith("Buku")
+        ) {
+            return window.rpgAlert("Item premium ini terikat pada karakter dan tidak bisa dilelang.");
+        }
+
         const priceStr = await window.rpgPrompt(`Masukkan Harga Beli Langsung (Gold) untuk 1x [${itemName}]:`, "Jual ke Lelang", "number");
         const price = parseInt(priceStr);
         if (price > 0) listAuctionItem(db, currentUserUid, itemName, price, playerUsername);
