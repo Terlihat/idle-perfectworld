@@ -148,6 +148,9 @@ window.updateMyLocation = function (locationName) {
     }
 };
 
+// INISIALISASI UI TOKO & MALL
+setupShopModalUI(db, () => currentUserUid, executePurchase);
+
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUid = user.uid;
@@ -1086,11 +1089,6 @@ document.addEventListener('change', function (e) {
         }
     }
 });
-
-// ==========================================
-// setupShopModalUI
-// ==========================================
-setupShopModalUI(db, () => currentUserUid, executePurchase);
 
 // ==========================================
 // SISTEM GLOBAL LEADERBOARD 
