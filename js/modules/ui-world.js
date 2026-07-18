@@ -133,6 +133,7 @@ function renderFilteredAuction() {
     filteredItems.forEach(item => {
         const isMine = item.sellerId === currentUid;
         const itemPrice = item.buyoutPrice || item.price || 0;
+        const namaPenjualTampil = isMine ? escapeHTML(item.sellerName) + " (Anda)" : "Anonim";
 
         // 🔥 SOLUSI IKON HILANG: Cari ikon berdasarkan nama asli (tanpa plus)
         const baseItemName = item.itemName.replace(/\s\[\+\d+\]$/, '');
@@ -160,7 +161,7 @@ function renderFilteredAuction() {
             btnHtml += `<button onclick="window.buyFromAuction('${item.id}', '${escapeHTML(item.itemName)}', ${itemPrice}, '${item.sellerId}')" style="padding:2px 5px; font-size:9px; background:#e0a800;">Beli ${itemPrice}G</button>`;
         }
 
-        auctionList.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding: 6px 0;"><div><strong style="color:#00d2ff;">${itemIcon} ${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: ${escapeHTML(item.sellerName)} | 💰 ${itemPrice.toLocaleString()}G</span></div><div style="text-align: right;">${btnHtml}</div></div>`;
+        auctionList.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding: 6px 0;"><div><strong style="color:#00d2ff;">${itemIcon} ${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: <span style="color:#ffcc00;">${namaPenjualTampil}</span> | 💰 ${itemPrice.toLocaleString()}G</span></div><div style="text-align: right;">${btnHtml}</div></div>`;
     });
 
     if (filteredItems.length === 0) {
