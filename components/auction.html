@@ -1,4 +1,36 @@
 <h2>⚖️ Pasar Lelang</h2>
+
+<!-- KOTAK FITUR PENCARIAN & FILTER -->
+<div style="background: #121216; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #3f3f52;">
+
+    <!-- Kolom Pencarian -->
+    <input type="text" id="auction-search" placeholder="🔍 Cari nama item..." oninput="window.updateAuctionFilter()"
+        style="width: 100%; padding: 6px; margin-bottom: 8px; background: #222; color: #fff; border: 1px solid #555; border-radius: 3px; font-size: 11px;">
+
+    <!-- Tombol Kategori -->
+    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;" id="auc-category-btns">
+        <button onclick="window.setAuctionFilter('Semua')"
+            style="flex:1; padding: 4px; font-size: 10px; background: #007bff; color: white; border: none; border-radius: 2px;">Semua</button>
+        <button onclick="window.setAuctionFilter('weapon')"
+            style="flex:1; padding: 4px; font-size: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 2px;">Senjata</button>
+        <button onclick="window.setAuctionFilter('armor')"
+            style="flex:1; padding: 4px; font-size: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 2px;">Armor</button>
+        <button onclick="window.setAuctionFilter('accessory')"
+            style="flex:1; padding: 4px; font-size: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 2px;">Aksesoris</button>
+    </div>
+
+    <!-- Tombol Sorting (Harga) -->
+    <div style="display: flex; gap: 4px;">
+        <button onclick="window.setAuctionSort('asc')"
+            style="flex:1; padding: 4px; font-size: 10px; background: #28a745; color: white; border: none; border-radius: 2px;">⬆️
+            Harga Terendah</button>
+        <button onclick="window.setAuctionSort('desc')"
+            style="flex:1; padding: 4px; font-size: 10px; background: #dc3545; color: white; border: none; border-radius: 2px;">⬇️
+            Harga Tertinggi</button>
+    </div>
+</div>
+
+<!-- PANEL LIST ITEM (Diperbesar jadi 500px) -->
 <div id="auction-list"
-    style="max-height: 350px; overflow-y: auto; background: #121216; padding: 8px; border-radius: 5px; font-size: 12px; border: 1px solid #3f3f52;">
+    style="height: 500px; overflow-y: auto; background: #0a0a0c; padding: 8px; border-radius: 5px; font-size: 12px; border: 1px solid #3f3f52;">
 </div>

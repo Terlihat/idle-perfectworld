@@ -1,4 +1,5 @@
 import { escapeHTML, getIconHTML } from './ui-utils.js';
+import { ITEM_DB } from '../data/items.js';
 
 export const SHOP_ITEMS = [
     { name: 'Pedang Besi', price: 2000, currency: 'Gold' },
@@ -49,35 +50,94 @@ export function renderShopAndMall() {
     if (mallContainer) mallContainer.innerHTML = buildGrid(MALL_ITEMS);
 }
 
+// ==========================================
+// STATE GLOBAL UNTUK FILTER PASAR LELANG
+// ==========================================
+let currentAuctionItems = [];
+let currentUid = null;
+let currentFilter = 'Semua';
+let currentSort = 'asc'; // 'asc' (Murah ke Mahal), 'desc' (Mahal ke Murah)
+let currentSearch = '';
+
+window.setAuctionFilter = function (tipe) {
+    currentFilter = tipe;
+    // Ubah warna tombol agar ketahuan mana yang sedang aktif
+    const btns = document.getElementById('auc-category-btns').children;
+    for (let b of btns) { b.style.background = '#333'; b.style.border = '1px solid #555'; }
+    event.target.style.background = '#007bff';
+    event.target.style.border = 'none';
+    renderFilteredAuction();
+};
+
+window.setAuctionSort = function (sortType) {
+    currentSort = sortType;
+    renderFilteredAuction();
+};
+
+window.updateAuctionFilter = function () {
+    currentSearch = document.getElementById('auction-search').value.toLowerCase();
+    renderFilteredAuction();
+};
+
+// ==========================================
+// FUNGSI UTAMA RENDER LELANG
+// ==========================================
 export function renderAuctionUI(items, currentUserUid) {
+    currentAuctionItems = items;
+    currentUid = currentUserUid;
+    renderFilteredAuction(); // Panggil fungsi filter
+}
+
+function renderFilteredAuction() {
     const auctionList = document.getElementById('auction-list');
     if (!auctionList) return;
-
-    auctionList.innerHTML = ""; // Bersihkan list
+    auctionList.innerHTML = "";
 
     const now = Date.now();
-    let itemCount = 0; // Menghitung barang yang masih aktif
+    let activeItems = [];
 
-    items.forEach(item => {
-        const isExpired = (item.expiresAt || 0) < now;
-
-        // 🔥 JIKA KADALUARSA: Hilangkan dari layar dan proses ke kotak surat
-        if (isExpired) {
-            // Panggil fungsi global di game.js untuk mengeksekusi pengembalian
-            if (typeof window.processExpiredAuction === 'function') {
-                window.processExpiredAuction(item.id);
-            }
-            return; // Lompati (skip) item ini agar tidak digambar di layar
+    // 1. PISAHKAN BARANG KADALUARSA
+    currentAuctionItems.forEach(item => {
+        if ((item.expiresAt || 0) < now) {
+            if (typeof window.processExpiredAuction === 'function') window.processExpiredAuction(item.id);
+        } else {
+            activeItems.push(item);
         }
+    });
 
-        itemCount++; // Tambah hitungan barang aktif
-        const isMine = item.sellerId === currentUserUid;
+    // 2. FILTERING (Pencarian & Kategori)
+    let filteredItems = activeItems.filter(item => {
+        // Hapus tulisan [+...] untuk mencari nama aslinya di database
+        const baseItemName = item.itemName.replace(/\s\[\+\d+\]$/, '');
+        const itemData = ITEM_DB[baseItemName] || {};
+        const itemType = itemData.type || 'lainnya';
+
+        // Pengecekan Kolom Pencarian
+        if (currentSearch && !item.itemName.toLowerCase().includes(currentSearch)) return false;
+
+        // Pengecekan Kategori (Senjata, Armor, Aksesoris)
+        if (currentFilter !== 'Semua') {
+            if (itemType !== currentFilter) return false;
+        }
+        return true;
+    });
+
+    // 3. SORTING (Pengurutan Harga)
+    filteredItems.sort((a, b) => {
+        const priceA = a.buyoutPrice || a.price || 0;
+        const priceB = b.buyoutPrice || b.price || 0;
+        return currentSort === 'asc' ? priceA - priceB : priceB - priceA;
+    });
+
+    // 4. MENGGAMBAR KE LAYAR (RENDER)
+    filteredItems.forEach(item => {
+        const isMine = item.sellerId === currentUid;
         const itemPrice = item.buyoutPrice || item.price || 0;
 
-        // 🔥 MENDAPATKAN IKON REAL
-        const itemIcon = getIconHTML(item.itemName);
+        // 🔥 SOLUSI IKON HILANG: Cari ikon berdasarkan nama asli (tanpa plus)
+        const baseItemName = item.itemName.replace(/\s\[\+\d+\]$/, '');
+        const itemIcon = getIconHTML(baseItemName);
 
-        // 🔥 KALKULASI SISA WAKTU (HARI & JAM)
         const sisaMs = (item.expiresAt || 0) - now;
         const sisaHari = Math.floor(sisaMs / (1000 * 60 * 60 * 24));
         const sisaJam = Math.floor((sisaMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -100,13 +160,11 @@ export function renderAuctionUI(items, currentUserUid) {
             btnHtml += `<button onclick="window.buyFromAuction('${item.id}', '${escapeHTML(item.itemName)}', ${itemPrice}, '${item.sellerId}')" style="padding:2px 5px; font-size:9px; background:#e0a800;">Beli ${itemPrice}G</button>`;
         }
 
-        // Memasukkan itemIcon ke dalam HTML
         auctionList.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding: 6px 0;"><div><strong style="color:#00d2ff;">${itemIcon} ${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: ${escapeHTML(item.sellerName)} | 💰 ${itemPrice.toLocaleString()}G</span></div><div style="text-align: right;">${btnHtml}</div></div>`;
     });
 
-    // Jika semua item ternyata kadaluarsa dan tidak ada yang aktif
-    if (itemCount === 0) {
-        auctionList.innerHTML = "Belum ada lelang.";
+    if (filteredItems.length === 0) {
+        auctionList.innerHTML = activeItems.length === 0 ? "Belum ada lelang aktif saat ini." : "🔍 Tidak ada barang yang cocok dengan pencarian/kategori ini.";
     }
 }
 
