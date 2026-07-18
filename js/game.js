@@ -757,7 +757,7 @@ window.handleInventoryClick = async function (itemName) {
         if (qty > 0) depositItem(db, currentUserUid, itemName, qty);
     }
     else if (modeSaatIni === "AUCTION") {
-        if (itemName.includes("Tiket") || itemName.includes("Buku") || itemName.includes("Ramuan Stamina") || itemName.includes("Naga Terbang")) return window.rpgAlert("Item premium tidak bisa dilelang.");
+        if (itemName.includes("Tiket") || itemName.includes("Buku") || itemName.includes("Ramuan Stamina")) return window.rpgAlert("Item premium tidak bisa dilelang.");
         const priceStr = await window.rpgPrompt(`Masukkan Harga Beli Langsung (Gold) untuk 1x [${itemName}]:`, "Jual ke Lelang", "number");
         const price = parseInt(priceStr);
         if (price > 0) listAuctionItem(db, currentUserUid, itemName, price, playerUsername);
