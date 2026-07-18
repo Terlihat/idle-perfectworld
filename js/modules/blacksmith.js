@@ -41,12 +41,12 @@ export async function executeRefineAction(db, uid, equipName, catalystName) {
             const itemData = ITEM_DB[baseName];
             if (!itemData) throw "Data perlengkapan tidak valid di sistem.";
             if (!inv[equipName] || inv[equipName] < 1) throw `[ERROR] [${equipName}] tidak ada di tas (Harap lepas dari badan).`;
-            
+
             // BATAS MAKSIMAL DITAIKKAN MENJADI +12
             if (newRefine >= 12) throw "[INFO] Perlengkapan ini sudah mencapai batas maksimal (+12)!";
 
             const mirageCost = (itemData.type === 'weapon') ? 2 : 1;
-            if (gold < 1000) throw "[ERROR] Gold tidak cukup! Butuh 1,000 Gold.";
+            //if (gold < 1000) throw "[ERROR] Gold tidak cukup! Butuh 1,000 Gold.";
             if ((inv["Mirage Stone"] || 0) < mirageCost) throw `[ERROR] Butuh ${mirageCost}x Mirage Stone!`;
 
             // DETEKSI PENGGUNAAN DRAGON ORB & VALIDASI TINGKATNYA
@@ -63,12 +63,12 @@ export async function executeRefineAction(db, uid, equipName, catalystName) {
                 if (inv[catalystName] <= 0) delete inv[catalystName];
             }
 
-            gold -= 1000;
+            //gold -= 1000;
             inv["Mirage Stone"] -= mirageCost;
             if (inv["Mirage Stone"] <= 0) delete inv["Mirage Stone"];
 
             // Tarik equip dari tas
-            inv[equipName] -= 1; 
+            inv[equipName] -= 1;
             if (inv[equipName] <= 0) delete inv[equipName];
 
             let isSuccess = false;
@@ -79,7 +79,7 @@ export async function executeRefineAction(db, uid, equipName, catalystName) {
             } else {
                 // JIKA PAKAI BATU BIASA/PREMIUM LAINNYA
                 const rateKey = (catalystName === "Tanpa Batu Tambahan") ? "Mirage Stone" : catalystName;
-                
+
                 // Ambil persentase (Jika tempa ke +11 atau +12 tanpa rate terdaftar, jadikan 1% / 0.01)
                 let successRate = 0.01;
                 if (REFINE_RATES[rateKey] && REFINE_RATES[rateKey][newRefine] !== undefined) {
@@ -89,7 +89,7 @@ export async function executeRefineAction(db, uid, equipName, catalystName) {
                 const roll = Math.random();
                 isSuccess = (roll <= successRate);
             }
-            
+
             if (isSuccess) {
                 newRefine += 1;
                 logMsg = `[SUKSES] ${baseName} berhasil naik ke (+${newRefine})!`;
@@ -129,7 +129,7 @@ export async function executeRefineAction(db, uid, equipName, catalystName) {
 
         return finalItemName;
 
-    } catch (err) { 
-        if (typeof window.addBlacksmithLog === "function") window.addBlacksmithLog(err, "#dc3545"); 
+    } catch (err) {
+        if (typeof window.addBlacksmithLog === "function") window.addBlacksmithLog(err, "#dc3545");
     }
 }

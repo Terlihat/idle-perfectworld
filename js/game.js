@@ -786,7 +786,7 @@ window.handleInventoryClick = async function (itemName) {
             document.getElementById('bs-text-equip').style.color = "#00d2ff";
 
             const mCost = itemInfo.type === 'weapon' ? 2 : 1;
-            document.getElementById('bs-info-cost').innerText = `Biaya: ${mCost}x Mirage Stone & 1,000 Gold`;
+            document.getElementById('bs-info-cost').innerText = `Biaya: ${mCost}x Mirage Stone`;
         }
         else if (itemInfo.type === 'catalyst') {
             if (itemName === "Mirage Stone") return window.rpgAlert("Mirage Stone digunakan otomatis. Pilih batu tambahan atau biarkan kosong!");
