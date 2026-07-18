@@ -8,7 +8,9 @@ loadUIComponents();
 
 import {
     renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI,
-    renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI, renderChatUI, escapeHTML, renderCraftingUI, getIconHTML, renderShopAndMall, renderPKUI
+    renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI,
+    renderChatUI, escapeHTML, renderCraftingUI, getIconHTML, renderShopAndMall,
+    renderPKUI, setupLeaderboardUI, setupShopModalUI
 } from './modules/ui-renderer.js';
 
 // IMPORT MODULES SISTEM
@@ -42,8 +44,6 @@ import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFrie
 import './modules/inventory-modes.js';
 import { processReincarnation } from './modules/reincarnation.js';
 import { executePurchase } from './modules/shop.js';
-import { setupShopModalUI } from './modules/ui-world.js';
-import { setupLeaderboardUI } from './modules/ui-social.js';
 import { getLeaderboardData } from './modules/leaderboard.js';
 
 // ==========================================
@@ -150,9 +150,10 @@ window.updateMyLocation = function (locationName) {
     }
 };
 
-// INISIALISASI UI TOKO & MALL
+// ==========================================
+// INISIALISASI UI & MODAL
+// ==========================================
 setupShopModalUI(db, () => currentUserUid, executePurchase);
-// INISIALISASI UI Leaderboard
 setupLeaderboardUI(db, getLeaderboardData);
 
 onAuthStateChanged(auth, async (user) => {
