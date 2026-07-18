@@ -43,8 +43,8 @@ import './modules/inventory-modes.js';
 import { processReincarnation } from './modules/reincarnation.js';
 import { executePurchase } from './modules/shop.js';
 import { setupShopModalUI } from './modules/ui-world.js';
-import { getLeaderboardData } from './leaderboard.js';
-import { setupLeaderboardUI } from './ui-social.js';
+import { setupLeaderboardUI } from './modules/ui-social.js';
+import { getLeaderboardData } from './modules/leaderboard.js';
 
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
