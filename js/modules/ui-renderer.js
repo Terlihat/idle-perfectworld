@@ -4,3 +4,5 @@ export * from './ui-inventory.js';
 export * from './ui-social.js';
 export * from './ui-world.js';
 export * from './ui-pk.js';
+export * from './ui-quest.js';
+export * from './ui-friends.js';

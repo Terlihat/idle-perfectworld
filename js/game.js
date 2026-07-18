@@ -10,7 +10,7 @@ import {
     renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI,
     renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI,
     renderChatUI, escapeHTML, renderCraftingUI, getIconHTML, renderShopAndMall,
-    renderPKUI, setupLeaderboardUI, setupShopModalUI, setupPKUI
+    renderPKUI, setupLeaderboardUI, setupShopModalUI, setupPKUI, setupFriendUI
 } from './modules/ui-renderer.js';
 
 // IMPORT MODULES SISTEM
@@ -156,9 +156,15 @@ window.updateMyLocation = function (locationName) {
 // ==========================================
 setupShopModalUI(db, () => currentUserUid, executePurchase);
 setupLeaderboardUI(db, getLeaderboardData);
+
 // Aktifkan Sistem Zona PK
 setupPKUI(db, () => currentUserUid, () => currentPlayerStats, {
     listenToPKZone, enterPKZone, leavePKZone, executePKBattle
+});
+
+// Aktifkan Sistem Pertemanan
+setupFriendUI(db, () => currentUserUid, () => currentPlayerStats, {
+    sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend
 });
 
 onAuthStateChanged(auth, async (user) => {
@@ -1143,133 +1149,6 @@ document.addEventListener('click', (e) => {
         document.getElementById('tab-cm-wallet').style.display = 'block';
     }
 });
-
-// ==========================================
-// FITUR: Render UI Misi Harian & Bounty
-// ==========================================
-window.renderQuestUI = function (questData) {
-    const btnTake = document.getElementById('btn-take-quest');
-    const dTitle = document.getElementById('quest-daily-title');
-    const dProg = document.getElementById('quest-daily-prog');
-    const btnClaimD = document.getElementById('btn-claim-daily');
-
-    const bTitle = document.getElementById('quest-bounty-title');
-    const bProg = document.getElementById('quest-bounty-prog');
-    const btnClaimB = document.getElementById('btn-claim-bounty');
-
-    if (!btnTake) return; // Mencegah error jika HTML belum termuat
-
-    const today = new Date().toLocaleDateString('id-ID');
-
-    // JIKA PEMAIN SUDAH PUNYA MISI HARI INI
-    if (questData && questData.lastReset === today) {
-        btnTake.style.display = 'none'; // Sembunyikan tombol ambil misi
-
-        // Render Misi Harian (Daily)
-        if (questData.daily) {
-            const dq = questData.daily;
-            if (dTitle) dTitle.innerText = dq.title;
-            if (dProg) dProg.innerText = `${dq.progress} / ${dq.target}`;
-
-            if (dq.isClaimed) {
-                if (btnClaimD) { btnClaimD.style.display = 'inline-block'; btnClaimD.innerText = "Selesai"; btnClaimD.disabled = true; btnClaimD.style.background = "#555"; btnClaimD.style.color = "#888"; }
-            } else if (dq.progress >= dq.target) {
-                if (btnClaimD) { btnClaimD.style.display = 'inline-block'; btnClaimD.innerText = "Klaim Hadiah"; btnClaimD.disabled = false; btnClaimD.style.background = "#ffca28"; btnClaimD.style.color = "#000"; }
-            } else {
-                if (btnClaimD) btnClaimD.style.display = 'none';
-            }
-        }
-
-        // Render Misi Bounty
-        if (questData.bounty) {
-            const bq = questData.bounty;
-            if (bTitle) bTitle.innerText = bq.title;
-            if (bProg) bProg.innerText = `${bq.progress} / ${bq.target}`;
-
-            if (bq.isClaimed) {
-                if (btnClaimB) { btnClaimB.style.display = 'inline-block'; btnClaimB.innerText = "Selesai"; btnClaimB.disabled = true; btnClaimB.style.background = "#555"; btnClaimB.style.color = "#888"; }
-            } else if (bq.progress >= bq.target) {
-                if (btnClaimB) { btnClaimB.style.display = 'inline-block'; btnClaimB.innerText = "Klaim Hadiah"; btnClaimB.disabled = false; btnClaimB.style.background = "#ffca28"; btnClaimB.style.color = "#000"; }
-            } else {
-                if (btnClaimB) btnClaimB.style.display = 'none';
-            }
-        }
-    }
-    // JIKA PEMAIN BARU ATAU HARI SUDAH BERGANTI
-    else {
-        btnTake.style.display = 'block'; // Tampilkan tombol ambil misi
-        if (dTitle) dTitle.innerText = "-";
-        if (dProg) dProg.innerText = "0/0";
-        if (btnClaimD) btnClaimD.style.display = 'none';
-        if (bTitle) bTitle.innerText = "-";
-        if (bProg) bProg.innerText = "0/0";
-        if (btnClaimB) btnClaimB.style.display = 'none';
-    }
-};
-
-// --- JEMBATAN UI SISTEM PERTEMANAN ---
-window.toggleFriendTab = function (tab) {
-    document.getElementById('tab-friend-list').style.display = tab === 'list' ? 'block' : 'none';
-    document.getElementById('tab-friend-req').style.display = tab === 'req' ? 'block' : 'none';
-    document.getElementById('btn-tab-list').style.background = tab === 'list' ? '#238636' : '#333';
-    document.getElementById('btn-tab-req').style.background = tab === 'req' ? '#8957e5' : '#333';
-};
-
-window.sendFriendReqManual = async function () {
-    const inputVal = document.getElementById('input-add-friend').value.trim();
-    if (!inputVal) return window.rpgAlert("Masukkan Nickname");
-
-    // Konversi nama inputan menjadi sensitif terhadap huruf besar/kecil (karena Firebase exact match)
-    let targetUid = inputVal;
-
-    try {
-        // Import fungsi query tambahan dari Firestore
-        const { collection, query, where, getDocs, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js');
-
-        // 1. Coba cari berdasarkan Nickname (Username) terlebih dahulu
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("username", "==", inputVal));
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-            // Jika Nickname ketemu, sistem otomatis "mencuri" UID-nya dari balik layar
-            targetUid = querySnapshot.docs[0].id;
-        } else {
-            // Jika Nickname tidak ketemu, sistem mengecek apakah input ini adalah UID langsung
-            const docSnap = await getDoc(doc(db, "users", inputVal));
-            if (!docSnap.exists()) {
-                return window.rpgAlert(`Pemain dengan nama atau UID [${inputVal}] tidak ditemukan! Pastikan huruf besar/kecil sesuai.`, "Gagal");
-            }
-        }
-
-        // 2. Eksekusi pengiriman undangan menggunakan UID yang sudah divalidasi
-        await sendFriendRequest(db, currentUserUid, currentPlayerStats, targetUid);
-        window.rpgAlert(`Permintaan pertemanan berhasil dikirim!`, "Sukses");
-        document.getElementById('input-add-friend').value = "";
-
-    } catch (err) {
-        // Tangkap pesan error spesifik jika mencoba add diri sendiri atau sudah berteman
-        const errorMsg = typeof err === 'string' ? err : "Terjadi kesalahan sistem.";
-        window.rpgAlert(errorMsg, "Gagal");
-    }
-};
-
-window.accFriend = async function (reqUid, reqName, reqLevel) {
-    try { await acceptFriendRequest(db, currentUserUid, currentPlayerStats, reqUid, { username: reqName, level: reqLevel }); }
-    catch (err) { console.error(err); }
-};
-
-window.rejFriend = async function (reqUid) {
-    try { await rejectFriendRequest(db, currentUserUid, reqUid); }
-    catch (err) { console.error(err); }
-};
-
-window.delFriend = async function (targetUid) {
-    if (await window.rpgConfirm("Yakin ingin menghapus teman ini?", "Hapus Teman")) {
-        try { await removeFriend(db, currentUserUid, targetUid); }
-        catch (err) { console.error(err); }
-    }
-};
 
 // --- SISTEM PESAN PRIBADI (WHISPER) ---
 let unsubPrivateChat = null;
