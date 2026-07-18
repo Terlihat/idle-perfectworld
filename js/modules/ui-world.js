@@ -195,3 +195,81 @@ export function renderPKUI(pkPlayers, currentUid) {
     }
     container.innerHTML = html;
 }
+
+// ==========================================
+// SISTEM MODAL PEMBELIAN TOKO & MALL
+// ==========================================
+let currentBuyItem = null;
+let currentBuyPrice = 0;
+let currentBuyCurrency = 'Gold';
+
+export function setupShopModalUI(db, getUidCallback, executePurchaseFn) {
+    window.openBuyModal = function (itemName, price, currency) {
+        currentBuyItem = itemName;
+        currentBuyPrice = price;
+        currentBuyCurrency = currency;
+
+        const modal = document.getElementById('buy-modal');
+        if (!modal) return window.rpgAlert ? window.rpgAlert("Error: HTML Modal Pembelian belum terpasang!") : alert("Error HTML!");
+
+        document.getElementById('buy-modal-title').innerText = `Beli [${itemName}]`;
+        document.getElementById('buy-modal-qty').value = 1;
+        document.getElementById('buy-modal-currency').innerText = currency;
+        document.getElementById('buy-modal-currency').style.color = currency === 'Coin' ? '#ffcc00' : '#e0a800';
+
+        const iconContainer = document.getElementById('buy-modal-icon');
+        // Asumsi getIconHTML sudah di-import di file ui-world.js ini
+        if (iconContainer && typeof getIconHTML === 'function') {
+            iconContainer.innerHTML = getIconHTML(itemName);
+        }
+
+        updateModalTotal();
+        modal.style.display = 'flex';
+    };
+
+    function updateModalTotal() {
+        const qty = parseInt(document.getElementById('buy-modal-qty').value) || 1;
+        document.getElementById('buy-modal-total').innerText = (currentBuyPrice * qty).toLocaleString();
+    }
+
+    document.addEventListener('input', (e) => {
+        if (e.target.id === 'buy-modal-qty') {
+            let val = parseInt(e.target.value);
+            if (val < 1) e.target.value = 1;
+            if (val > 999) e.target.value = 999;
+            updateModalTotal();
+        }
+    });
+
+    document.addEventListener('click', async (e) => {
+        if (e.target.id === 'btn-cancel-buy') {
+            document.getElementById('buy-modal').style.display = 'none';
+        }
+
+        if (e.target.id === 'btn-confirm-buy') {
+            const uid = getUidCallback();
+            if (!uid) return;
+
+            const qty = parseInt(document.getElementById('buy-modal-qty').value) || 1;
+            const btn = document.getElementById('btn-confirm-buy');
+
+            btn.disabled = true;
+            btn.innerText = "⏳ PROSES...";
+            btn.style.background = "#555";
+
+            try {
+                // Mengeksekusi pemotongan uang di shop.js
+                await executePurchaseFn(db, uid, currentBuyItem, currentBuyPrice, qty, currentBuyCurrency);
+                document.getElementById('buy-modal').style.display = 'none';
+
+            } catch (err) {
+                if (typeof window.rpgAlert === 'function') window.rpgAlert("❌ " + err);
+                else alert("❌ " + err);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "BELI";
+                btn.style.background = "#28a745";
+            }
+        }
+    });
+}

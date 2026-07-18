@@ -16,7 +16,7 @@ const SHOP_PRICES = {
 
 export async function buyEquipment(db, uid, itemName) {
     if (!uid || !itemName) return;
-    
+
     const price = SHOP_PRICES[itemName];
     if (!price) return alert("Item tidak dijual di toko ini!");
 
@@ -44,4 +44,33 @@ export async function buyEquipment(db, uid, itemName) {
     } catch (err) {
         alert(err);
     }
+}
+
+// ==========================================
+// TRANSAKSI PEMBELIAN TOKO & MALL
+// ==========================================
+export async function executePurchase(db, uid, itemName, price, qty, currency) {
+    const userRef = doc(db, "users", uid);
+    const totalCost = price * qty;
+
+    await runTransaction(db, async (ts) => {
+        const snap = await ts.get(userRef);
+        if (!snap.exists()) throw "User tidak ditemukan.";
+        const data = snap.data();
+        let updates = {};
+
+        if (currency === 'Gold') {
+            if ((data.gold || 0) < totalCost) throw `Gold tidak cukup! Butuh ${totalCost.toLocaleString()} Gold.`;
+            updates.gold = data.gold - totalCost;
+        } else if (currency === 'Coin') {
+            if ((data.coin || 0) < totalCost) throw `Coin Premium tidak cukup! Butuh ${totalCost.toLocaleString()} Coin.`;
+            updates.coin = data.coin - totalCost;
+        }
+
+        let inv = data.inventory || {};
+        inv[itemName] = (inv[itemName] || 0) + qty;
+        updates.inventory = inv;
+
+        ts.update(userRef, updates);
+    });
 }

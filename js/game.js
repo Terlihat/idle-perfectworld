@@ -41,6 +41,8 @@ import { renderExpeditionUI } from './modules/expedition.js';
 import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend } from './modules/friends.js';
 import './modules/inventory-modes.js';
 import { processReincarnation } from './modules/reincarnation.js';
+import { executePurchase } from './modules/shop.js';
+import { setupShopModalUI } from './modules/ui-world.js';
 
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
@@ -1086,97 +1088,9 @@ document.addEventListener('change', function (e) {
 });
 
 // ==========================================
-// SISTEM MODAL PEMBELIAN TOKO & MALL
+// setupShopModalUI
 // ==========================================
-let currentBuyItem = null;
-let currentBuyPrice = 0;
-let currentBuyCurrency = 'Gold';
-
-window.openBuyModal = function (itemName, price, currency) {
-    currentBuyItem = itemName;
-    currentBuyPrice = price;
-    currentBuyCurrency = currency;
-
-    const modal = document.getElementById('buy-modal');
-    if (!modal) return window.rpgAlert("Error: HTML Modal Pembelian belum terpasang!");
-
-    document.getElementById('buy-modal-title').innerText = `Beli [${itemName}]`;
-    document.getElementById('buy-modal-qty').value = 1;
-    document.getElementById('buy-modal-currency').innerText = currency;
-    document.getElementById('buy-modal-currency').style.color = currency === 'Coin' ? '#ffcc00' : '#e0a800';
-
-    const iconContainer = document.getElementById('buy-modal-icon');
-    if (iconContainer && typeof getIconHTML === 'function') {
-        iconContainer.innerHTML = getIconHTML(itemName);
-    }
-
-    updateModalTotal();
-    modal.style.display = 'flex';
-};
-
-function updateModalTotal() {
-    const qty = parseInt(document.getElementById('buy-modal-qty').value) || 1;
-    document.getElementById('buy-modal-total').innerText = (currentBuyPrice * qty).toLocaleString();
-}
-
-document.addEventListener('input', (e) => {
-    if (e.target.id === 'buy-modal-qty') {
-        let val = parseInt(e.target.value);
-        if (val < 1) e.target.value = 1;
-        if (val > 999) e.target.value = 999;
-        updateModalTotal();
-    }
-});
-
-document.addEventListener('click', async (e) => {
-    if (e.target.id === 'btn-cancel-buy') {
-        document.getElementById('buy-modal').style.display = 'none';
-    }
-
-    if (e.target.id === 'btn-confirm-buy') {
-        const qty = parseInt(document.getElementById('buy-modal-qty').value) || 1;
-        const btn = document.getElementById('btn-confirm-buy');
-
-        btn.disabled = true;
-        btn.innerText = "⏳ PROSES...";
-        btn.style.background = "#555";
-
-        try {
-            const userRef = doc(db, "users", currentUserUid);
-            const totalCost = currentBuyPrice * qty;
-
-            await runTransaction(db, async (ts) => {
-                const snap = await ts.get(userRef);
-                if (!snap.exists()) throw "User tidak ditemukan.";
-                const data = snap.data();
-                let updates = {};
-
-                if (currentBuyCurrency === 'Gold') {
-                    if ((data.gold || 0) < totalCost) throw `Gold tidak cukup! Butuh ${totalCost.toLocaleString()} Gold.`;
-                    updates.gold = data.gold - totalCost;
-                } else if (currentBuyCurrency === 'Coin') {
-                    if ((data.coin || 0) < totalCost) throw `Coin Premium tidak cukup! Butuh ${totalCost.toLocaleString()} Coin.`;
-                    updates.coin = data.coin - totalCost;
-                }
-
-                let inv = data.inventory || {};
-                inv[currentBuyItem] = (inv[currentBuyItem] || 0) + qty;
-                updates.inventory = inv;
-
-                ts.update(userRef, updates);
-            });
-
-            document.getElementById('buy-modal').style.display = 'none';
-
-        } catch (err) {
-            window.rpgAlert("❌ " + err);
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "BELI";
-            btn.style.background = "#28a745";
-        }
-    }
-});
+setupShopModalUI(db, () => currentUserUid, executePurchase);
 
 // ==========================================
 // SISTEM GLOBAL LEADERBOARD 
