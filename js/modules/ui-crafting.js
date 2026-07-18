@@ -2,6 +2,8 @@
 // SISTEM RENDER UI CRAFTING
 // ===================================================
 
+import { getIconHTML } from './ui-renderer.js';
+
 export function renderCraftingUI(playerInvData, playerLevel, playerGold) {
     const grid = document.getElementById('crafting-recipe-grid');
     if (!grid) return;

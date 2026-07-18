@@ -1173,9 +1173,9 @@ document.addEventListener('click', function (e) {
     }
 });
 
-// ==========================================
-// SISTEM DATABASE MONSTER DINAMIS (FIRESTORE)
-// ==========================================
+// ===========================================
+// SISTEM DATABASE MONSTER DUNGEON & DROP ITEM
+// ===========================================
 
 // 1. Fungsi untuk mengambil data monster sebelum bertarung
 window.fetchMonsterData = async function (monsterId) {
