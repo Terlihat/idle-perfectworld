@@ -17,7 +17,7 @@ import { equipFromInventory, sellItemToNPC, unequipItem } from './modules/invent
 import { attackMonster } from './modules/battle.js';
 import { listenToChat, sendChat } from './modules/chat.js';
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
-import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, rejectBid, cancelAuction } from './modules/auction.js';
+import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, rejectBid, cancelAuction, returnExpiredToMail } from './modules/auction.js';
 import { listenToParties, createOrJoinParty, leaveParty, startFbBattle } from './modules/party.js';
 import { getUpdatedQuests } from './modules/quest.js';
 import './modules/quest.js';
@@ -868,6 +868,10 @@ window.actionBid = async function (id, action) {
     if (action === 'reject' && await window.rpgConfirm("Tolak tawaran ini?", "Tolak Tawaran")) rejectBid(db, currentUserUid, id);
 };
 
+window.processExpiredAuction = function (auctionId) {
+    returnExpiredToMail(db, auctionId);
+};
+
 window.addStat = function (statName) { addCharacterStat(db, currentUserUid, statName); };
 window.leaveParty = function (partyId) { leaveParty(db, partyId, currentUserUid); };
 window.startFb = async function (partyId) {
@@ -1543,7 +1547,7 @@ window.toggleFriendTab = function (tab) {
 
 window.sendFriendReqManual = async function () {
     const inputVal = document.getElementById('input-add-friend').value.trim();
-    if (!inputVal) return window.rpgAlert("Masukkan Nickname atau UID target!");
+    if (!inputVal) return window.rpgAlert("Masukkan Nickname");
 
     // Konversi nama inputan menjadi sensitif terhadap huruf besar/kecil (karena Firebase exact match)
     let targetUid = inputVal;

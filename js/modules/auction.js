@@ -36,7 +36,7 @@ export async function listAuctionItem(db, uid, itemName, price, sellerName) {
             inv[itemName] -= 1;
             if (inv[itemName] === 0) delete inv[itemName];
 
-            const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 Jam dari sekarang
+            const expiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 Hari dari sekarang
 
             ts.set(marketRef, {
                 sellerId: uid, sellerName: sellerName, itemName: itemName, buyoutPrice: price,
@@ -44,7 +44,7 @@ export async function listAuctionItem(db, uid, itemName, price, sellerName) {
             });
             ts.update(userRef, { inventory: inv });
         });
-        alert(`⚖️ Berhasil mendaftarkan ${itemName}! Batas waktu lelang: 24 Jam.`);
+        alert(`⚖️ Berhasil mendaftarkan ${itemName}! Batas waktu lelang: 7 Hari.`);
     } catch (err) { alert(err); }
 }
 
@@ -85,7 +85,7 @@ export async function placeBid(db, buyerUid, buyerName, auctionId, bidAmount) {
             let newGold = buyerData.gold - bidAmount;
             if (auction.highestBid && auction.highestBid.buyerId === buyerUid) {
                 // Jika pemain yang sama menaikkan bid-nya, potong selisihnya saja
-                newGold = buyerData.gold - (bidAmount - auction.highestBid.amount); 
+                newGold = buyerData.gold - (bidAmount - auction.highestBid.amount);
             }
             ts.update(buyerRef, { gold: newGold });
 
@@ -123,9 +123,9 @@ export async function acceptBid(db, sellerUid, auctionId) {
             const buyerRef = doc(db, "users", auction.highestBid.buyerId);
             const buyerSnap = await ts.get(buyerRef);
             if (!buyerSnap.exists()) throw "Pembeli tidak ditemukan!";
-            
+
             const sellerSnap = await ts.get(sellerRef);
-            
+
             // Transfer Item ke Pembeli
             let buyerInv = buyerSnap.data().inventory || {};
             buyerInv[auction.itemName] = (buyerInv[auction.itemName] || 0) + 1;
@@ -218,7 +218,7 @@ export async function buyAuctionItem(db, buyerUid, auctionId, itemName, price, s
             ts.update(buyerRef, { gold: (buyerSnap.data().gold || 0) - costToBuyer, inventory: buyerInv });
 
             if (sellerSnap.exists()) ts.update(sellerRef, { gold: (sellerSnap.data().gold || 0) + price });
-            
+
             if (prevBuyerRef && prevBuyerData && !isPrevBidder) {
                 ts.update(prevBuyerRef, { gold: (prevBuyerData.gold || 0) + auction.highestBid.amount });
             }
@@ -264,4 +264,47 @@ export async function cancelAuction(db, sellerUid, auctionId) {
         });
         alert("Barang berhasil ditarik dan dikembalikan ke dalam Tas Anda.");
     } catch (err) { alert(err); }
+}
+
+// 8. KEMBALIKAN BARANG KADALUARSA KE KOTAK SURAT
+export async function returnExpiredToMail(db, auctionId) {
+    const auctionRef = doc(db, "market", auctionId);
+
+    try {
+        await runTransaction(db, async (ts) => {
+            const auctionSnap = await ts.get(auctionRef);
+            if (!auctionSnap.exists()) return;
+            const auction = auctionSnap.data();
+
+            // Cek apakah benar-benar sudah kadaluarsa
+            if (auction.expiresAt >= Date.now()) return;
+
+            // 1. Refund uang ke penawar terakhir (jika ada yang menawar tapi lelang keburu habis)
+            if (auction.highestBid) {
+                const buyerRef = doc(db, "users", auction.highestBid.buyerId);
+                const buyerSnap = await ts.get(buyerRef);
+                if (buyerSnap.exists()) {
+                    ts.update(buyerRef, { gold: (buyerSnap.data().gold || 0) + auction.highestBid.amount });
+                }
+            }
+
+            // 2. Buat Surat untuk Penjual (Berisi item miliknya yang gagal terjual)
+            const mailRef = doc(collection(db, "mails")); // Asumsi collection kotak surat Anda bernama "mails"
+            ts.set(mailRef, {
+                receiverId: auction.sellerId,
+                title: "Lelang Kadaluarsa",
+                content: `Waktu lelang 7 Hari untuk [${auction.itemName}] telah berakhir.\nBarang Anda dikembalikan.`,
+                attachments: { itemName: auction.itemName, qty: 1, gold: 0, coin: 0 },
+                isRead: false,
+                isClaimed: false,
+                date: new Date().toLocaleDateString('id-ID'),
+                timestamp: serverTimestamp()
+            });
+
+            // 3. Hapus data dari Pasar Lelang
+            ts.delete(auctionRef);
+        });
+    } catch (err) {
+        console.error("Gagal mengembalikan barang kadaluarsa: ", err);
+    }
 }

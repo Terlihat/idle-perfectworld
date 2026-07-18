@@ -51,34 +51,63 @@ export function renderShopAndMall() {
 
 export function renderAuctionUI(items, currentUserUid) {
     const auctionList = document.getElementById('auction-list');
-    if (!auctionList) return; 
-    auctionList.innerHTML = items.length === 0 ? "Belum ada lelang." : "";
+    if (!auctionList) return;
+
+    auctionList.innerHTML = ""; // Bersihkan list
+
     const now = Date.now();
+    let itemCount = 0; // Menghitung barang yang masih aktif
+
     items.forEach(item => {
         const isExpired = (item.expiresAt || 0) < now;
+
+        // 🔥 JIKA KADALUARSA: Hilangkan dari layar dan proses ke kotak surat
+        if (isExpired) {
+            // Panggil fungsi global di game.js untuk mengeksekusi pengembalian
+            if (typeof window.processExpiredAuction === 'function') {
+                window.processExpiredAuction(item.id);
+            }
+            return; // Lompati (skip) item ini agar tidak digambar di layar
+        }
+
+        itemCount++; // Tambah hitungan barang aktif
         const isMine = item.sellerId === currentUserUid;
-        const itemPrice = item.buyoutPrice || item.price || 0; 
+        const itemPrice = item.buyoutPrice || item.price || 0;
+
+        // 🔥 MENDAPATKAN IKON REAL
+        const itemIcon = getIconHTML(item.itemName);
+
+        // 🔥 KALKULASI SISA WAKTU (HARI & JAM)
+        const sisaMs = (item.expiresAt || 0) - now;
+        const sisaHari = Math.floor(sisaMs / (1000 * 60 * 60 * 24));
+        const sisaJam = Math.floor((sisaMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const teksWaktu = sisaHari > 0 ? `${sisaHari} Hari ${sisaJam} Jam` : `${sisaJam} Jam`;
+
         let btnHtml = "";
         if (isMine) {
             if (item.highestBid) {
                 btnHtml += `<div style="margin-bottom:4px; font-size:10px;">Bid: <strong style="color:#00d2ff">${item.highestBid.amount}G</strong> (${escapeHTML(item.highestBid.buyerName)})</div>`;
                 btnHtml += `<button onclick="window.actionBid('${item.id}', 'accept')" style="padding:2px 5px; font-size:9px; background:#28a745;">Terima</button> `;
                 btnHtml += `<button onclick="window.actionBid('${item.id}', 'reject')" style="padding:2px 5px; font-size:9px; background:#dc3545;">Tolak</button>`;
-                if (isExpired) btnHtml += `<div style="color:#dc3545; font-size:9px; margin-top:3px;">⏰ Habis!</div>`;
             } else {
-                btnHtml += `<div style="margin-bottom:4px;">${isExpired ? '<span style="color:#dc3545; font-size:9px;">⏰ Kadaluarsa</span>' : '<span style="color:#28a745; font-size:9px;">🟢 Aktif</span>'}</div>`;
+                btnHtml += `<div style="margin-bottom:4px;"><span style="color:#28a745; font-size:9px;">⏰ ${teksWaktu}</span></div>`;
                 btnHtml += `<button onclick="window.cancelAuction('${item.id}')" style="padding:2px 5px; font-size:9px; background:#555;">Tarik</button>`;
             }
         } else {
             const currentBid = item.highestBid ? item.highestBid.amount : 0;
-            if (!isExpired) {
-                btnHtml += `<div style="font-size:9px; margin-bottom:4px;">Bid: ${currentBid > 0 ? currentBid + 'G' : '-'}</div>`;
-                btnHtml += `<button onclick="window.placeBid('${item.id}', '${escapeHTML(item.itemName)}', ${currentBid})" style="padding:2px 5px; font-size:9px; background:#007bff;">Tawar</button> `;
-                btnHtml += `<button onclick="window.buyFromAuction('${item.id}', '${escapeHTML(item.itemName)}', ${itemPrice}, '${item.sellerId}')" style="padding:2px 5px; font-size:9px; background:#e0a800;">Beli ${itemPrice}G</button>`;
-            } else { btnHtml += `<span style="color:#dc3545; font-size:10px;">Selesai</span>`; }
+            btnHtml += `<div style="font-size:9px; margin-bottom:4px;">Bid: ${currentBid > 0 ? currentBid + 'G' : '-'}</div>`;
+            btnHtml += `<button onclick="window.placeBid('${item.id}', '${escapeHTML(item.itemName)}', ${currentBid})" style="padding:2px 5px; font-size:9px; background:#007bff;">Tawar</button> `;
+            btnHtml += `<button onclick="window.buyFromAuction('${item.id}', '${escapeHTML(item.itemName)}', ${itemPrice}, '${item.sellerId}')" style="padding:2px 5px; font-size:9px; background:#e0a800;">Beli ${itemPrice}G</button>`;
         }
-        auctionList.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding: 6px 0;"><div><strong style="color:#00d2ff;">${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: ${escapeHTML(item.sellerName)} | 💰 ${itemPrice.toLocaleString()}G</span></div><div style="text-align: right;">${btnHtml}</div></div>`;
+
+        // Memasukkan itemIcon ke dalam HTML
+        auctionList.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding: 6px 0;"><div><strong style="color:#00d2ff;">${itemIcon} ${escapeHTML(item.itemName)}</strong><br><span style="font-size:10px; color:#aaa;">Penjual: ${escapeHTML(item.sellerName)} | 💰 ${itemPrice.toLocaleString()}G</span></div><div style="text-align: right;">${btnHtml}</div></div>`;
     });
+
+    // Jika semua item ternyata kadaluarsa dan tidak ada yang aktif
+    if (itemCount === 0) {
+        auctionList.innerHTML = "Belum ada lelang.";
+    }
 }
 
 export function renderPKUI(pkPlayers, currentUid) {
@@ -87,7 +116,7 @@ export function renderPKUI(pkPlayers, currentUid) {
     let html = '<div style="display:grid; gap:10px;">';
     let targetCount = 0;
     pkPlayers.forEach(p => {
-        if (p.id === currentUid) return; 
+        if (p.id === currentUid) return;
         targetCount++;
         let isRed = (p.pkKills || 0) >= 3;
         let nameColor = isRed ? '#ff4c4c' : '#fff';
