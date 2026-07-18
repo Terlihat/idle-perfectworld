@@ -159,3 +159,61 @@ export function renderChatUI(messages, currentChatChannel) {
         chatBox.innerHTML += `<div><strong style="color:${chColor}; font-size:9px;">[${chLabel}]</strong> ${vipBadge} <span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`;
     });
 }
+
+// ==========================================
+// SISTEM UI GLOBAL LEADERBOARD 
+// ==========================================
+export function setupLeaderboardUI(db, getLeaderboardDataFn) {
+    window.fetchLeaderboard = async function (type) {
+        const lbContent = document.getElementById('leaderboard-content');
+        if (!lbContent) return;
+
+        lbContent.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">⏳ Memindai data seluruh pemain...</div>';
+
+        try {
+            // 1. Panggil data dari file leaderboard.js
+            const usersData = await getLeaderboardDataFn(db);
+
+            // 2. Urutkan data berdasarkan tombol yang diklik
+            if (type === 'level') usersData.sort((a, b) => b.level - a.level);
+            if (type === 'gold') usersData.sort((a, b) => b.gold - a.gold);
+            if (type === 'tower') usersData.sort((a, b) => b.tower - a.tower);
+
+            // 3. Render HTML Tabel
+            let html = '<table style="width:100%; border-collapse:collapse; font-size:12px; text-align:center;">';
+            html += '<tr style="background:#222; color:#fff; border-bottom:2px solid #555;">';
+            html += '<th style="padding:8px 5px;">Rank</th><th style="padding:8px 5px; text-align:left;">Nama</th><th style="padding:8px 5px;">Class</th><th style="padding:8px 5px;">Pencapaian</th></tr>';
+
+            // Ambil maksimal Top 10
+            for (let i = 0; i < Math.min(10, usersData.length); i++) {
+                const u = usersData[i];
+                let valStr = "";
+                let valColor = "#fff";
+
+                if (type === 'level') { valStr = `Lv. ${u.level}`; valColor = '#00d2ff'; }
+                if (type === 'gold') { valStr = `💰 ${u.gold.toLocaleString()}`; valColor = '#ffcc00'; }
+                if (type === 'tower') { valStr = `🗼 Lantai ${u.tower}`; valColor = '#e040fb'; }
+
+                let rankColor = '#aaa';
+                let rankIcon = `#${i + 1}`;
+                if (i === 0) { rankColor = '#ffcc00'; rankIcon = '🥇 1'; }
+                else if (i === 1) { rankColor = '#c0c0c0'; rankIcon = '🥈 2'; }
+                else if (i === 2) { rankColor = '#cd7f32'; rankIcon = '🥉 3'; }
+
+                const safeName = window.escapeHTML ? window.escapeHTML(u.name) : u.name;
+
+                html += `<tr style="border-bottom:1px solid #333; background: ${i % 2 === 0 ? '#1a1a24' : '#121216'}; transition:0.2s;">
+                    <td style="padding:8px 5px; color:${rankColor}; font-weight:bold; font-size:14px;">${rankIcon}</td>
+                    <td style="padding:8px 5px; color:#fff; font-weight:bold; text-align:left;">${safeName}</td>
+                    <td style="padding:8px 5px; color:#aaa;">${u.class}</td>
+                    <td style="padding:8px 5px; color:${valColor}; font-weight:bold;">${valStr}</td>
+                </tr>`;
+            }
+            html += '</table>';
+            lbContent.innerHTML = html;
+
+        } catch (err) {
+            lbContent.innerHTML = `<div style="text-align:center; color:#dc3545; margin-top:20px;">Gagal memuat: ${err.message}</div>`;
+        }
+    };
+}

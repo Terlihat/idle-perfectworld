@@ -43,6 +43,8 @@ import './modules/inventory-modes.js';
 import { processReincarnation } from './modules/reincarnation.js';
 import { executePurchase } from './modules/shop.js';
 import { setupShopModalUI } from './modules/ui-world.js';
+import { getLeaderboardData } from './leaderboard.js';
+import { setupLeaderboardUI } from './ui-social.js';
 
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
@@ -150,6 +152,8 @@ window.updateMyLocation = function (locationName) {
 
 // INISIALISASI UI TOKO & MALL
 setupShopModalUI(db, () => currentUserUid, executePurchase);
+// INISIALISASI UI Leaderboard
+setupLeaderboardUI(db, getLeaderboardData);
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
