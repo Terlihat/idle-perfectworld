@@ -12,3 +12,4 @@ export * from './ui-dungeon.js';
 export * from './ui-redeem.js';
 export * from './ui-support.js';
 export * from './ui-live-panels.js';
+export * from './ui-modal.js';
