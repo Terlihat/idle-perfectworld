@@ -11,7 +11,6 @@ import { createGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, upda
 import { depositGold, withdrawGold } from './bank.js';
 import { attackMonster } from './battle.js';
 import { createOrJoinParty } from './party.js';
-import { assignRandomQuests, claimQuestReward } from './quest.js';
 
 // Fungsi bantuan UI
 export function clearActiveModeClasses() {
@@ -175,8 +174,8 @@ export function setupActionRouters() {
         if (targetId === 'btn-create-party') createOrJoinParty(db, document.getElementById('fb-select').value, stats);
 
         // --- QUESTS ---
-        if (targetId === 'btn-take-quest') assignRandomQuests(db, uid);
-        if (targetId === 'btn-claim-daily') claimQuestReward(db, uid, 'daily');
-        if (targetId === 'btn-claim-bounty') claimQuestReward(db, uid, 'bounty');
+        if (targetId === 'btn-take-quest') window.assignRandomQuests(db, uid);
+        if (targetId === 'btn-claim-daily') window.claimQuestReward(db, uid, 'daily');
+        if (targetId === 'btn-claim-bounty') window.claimQuestReward(db, uid, 'bounty');
     });
 }

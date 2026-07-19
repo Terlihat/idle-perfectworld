@@ -408,7 +408,7 @@ function startLiveGameSync() {
     activeUnsubscribeListeners.push(unsubData, unsubMail, unsubAuction, unsubParties, unsubGuilds, unsubCoinMarket, unsubBoss);
 }
 
-// GLOBAL WINDOW ROUTERS ASYNC (PERBAIKAN SINKRONISASI MODE)
+// GLOBAL WINDOW ROUTERS ASYNC
 window.handleInventoryClick = async function (itemName) {
     // 🔥 PERBAIKAN UTAMA: Memastikan game selalu membaca mode dari master toggle global
     const modeSaatIni = window.inventoryMode || "EQUIP";
