@@ -52,6 +52,7 @@ import { fetchMonsterData, calculateMonsterDrops, getDungeonMonstersList } from 
 import { claimGiftCodeTransaction } from './modules/redeem-system.js';
 import { loadCloudItems } from './modules/item-system.js';
 import { setupMaintenanceMonitor } from './modules/maintenance-system.js';
+import { setupActionRouters } from './modules/action-routers.js';
 
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
@@ -184,6 +185,9 @@ setupRedeemUI(db, () => currentUserUid, { claimGiftCodeTransaction });
 
 // Aktifkan Sistem Bantuan / Customer Support
 setupSupportUI(db, () => currentUserUid, () => playerUsername);
+
+// Aktifkan Router & Event Listeners Global
+setupActionRouters();
 
 // Aktifkan Pemantau Maintenance Server
 setupMaintenanceMonitor(db, auth);
@@ -874,65 +878,6 @@ document.addEventListener('change', function (e) {
             e.target.parentElement.style.borderColor = "#00d2ff";
             e.target.parentElement.style.background = "#15201b";
         }
-    }
-});
-
-// --- SISTEM PEMBACA INFO DROP BOS FB ---
-document.addEventListener('change', (e) => {
-    if (e.target.id === 'fb-select') {
-        const bossKey = e.target.value;
-        const boss = MONSTER_DB[bossKey];
-
-        const infoBox = document.getElementById('fb-drop-info');
-        const textBox = document.getElementById('fb-drop-text');
-
-        if (boss && infoBox && textBox) {
-            let dropsInfo = [];
-
-            if (boss.drop) dropsInfo.push(`[${boss.drop.item}] (${(boss.drop.chance * 100).toFixed(0)}%)`);
-            if (boss.drops && Array.isArray(boss.drops)) {
-                boss.drops.forEach(d => dropsInfo.push(`[${d.item}] (${(d.chance * 100).toFixed(0)}%)`));
-            }
-
-            if (dropsInfo.length > 0) {
-                textBox.innerText = dropsInfo.join(' | ');
-            } else {
-                textBox.innerText = "Hanya EXP & Gold";
-            }
-            infoBox.style.display = 'block';
-        }
-    }
-});
-
-// Navigasi Tab Bursa Koin
-document.addEventListener('click', (e) => {
-    if (e.target.id === 'btn-tab-cmb') {
-        document.getElementById('tab-cm-buy').style.display = 'block';
-        document.getElementById('tab-cm-sell').style.display = 'none';
-        document.getElementById('tab-cm-wallet').style.display = 'none';
-    } else if (e.target.id === 'btn-tab-cms') {
-        document.getElementById('tab-cm-buy').style.display = 'none';
-        document.getElementById('tab-cm-sell').style.display = 'block';
-        document.getElementById('tab-cm-wallet').style.display = 'none';
-    } else if (e.target.id === 'btn-tab-cmw') {
-        document.getElementById('tab-cm-buy').style.display = 'none';
-        document.getElementById('tab-cm-sell').style.display = 'none';
-        document.getElementById('tab-cm-wallet').style.display = 'block';
-    }
-});
-
-// PEMICU OTOMATIS SAAT TOMBOL MENU DIKLIK
-document.addEventListener('click', function (e) {
-    // Memantau jika tombol Craft atau Tempa ditekan
-    if (e.target.id === 'btn-mode-crafting' || e.target.id === 'btn-mode-blacksmith' || e.target.innerText.includes('CRAFT')) {
-        setTimeout(() => {
-            if (typeof window.renderCraftingUI === 'function') {
-                const inv = window.currentInventoryData || {};
-                const lvl = (typeof currentPlayerStats !== 'undefined' && currentPlayerStats) ? (currentPlayerStats.level || 1) : 1;
-                const gold = (typeof currentPlayerStats !== 'undefined' && currentPlayerStats) ? (currentPlayerStats.gold || 0) : 0;
-                window.renderCraftingUI(inv, lvl, gold);
-            }
-        }, 100); // Tunggu sejenak hingga HTML terbuka, lalu SIRAM dengan data resep!
     }
 });
 
