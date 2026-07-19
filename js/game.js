@@ -54,14 +54,18 @@ import { loadCloudItems } from './modules/item-system.js';
 import { setupMaintenanceMonitor } from './modules/maintenance-system.js';
 import { setupActionRouters } from './modules/action-routers.js';
 
+// VARIABEL GLOBAL
 let inventoryMode = "EQUIP";
 let unsubMail;
 
+// FUNGSI BANTUAN
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
     document.getElementById(screenId).style.display = 'block';
 }
 
+// FUNGSI CHAT DINAMIS
+let unsubChatListener = null;
 function startDynamicChat() {
     if (unsubChatListener) unsubChatListener();
     let targetId = null;
@@ -73,7 +77,7 @@ function startDynamicChat() {
     });
 }
 
-// --- FUNGSI GLOBAL UPDATE LOKASI (Panggil ini dari tombol menu) ---
+// FUNGSI UPDATE LOKASI KARAKTER
 window.updateMyLocation = function (locationName) {
     if (currentUserUid) {
         updateDoc(doc(db, "users", currentUserUid), {
@@ -122,9 +126,7 @@ setupActionRouters();
 // Aktifkan Pemantau Maintenance Server
 setupMaintenanceMonitor(db, auth);
 
-// ==========================================
 // LISTENER AUTHENTIKASI
-// ==========================================
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUid = user.uid;
@@ -143,7 +145,6 @@ onAuthStateChanged(auth, async (user) => {
             if (staminaRegenInterval) clearInterval(staminaRegenInterval);
             staminaRegenInterval = startStaminaRegeneration(db, currentUserUid);
 
-            // SISTEM PELACAK STATUS ONLINE
             updateDoc(doc(db, "users", currentUserUid), {
                 lastActive: Date.now(),
                 currentLocation: "Kota Aman (Idle)"
@@ -184,6 +185,8 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+// FUNGSI UTAMA SYNC GAME SECARA REAL-TIME
+let activeUnsubscribeListeners = [];
 function startLiveGameSync() {
     activeUnsubscribeListeners.forEach(unsub => {
         if (typeof unsub === 'function') unsub();
@@ -334,10 +337,10 @@ function startLiveGameSync() {
     activeUnsubscribeListeners.push(unsubData, unsubMail, unsubAuction, unsubParties, unsubGuilds, unsubCoinMarket, unsubBoss);
 }
 
-// Pastikan fungsi aksi terpasang ke window agar bisa dipanggil dari HTML
+// FUNGSI PEMBUATAN ITEM
 window.craftItemAction = craftItemAction;
 
-// function untuk memproses reinkarnasi karakter
+// Fungsi untuk memproses reinkarnasi karakter
 window.processReincarnation = function () {
     processReincarnation(db, auth);
 };
