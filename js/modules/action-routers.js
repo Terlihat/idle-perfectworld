@@ -13,7 +13,6 @@ import { createGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, upda
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './bank.js';
 import { attackMonster } from './battle.js';
 import { createOrJoinParty, leaveParty, startFbBattle } from './party.js';
-import { assignRandomQuests, claimQuestReward } from './quest.js';
 import { equipFromInventory, sellItemToNPC, unequipItem } from './inventory.js';
 import { listAuctionItem, buyAuctionItem, cancelAuction, placeBid, acceptBid, rejectBid, returnExpiredToMail } from './auction.js';
 import { dismantleItemAction, DISMANTLE_CONFIG, craftItemAction } from './crafting.js';

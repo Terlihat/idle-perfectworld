@@ -210,16 +210,12 @@ onAuthStateChanged(auth, async (user) => {
             if (staminaRegenInterval) clearInterval(staminaRegenInterval);
             staminaRegenInterval = startStaminaRegeneration(db, currentUserUid);
 
-            // ==========================================
-            // SISTEM PELACAK STATUS ONLINE (HEARTBEAT)
-            // ==========================================
-            // 1. Set status saat baru masuk
+            // SISTEM PELACAK STATUS ONLINE
             updateDoc(doc(db, "users", currentUserUid), {
                 lastActive: Date.now(),
                 currentLocation: "Kota Aman (Idle)"
             }).catch(err => console.error("Gagal set online:", err));
 
-            // 2. Kirim Detak Jantung setiap 60 detik (1 Menit)
             if (window.heartbeatInterval) clearInterval(window.heartbeatInterval);
             window.heartbeatInterval = setInterval(() => {
                 if (currentUserUid) {
@@ -229,17 +225,14 @@ onAuthStateChanged(auth, async (user) => {
                 }
             }, 60000);
 
-            // 3. Tetap simpan beforeunload sebagai cadangan (jika sempat terkirim)
             window.addEventListener('beforeunload', () => {
                 updateDoc(doc(db, "users", currentUserUid), {
-                    lastActive: 0, // Set 0 agar langsung dianggap offline
+                    lastActive: 0,
                     currentLocation: "Offline"
                 });
             });
-            // ==========================================
         }
     } else {
-        // Hentikan detak jantung saat Logout
         if (window.heartbeatInterval) clearInterval(window.heartbeatInterval);
 
         if (currentUserUid) {
@@ -413,6 +406,5 @@ window.craftItemAction = craftItemAction;
 
 // function untuk memproses reinkarnasi karakter
 window.processReincarnation = function () {
-    // Kita mengirimkan db dan auth dari game.js ke dalam modul
     processReincarnation(db, auth);
 };
