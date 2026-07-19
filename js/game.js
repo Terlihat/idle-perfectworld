@@ -49,6 +49,7 @@ import { getLeaderboardData } from './modules/leaderboard.js';
 import { listenToPKZone, enterPKZone, leavePKZone, executePKBattle } from './modules/pk-system.js';
 import { fetchMonsterData, calculateMonsterDrops, getDungeonMonstersList } from './modules/dungeon-system.js';
 import { claimGiftCodeTransaction } from './modules/redeem-system.js';
+import { loadCloudItems } from './modules/item-system.js';
 
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
@@ -188,6 +189,7 @@ onAuthStateChanged(auth, async (user) => {
 
         await loadUIComponents();
         await syncItemsFromFirebase(db);
+        await loadCloudItems(db);
 
         const docSnap = await getDoc(doc(db, "users", currentUserUid));
         if (!docSnap.exists() || !docSnap.data().characterClass) {
@@ -1184,37 +1186,6 @@ document.addEventListener('click', function (e) {
         }, 100); // Tunggu sejenak hingga HTML terbuka, lalu SIRAM dengan data resep!
     }
 });
-
-// Tempat menyimpan data item dari Cloud
-window.CLOUD_ITEM_DB = {};
-
-// Fungsi untuk menarik semua item dari Firestore ke memori lokal pemain
-window.loadCloudItems = async function (db) {
-    try {
-        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
-        const querySnapshot = await getDocs(collection(db, "items"));
-
-        querySnapshot.forEach(doc => {
-            window.CLOUD_ITEM_DB[doc.id] = doc.data();
-        });
-
-        console.log("🎒 Data Item Cloud berhasil dimuat ke memori pemain!");
-
-        // 🔥 PERBAIKAN: Paksa sistem menggambar ulang UI Tas dan Bank 
-        // SETELAH data Cloud benar-benar selesai diunduh.
-        if (typeof window.renderInventoryUI === 'function' && window.currentInventoryData) {
-            window.renderInventoryUI(window.currentInventoryData);
-        }
-
-        // (Opsional) Panggil ulang fungsi update utama game Anda jika ada
-        if (typeof window.updateUI === 'function') {
-            window.updateUI();
-        }
-
-    } catch (err) {
-        console.error("Gagal menarik data item dari Cloud:", err);
-    }
-};
 
 // Fungsi untuk melakukan pemantauan status maintenance server secara real-time
 function pantauMaintenanceServer() {
