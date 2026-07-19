@@ -122,6 +122,9 @@ setupActionRouters();
 // Aktifkan Pemantau Maintenance Server
 setupMaintenanceMonitor(db, auth);
 
+// ==========================================
+// LISTENER AUTHENTIKASI
+// ==========================================
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUid = user.uid;
