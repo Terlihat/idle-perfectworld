@@ -11,7 +11,7 @@ import {
     renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI,
     renderChatUI, escapeHTML, renderCraftingUI, getIconHTML, renderShopAndMall,
     renderPKUI, setupLeaderboardUI, setupShopModalUI, setupPKUI, setupFriendUI,
-    setupPrivateChatUI, setupDungeonUI, setupRedeemUI
+    setupPrivateChatUI, setupDungeonUI, setupRedeemUI, setupSupportUI
 } from './modules/ui-renderer.js';
 
 // IMPORT MODULES SISTEM
@@ -178,6 +178,9 @@ setupDungeonUI(db, { fetchMonsterData, calculateMonsterDrops, getDungeonMonsters
 
 // Aktifkan Sistem Kode Redeem
 setupRedeemUI(db, () => currentUserUid, { claimGiftCodeTransaction });
+
+// Aktifkan Sistem Bantuan / Customer Support
+setupSupportUI(db, () => currentUserUid, () => playerUsername);
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -1181,91 +1184,6 @@ document.addEventListener('click', function (e) {
         }, 100); // Tunggu sejenak hingga HTML terbuka, lalu SIRAM dengan data resep!
     }
 });
-
-// ==========================================
-// SISTEM TIKET BANTUAN (CUSTOMER SUPPORT)
-// ==========================================
-window.submitSupportTicket = async function () {
-    const category = document.getElementById('ticket-category').value;
-    const message = document.getElementById('ticket-message').value.trim();
-
-    if (!message) return window.rpgAlert("Pesan laporan tidak boleh kosong!", "Peringatan");
-    if (message.length < 10) return window.rpgAlert("Pesan terlalu singkat. Mohon jelaskan secara detail.", "Peringatan");
-
-    const btn = document.querySelector('button[onclick="window.submitSupportTicket()"]');
-    btn.disabled = true; btn.innerText = "⏳ Mengirim...";
-
-    try {
-        // Menggunakan addDoc & serverTimestamp langsung dari import Firestore Anda
-        const { addDoc, collection, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
-
-        await addDoc(collection(db, "supportTickets"), {
-            senderUid: window.currentUserUid,
-            senderName: window.playerUsername,
-            category: category,
-            message: message,
-            status: "open",
-            timestamp: serverTimestamp()
-        });
-
-        window.rpgAlert("✅ Tiket berhasil dikirim ke Meja Admin! Jika ada kompensasi, Admin akan mengirimkannya ke Kotak Surat Anda.", "Laporan Terkirim");
-        document.getElementById('ticket-message').value = "";
-    } catch (err) {
-        window.rpgAlert("Gagal mengirim tiket: " + err.message, "Error");
-    } finally {
-        btn.disabled = false; btn.innerText = "✉️ Kirim Tiket";
-    }
-};
-
-window.listenToMyTickets = async function () {
-    const listDiv = document.getElementById('my-ticket-list');
-    if (!listDiv || !window.currentUserUid) return;
-
-    const { query, collection, where, orderBy, onSnapshot } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
-
-    const q = query(collection(db, "supportTickets"), where("senderUid", "==", window.currentUserUid), orderBy("timestamp", "desc"));
-
-    if (window.unsubMyTickets) window.unsubMyTickets();
-
-    window.unsubMyTickets = onSnapshot(q, (snapshot) => {
-        if (snapshot.empty) {
-            listDiv.innerHTML = `<div style="text-align: center; color: #aaa; padding: 15px; font-size: 12px; background: #1a1a24; border-radius: 4px;">Anda belum pernah membuat laporan bantuan.</div>`;
-            return;
-        }
-
-        listDiv.innerHTML = "";
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const time = data.timestamp ? data.timestamp.toDate().toLocaleString('id-ID') : 'Baru saja';
-
-            const isOpen = data.status === "open";
-            const statusHtml = isOpen
-                ? `<span style="background: #e67e22; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 3px; font-weight: bold;">⏳ Menunggu Admin</span>`
-                : `<span style="background: #28a745; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 3px; font-weight: bold;">✅ Selesai</span>`;
-
-            let adminReplyHtml = "";
-            if (!isOpen && data.adminReply) {
-                adminReplyHtml = `<div style="margin-top: 8px; padding: 8px; background: #121216; border-left: 3px solid #28a745; font-size: 11px; color: #a6e3a1; font-style: italic;">Admin: "${data.adminReply}"</div>`;
-            }
-
-            let catColor = "#00d2ff";
-            if (data.category === "BUG") catColor = "#dc3545";
-            if (data.category === "REPORT") catColor = "#ffca28";
-
-            listDiv.innerHTML += `
-                <div style="background: #1a1a24; padding: 10px; border-radius: 4px; border-left: 3px solid ${catColor}; border-bottom: 1px solid #333; margin-bottom: 8px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; align-items: center;">
-                        <span style="color: ${catColor}; font-size: 11px; font-weight: bold;">[${data.category}]</span>
-                        ${statusHtml}
-                    </div>
-                    <div style="color: #ccc; font-size: 12px; margin-bottom: 5px;">"${data.message}"</div>
-                    <div style="color: #777; font-size: 10px;">Dibuat: ${time}</div>
-                    ${adminReplyHtml}
-                </div>
-            `;
-        });
-    });
-};
 
 // Tempat menyimpan data item dari Cloud
 window.CLOUD_ITEM_DB = {};

@@ -10,3 +10,4 @@ export * from './ui-private-chat.js';
 export * from './ui-crafting.js';
 export * from './ui-dungeon.js';
 export * from './ui-redeem.js';
+export * from './ui-support.js';
