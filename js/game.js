@@ -11,7 +11,8 @@ import {
     renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI,
     renderChatUI, escapeHTML, renderCraftingUI, getIconHTML, renderShopAndMall,
     renderPKUI, setupLeaderboardUI, setupShopModalUI, setupPKUI, setupFriendUI,
-    setupPrivateChatUI, setupDungeonUI, setupRedeemUI, setupSupportUI
+    setupPrivateChatUI, setupDungeonUI, setupRedeemUI, setupSupportUI,
+    renderCoinMarketUI, renderWorldBossUI, renderLiveFriendsUI
 } from './modules/ui-renderer.js';
 
 // IMPORT MODULES SISTEM
@@ -282,20 +283,12 @@ function startLiveGameSync() {
                     </button>
                 </div>
             `;
-
             document.getElementById('btn-banned-logout').addEventListener('click', () => {
                 const btn = document.getElementById('btn-banned-logout');
                 btn.innerText = "Memutus sesi...";
                 btn.disabled = true;
-
-                signOut(auth).then(() => {
-                    window.location.href = 'index.html';
-                }).catch((error) => {
-                    console.error("Gagal memutus sesi:", error);
-                    window.location.href = 'index.html';
-                });
+                signOut(auth).then(() => window.location.href = 'index.html').catch(() => window.location.href = 'index.html');
             });
-
             return;
         }
 
@@ -312,10 +305,7 @@ function startLiveGameSync() {
         }
 
         if (isLevelUp) {
-            updateDoc(doc(db, "users", currentUserUid), {
-                level: curLevel,
-                exp: curExp
-            });
+            updateDoc(doc(db, "users", currentUserUid), { level: curLevel, exp: curExp });
             return;
         }
 
@@ -334,9 +324,7 @@ function startLiveGameSync() {
             const myGuild = globalGuilds[d.guildId];
             const myDataInGuild = myGuild.members.find(m => m.uid === currentUserUid);
             if (myDataInGuild && myDataInGuild.level !== (d.level || 1)) {
-                const updatedMembers = myGuild.members.map(m =>
-                    m.uid === currentUserUid ? { ...m, level: (d.level || 1) } : m
-                );
+                const updatedMembers = myGuild.members.map(m => m.uid === currentUserUid ? { ...m, level: (d.level || 1) } : m);
                 updateDoc(doc(db, "guilds", d.guildId), { members: updatedMembers });
             }
         }
@@ -364,90 +352,8 @@ function startLiveGameSync() {
         renderTowerUI(d);
         renderExpeditionUI(d);
 
-        // --- RENDER DAFTAR TEMAN (LIVE STATUS) ---
-        const friends = d.friends || {};
-        const reqs = d.friendRequests || {};
-        const friendUids = Object.keys(friends);
-
-        if (friendUids.length === 0) {
-            document.getElementById('tab-friend-list').innerHTML = `<div style="text-align: center; color: #aaa; margin-top: 20px;">Belum ada teman.</div>`;
-        } else {
-            // Kita buat fungsi async kecil agar bisa fetch data teman
-            const loadLiveFriends = async () => {
-                let fHtml = "";
-                for (let uid of friendUids) {
-                    const fSnap = await getDoc(doc(db, "users", uid));
-                    let isOnline = false;
-                    let loc = "Tidak diketahui";
-
-                    if (fSnap.exists()) {
-                        const fdata = fSnap.data();
-
-                        // --- SISTEM DETAK JANTUNG (HEARTBEAT) ---
-                        // Cek apakah detak jantung terakhir kurang dari 2 menit (120.000 ms)
-                        const lastActive = fdata.lastActive || 0;
-                        const timeDiff = Date.now() - lastActive;
-
-                        // Jika selisih waktu di bawah 2 menit dan tidak logout manual
-                        if (timeDiff < 120000 && lastActive !== 0) {
-                            isOnline = true;
-                            loc = fdata.currentLocation || "Kota Aman (Idle)";
-                        } else {
-                            isOnline = false;
-                            loc = "Offline";
-                        }
-                    }
-
-                    // Indikator Warna (Hijau = Online, Abu = Offline)
-                    const statusDot = isOnline ? `<span style="color:#28a745; text-shadow: 0 0 5px #28a745;">●</span>` : `<span style="color:#666;">●</span>`;
-                    const locText = isOnline ? `<span style="font-size:10px; color:#ffca28;">📍 [${loc}]</span>` : `<span style="font-size:10px; color:#666;">[Offline]</span>`;
-
-                    // 🔥 LOGIKA BADGE PESAN BARU
-                    const unreadMsgs = d.unreadMessages || {};
-                    const hasUnread = unreadMsgs[uid] === true;
-                    // Jika ada pesan belum dibaca, munculkan lingkaran merah berkedip
-                    const badgeHtml = hasUnread ? `<span style="background:#dc3545; color:white; border-radius:50%; padding:2px 6px; font-size:9px; position:absolute; top:-5px; right:-5px; font-weight:bold; box-shadow:0 0 5px red; animation:pm-blink 1s infinite;">!</span>` : '';
-
-                    fHtml += `<div style="display:flex; justify-content:space-between; align-items:center; background:#161b22; padding:8px; margin-bottom:5px; border-radius:4px; border-left: 3px solid ${isOnline ? '#28a745' : '#444'};">
-                                <div style="display:flex; flex-direction:column;">
-                                    <span>${statusDot} <b style="color:#58a6ff;">${friends[uid].username}</b> <span style="color:#aaa; font-size:12px;">(Lv.${friends[uid].level})</span></span>
-                                    ${locText}
-                                </div>
-                                <div style="display:flex; gap: 5px;">
-                                    <!-- Tambahkan position:relative agar badge bisa menempel di pojok tombol -->
-                                    <button onclick="window.openPrivateChat('${uid}', '${friends[uid].username}')" style="background:#0366d6; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; position:relative;">
-                                        💬 Pesan ${badgeHtml}
-                                    </button>
-                                    <button onclick="window.delFriend('${uid}')" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">Hapus</button>
-                                </div>
-                              </div>`;
-                }
-                document.getElementById('tab-friend-list').innerHTML = fHtml;
-            };
-            loadLiveFriends();
-        }
-
-        // Render Permintaan
-        let rHtml = "";
-        let reqCount = 0;
-        for (let uid in reqs) {
-            reqCount++;
-            rHtml += `<div style="display:flex; flex-direction:column; background:#161b22; padding:8px; margin-bottom:5px; border-radius:4px;">
-                        <span style="margin-bottom:5px;"><b style="color:#ffca28;">${reqs[uid].username}</b> ingin berteman.</span>
-                        <div style="display:flex; gap:5px;">
-                            <button onclick="window.accFriend('${uid}', '${reqs[uid].username}', ${reqs[uid].level})" style="flex:1; background:#28a745; color:white; border:none; padding:4px; border-radius:3px;">Terima</button>
-                            <button onclick="window.rejFriend('${uid}')" style="flex:1; background:#dc3545; color:white; border:none; padding:4px; border-radius:3px;">Tolak</button>
-                        </div>
-                      </div>`;
-        }
-        document.getElementById('tab-friend-req').innerHTML = rHtml || `<div style="text-align: center; color: #aaa; margin-top: 20px;">Tidak ada permintaan.</div>`;
-
-        // Update Badge Notifikasi Merah
-        const badge = document.getElementById('badge-friend-req');
-        if (badge) {
-            badge.innerText = reqCount;
-            badge.style.display = reqCount > 0 ? 'inline-block' : 'none';
-        }
+        // --- PANGGIL FILE UI LIVE BARU ---
+        renderLiveFriendsUI(db, d, currentUserUid);
 
         window.currentInventoryData = d.inventory || {};
         const elOwnedStone = document.getElementById('transfer-owned-stone');
@@ -491,166 +397,10 @@ function startLiveGameSync() {
         renderPartyUI(parties, currentUserUid);
     });
 
-    // --- LISTENER LIVE UPDATE BURSA KOIN (TAMBAHAN BARU) ---
-    const unsubCoinMarket = listenToCoinMarket(db, (items) => {
-        const container = document.getElementById('cm-market-list');
-        if (!container) return;
+    // --- PANGGIL FILE UI LIVE BARU ---
+    const unsubCoinMarket = listenToCoinMarket(db, (items) => renderCoinMarketUI(items, currentUserUid));
+    const unsubBoss = listenToWorldBoss((bossData) => renderWorldBossUI(bossData, currentUserUid));
 
-        if (items.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; margin-top:20px;">Pasar koin sedang kosong...</div>`;
-            return;
-        }
-
-        // Kita gunakan kurung kurawal {} di dalam map agar bisa menggunakan logika IF
-        container.innerHTML = items.map(item => {
-
-            // Logika Tombol Dinamis
-            let actionButton = "";
-            if (item.sellerUid === window.currentUserUid) {
-                // Jika ini barang miliknya sendiri, tampilkan tombol BATAL (Merah)
-                actionButton = `<button onclick="window.cmCancelSell('${item.id}')" style="background:#dc3545; color:#fff; border:none; border-radius:3px; padding:5px 10px; font-weight:bold; cursor:pointer;">BATAL</button>`;
-            } else {
-                // Jika ini barang orang lain, tampilkan tombol BELI (Hijau)
-                actionButton = `<button onclick="window.cmBuyCoin('${item.id}', '${item.sellerUid}', ${item.amount}, ${item.price})" style="background:#28a745; color:#fff; border:none; border-radius:3px; padding:5px 10px; font-weight:bold; cursor:pointer;">BELI</button>`;
-            }
-
-            return `
-            <div style="background:#1a1a1a; border:1px solid #333; padding:10px; margin-bottom:5px; border-radius:5px; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div style="font-weight:bold; color:#ffcc00;">🪙 ${item.amount} Coin</div>
-                    <div style="font-size:11px; color:#aaa;">Dijual oleh: ${item.sellerName}</div>
-                </div>
-                <div style="text-align:right;">
-                    <div style="color:#ffd700; font-weight:bold; margin-bottom:5px;">💰 ${item.price} Gold</div>
-                    ${actionButton}
-                </div>
-            </div>
-            `;
-        }).join('');
-    });
-
-    // --- LISTENER WORLD BOSS (TAMBAHAN BARU) ---
-    const unsubBoss = listenToWorldBoss((bossData) => {
-        if (!bossData) return;
-
-        const bossNameEl = document.getElementById('wb-name');
-        if (bossNameEl) bossNameEl.innerText = bossData.name + (bossData.isActive ? " (AKTIF)" : " (MATI)");
-
-        const hpBar = document.getElementById('wb-hp-bar');
-        const hpText = document.getElementById('wb-hp-text');
-        const btnAttack = document.getElementById('wb-btn-attack');
-
-        if (bossData.maxHp && hpBar && hpText) {
-            let pct = (bossData.currentHp / bossData.maxHp) * 100;
-            hpBar.style.width = pct + "%";
-            hpText.innerText = `${bossData.currentHp.toLocaleString()} / ${bossData.maxHp.toLocaleString()} HP`;
-        }
-
-        // --- LOGIKA TOMBOL & COOLDOWN BARU (DENGAN LIVE TIMER) ---
-        let myRecord = bossData.participants && bossData.participants[window.currentUserUid] ? bossData.participants[window.currentUserUid] : null;
-        let attackCount = myRecord ? (myRecord.attackCount || 0) : 0;
-        let lastTime = myRecord ? (myRecord.lastAttackTime || 0) : 0;
-
-        // Hapus timer lama jika ada agar tidak bentrok (bocor memori)
-        if (window.wbCooldownTimer) {
-            clearInterval(window.wbCooldownTimer);
-            window.wbCooldownTimer = null;
-        }
-
-        if (!bossData.isActive || bossData.currentHp <= 0) {
-            if (btnAttack) {
-                btnAttack.innerText = "BOSS TELAH MATI";
-                btnAttack.disabled = true;
-                btnAttack.style.background = "#333";
-                btnAttack.style.borderColor = "#111";
-            }
-        } else {
-            if (btnAttack) {
-                const now = Date.now();
-                const ONE_HOUR = 60 * 60 * 1000;
-
-                if (attackCount >= 5) {
-                    btnAttack.disabled = true;
-                    btnAttack.innerText = "Batas 5x Serangan Tercapai";
-                    btnAttack.style.background = "#555";
-                    btnAttack.style.borderColor = "#333";
-                } else if (attackCount > 0 && (now - lastTime < ONE_HOUR)) {
-                    btnAttack.disabled = true;
-                    btnAttack.style.background = "#b8860b";
-                    btnAttack.style.borderColor = "#daa520";
-
-                    // FUNGSI LIVE TIMER
-                    const updateTimer = () => {
-                        let waktuSekarang = Date.now();
-                        let sisaWaktu = ONE_HOUR - (waktuSekarang - lastTime);
-
-                        if (sisaWaktu <= 0) {
-                            // Waktu habis, aktifkan kembali tombol!
-                            clearInterval(window.wbCooldownTimer);
-                            if (btnAttack) {
-                                btnAttack.disabled = false;
-                                btnAttack.innerText = `⚔️ SERANG BOSS! (${5 - attackCount}/5)`;
-                                btnAttack.style.background = "#8b0000";
-                                btnAttack.style.borderColor = "#ff4c4c";
-                            }
-                        } else {
-                            // Ubah milidetik ke format Menit:Detik (MM:SS)
-                            let m = Math.floor(sisaWaktu / 60000);
-                            let s = Math.floor((sisaWaktu % 60000) / 1000);
-
-                            // Tambahkan angka 0 di depan jika di bawah 10 (misal: 09:05)
-                            let mStr = m.toString().padStart(2, '0');
-                            let sStr = s.toString().padStart(2, '0');
-
-                            if (btnAttack) btnAttack.innerText = `⏳ Cooldown (${mStr}:${sStr})`;
-                        }
-                    };
-
-                    // Panggil sekali agar langsung muncul tanpa jeda 1 detik
-                    updateTimer();
-                    // Set interval agar berjalan mundur setiap 1 detik
-                    window.wbCooldownTimer = setInterval(updateTimer, 1000);
-
-                } else {
-                    btnAttack.disabled = false;
-                    btnAttack.innerText = `⚔️ SERANG BOSS! (${5 - attackCount}/5)`;
-                    btnAttack.style.background = "#8b0000";
-                    btnAttack.style.borderColor = "#ff4c4c";
-                }
-            }
-        }
-
-        // Render Leaderboard
-        const lbContainer = document.getElementById('wb-leaderboard');
-        if (lbContainer) {
-            let participantsArr = Object.entries(bossData.participants || {}).map(([uid, data]) => ({
-                uid, name: data.name, damage: data.damage
-            }));
-
-            participantsArr.sort((a, b) => b.damage - a.damage);
-
-            if (participantsArr.length > 0) {
-                lbContainer.innerHTML = participantsArr.slice(0, 5).map((p, index) => `
-                    <div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid #333;">
-                        <span><strong style="color:${index === 0 ? '#ffcc00' : (index === 1 ? '#aaa' : '#c08a47')}">#${index + 1}</strong> ${p.name}</span>
-                        <span style="color:#ff4c4c; font-weight:bold;">${p.damage.toLocaleString()} DMG</span>
-                    </div>
-                `).join('');
-            }
-        }
-
-        // Render My Damage
-        const myDmgEl = document.getElementById('wb-my-damage');
-        if (myDmgEl) {
-            const myDmg = bossData.participants && bossData.participants[window.currentUserUid]
-                ? bossData.participants[window.currentUserUid].damage : 0;
-            myDmgEl.innerText = `Total Damage Anda: ${myDmg.toLocaleString()}`;
-        }
-    });
-
-
-
-    // Mendaftarkan semua fungsi pembatalan listener termasuk unsubCoinMarket
     activeUnsubscribeListeners.push(unsubData, unsubMail, unsubAuction, unsubParties, unsubGuilds, unsubCoinMarket, unsubBoss);
 }
 
@@ -1171,12 +921,7 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Pastikan fungsi aksi terpasang ke window agar bisa dipanggil dari HTML
-window.craftItemAction = craftItemAction;
-
-// ===================================================
 // PEMICU OTOMATIS SAAT TOMBOL MENU DIKLIK
-// ===================================================
 document.addEventListener('click', function (e) {
     // Memantau jika tombol Craft atau Tempa ditekan
     if (e.target.id === 'btn-mode-crafting' || e.target.id === 'btn-mode-blacksmith' || e.target.innerText.includes('CRAFT')) {
@@ -1191,8 +936,10 @@ document.addEventListener('click', function (e) {
     }
 });
 
+// Pastikan fungsi aksi terpasang ke window agar bisa dipanggil dari HTML
+window.craftItemAction = craftItemAction;
+
 // function untuk memproses reinkarnasi karakter
-// Mendaftarkan fungsi ke window agar bisa dipanggil oleh tombol onclick di HTML
 window.processReincarnation = function () {
     // Kita mengirimkan db dan auth dari game.js ke dalam modul
     processReincarnation(db, auth);
