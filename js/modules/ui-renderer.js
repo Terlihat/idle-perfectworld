@@ -9,3 +9,4 @@ export * from './ui-friends.js';
 export * from './ui-private-chat.js';
 export * from './ui-crafting.js';
 export * from './ui-dungeon.js';
+export * from './ui-redeem.js';
