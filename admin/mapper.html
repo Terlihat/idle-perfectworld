@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Alat Pemetaan Ikon RPG Ultimate</title>
+    <title>Alat Pemetaan Ikon PW</title>
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
     <style>
         /* Reset Dasar */
         body {
@@ -125,23 +126,6 @@
             overflow-wrap: normal;
             overflow-x: auto;
             box-sizing: border-box;
-        }
-
-        /* Tombol Copy */
-        .btn-copy {
-            margin-top: 10px;
-            padding: 12px;
-            background: #28a745;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-
-        .btn-copy:hover {
-            background: #218838;
         }
 
         /* ================= AREA KERJA (KANAN) ================= */
@@ -273,7 +257,17 @@
         <label style="font-size: 12px; color: #aaa; margin-bottom: 5px;">3. Daftar Item Otomatis</label>
         <textarea id="history-box"></textarea>
 
-        <button class="btn-copy" onclick="copyAllJSON()">📋 Salin Semua JSON</button>
+        <!-- Tombol Aksi -->
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button onclick="copyAllJSON()"
+                style="flex: 1; padding: 12px; background: #28a745; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s;"
+                onmouseover="this.style.background='#218838'" onmouseout="this.style.background='#28a745'">📋 SALIN
+            </button>
+            <button onclick="clearJSON()"
+                style="flex: 1; padding: 12px; background: #dc3545; color: #fff; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s;"
+                onmouseover="this.style.background='#c82333'" onmouseout="this.style.background='#dc3545'">🗑️ HAPUS
+            </button>
+        </div>
     </div>
 
     <div class="scroll-container" id="scroll-area">
@@ -386,8 +380,16 @@
                 showToast("⚠️ Daftar masih kosong!", "#dc3545");
                 return;
             }
-            navigator.clipboard.writeText(historyBox.value);
+            // Tambahkan .trim() untuk memotong baris/spasi kosong berlebih di akhir
+            navigator.clipboard.writeText(historyBox.value.trim());
             showToast("📋 Seluruh JSON berhasil disalin!");
+        }
+
+        // --- HAPUS DAFTAR JSON ---
+        function clearJSON() {
+            if (historyBox.value.trim() === '') return;
+            historyBox.value = ''; // Mengosongkan textarea
+            showToast("🗑️ Daftar JSON dibersihkan!", "#dc3545");
         }
 
         function showToast(msg, bgColor = "#28a745") {
