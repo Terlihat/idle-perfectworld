@@ -2,17 +2,28 @@
 // SISTEM ROUTER & EVENT LISTENER GLOBAL
 // ==========================================
 import { db } from '../firebase-config.js';
+import { doc, updateDoc, collection, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { MONSTER_DB } from '../data/monsters.js';
+import { ITEM_DB } from '../data/items.js';
 
-// Import fungsi-fungsi sistem yang dibutuhkan oleh tombol
-import { selectCharacterClass } from './character.js';
+// Import Fungsi Modul
+import { selectCharacterClass, consumePotion, addCharacterStat } from './character.js';
 import { sendChat } from './chat.js';
-import { createGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, disbandGuild } from './guild.js';
-import { depositGold, withdrawGold } from './bank.js';
+import { createGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, disbandGuild, joinGuild, kickMember } from './guild.js';
+import { depositGold, withdrawGold, depositItem, withdrawItem } from './bank.js';
 import { attackMonster } from './battle.js';
-import { createOrJoinParty } from './party.js';
+import { createOrJoinParty, leaveParty, startFbBattle } from './party.js';
+import { assignRandomQuests, claimQuestReward } from './quest.js';
+import { equipFromInventory, sellItemToNPC, unequipItem } from './inventory.js';
+import { listAuctionItem, buyAuctionItem, cancelAuction, placeBid, acceptBid, rejectBid, returnExpiredToMail } from './auction.js';
+import { dismantleItemAction, DISMANTLE_CONFIG, craftItemAction } from './crafting.js';
+import { executeRefineAction } from './blacksmith.js';
+import { claimMailReward, deleteMail } from './mailbox.js';
+import { getIconHTML } from './ui-renderer.js';
 
-// Fungsi bantuan UI
+// ==========================================
+// FUNGSI BANTUAN UI (Toggles & Panels)
+// ==========================================
 export function clearActiveModeClasses() {
     ['btn-mode-equip', 'btn-mode-sell', 'btn-mode-bank', 'btn-mode-auction', 'btn-mode-dismantle', 'btn-mode-blacksmith', 'btn-mode-crafting'].forEach(id => {
         const el = document.getElementById(id);
@@ -21,118 +32,325 @@ export function clearActiveModeClasses() {
 }
 window.clearActiveModeClasses = clearActiveModeClasses;
 
+window.bukaPanelKhusus = function (panelId) {
+    const panels = ['panel-bank', 'panel-auction', 'panel-blacksmith', 'panel-crafting'];
+    const targetPanel = document.getElementById(panelId);
+    if (targetPanel && targetPanel.style.display === 'block') { targetPanel.style.display = 'none'; return; }
+    panels.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    if (targetPanel) { targetPanel.style.display = 'block'; targetPanel.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+};
+
+window.togglePanel = function (panelId) {
+    const el = document.getElementById(panelId);
+    if (el) {
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        if (el.style.display === 'block') el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+};
+
+// ==========================================
+// ROUTER KLIK INVENTORY (TAS)
+// ==========================================
+window.handleInventoryClick = async function (itemName) {
+    const modeSaatIni = window.inventoryMode || "EQUIP";
+    const uid = window.currentUserUid;
+    const stats = window.currentPlayerStats || {};
+
+    if (modeSaatIni === "transfer" || modeSaatIni === "TRANSFER") {
+        if (window.putItemToTransferSlot) window.putItemToTransferSlot(itemName);
+        return;
+    }
+
+    if (modeSaatIni === "EQUIP") {
+        if (itemName === "Tiket Ganti Nama") {
+            const inputName = await window.rpgPrompt("Masukkan Nama Karakter Baru:", "Ganti Nama");
+            if (inputName && inputName.trim() !== "") equipFromInventory(db, uid, itemName, inputName);
+        }
+        else if (itemName === "Tiket Ubah Job") {
+            const inputJob = await window.rpgPrompt("Pilih Job Baru (Ketik: Warrior atau Mage):", "Ganti Job");
+            if (inputJob === "Warrior" || inputJob === "Mage") equipFromInventory(db, uid, itemName, inputJob);
+            else if (inputJob) window.rpgAlert("Job tidak valid! Harus 'Warrior' atau 'Mage'.");
+        }
+        else if (itemName === "Buku Reset Stats") {
+            if (await window.rpgConfirm("Gunakan Buku Reset Stats?", "Reset Stats")) equipFromInventory(db, uid, itemName, null);
+        }
+        else if (itemName === "Ramuan HP" || itemName === "Ramuan MP") {
+            const sukses = await consumePotion(db, uid, itemName, stats.maxHp, stats.maxMp);
+            if (sukses) window.rpgAlert(`Anda meminum [${itemName}]! Nyawa/Mana kembali penuh.`, "Berhasil Diteguk");
+        }
+        else if (itemName.startsWith("Item Renkarnasi")) {
+            window.rpgAlert("Pergilah ke menu Kuil Reinkarnasi (Rebirth) untuk menggunakannya!", "Info Item");
+        }
+        else { equipFromInventory(db, uid, itemName, null); }
+    }
+    else if (modeSaatIni === "SELL") { sellItemToNPC(db, uid, itemName); }
+    else if (modeSaatIni === "BANK") {
+        const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ingin disimpan?`, "Simpan ke Bank", "number");
+        const qty = parseInt(qtyStr);
+        if (qty > 0) depositItem(db, uid, itemName, qty);
+    }
+    else if (modeSaatIni === "AUCTION") {
+        const itemDilarangPersis = ["Dragon Orb (1 Star)","Dragon Orb (2 Star)","Dragon Orb (3 Star)","Dragon Orb (4 Star)","Dragon Orb (5 Star)","Dragon Orb (6 Star)","Dragon Orb (7 Star)","Dragon Orb (8 Star)","Dragon Orb (9 Star)","Dragon Orb Ocean","Dragon Orb Mirage","Dragon Orb Flame","Mahkota Kaisar Surga","Pedang Kaisar Langit","Senjata Dewa: Ragnarok","Senjata Dewa: Nirvana","Zirah Dewa: Aegis","Naga Terbang","Ramuan Stamina"];
+        if (itemDilarangPersis.includes(itemName) || itemName.startsWith("Tiket") || itemName.startsWith("Buku")) return window.rpgAlert("Item premium ini terikat pada karakter dan tidak bisa dilelang.");
+        
+        const priceStr = await window.rpgPrompt(`Masukkan Harga Beli Langsung (Gold) untuk 1x [${itemName}]:`, "Jual ke Lelang", "number");
+        const price = parseInt(priceStr);
+        if (price > 0) listAuctionItem(db, uid, itemName, price, window.playerUsername);
+    }
+    else if (modeSaatIni === "DISMANTLE") {
+        if (DISMANTLE_CONFIG[itemName]) {
+            if (await window.rpgConfirm(`🔥 Yakin ingin MELEBUR [${itemName}]?`, "Peleburan Item")) dismantleItemAction(db, uid, itemName);
+        } else window.rpgAlert(`❌ [${itemName}] tidak bisa dilebur!`);
+    }
+    else if (modeSaatIni === "BLACKSMITH") {
+        const baseName = itemName.replace(/\s\[\+\d+\]$/, '');
+        const itemInfo = ITEM_DB[baseName];
+        if (!itemInfo) return window.rpgAlert("Item tidak dikenali sistem.");
+        const realIconHTML = getIconHTML(baseName);
+
+        if (itemInfo.type === 'weapon' || itemInfo.type === 'armor' || itemInfo.type === 'accessory') {
+            window.bsSelectedEquip = itemName;
+            document.getElementById('bs-icon-equip').innerHTML = realIconHTML;
+            document.getElementById('bs-text-equip').innerText = itemName;
+            document.getElementById('bs-text-equip').style.color = "#00d2ff";
+            document.getElementById('bs-info-cost').innerText = `Biaya: ${itemInfo.type === 'weapon' ? 2 : 1}x Mirage Stone`;
+        }
+        else if (itemInfo.type === 'catalyst') {
+            if (itemName === "Mirage Stone") return window.rpgAlert("Mirage Stone digunakan otomatis.");
+            window.bsSelectedCatalyst = itemName;
+            document.getElementById('bs-icon-catalyst').innerHTML = realIconHTML;
+            document.getElementById('bs-text-catalyst').innerText = itemName;
+            document.getElementById('bs-text-catalyst').style.color = "#ffcc00";
+        }
+        else window.rpgAlert("❌ Hanya bisa memasukkan Equip atau Batu Catalyst!");
+    }
+};
+
+// ==========================================
+// ROUTER KLIK LAINNYA (BANK, MAIL, LELANG, DLL)
+// ==========================================
+window.handleBankClick = async function (itemName) {
+    const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ditarik?`, "Tarik dari Bank", "number");
+    const qty = parseInt(qtyStr);
+    if (qty > 0) withdrawItem(db, window.currentUserUid, itemName, qty);
+};
+
+window.claimMail = function (mailId) { claimMailReward(db, window.currentUserUid, mailId); };
+window.deleteMail = async function (mailId) { if (await window.rpgConfirm("Yakin menghapus surat ini?", "Hapus Surat")) deleteMail(db, window.currentUserUid, mailId); };
+window.deleteAllMails = async function () {
+    if (!await window.rpgConfirm("Hapus semua surat?\n(Surat yang berisi Hadiah belum diklaim TIDAK akan dihapus).", "Bersihkan Kotak Surat")) return;
+    try {
+        const mailRef = collection(db, "users", window.currentUserUid, "mailbox");
+        const snap = await getDocs(mailRef);
+        const batch = writeBatch(db);
+        let deletedCount = 0;
+        snap.docs.forEach(docSnap => {
+            const data = docSnap.data();
+            const att = data.attachments || {};
+            const isPunyaHadiah = (att.itemName || att.name || (att.gold || 0) > 0 || (att.coin || 0) > 0 || data.reward);
+            const isSudahDiKlaim = data.isClaimed === true || data.isClaimed === "true";
+            if (!isPunyaHadiah || isSudahDiKlaim) { batch.delete(docSnap.ref); deletedCount++; }
+        });
+        if (deletedCount > 0) { await batch.commit(); window.rpgAlert(`🧹 ${deletedCount} surat dibersihkan!`, "Sukses"); } 
+        else window.rpgAlert("Tidak ada surat yang bisa dihapus.", "Kotak Bersih");
+    } catch (err) { window.rpgAlert(`Gagal: ${err.message}`, "Sistem Error"); }
+};
+
+window.buyFromAuction = async function (id, name, price, sellerId) { if (await window.rpgConfirm(`Beli Langsung ${name} seharga ${price} Gold?`, "Pasar Lelang")) buyAuctionItem(db, window.currentUserUid, id, name, price, sellerId); };
+window.cancelAuction = async function (id) { if (await window.rpgConfirm("Tarik barang dari pasar?", "Batal Lelang")) cancelAuction(db, window.currentUserUid, id); };
+window.placeBid = async function (id, name, currentBid) {
+    const minBid = currentBid > 0 ? currentBid + 10 : 10;
+    const bidStr = await window.rpgPrompt(`Tawaran untuk ${name} (Min: ${minBid}):`, "Tawar Lelang", "number");
+    const bidAmt = parseInt(bidStr);
+    if (bidAmt >= minBid) placeBid(db, window.currentUserUid, window.playerUsername, id, bidAmt); 
+    else if (bidStr) window.rpgAlert(`Minimal tawaran ${minBid} Gold.`);
+};
+window.actionBid = async function (id, action) {
+    if (action === 'accept' && await window.rpgConfirm("Terima tawaran?", "Terima")) acceptBid(db, window.currentUserUid, id);
+    if (action === 'reject' && await window.rpgConfirm("Tolak tawaran?", "Tolak")) rejectBid(db, window.currentUserUid, id);
+};
+window.processExpiredAuction = function (auctionId) { returnExpiredToMail(db, auctionId); };
+
+window.addStat = function (statName) { addCharacterStat(db, window.currentUserUid, statName); };
+window.leaveParty = function (partyId) { leaveParty(db, partyId, window.currentUserUid); };
+window.startFb = async function (partyId) {
+    if (window.isFbRunning) return;
+    window.isFbRunning = true;
+    try { await startFbBattle(db, window.currentUserUid, partyId); } 
+    catch (err) { console.error("Gagal memulai FB:", err); } 
+    finally { setTimeout(() => { window.isFbRunning = false; }, 1500); }
+};
+
+window.joinGuildAction = async function (guildId) { if (await window.rpgConfirm("Bergabung dengan Guild ini?", "Gabung Guild")) joinGuild(db, window.currentUserUid, window.currentPlayerStats, guildId); };
+window.kickMemberAction = async function (targetUid) { if (await window.rpgConfirm("Keluarkan anggota ini?", "Keluarkan")) kickMember(db, window.currentUserUid, window.currentPlayerStats.guildId, targetUid); };
+window.actionCraftItem = async function (recipeName) { if (await window.rpgConfirm(`Siap menempa [${recipeName}]?`, "Crafting")) craftItemAction(db, window.currentUserUid, recipeName); };
+window.actionUnequip = function (slotType) { unequipItem(db, window.currentUserUid, slotType); };
+
+// ==========================================
+// BLACKSMITH LOGIC
+// ==========================================
+window.addBlacksmithLog = function (msg, color) {
+    const logPanel = document.getElementById('bs-log-panel');
+    if (logPanel) {
+        const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+        logPanel.innerHTML += `<div style="color: ${color}; margin-bottom: 3px;">[${time}] ${msg}</div>`;
+        logPanel.scrollTop = logPanel.scrollHeight;
+    }
+};
+
+window.executeTempa = async function () {
+    if (!window.bsSelectedEquip) return window.addBlacksmithLog("[ERROR] Pilih Equipment terlebih dahulu dari Tas!", "#dc3545");
+    if (window.isForging) return;
+    window.isForging = true;
+
+    const btnTempa = document.querySelector('button[onclick="window.executeTempa()"]');
+    if (btnTempa) { btnTempa.innerText = "⏳ MENEMPA..."; btnTempa.style.background = "#555"; btnTempa.style.cursor = "not-allowed"; }
+
+    const newEquipName = await executeRefineAction(db, window.currentUserUid, window.bsSelectedEquip, window.bsSelectedCatalyst);
+    if (newEquipName && typeof newEquipName === 'string') {
+        window.bsSelectedEquip = newEquipName;
+        const elText = document.getElementById('bs-text-equip');
+        if (elText) elText.innerText = newEquipName;
+    }
+
+    if (btnTempa) { btnTempa.innerText = "⚒️ TEMPA"; btnTempa.style.background = "#28a745"; btnTempa.style.cursor = "pointer"; }
+    window.isForging = false;
+};
+
+window.resetEquip = function () {
+    window.bsSelectedEquip = null;
+    const elIcon = document.getElementById('bs-icon-equip');
+    const elText = document.getElementById('bs-text-equip');
+    if (elIcon) elIcon.innerHTML = "🛡️";
+    if (elText) { elText.innerText = "Pilih Equip"; elText.style.color = "#aaa"; }
+    const costText = document.getElementById('bs-info-cost');
+    if (costText) costText.innerText = "Silakan pilih Equipment.";
+    window.addBlacksmithLog("[SISTEM] Equipment dikeluarkan dari tungku.", "#aaa");
+};
+
+window.resetCatalyst = function () {
+    window.bsSelectedCatalyst = "Tanpa Batu Tambahan";
+    const elIcon = document.getElementById('bs-icon-catalyst');
+    const elText = document.getElementById('bs-text-catalyst');
+    if (elIcon) elIcon.innerHTML = "💎";
+    if (elText) { elText.innerText = "Tanpa Batu"; elText.style.color = "#aaa"; }
+    window.addBlacksmithLog("[SISTEM] Batu katalis dikosongkan.", "#aaa");
+};
+
+// ==========================================
+// SETUP EVENT LISTENERS UTAMA
+// ==========================================
 export function setupActionRouters() {
-    // --- SISTEM PEMBACA INFO DROP BOS FB ---
+    
+    // INFO BOS FB
     document.addEventListener('change', (e) => {
         if (e.target.id === 'fb-select') {
-            const bossKey = e.target.value;
-            const boss = MONSTER_DB[bossKey];
-            const infoBox = document.getElementById('fb-drop-info');
-            const textBox = document.getElementById('fb-drop-text');
-
+            const boss = MONSTER_DB[e.target.value];
+            const infoBox = document.getElementById('fb-drop-info'), textBox = document.getElementById('fb-drop-text');
             if (boss && infoBox && textBox) {
                 let dropsInfo = [];
                 if (boss.drop) dropsInfo.push(`[${boss.drop.item}] (${(boss.drop.chance * 100).toFixed(0)}%)`);
-                if (boss.drops && Array.isArray(boss.drops)) {
-                    boss.drops.forEach(d => dropsInfo.push(`[${d.item}] (${(d.chance * 100).toFixed(0)}%)`));
-                }
+                if (boss.drops && Array.isArray(boss.drops)) boss.drops.forEach(d => dropsInfo.push(`[${d.item}] (${(d.chance * 100).toFixed(0)}%)`));
                 textBox.innerText = dropsInfo.length > 0 ? dropsInfo.join(' | ') : "Hanya EXP & Gold";
                 infoBox.style.display = 'block';
             }
         }
     });
 
-    // --- NAVIGASI TAB BURSA KOIN ---
+    // NAVIGASI COIN MARKET
     document.addEventListener('click', (e) => {
-        if (e.target.id === 'btn-tab-cmb') {
-            document.getElementById('tab-cm-buy').style.display = 'block';
-            document.getElementById('tab-cm-sell').style.display = 'none';
-            document.getElementById('tab-cm-wallet').style.display = 'none';
-        } else if (e.target.id === 'btn-tab-cms') {
-            document.getElementById('tab-cm-buy').style.display = 'none';
-            document.getElementById('tab-cm-sell').style.display = 'block';
-            document.getElementById('tab-cm-wallet').style.display = 'none';
-        } else if (e.target.id === 'btn-tab-cmw') {
-            document.getElementById('tab-cm-buy').style.display = 'none';
-            document.getElementById('tab-cm-sell').style.display = 'none';
-            document.getElementById('tab-cm-wallet').style.display = 'block';
+        if (['btn-tab-cmb', 'btn-tab-cms', 'btn-tab-cmw'].includes(e.target.id)) {
+            document.getElementById('tab-cm-buy').style.display = e.target.id === 'btn-tab-cmb' ? 'block' : 'none';
+            document.getElementById('tab-cm-sell').style.display = e.target.id === 'btn-tab-cms' ? 'block' : 'none';
+            document.getElementById('tab-cm-wallet').style.display = e.target.id === 'btn-tab-cmw' ? 'block' : 'none';
         }
     });
 
-    // --- PEMICU OTOMATIS CRAFTING ---
+    // CRAFTING AUTO TRIGGER
     document.addEventListener('click', function (e) {
         if (e.target.id === 'btn-mode-crafting' || e.target.id === 'btn-mode-blacksmith' || (e.target.innerText && e.target.innerText.includes('CRAFT'))) {
             setTimeout(() => {
                 if (typeof window.renderCraftingUI === 'function') {
                     const inv = window.currentInventoryData || {};
-                    const lvl = (window.currentPlayerStats) ? (window.currentPlayerStats.level || 1) : 1;
-                    const gold = (window.currentPlayerStats) ? (window.currentPlayerStats.gold || 0) : 0;
+                    const lvl = window.currentPlayerStats ? (window.currentPlayerStats.level || 1) : 1;
+                    const gold = window.currentPlayerStats ? (window.currentPlayerStats.gold || 0) : 0;
                     window.renderCraftingUI(inv, lvl, gold);
                 }
             }, 100);
         }
     });
 
-    // --- SISTEM CHAT CHANNEL SELECT ---
+    // CHAT CHANNEL
     document.addEventListener('change', (e) => {
         if (e.target && e.target.id === 'chat-channel-select') {
             const val = e.target.value;
-            if (val === 'guild' && (!window.currentPlayerStats || !window.currentPlayerStats.guildId)) {
-                window.rpgAlert("Anda belum bergabung dengan Guild!");
-                e.target.value = window.currentChatChannel; return;
-            }
-            if (val === 'party' && !window.currentPartyId) {
-                window.rpgAlert("Anda belum masuk ke dalam Ruang Tunggu Party FB!");
-                e.target.value = window.currentChatChannel; return;
-            }
+            if (val === 'guild' && (!window.currentPlayerStats || !window.currentPlayerStats.guildId)) { window.rpgAlert("Belum gabung Guild!"); e.target.value = window.currentChatChannel; return; }
+            if (val === 'party' && !window.currentPartyId) { window.rpgAlert("Belum masuk Party FB!"); e.target.value = window.currentChatChannel; return; }
             window.currentChatChannel = val;
             if (window.startDynamicChat) window.startDynamicChat();
         }
     });
 
-    // --- SISTEM CHAT ENTER KEY ---
+    // CHAT ENTER
     document.addEventListener('keydown', (e) => {
-        if (e.target && e.target.id === 'chat-input' && e.key === 'Enter') {
-            e.preventDefault();
-            const btn = document.getElementById('btn-send-chat');
-            if (btn) btn.click();
+        if (e.target && e.target.id === 'chat-input' && e.key === 'Enter') { e.preventDefault(); const btn = document.getElementById('btn-send-chat'); if (btn) btn.click(); }
+    });
+
+    // BUAT KARAKTER
+    document.addEventListener('click', async function (e) {
+        if (e.target && e.target.id === 'btn-create-char') {
+            const charNameInput = document.getElementById('char-name-input');
+            const classRadio = document.querySelector('input[name="char-class"]:checked');
+            if (!charNameInput || !charNameInput.value.trim()) return window.rpgAlert("❌ Nama tidak boleh kosong!");
+            if (!classRadio) return window.rpgAlert("❌ Pilih Class!");
+
+            try {
+                e.target.innerText = "⏳ MENEMPA TAKDIR..."; e.target.style.background = "#555"; e.target.disabled = true;
+                await selectCharacterClass(db, window.currentUserUid, classRadio.value);
+                await updateDoc(doc(db, "users", window.currentUserUid), { username: charNameInput.value.trim() });
+                const scChar = document.getElementById('screen-char-select'), scGame = document.getElementById('screen-game');
+                if (scChar) scChar.style.display = 'none';
+                if (scGame) scGame.style.display = 'block';
+            } catch (error) {
+                window.rpgAlert("Gagal: " + error.message);
+                e.target.innerText = "🔥 Mulai Petualangan 🔥"; e.target.style.background = "#ff9800"; e.target.disabled = false;
+            }
         }
     });
 
-    // --- KLIK GLOBAL (ROUTER UTAMA) ---
+    // HIGHLIGHT CLASS SELECT
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.name === 'char-class') {
+            document.querySelectorAll('input[name="char-class"]').forEach(radio => { radio.parentElement.style.borderColor = "#3f3f52"; radio.parentElement.style.background = "#121216"; });
+            if (e.target.value === 'Warrior') { e.target.parentElement.style.borderColor = "#dc3545"; e.target.parentElement.style.background = "#1c152a"; } 
+            else if (e.target.value === 'Mage') { e.target.parentElement.style.borderColor = "#00d2ff"; e.target.parentElement.style.background = "#15201b"; }
+        }
+    });
+
+    // ROUTER KLIK GLOBAL
     document.addEventListener('click', async (e) => {
         const target = e.target.closest('button') || e.target.closest('.char-card') || e.target;
         const targetId = target.id;
-
         if (!targetId) return;
 
-        // Ambil data pemain secara real-time dari memori window
         const uid = window.currentUserUid;
         const stats = window.currentPlayerStats || {};
 
         if (targetId === 'btn-admin-panel') window.location.href = './admin/index.html';
         if (targetId === 'btn-copy-uid') { if (uid) { navigator.clipboard.writeText(uid); window.rpgAlert("📋 UID disalin!"); } }
 
-        // --- NAVIGASI TOGGLE PANEL ---
-        if (targetId === 'btn-toggle-mall') window.togglePanel('panel-mall');
-        if (targetId === 'btn-toggle-shop') window.togglePanel('panel-shop');
-        if (targetId === 'btn-toggle-coin-market') window.togglePanel('panel-coin-market');
-        if (targetId === 'btn-toggle-mail') window.togglePanel('panel-mailbox');
-        if (targetId === 'btn-toggle-friends') window.togglePanel('panel-friends');
-        if (targetId === 'btn-toggle-boss') window.togglePanel('panel-world-boss');
-        if (targetId === 'btn-toggle-tower') window.togglePanel('panel-tower');
-        if (targetId === 'btn-toggle-afk') window.togglePanel('panel-afk');
-        if (targetId === 'btn-toggle-leaderboard') {
-            window.togglePanel('panel-leaderboard');
-            const lbContent = document.getElementById('leaderboard-content');
-            if (lbContent && lbContent.innerText.includes('Klik kategori')) window.fetchLeaderboard('level');
-        }
-        if (targetId === 'btn-toggle-tickets') {
-            window.togglePanel('panel-tickets');
-            if (typeof window.listenToMyTickets === 'function') window.listenToMyTickets();
+        if (targetId.startsWith('btn-toggle-')) {
+            const map = {'btn-toggle-mall': 'panel-mall', 'btn-toggle-shop': 'panel-shop', 'btn-toggle-coin-market': 'panel-coin-market', 'btn-toggle-mail': 'panel-mailbox', 'btn-toggle-friends': 'panel-friends', 'btn-toggle-boss': 'panel-world-boss', 'btn-toggle-tower': 'panel-tower', 'btn-toggle-afk': 'panel-afk', 'btn-toggle-tickets': 'panel-tickets'};
+            if (map[targetId]) window.togglePanel(map[targetId]);
+            
+            if (targetId === 'btn-toggle-leaderboard') {
+                window.togglePanel('panel-leaderboard');
+                const lbContent = document.getElementById('leaderboard-content');
+                if (lbContent && lbContent.innerText.includes('Klik kategori')) window.fetchLeaderboard('level');
+            }
+            if (targetId === 'btn-toggle-tickets' && typeof window.listenToMyTickets === 'function') window.listenToMyTickets();
         }
 
-        // --- TOMBOL KATEGORI LEADERBOARD ---
         if (targetId === 'btn-lb-level') window.fetchLeaderboard('level');
         if (targetId === 'btn-lb-gold') window.fetchLeaderboard('gold');
         if (targetId === 'btn-lb-tower') window.fetchLeaderboard('tower');
@@ -151,29 +369,19 @@ export function setupActionRouters() {
             }
         }
 
-        // --- FITUR GUILD DENGAN RPG MODAL ---
-        if (targetId === 'btn-create-guild') {
-            const name = document.getElementById('input-guild-name').value;
-            if (!name) return window.rpgAlert("Nama guild tidak boleh kosong!");
-            if (await window.rpgConfirm(`Dirikan Guild [${name}] seharga 100,000 Gold?`, "Buat Guild")) createGuild(db, uid, stats, name);
-        }
-        if (targetId === 'btn-leave-guild') { if (await window.rpgConfirm("Yakin ingin keluar dari Guild? Anda akan kehilangan semua Buff Guild!", "Keluar Guild")) dbLeaveGuild(db, uid, stats.guildId); }
-        if (targetId === 'btn-donate-guild') { const el = document.getElementById('input-donate-gold'); const amt = parseInt(el ? el.value : 0); if (amt > 0) { donateGold(db, uid, stats.guildId, amt); el.value = ""; } }
+        if (targetId === 'btn-create-guild') { const name = document.getElementById('input-guild-name').value; if (!name) return window.rpgAlert("Nama guild kosong!"); if (await window.rpgConfirm(`Dirikan [${name}] seharga 100k Gold?`, "Buat Guild")) createGuild(db, uid, stats, name); }
+        if (targetId === 'btn-leave-guild') { if (await window.rpgConfirm("Keluar dari Guild?", "Keluar Guild")) dbLeaveGuild(db, uid, stats.guildId); }
+        if (targetId === 'btn-donate-guild') { const amt = parseInt(document.getElementById('input-donate-gold').value); if (amt > 0) { donateGold(db, uid, stats.guildId, amt); document.getElementById('input-donate-gold').value = ""; } }
         if (targetId === 'btn-upgrade-guild') { if (await window.rpgConfirm("Gunakan Dana Guild untuk naik level?", "Upgrade Guild")) upgradeGuild(db, uid, stats.guildId); }
-        if (targetId === 'btn-edit-motd') {
-            const txt = await window.rpgPrompt("Masukkan pengumuman baru untuk anggota Guild:", "Ubah Papan Info");
-            if (txt) updateMotd(db, uid, stats.guildId, txt);
-        }
-        if (targetId === 'btn-disband-guild') { if (await window.rpgConfirm("PERINGATAN KERAS: Yakin membubarkan Guild selamanya? Dana Guild akan hangus!", "Bubarkan Guild")) disbandGuild(db, uid, stats.guildId); }
+        if (targetId === 'btn-edit-motd') { const txt = await window.rpgPrompt("Pengumuman baru:", "Papan Info"); if (txt) updateMotd(db, uid, stats.guildId, txt); }
+        if (targetId === 'btn-disband-guild') { if (await window.rpgConfirm("PERINGATAN: Bubarkan Guild selamanya?", "Bubarkan Guild")) disbandGuild(db, uid, stats.guildId); }
 
-        // --- BANK & DUNGEON ---
         if (targetId === 'btn-bank-deposit-gold') { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { depositGold(db, uid, val); el.value = ""; } }
         if (targetId === 'btn-bank-withdraw-gold') { const el = document.getElementById('bank-gold-input'); const val = parseInt(el.value); if (val > 0) { withdrawGold(db, uid, val); el.value = ""; } }
 
         if (targetId === 'btn-attack-dungeon') attackMonster(db, uid, document.getElementById('dungeon-select').value, stats);
         if (targetId === 'btn-create-party') createOrJoinParty(db, document.getElementById('fb-select').value, stats);
 
-        // --- QUESTS ---
         if (targetId === 'btn-take-quest') window.assignRandomQuests(db, uid);
         if (targetId === 'btn-claim-daily') window.claimQuestReward(db, uid, 'daily');
         if (targetId === 'btn-claim-bounty') window.claimQuestReward(db, uid, 'bounty');
