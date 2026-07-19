@@ -1,121 +1,262 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <title>Alat Pemetaan Ikon RPG Ultimate</title>
     <style>
         /* Reset Dasar */
-        body { 
-            background-color: #121216; color: #fff; font-family: sans-serif; 
-            margin: 0; padding: 0; height: 100vh; overflow: hidden; /* Mencegah scroll di seluruh layar */
+        body {
+            background-color: #121216;
+            color: #fff;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            /* Mencegah scroll di seluruh layar */
         }
-        
+
         /* ================= SIDEBAR PANEL (KIRI) ================= */
         .sidebar {
-            position: absolute; top: 0; left: 0; bottom: 0;
-            width: 320px; background: #1c1c24; border-right: 2px solid #3f3f52;
-            display: flex; flex-direction: column; padding: 15px; box-sizing: border-box;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.5); z-index: 100;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 320px;
+            background: #1c1c24;
+            border-right: 2px solid #3f3f52;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            box-sizing: border-box;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 100;
         }
-        .sidebar h2 { margin-top: 0; font-size: 18px; color: #00d2ff; text-align: center; border-bottom: 1px solid #3f3f52; padding-bottom: 10px; }
-        
+
+        .sidebar h2 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #00d2ff;
+            text-align: center;
+            border-bottom: 1px solid #3f3f52;
+            padding-bottom: 10px;
+        }
+
         /* Input Item */
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 12px; color: #aaa; margin-bottom: 5px; }
-        #item-name { 
-            width: 100%; padding: 10px; background: #121216; color: #fff; 
-            border: 1px solid #00d2ff; border-radius: 4px; font-size: 14px; box-sizing: border-box; outline: none;
+        .input-group {
+            margin-bottom: 15px;
         }
-        #item-name:focus { border-color: #ffcc00; box-shadow: 0 0 5px #ffcc00; }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        #item-name {
+            width: 100%;
+            padding: 10px;
+            background: #121216;
+            color: #fff;
+            border: 1px solid #00d2ff;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        #item-name:focus {
+            border-color: #ffcc00;
+            box-shadow: 0 0 5px #ffcc00;
+        }
 
         /* Preview (Kaca Pembesar) */
-        .preview-box { text-align: center; margin-bottom: 15px; }
-        #preview-container {
-            width: 96px; height: 96px; /* Ukuran 32x32 di-zoom 3x */
-            margin: 0 auto; border: 2px solid #ffcc00; border-radius: 4px;
-            overflow: hidden; position: relative; background: #000;
+        .preview-box {
+            text-align: center;
+            margin-bottom: 15px;
         }
+
+        #preview-container {
+            width: 96px;
+            height: 96px;
+            /* Ukuran 32x32 di-zoom 3x */
+            margin: 0 auto;
+            border: 2px solid #ffcc00;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+
         #preview-img {
-            position: absolute; top: 0; left: 0;
-            transform-origin: top left; transform: scale(3); /* Zoom 3x */
-            image-rendering: pixelated; 
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: top left;
+            transform: scale(3);
+            /* Zoom 3x */
+            image-rendering: pixelated;
             pointer-events: none;
         }
-        #coord-display { font-size: 11px; color: #aaa; margin-top: 5px; font-family: monospace; }
+
+        #coord-display {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 5px;
+            font-family: monospace;
+        }
 
         /* Riwayat / Textarea */
-        #history-box { 
-            flex-grow: 1; width: 100%; background: #0a0a0c; color: #28a745; 
-            border: 1px solid #3f3f52; border-radius: 4px; padding: 10px; 
-            font-family: monospace; font-size: 12px; resize: none; outline: none; white-space: pre; overflow-wrap: normal; overflow-x: auto;
+        #history-box {
+            flex-grow: 1;
+            width: 100%;
+            background: #0a0a0c;
+            color: #28a745;
+            border: 1px solid #3f3f52;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            resize: none;
+            outline: none;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
             box-sizing: border-box;
         }
 
         /* Tombol Copy */
-        .btn-copy { 
-            margin-top: 10px; padding: 12px; background: #28a745; color: #fff; 
-            border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase;
+        .btn-copy {
+            margin-top: 10px;
+            padding: 12px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
         }
-        .btn-copy:hover { background: #218838; }
+
+        .btn-copy:hover {
+            background: #218838;
+        }
 
         /* ================= AREA KERJA (KANAN) ================= */
-        .scroll-container { 
-            position: absolute; top: 0; left: 320px; right: 0; bottom: 0;
-            overflow: auto; /* Memunculkan scrollbar di area ini saja */
-            padding: 20px; background: #0a0a0c; box-sizing: border-box;
+        .scroll-container {
+            position: absolute;
+            top: 0;
+            left: 320px;
+            right: 0;
+            bottom: 0;
+            overflow: auto;
+            /* Memunculkan scrollbar di area ini saja */
+            padding: 20px;
+            background: #0a0a0c;
+            box-sizing: border-box;
         }
 
         /* Bungkus Gambar dan Grid Sorot */
         #img-wrapper {
-            position: relative; display: inline-block;
+            position: relative;
+            display: inline-block;
             background-image: linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px);
-            background-size: 32px 32px; /* Ukuran asli grid */
+            background-size: 32px 32px;
+            /* Ukuran asli grid */
         }
-        
-        #sprite-img { display: block; cursor: crosshair; }
+
+        #sprite-img {
+            display: block;
+            cursor: crosshair;
+        }
 
         /* Kotak Kuning Sorotan (Snap to Grid) */
         #hover-box {
-            position: absolute; border: 2px solid #ffcc00; background: rgba(255, 204, 0, 0.3);
-            pointer-events: none; display: none; z-index: 10; box-sizing: border-box;
+            position: absolute;
+            border: 2px solid #ffcc00;
+            background: rgba(255, 204, 0, 0.3);
+            pointer-events: none;
+            display: none;
+            z-index: 10;
+            box-sizing: border-box;
         }
 
         /* PANEL ZOOM (MENGAMBANG KANAN BAWAH) */
-        .controls { 
-            position: fixed; bottom: 30px; right: 30px; z-index: 9999; 
-            background: rgba(20, 20, 26, 0.4); /* Sangat transparan (40%) */
-            backdrop-filter: blur(5px); /* Efek kaca blur kekinian */
-            padding: 8px 12px; /* Jauh lebih kecil */
-            border: 1px solid rgba(255, 204, 0, 0.3); /* Border setipis rambut dan transparan */
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+            background: rgba(20, 20, 26, 0.4);
+            /* Sangat transparan (40%) */
+            backdrop-filter: blur(5px);
+            /* Efek kaca blur kekinian */
+            padding: 8px 12px;
+            /* Jauh lebih kecil */
+            border: 1px solid rgba(255, 204, 0, 0.3);
+            /* Border setipis rambut dan transparan */
             border-radius: 8px;
-            display: flex; gap: 8px; align-items: center; 
-            transition: all 0.3s ease-in-out; /* Animasi transisi mulus */
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            transition: all 0.3s ease-in-out;
+            /* Animasi transisi mulus */
         }
 
         /* Saat mouse diarahkan ke panel, warnanya kembali jelas agar mudah ditekan */
         .controls:hover {
             background: rgba(20, 20, 26, 0.95);
             border: 1px solid rgba(255, 204, 0, 1);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.8);
         }
-        button.zoom-btn { padding: 8px 15px; cursor: pointer; background: #007bff; color: #fff; border: none; border-radius: 4px; font-weight: bold; }
-        button.zoom-btn:hover { background: #0056b3; }
-        .btn-reset { background: #dc3545 !important; }
-        .btn-reset:hover { background: #c82333 !important; }
+
+        button.zoom-btn {
+            padding: 8px 15px;
+            cursor: pointer;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        button.zoom-btn:hover {
+            background: #0056b3;
+        }
+
+        .btn-reset {
+            background: #dc3545 !important;
+        }
+
+        .btn-reset:hover {
+            background: #c82333 !important;
+        }
 
         /* Pesan Notifikasi Sukses */
         #toast {
-            position: fixed; top: 20px; right: 20px; background: #28a745; color: white;
-            padding: 10px 20px; border-radius: 5px; font-weight: bold; opacity: 0;
-            transition: opacity 0.3s ease-in-out; pointer-events: none; z-index: 10000;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            pointer-events: none;
+            z-index: 10000;
         }
     </style>
 </head>
+
 <body>
 
     <div class="sidebar">
         <h2>🛠️ Mesin Pembuat JSON</h2>
-        
+
         <div class="input-group">
             <label>1. Ketik Nama Item (Lalu klik gambar)</label>
             <input type="text" id="item-name" placeholder="Misal: Pedang Naga" autocomplete="off">
@@ -124,28 +265,30 @@
         <div class="preview-box">
             <label style="font-size: 12px; color: #aaa;">2. Kaca Pembesar (Preview)</label>
             <div id="preview-container">
-                <img src="./assets/interface.webp" id="preview-img">
+                <img src="../assets/interface.webp" id="preview-img">
             </div>
             <div id="coord-display">Kolom: - | Baris: -</div>
         </div>
 
         <label style="font-size: 12px; color: #aaa; margin-bottom: 5px;">3. Daftar Item Otomatis</label>
         <textarea id="history-box"></textarea>
-        
+
         <button class="btn-copy" onclick="copyAllJSON()">📋 Salin Semua JSON</button>
     </div>
 
     <div class="scroll-container" id="scroll-area">
         <div id="img-wrapper">
-            <img src="./assets/interface.webp" id="sprite-img" alt="Sprite Sheet">
-            <div id="hover-box"></div> </div>
+            <img src="../assets/interface.webp" id="sprite-img" alt="Sprite Sheet">
+            <div id="hover-box"></div>
+        </div>
     </div>
 
     <div class="controls">
         <button class="zoom-btn" onclick="zoom(1.2)">➕ Zoom In</button>
         <button class="zoom-btn" onclick="zoom(0.8)">➖ Zoom Out</button>
         <button class="zoom-btn btn-reset" onclick="resetZoom()">🔄 Ukuran Asli</button>
-        <span id="zoom-level" style="margin-left: 10px; font-size: 14px; color:#fff; font-weight: bold;">Skala: 1.0x</span>
+        <span id="zoom-level" style="margin-left: 10px; font-size: 14px; color:#fff; font-weight: bold;">Skala:
+            1.0x</span>
     </div>
 
     <div id="toast">Disalin!</div>
@@ -154,10 +297,10 @@
         const img = document.getElementById('sprite-img');
         const imgWrapper = document.getElementById('img-wrapper');
         const hoverBox = document.getElementById('hover-box');
-        
+
         const previewImg = document.getElementById('preview-img');
         const coordDisplay = document.getElementById('coord-display');
-        
+
         const inputName = document.getElementById('item-name');
         const historyBox = document.getElementById('history-box');
         const toast = document.getElementById('toast');
@@ -168,7 +311,7 @@
 
         // Ambil dimensi asli gambar
         img.onload = () => { baseWidth = img.naturalWidth; };
-        if(img.complete) { baseWidth = img.naturalWidth; }
+        if (img.complete) { baseWidth = img.naturalWidth; }
 
         // --- SISTEM ZOOM ---
         function zoom(factor) {
@@ -191,7 +334,7 @@
         }
 
         // --- SISTEM KACA PEMBESAR & SOROTAN ---
-        imgWrapper.addEventListener('mousemove', function(e) {
+        imgWrapper.addEventListener('mousemove', function (e) {
             const rect = imgWrapper.getBoundingClientRect();
             const rawX = (e.clientX - rect.left) / scale;
             const rawY = (e.clientY - rect.top) / scale;
@@ -218,7 +361,7 @@
         });
 
         // --- SISTEM KLIK & GENERATE JSON (VERSI RATA KIRI) ---
-        imgWrapper.addEventListener('click', function(e) {
+        imgWrapper.addEventListener('click', function (e) {
             const rect = imgWrapper.getBoundingClientRect();
             const col = Math.floor(((e.clientX - rect.left) / scale) / 32);
             const row = Math.floor(((e.clientY - rect.top) / scale) / 32);
@@ -227,7 +370,7 @@
             if (!itemName) itemName = `Item_Baru_${col}_${row}`;
 
             const jsonLine = `"${itemName}": {"col": ${col}, "row": ${row}},\n`;
-            
+
             historyBox.value += jsonLine;
             historyBox.scrollTop = historyBox.scrollHeight;
 
@@ -263,7 +406,7 @@
         const scrollArea = document.getElementById('scroll-area');
 
         // 1. KONTROL KEYBOARD
-        window.addEventListener('keydown', function(e) {
+        window.addEventListener('keydown', function (e) {
             const isTyping = (document.activeElement === inputName || document.activeElement === historyBox);
             const speed = 50;
 
@@ -278,19 +421,19 @@
             if (isTyping && ['w', 'a', 's', 'd'].includes(key)) return;
 
             // Navigasi
-            if (e.key === 'ArrowUp' || key === 'w') { 
-                scrollArea.scrollBy({ top: -speed, left: 0 }); e.preventDefault(); 
-            } 
-            else if (e.key === 'ArrowDown' || key === 's') { 
-                scrollArea.scrollBy({ top: speed, left: 0 }); e.preventDefault(); 
-            } 
+            if (e.key === 'ArrowUp' || key === 'w') {
+                scrollArea.scrollBy({ top: -speed, left: 0 }); e.preventDefault();
+            }
+            else if (e.key === 'ArrowDown' || key === 's') {
+                scrollArea.scrollBy({ top: speed, left: 0 }); e.preventDefault();
+            }
             else if (e.key === 'ArrowLeft' || key === 'a') {
                 // Biarkan panah kiri berfungsi untuk menggeser kursor teks jika sedang mengetik
-                if (isTyping && e.key === 'ArrowLeft') return; 
+                if (isTyping && e.key === 'ArrowLeft') return;
                 scrollArea.scrollBy({ top: 0, left: -speed }); e.preventDefault();
-            } 
+            }
             else if (e.key === 'ArrowRight' || key === 'd') {
-                if (isTyping && e.key === 'ArrowRight') return; 
+                if (isTyping && e.key === 'ArrowRight') return;
                 scrollArea.scrollBy({ top: 0, left: speed }); e.preventDefault();
             }
         });
@@ -311,7 +454,7 @@
 
         scrollArea.addEventListener('mouseleave', () => { isDragging = false; scrollArea.style.cursor = 'default'; });
         scrollArea.addEventListener('mouseup', () => { isDragging = false; scrollArea.style.cursor = 'default'; });
-        
+
         scrollArea.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
             e.preventDefault();
@@ -327,4 +470,5 @@
         scrollArea.addEventListener('contextmenu', e => e.preventDefault());
     </script>
 </body>
+
 </html>
