@@ -8,3 +8,4 @@ export * from './ui-quest.js';
 export * from './ui-friends.js';
 export * from './ui-private-chat.js';
 export * from './ui-crafting.js';
+export * from './ui-dungeon.js';

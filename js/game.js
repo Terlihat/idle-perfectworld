@@ -10,7 +10,8 @@ import {
     renderPlayerUI, renderQuestUI, renderInventoryUI, renderBankUI,
     renderMailboxUI, renderAuctionUI, renderPartyUI, renderGuildUI,
     renderChatUI, escapeHTML, renderCraftingUI, getIconHTML, renderShopAndMall,
-    renderPKUI, setupLeaderboardUI, setupShopModalUI, setupPKUI, setupFriendUI, setupPrivateChatUI
+    renderPKUI, setupLeaderboardUI, setupShopModalUI, setupPKUI, setupFriendUI,
+    setupPrivateChatUI, setupDungeonUI
 } from './modules/ui-renderer.js';
 
 // IMPORT MODULES SISTEM
@@ -46,6 +47,7 @@ import { processReincarnation } from './modules/reincarnation.js';
 import { executePurchase } from './modules/shop.js';
 import { getLeaderboardData } from './modules/leaderboard.js';
 import { listenToPKZone, enterPKZone, leavePKZone, executePKBattle } from './modules/pk-system.js';
+import { fetchMonsterData, calculateMonsterDrops, getDungeonMonstersList } from './modules/dungeon-system.js';
 
 // ==========================================
 // SISTEM UNIVERSAL RPG MODAL (Pengganti Alert/Confirm/Prompt)
@@ -169,6 +171,9 @@ setupFriendUI(db, () => currentUserUid, () => currentPlayerStats, {
 
 // Aktifkan Sistem Private Chat / Whisper
 setupPrivateChatUI(db, () => currentUserUid, () => playerUsername);
+
+// Aktifkan Sistem Dungeon & Drop Item
+setupDungeonUI(db, { fetchMonsterData, calculateMonsterDrops, getDungeonMonstersList });
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -1173,97 +1178,7 @@ document.addEventListener('click', function (e) {
     }
 });
 
-// ===========================================
-// SISTEM DATABASE MONSTER DUNGEON & DROP ITEM
-// ===========================================
 
-// 1. Fungsi untuk mengambil data monster sebelum bertarung
-window.fetchMonsterData = async function (monsterId) {
-    try {
-        const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
-        const docRef = doc(db, "monsters", monsterId);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            return docSnap.data(); // Mengembalikan data dari Firestore
-        } else {
-            console.warn(`[SISTEM] Monster ID: ${monsterId} tidak ditemukan di Live Database.`);
-            // Fallback (Cadangan): Jika admin belum melakukan Sync, ambil dari file lokal
-            if (typeof MONSTER_DB !== 'undefined' && MONSTER_DB[monsterId]) {
-                return MONSTER_DB[monsterId];
-            }
-            return null;
-        }
-    } catch (error) {
-        console.error("Gagal menarik data monster:", error);
-        return null;
-    }
-};
-
-// 2. Fungsi RNG untuk memproses Drop Item sesuai persentase Admin
-window.calculateMonsterDrops = function (dropsArray) {
-    let obtainedItems = [];
-    if (!dropsArray || dropsArray.length === 0) return obtainedItems;
-
-    // Loop setiap item yang diatur oleh Admin
-    dropsArray.forEach(drop => {
-        // Hasilkan angka acak dari 0.00 hingga 100.00
-        const roll = Math.random() * 100;
-
-        // Jika angka acak lebih kecil atau sama dengan persentase drop admin, pemain dapat itemnya!
-        if (roll <= drop.chance) {
-            obtainedItems.push(drop.item);
-        }
-    });
-
-    return obtainedItems; // Mengembalikan array nama item (contoh: ["Ramuan HP", "Pedang Besi"])
-};
-
-// 3. Fungsi untuk memuat daftar monster ke UI Dropdown Dungeon
-window.loadDungeonMonstersList = async function () {
-    const selectBox = document.getElementById('dungeon-select');
-    if (!selectBox) return;
-
-    try {
-        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
-        const querySnapshot = await getDocs(collection(db, "monsters"));
-
-        if (querySnapshot.empty) {
-            selectBox.innerHTML = '<option value="">❌ Belum ada monster di database</option>';
-            return;
-        }
-
-        // Tampung data ke dalam array agar bisa kita urutkan
-        let monstersArray = [];
-        querySnapshot.forEach(doc => {
-            const data = doc.data();
-            const id = doc.id;
-
-            // 🔥 LOGIKA PENYARINGAN (FILTER): Deteksi dan abaikan Boss Fuben
-            const isFubenBoss = id.startsWith("fb") || (data.name && data.name.includes("[FB"));
-
-            // Masukkan ke daftar HANYA jika bukan Boss Fuben
-            if (!isFubenBoss) {
-                monstersArray.push({ id: id, ...data });
-            }
-        });
-
-        // Urutkan monster berdasarkan Level (dari terkecil ke terbesar) agar progresi rapi
-        monstersArray.sort((a, b) => (a.levelReq || 1) - (b.levelReq || 1));
-
-        // Bersihkan tulisan "Memuat..." dan masukkan data asli
-        selectBox.innerHTML = '';
-        monstersArray.forEach(m => {
-            const levelText = m.levelReq ? `(Lv. ${m.levelReq})` : '';
-            // Tampilkan Nama, Level, dan Rekomendasi HP
-            selectBox.innerHTML += `<option value="${m.id}">💀 ${m.name} ${levelText} - HP: ${m.hp}</option>`;
-        });
-
-    } catch (err) {
-        console.error("Gagal memuat daftar monster untuk UI:", err);
-        selectBox.innerHTML = '<option value="">⚠️ Gagal terhubung ke server</option>';
-    }
-};
 
 // ==========================================
 // SISTEM KLAIM KODE REDEEM (GIFT CODE)
