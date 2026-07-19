@@ -2,7 +2,9 @@ import { db, auth } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { doc, getDoc, updateDoc, onSnapshot, runTransaction, collection, getDocs, query, where, writeBatch, addDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+// ==========================================
 // IMPORT MODULES UI
+// ==========================================
 import { loadUIComponents } from './ui-loader.js';
 loadUIComponents();
 
@@ -15,44 +17,60 @@ import {
     renderCoinMarketUI, renderWorldBossUI, renderLiveFriendsUI, setupRPGModal
 } from './modules/ui-renderer.js';
 
-// IMPORT MODULES SISTEM
-import { selectCharacterClass, addCharacterStat, startStaminaRegeneration, consumePotion } from './modules/character.js';
-import { equipFromInventory, sellItemToNPC, unequipItem } from './modules/inventory.js';
-import { attackMonster } from './modules/battle.js';
-import { listenToChat, sendChat } from './modules/chat.js';
-import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
-import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, rejectBid, cancelAuction, returnExpiredToMail } from './modules/auction.js';
-import { listenToParties, createOrJoinParty, leaveParty, startFbBattle } from './modules/party.js';
-import { getUpdatedQuests } from './modules/quest.js';
-import './modules/quest.js';
-import { listenToGuilds, createGuild, joinGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, kickMember, disbandGuild } from './modules/guild.js';
-import { listenToMailbox, claimMailReward, deleteMail } from './modules/mailbox.js';
-import { dismantleItemAction, DISMANTLE_CONFIG, CRAFTING_RECIPES, craftItemAction } from './modules/crafting.js';
+// ==========================================
+// IMPORT DATA & DATABASE LOKAL
+// ==========================================
 import { ITEM_DB, syncItemsFromFirebase } from './data/items.js';
-import { executeRefineAction } from './modules/blacksmith.js';
-
 import { MONSTER_DB } from './data/monsters.js';
+
+// ==========================================
+// IMPORT CORE SYSTEMS (Mesin Utama)
+// ==========================================
+import { setupActionRouters } from './modules/action-routers.js';
 import './modules/game-state.js';
-import './modules/coin-market.js';
-import { listenToCoinMarket } from './modules/coin-market.js';
-import './modules/refine-transfer.js';
-import './modules/world-boss.js';
-import { listenToWorldBoss } from './modules/world-boss.js';
-import './modules/tower.js';
-import { renderTowerUI } from './modules/tower.js';
-import './modules/expedition.js';
-import { renderExpeditionUI } from './modules/expedition.js';
-import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend } from './modules/friends.js';
-import './modules/inventory-modes.js';
-import { processReincarnation } from './modules/reincarnation.js';
-import { executePurchase } from './modules/shop.js';
-import { getLeaderboardData } from './modules/leaderboard.js';
-import { listenToPKZone, enterPKZone, leavePKZone, executePKBattle } from './modules/pk-system.js';
-import { fetchMonsterData, calculateMonsterDrops, getDungeonMonstersList } from './modules/dungeon-system.js';
-import { claimGiftCodeTransaction } from './modules/redeem-system.js';
 import { loadCloudItems } from './modules/item-system.js';
 import { setupMaintenanceMonitor } from './modules/maintenance-system.js';
-import { setupActionRouters } from './modules/action-routers.js';
+
+// ==========================================
+// IMPORT CHARACTER, COMBAT & DUNGEON
+// ==========================================
+import { attackMonster } from './modules/battle.js';
+import { selectCharacterClass, addCharacterStat, startStaminaRegeneration, consumePotion } from './modules/character.js';
+import { fetchMonsterData, calculateMonsterDrops, getDungeonMonstersList } from './modules/dungeon-system.js';
+import { equipFromInventory, sellItemToNPC, unequipItem } from './modules/inventory.js';
+import './modules/inventory-modes.js';
+import { listenToPKZone, enterPKZone, leavePKZone, executePKBattle } from './modules/pk-system.js';
+import { processReincarnation } from './modules/reincarnation.js';
+
+// ==========================================
+// IMPORT SOCIAL (Guild, Party, Teman & Chat)
+// ==========================================
+import { listenToChat, sendChat } from './modules/chat.js';
+import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend } from './modules/friends.js';
+import { listenToGuilds, createGuild, joinGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, kickMember, disbandGuild } from './modules/guild.js';
+import { listenToParties, createOrJoinParty, leaveParty, startFbBattle } from './modules/party.js';
+
+// ==========================================
+// IMPORT ECONOMY (Bank, Lelang, Market, Toko)
+// ==========================================
+import { listenToAuction, listAuctionItem, buyAuctionItem, placeBid, acceptBid, rejectBid, cancelAuction, returnExpiredToMail } from './modules/auction.js';
+import { depositGold, withdrawGold, depositItem, withdrawItem } from './modules/bank.js';
+import { listenToCoinMarket } from './modules/coin-market.js';
+import { claimGiftCodeTransaction } from './modules/redeem-system.js';
+import { executePurchase } from './modules/shop.js';
+
+// ==========================================
+// IMPORT PROGRESSION (Aktivitas & Misi)
+// ==========================================
+import { executeRefineAction } from './modules/blacksmith.js';
+import { dismantleItemAction, DISMANTLE_CONFIG, CRAFTING_RECIPES, craftItemAction } from './modules/crafting.js';
+import { renderExpeditionUI } from './modules/expedition.js';
+import { getLeaderboardData } from './modules/leaderboard.js';
+import { listenToMailbox, claimMailReward, deleteMail } from './modules/mailbox.js';
+import { getUpdatedQuests } from './modules/quest.js';
+import './modules/refine-transfer.js';
+import { renderTowerUI } from './modules/tower.js';
+import { listenToWorldBoss } from './modules/world-boss.js';
 
 // VARIABEL GLOBAL
 let inventoryMode = "EQUIP";

@@ -1,0 +1,42 @@
+📁 Project Game RPG
+├── 📄 index.html              (Antarmuka utama, tombol, dan panel UI)
+├── 📄 firebase-config.js      (Koneksi inti ke database Firestore & Auth)
+├── 📄 game.js                 (Jantung Utama: Mengurus Login/Logout & Sinkronisasi Live)
+│
+├── 📁 data/                   (Database Lokal / Kamus Game)
+│   ├── 📄 items.js            (Daftar stat & info equip/batu)
+│   └── 📄 monsters.js         (Daftar HP bos, chance drop FB, dll)
+│
+└── 📁 modules/                (Otak & Logika Game yang Terpisah)
+    │
+    ├── ⚙️ CORE & ROUTERS (Pengendali Utama)
+    │   ├── 📄 action-routers.js       (Mendeteksi semua klik tombol pemain)
+    │   ├── 📄 game-state.js           (Menyimpan status sementara game)
+    │   ├── 📄 item-system.js          (Menarik data item dari Cloud ke lokal)
+    │   └── 📄 maintenance-system.js   (Satpam gerbang saat server maintenance)
+    │
+    ├── 🎨 UI RENDERERS (Penggambar Tampilan HTML)
+    │   ├── 📄 ui-renderer.js          (Terminal pusat export semua UI)
+    │   ├── 📄 ui-modal.js             (Sistem pop-up alert/confirm kustom)
+    │   ├── 📄 ui-live-panels.js       (UI untuk World Boss, Coin Market, Live Friends)
+    │   └── 📄 ui-*.js                 (File UI spesifik lainnya seperti quest, crafting, dll)
+    │
+    ├── ⚔️ RPG FEATURES (Logika Fitur Permainan)
+    │   ├── 📄 character.js            (Bikin char, minum potion, naik stat)
+    │   ├── 📄 battle.js & dungeon-system.js (Kalkulasi damage, drop rate, RNG)
+    │   ├── 📄 pk-system.js & reincarnation.js (Fitur end-game player)
+    │   └── 📄 blacksmith.js & crafting.js     (Sistem tempa dan lebur equip)
+    │
+    ├── 💰 ECONOMY & ITEMS (Sistem Ekonomi)
+    │   ├── 📄 inventory.js & inventory-modes.js (Pakai, jual, pindah barang)
+    │   ├── 📄 bank.js                 (Simpan/tarik gold & equip)
+    │   ├── 📄 auction.js              (Pasar lelang antar pemain)
+    │   ├── 📄 coin-market.js          (Bursa jual beli koin)
+    │   └── 📄 shop.js & redeem-system.js (Toko NPC & klaim kode hadiah)
+    │
+    └── 🤝 SOCIAL & MULTIPLAYER (Interaksi Antar Pemain)
+        ├── 📄 chat.js                 (Obrolan World, Guild, Party)
+        ├── 📄 guild.js                (Donasi, upgrade, kick member)
+        ├── 📄 party.js                (Ruang tunggu dan eksekusi Fuben)
+        ├── 📄 friends.js              (Tambah/hapus teman)
+        └── 📄 mailbox.js              (Kirim hadiah dan klaim surat expired)

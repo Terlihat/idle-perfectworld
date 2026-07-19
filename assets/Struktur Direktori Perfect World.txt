@@ -1,0 +1,96 @@
+📁 idle-perfectworld/
+│
+├── 📁 admin/                  (Folder panel admin game)
+├── 📁 assets/                 (Folder gambar, ikon, atau aset visual)
+├── 📁 css/                    (Folder styling antarmuka)
+│
+├── 📁 components/             (Pecahan UI HTML Modular)
+│   ├── 📄 auction.html
+│   ├── 📄 auth.html
+│   ├── 📄 bank.html
+│   ├── 📄 blacksmith.html
+│   ├── 📄 char-select.html
+│   ├── 📄 chat-box.html
+│   ├── 📄 coin-market.html
+│   ├── 📄 crafting.html
+│   ├── 📄 dungeon.html
+│   ├── 📄 expedition.html
+│   ├── 📄 friends.html
+│   ├── 📄 guild.html
+│   ├── 📄 inventory.html
+│   ├── 📄 leaderboard.html
+│   ├── 📄 mailbox.html
+│   ├── 📄 mall.html
+│   ├── 📄 modals.html
+│   ├── 📄 navigation.html
+│   └── 📄 party.html
+│
+├── 📁 data/                   (Database Mentah / Statis)
+│   └── 📄 items.json          (Katalog lengkap data item format JSON)
+│
+├── 📁 js/                     (Pusat Logika JavaScript)
+│   │
+│   ├── 📁 data/               (Kamus Game)
+│   │   ├── 📄 items.js
+│   │   └── 📄 monsters.js
+│   │
+│   ├── 📁 modules/            (Otak Game - Hasil Refactoring Kita!)
+│   │   ├── 📄 action-routers.js
+│   │   ├── 📄 apothecary.js   <-- (Fitur tambahan yang Anda miliki)
+│   │   ├── 📄 auction.js
+│   │   ├── 📄 bank.js
+│   │   ├── 📄 battle.js
+│   │   ├── 📄 blacksmith.js
+│   │   ├── 📄 character.js
+│   │   ├── 📄 chat.js
+│   │   ├── 📄 coin-market.js
+│   │   ├── 📄 crafting.js
+│   │   ├── 📄 dungeon-system.js
+│   │   ├── 📄 expedition.js
+│   │   ├── 📄 friends.js
+│   │   ├── 📄 game-state.js
+│   │   ├── 📄 guild.js
+│   │   ├── 📄 inventory-modes.js
+│   │   ├── 📄 inventory.js
+│   │   ├── 📄 item-system.js
+│   │   ├── 📄 leaderboard.js
+│   │   ├── 📄 mailbox.js
+│   │   ├── 📄 maintenance-system.js
+│   │   ├── 📄 mall.js
+│   │   ├── 📄 party.js
+│   │   ├── 📄 pk-system.js
+│   │   ├── 📄 quest.js
+│   │   ├── 📄 redeem-system.js
+│   │   ├── 📄 refine-transfer.js
+│   │   ├── 📄 reincarnation.js
+│   │   ├── 📄 shop.js
+│   │   ├── 📄 tower.js
+│   │   ├── 📄 ui-crafting.js
+│   │   ├── 📄 ui-dungeon.js
+│   │   ├── 📄 ui-friends.js
+│   │   ├── 📄 ui-inventory.js
+│   │   ├── 📄 ui-live-panels.js
+│   │   ├── 📄 ui-modal.js
+│   │   ├── 📄 ui-pk.js
+│   │   ├── 📄 ui-player.js
+│   │   ├── 📄 ui-private-chat.js
+│   │   ├── 📄 ui-quest.js
+│   │   ├── 📄 ui-redeem.js
+│   │   ├── 📄 ui-renderer.js
+│   │   ├── 📄 ui-social.js
+│   │   ├── 📄 ui-support.js
+│   │   ├── 📄 ui-utils.js
+│   │   ├── 📄 ui-world.js
+│   │   ├── 📄 vip.js          <-- (Fitur tambahan yang Anda miliki)
+│   │   └── 📄 world-boss.js
+│   │
+│   ├── 📄 auth.js             (Manajemen Autentikasi terpisah)
+│   ├── 📄 firebase-config.js  (Koneksi Database)
+│   ├── 📄 game.js             (Jantung Eksekusi & Sinkronisasi Live)
+│   └── 📄 ui-loader.js        (Mesin penarik HTML dari folder components/)
+│
+├── 📄 index.html              (Kerangka Utama Game)
+├── 📄 mapper.html             (Tool/Fitur Tambahan Pemetaan)
+├── 📄 favicon.ico
+├── 📄 LICENSE
+└── 📄 README.md
