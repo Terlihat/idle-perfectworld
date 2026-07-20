@@ -15,7 +15,6 @@
             padding: 0;
             height: 100vh;
             overflow: hidden;
-            /* Mencegah scroll di seluruh layar */
         }
 
         /* ================= SIDEBAR PANEL (KIRI) ================= */
@@ -34,27 +33,27 @@
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
             z-index: 100;
             transition: transform 0.3s ease-in-out;
-            /* Animasi bergeser */
         }
 
-        /* Class untuk menyembunyikan sidebar ke kiri */
         .sidebar.hidden {
             transform: translateX(-100%);
         }
 
-        /* Tombol Toggle Sidebar */
+        /* Tombol Toggle Sidebar (DITENGAHKAN) */
         #btn-toggle-sidebar {
             position: absolute;
-            top: 15px;
+            top: 50%;
+            /* Turunkan ke tengah layar */
+            transform: translateY(-50%);
+            /* Kunci tepat di tengah */
             right: -30px;
-            /* Menonjol ke luar sidebar */
             width: 30px;
-            height: 40px;
+            height: 60px;
+            /* Dibuat lebih tinggi agar mudah diklik */
             background: #1c1c24;
             border: 1px solid #3f3f52;
             border-left: none;
-            /* Menyatu dengan sidebar */
-            border-radius: 0 4px 4px 0;
+            border-radius: 0 6px 6px 0;
             color: #00d2ff;
             cursor: pointer;
             display: flex;
@@ -62,6 +61,7 @@
             align-items: center;
             font-size: 16px;
             z-index: 101;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
         }
 
         #btn-toggle-sidebar:hover {
@@ -78,7 +78,6 @@
             padding-bottom: 10px;
         }
 
-        /* Input Item */
         .input-group {
             margin-bottom: 15px;
         }
@@ -107,7 +106,6 @@
             box-shadow: 0 0 5px #ffcc00;
         }
 
-        /* Preview (Kaca Pembesar) */
         .preview-box {
             text-align: center;
             margin-bottom: 15px;
@@ -116,7 +114,6 @@
         #preview-container {
             width: 96px;
             height: 96px;
-            /* Ukuran 32x32 di-zoom 3x */
             margin: 0 auto;
             border: 2px solid #ffcc00;
             border-radius: 4px;
@@ -131,7 +128,6 @@
             left: 0;
             transform-origin: top left;
             transform: scale(3);
-            /* Zoom 3x */
             image-rendering: pixelated;
             pointer-events: none;
         }
@@ -143,7 +139,6 @@
             font-family: monospace;
         }
 
-        /* Riwayat / Textarea */
         #history-box {
             flex-grow: 1;
             width: 100%;
@@ -174,15 +169,12 @@
             background: #0a0a0c;
             box-sizing: border-box;
             transition: left 0.3s ease-in-out;
-            /* Animasi pelebaran layar */
         }
 
-        /* Class untuk memperlebar area saat sidebar disembunyikan */
         .scroll-container.expanded {
             left: 0;
         }
 
-        /* Bungkus Gambar dan Grid Sorot */
         #img-wrapper {
             position: relative;
             display: inline-block;
@@ -195,7 +187,6 @@
             cursor: crosshair;
         }
 
-        /* Kotak Kuning Sorotan (Snap to Grid) */
         #hover-box {
             position: absolute;
             border: 2px solid #ffcc00;
@@ -215,7 +206,8 @@
             background: rgba(20, 20, 26, 0.4);
             backdrop-filter: blur(5px);
             padding: 8px 12px;
-            border: 1px solid rgba(255, 204, 0, 0.3);
+            border: 1px solid #3f3f52;
+            /* Diubah agar senada dengan UI */
             border-radius: 8px;
             display: flex;
             gap: 8px;
@@ -223,43 +215,46 @@
             transition: transform 0.3s ease-in-out, background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
         }
 
-        /* Class untuk menyembunyikan panel zoom ke kanan luar layar */
         .controls.hidden {
             transform: translateX(calc(100% + 30px));
         }
 
         .controls:hover {
             background: rgba(20, 20, 26, 0.95);
-            border: 1px solid rgba(255, 204, 0, 1);
+            border: 1px solid #00d2ff;
+            /* Efek hover biru cerah */
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.8);
         }
 
-        /* Tombol Toggle Controls */
+        /* Tombol Toggle Controls (DISESUAIKAN WARNANYA) */
         #btn-toggle-controls {
             position: absolute;
             left: -30px;
-            /* Menonjol ke luar panel kontrol */
             top: 50%;
             transform: translateY(-50%);
+            /* Pas di tengah panel zoom */
             width: 30px;
-            height: 40px;
+            height: 60px;
+            /* Tinggi disamakan dengan toggle sidebar */
             background: rgba(20, 20, 26, 0.95);
-            border: 1px solid rgba(255, 204, 0, 1);
+            border: 1px solid #3f3f52;
+            /* Warna senada dengan border biasa */
             border-right: none;
-            /* Menyatu dengan panel */
-            border-radius: 4px 0 0 4px;
-            color: #ffcc00;
+            border-radius: 6px 0 0 6px;
+            color: #00d2ff;
+            /* Warna panah disamakan dengan sidebar */
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 16px;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3);
         }
 
         #btn-toggle-controls:hover {
             background: #3f3f52;
             color: #fff;
-            border-color: #fff;
+            border-color: #00d2ff;
         }
 
         button.zoom-btn {
@@ -284,7 +279,6 @@
             background: #c82333 !important;
         }
 
-        /* Pesan Notifikasi Sukses */
         #toast {
             position: fixed;
             top: 20px;
@@ -359,10 +353,8 @@
         const img = document.getElementById('sprite-img');
         const imgWrapper = document.getElementById('img-wrapper');
         const hoverBox = document.getElementById('hover-box');
-
         const previewImg = document.getElementById('preview-img');
         const coordDisplay = document.getElementById('coord-display');
-
         const inputName = document.getElementById('item-name');
         const historyBox = document.getElementById('history-box');
         const toast = document.getElementById('toast');
@@ -371,11 +363,9 @@
         let scale = 1;
         let baseWidth = 0;
 
-        // Ambil dimensi asli gambar
         img.onload = () => { baseWidth = img.naturalWidth; };
         if (img.complete) { baseWidth = img.naturalWidth; }
 
-        // --- SISTEM ZOOM ---
         function zoom(factor) {
             if (baseWidth === 0) baseWidth = img.naturalWidth;
             scale *= factor;
@@ -395,12 +385,10 @@
             hoverBox.style.display = 'none';
         }
 
-        // --- SISTEM KACA PEMBESAR & SOROTAN ---
         imgWrapper.addEventListener('mousemove', function (e) {
             const rect = imgWrapper.getBoundingClientRect();
             const rawX = (e.clientX - rect.left) / scale;
             const rawY = (e.clientY - rect.top) / scale;
-
             const col = Math.floor(rawX / 32);
             const row = Math.floor(rawY / 32);
 
@@ -414,7 +402,6 @@
 
             previewImg.style.left = `-${col * 32 * 3}px`;
             previewImg.style.top = `-${row * 32 * 3}px`;
-
             coordDisplay.innerText = `Kolom: ${col} | Baris: ${row}`;
         });
 
@@ -422,7 +409,6 @@
             hoverBox.style.display = 'none';
         });
 
-        // --- SISTEM KLIK & GENERATE JSON ---
         imgWrapper.addEventListener('click', function (e) {
             const rect = imgWrapper.getBoundingClientRect();
             const col = Math.floor(((e.clientX - rect.left) / scale) / 32);
@@ -432,17 +418,13 @@
             if (!itemName) itemName = `Item_Baru_${col}_${row}`;
 
             const jsonLine = `"${itemName}": {"col": ${col}, "row": ${row}},\n`;
-
             historyBox.value += jsonLine;
             historyBox.scrollTop = historyBox.scrollHeight;
-
             inputName.value = '';
             inputName.focus();
-
             showToast(`✅ [${itemName}] ditambahkan!`);
         });
 
-        // --- SALIN & HAPUS JSON ---
         function copyAllJSON() {
             if (historyBox.value.trim() === '') {
                 showToast("⚠️ Daftar masih kosong!", "#dc3545");
@@ -478,7 +460,6 @@
             sidebar.classList.toggle('hidden');
             scrollArea.classList.toggle('expanded');
 
-            // Ubah arah panah
             if (sidebar.classList.contains('hidden')) {
                 btn.innerText = '▶';
             } else {
@@ -492,7 +473,6 @@
 
             controls.classList.toggle('hidden');
 
-            // Ubah arah panah
             if (controls.classList.contains('hidden')) {
                 btn.innerText = '◀';
             } else {
@@ -505,7 +485,6 @@
         // ==========================================
         const scrollArea = document.getElementById('scroll-area');
 
-        // 1. KONTROL KEYBOARD
         window.addEventListener('keydown', function (e) {
             const isTyping = (document.activeElement === inputName || document.activeElement === historyBox);
             const speed = 50;
@@ -534,7 +513,6 @@
             }
         });
 
-        // 2. KONTROL KLIK KANAN & GESER (MOUSE DRAG)
         let isDragging = false;
         let startX, startY, scrollLeft, scrollTop;
 
