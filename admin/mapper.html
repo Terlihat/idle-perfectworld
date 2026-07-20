@@ -39,17 +39,14 @@
             transform: translateX(-100%);
         }
 
-        /* Tombol Toggle Sidebar (DITENGAHKAN) */
+        /* Tombol Toggle Sidebar (Di Tengah Kanan) */
         #btn-toggle-sidebar {
             position: absolute;
             top: 50%;
-            /* Turunkan ke tengah layar */
             transform: translateY(-50%);
-            /* Kunci tepat di tengah */
             right: -30px;
             width: 30px;
             height: 60px;
-            /* Dibuat lebih tinggi agar mudah diklik */
             background: #1c1c24;
             border: 1px solid #3f3f52;
             border-left: none;
@@ -175,6 +172,18 @@
             left: 0;
         }
 
+        /* HILANGKAN SCROLLBAR SAAT MODE FULLSCREEN (Ditambahkan via JS) */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            /* IE dan Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
         #img-wrapper {
             position: relative;
             display: inline-block;
@@ -201,60 +210,47 @@
         .controls {
             position: fixed;
             bottom: 30px;
-            right: 30px;
+            right: 20px;
             z-index: 9999;
-            background: rgba(20, 20, 26, 0.4);
+            background: rgba(20, 20, 26, 0.75);
             backdrop-filter: blur(5px);
             padding: 8px 12px;
             border: 1px solid #3f3f52;
-            /* Diubah agar senada dengan UI */
             border-radius: 8px;
             display: flex;
             gap: 8px;
             align-items: center;
-            transition: transform 0.3s ease-in-out, background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease-in-out, background 0.3s ease, box-shadow 0.3s ease;
         }
 
+        /* Geser panel ke kanan, tapi sisakan 35px agar tombol panah tetap terlihat */
         .controls.hidden {
-            transform: translateX(calc(100% + 30px));
+            transform: translateX(calc(100% - 35px));
         }
 
         .controls:hover {
             background: rgba(20, 20, 26, 0.95);
             border: 1px solid #00d2ff;
-            /* Efek hover biru cerah */
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.8);
         }
 
-        /* Tombol Toggle Controls (DISESUAIKAN WARNANYA) */
+        /* Tombol Panah Menyatu dalam Panel */
         #btn-toggle-controls {
-            position: absolute;
-            left: -30px;
-            top: 50%;
-            transform: translateY(-50%);
-            /* Pas di tengah panel zoom */
-            width: 30px;
-            height: 60px;
-            /* Tinggi disamakan dengan toggle sidebar */
-            background: rgba(20, 20, 26, 0.95);
-            border: 1px solid #3f3f52;
-            /* Warna senada dengan border biasa */
-            border-right: none;
-            border-radius: 6px 0 0 6px;
+            background: transparent;
+            border: none;
             color: #00d2ff;
-            /* Warna panah disamakan dengan sidebar */
+            font-size: 18px;
             cursor: pointer;
+            padding: 0 5px 0 0;
             display: flex;
-            justify-content: center;
             align-items: center;
-            font-size: 16px;
-            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3);
+            justify-content: center;
+            font-weight: bold;
+            outline: none;
         }
 
         #btn-toggle-controls:hover {
-            background: #3f3f52;
             color: #fff;
-            border-color: #00d2ff;
         }
 
         button.zoom-btn {
@@ -269,6 +265,14 @@
 
         button.zoom-btn:hover {
             background: #0056b3;
+        }
+
+        .btn-fullscreen {
+            background: #6f42c1 !important;
+        }
+
+        .btn-fullscreen:hover {
+            background: #5a32a3 !important;
         }
 
         .btn-reset {
@@ -339,7 +343,12 @@
     </div>
 
     <div class="controls" id="controls-panel">
-        <button id="btn-toggle-controls" onclick="toggleControls()" title="Sembunyikan/Tampilkan Zoom">▶</button>
+        <!-- Tombol panah sekarang ada di dalam flexbox -->
+        <button id="btn-toggle-controls" onclick="toggleControls()" title="Sembunyikan/Tampilkan Panel">▶</button>
+
+        <!-- Fitur Baru: Fullscreen -->
+        <button class="zoom-btn btn-fullscreen" id="btn-fullscreen" onclick="toggleFullScreen()">🖥️ Fullscreen</button>
+
         <button class="zoom-btn" onclick="zoom(1.2)">➕ Zoom In</button>
         <button class="zoom-btn" onclick="zoom(0.8)">➖ Zoom Out</button>
         <button class="zoom-btn btn-reset" onclick="resetZoom()">🔄 Reset Zoom</button>
@@ -450,6 +459,37 @@
         window.onload = () => { inputName.focus(); };
 
         // ==========================================
+        // SISTEM FULLSCREEN (BARU)
+        // ==========================================
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    showToast(`⚠️ Gagal Fullscreen: ${err.message}`, "#dc3545");
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Pantau perubahan mode Fullscreen untuk menghilangkan/memunculkan Scrollbar
+        document.addEventListener('fullscreenchange', () => {
+            const scrollArea = document.getElementById('scroll-area');
+            const btnFs = document.getElementById('btn-fullscreen');
+
+            if (document.fullscreenElement) {
+                // Saat masuk fullscreen, sembunyikan scrollbar
+                scrollArea.classList.add('no-scrollbar');
+                btnFs.innerHTML = "🗗 Keluar Fullscreen";
+            } else {
+                // Saat keluar fullscreen, kembalikan scrollbar
+                scrollArea.classList.remove('no-scrollbar');
+                btnFs.innerHTML = "🖥️ Fullscreen";
+            }
+        });
+
+        // ==========================================
         // SISTEM TOGGLE (SIDEBAR & CONTROLS)
         // ==========================================
         function toggleSidebar() {
@@ -474,9 +514,9 @@
             controls.classList.toggle('hidden');
 
             if (controls.classList.contains('hidden')) {
-                btn.innerText = '◀';
+                btn.innerText = '◀'; // Panah balik ke kiri agar bisa ditarik
             } else {
-                btn.innerText = '▶';
+                btn.innerText = '▶'; // Panah ke kanan
             }
         }
 
