@@ -347,12 +347,12 @@
         <button id="btn-toggle-controls" onclick="toggleControls()" title="Sembunyikan/Tampilkan Panel">▶</button>
 
         <!-- Fitur Baru: Fullscreen -->
-        <button class="zoom-btn btn-fullscreen" id="btn-fullscreen" onclick="toggleFullScreen()">🖥️ Fullscreen</button>
+        <button class="zoom-btn btn-fullscreen" id="btn-fullscreen" onclick="toggleFullScreen()">🖥️ F11</button>
 
-        <button class="zoom-btn" onclick="zoom(1.2)">➕ Zoom In</button>
-        <button class="zoom-btn" onclick="zoom(0.8)">➖ Zoom Out</button>
-        <button class="zoom-btn btn-reset" onclick="resetZoom()">🔄 Reset Zoom</button>
-        <span id="zoom-level" style="margin-left: 10px; font-size: 14px; color:#fff; font-weight: bold;">Skala:
+        <button class="zoom-btn" onclick="zoom(1.2)">➕ In</button>
+        <button class="zoom-btn" onclick="zoom(0.8)">➖ Out</button>
+        <button class="zoom-btn btn-reset" onclick="resetZoom()">🔄 Reset</button>
+        <span id="zoom-level" style="margin-left: 10px; font-size: 14px; color:#fff; font-weight: bold;">1:
             1.0x</span>
     </div>
 
@@ -481,11 +481,11 @@
             if (document.fullscreenElement) {
                 // Saat masuk fullscreen, sembunyikan scrollbar
                 scrollArea.classList.add('no-scrollbar');
-                btnFs.innerHTML = "🗗 Keluar Fullscreen";
+                btnFs.innerHTML = "🗗 Exit F11";
             } else {
                 // Saat keluar fullscreen, kembalikan scrollbar
                 scrollArea.classList.remove('no-scrollbar');
-                btnFs.innerHTML = "🖥️ Fullscreen";
+                btnFs.innerHTML = "🖥️ F11";
             }
         });
 
