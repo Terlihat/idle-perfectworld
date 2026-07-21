@@ -131,14 +131,16 @@ window.handleInventoryClick = async function (itemName) {
 // ==========================================
 // ROUTER KLIK LAINNYA (BANK, MAIL, LELANG, DLL)
 // ==========================================
-window.handleBankClick = async function (itemName) {
-    const stats = window.currentPlayerStats || {};
-    const bankInv = window.currentBankInventoryData || stats.bankInventory || {};
-    const totalItemDiBank = bankInv[itemName] || 0;
+window.handleBankClick = async function (itemName, passedQty) {
+
+    const totalItemDiBank = passedQty || 0;
 
     const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ditarik?`, "Tarik dari Bank", "number", totalItemDiBank);
     const qty = parseInt(qtyStr);
-    if (qty > 0) withdrawItem(db, window.currentUserUid, itemName, qty);
+
+    if (qty > 0) {
+        withdrawItem(db, window.currentUserUid, itemName, qty);
+    }
 };
 
 window.claimMail = function (mailId) { claimMailReward(db, window.currentUserUid, mailId); };

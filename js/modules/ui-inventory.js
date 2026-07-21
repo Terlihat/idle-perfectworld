@@ -107,7 +107,7 @@ export function renderBankUI(bankInventory) {
             let baseName = name.replace(/\s\[\+\d+\]$/, '');
 
             bankGrid.innerHTML += `
-            <div class="bank-slot filled" onclick="window.handleBankClick('${escapeHTML(name)}')">
+            <div class="bank-slot filled" onclick="window.handleBankClick('${escapeHTML(name)}', ${qty})">
                 ${getIconHTML(baseName)}
                 <span style="font-size:10px;">${escapeHTML(name)}</span>
                 <span class="inv-qty">x${qty}</span>
