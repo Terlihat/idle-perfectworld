@@ -84,14 +84,17 @@ window.handleInventoryClick = async function (itemName) {
     }
     else if (modeSaatIni === "SELL") { sellItemToNPC(db, uid, itemName); }
     else if (modeSaatIni === "BANK") {
-        const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ingin disimpan?`, "Simpan ke Bank", "number");
+        const inv = stats.inventory || {};
+        const totalItemDiTas = inv[itemName] || 0;
+
+        const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ingin disimpan?`, "Simpan ke Bank", "number", totalItemDiTas);
         const qty = parseInt(qtyStr);
         if (qty > 0) depositItem(db, uid, itemName, qty);
     }
     else if (modeSaatIni === "AUCTION") {
-        const itemDilarangPersis = ["Dragon Orb (1 Star)","Dragon Orb (2 Star)","Dragon Orb (3 Star)","Dragon Orb (4 Star)","Dragon Orb (5 Star)","Dragon Orb (6 Star)","Dragon Orb (7 Star)","Dragon Orb (8 Star)","Dragon Orb (9 Star)","Dragon Orb Ocean","Dragon Orb Mirage","Dragon Orb Flame","Mahkota Kaisar Surga","Pedang Kaisar Langit","Senjata Dewa: Ragnarok","Senjata Dewa: Nirvana","Zirah Dewa: Aegis","Naga Terbang","Ramuan Stamina"];
+        const itemDilarangPersis = ["Dragon Orb (1 Star)", "Dragon Orb (2 Star)", "Dragon Orb (3 Star)", "Dragon Orb (4 Star)", "Dragon Orb (5 Star)", "Dragon Orb (6 Star)", "Dragon Orb (7 Star)", "Dragon Orb (8 Star)", "Dragon Orb (9 Star)", "Dragon Orb Ocean", "Dragon Orb Mirage", "Dragon Orb Flame", "Mahkota Kaisar Surga", "Pedang Kaisar Langit", "Senjata Dewa: Ragnarok", "Senjata Dewa: Nirvana", "Zirah Dewa: Aegis", "Naga Terbang", "Ramuan Stamina"];
         if (itemDilarangPersis.includes(itemName) || itemName.startsWith("Tiket") || itemName.startsWith("Buku")) return window.rpgAlert("Item premium ini terikat pada karakter dan tidak bisa dilelang.");
-        
+
         const priceStr = await window.rpgPrompt(`Masukkan Harga Beli Langsung (Gold) untuk 1x [${itemName}]:`, "Jual ke Lelang", "number");
         const price = parseInt(priceStr);
         if (price > 0) listAuctionItem(db, uid, itemName, price, window.playerUsername);
@@ -129,7 +132,11 @@ window.handleInventoryClick = async function (itemName) {
 // ROUTER KLIK LAINNYA (BANK, MAIL, LELANG, DLL)
 // ==========================================
 window.handleBankClick = async function (itemName) {
-    const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ditarik?`, "Tarik dari Bank", "number");
+    const stats = window.currentPlayerStats || {};
+    const bankInv = stats.bankInventory || {};
+    const totalItemDiBank = bankInv[itemName] || 0;
+
+    const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ditarik?`, "Tarik dari Bank", "number", totalItemDiBank);
     const qty = parseInt(qtyStr);
     if (qty > 0) withdrawItem(db, window.currentUserUid, itemName, qty);
 };
@@ -150,7 +157,7 @@ window.deleteAllMails = async function () {
             const isSudahDiKlaim = data.isClaimed === true || data.isClaimed === "true";
             if (!isPunyaHadiah || isSudahDiKlaim) { batch.delete(docSnap.ref); deletedCount++; }
         });
-        if (deletedCount > 0) { await batch.commit(); window.rpgAlert(`🧹 ${deletedCount} surat dibersihkan!`, "Sukses"); } 
+        if (deletedCount > 0) { await batch.commit(); window.rpgAlert(`🧹 ${deletedCount} surat dibersihkan!`, "Sukses"); }
         else window.rpgAlert("Tidak ada surat yang bisa dihapus.", "Kotak Bersih");
     } catch (err) { window.rpgAlert(`Gagal: ${err.message}`, "Sistem Error"); }
 };
@@ -161,7 +168,7 @@ window.placeBid = async function (id, name, currentBid) {
     const minBid = currentBid > 0 ? currentBid + 10 : 10;
     const bidStr = await window.rpgPrompt(`Tawaran untuk ${name} (Min: ${minBid}):`, "Tawar Lelang", "number");
     const bidAmt = parseInt(bidStr);
-    if (bidAmt >= minBid) placeBid(db, window.currentUserUid, window.playerUsername, id, bidAmt); 
+    if (bidAmt >= minBid) placeBid(db, window.currentUserUid, window.playerUsername, id, bidAmt);
     else if (bidStr) window.rpgAlert(`Minimal tawaran ${minBid} Gold.`);
 };
 window.actionBid = async function (id, action) {
@@ -175,8 +182,8 @@ window.leaveParty = function (partyId) { leaveParty(db, partyId, window.currentU
 window.startFb = async function (partyId) {
     if (window.isFbRunning) return;
     window.isFbRunning = true;
-    try { await startFbBattle(db, window.currentUserUid, partyId); } 
-    catch (err) { console.error("Gagal memulai FB:", err); } 
+    try { await startFbBattle(db, window.currentUserUid, partyId); }
+    catch (err) { console.error("Gagal memulai FB:", err); }
     finally { setTimeout(() => { window.isFbRunning = false; }, 1500); }
 };
 
@@ -240,7 +247,7 @@ window.resetCatalyst = function () {
 // SETUP EVENT LISTENERS UTAMA
 // ==========================================
 export function setupActionRouters() {
-    
+
     // INFO BOS FB
     document.addEventListener('change', (e) => {
         if (e.target.id === 'fb-select') {
@@ -321,7 +328,7 @@ export function setupActionRouters() {
     document.addEventListener('change', function (e) {
         if (e.target && e.target.name === 'char-class') {
             document.querySelectorAll('input[name="char-class"]').forEach(radio => { radio.parentElement.style.borderColor = "#3f3f52"; radio.parentElement.style.background = "#121216"; });
-            if (e.target.value === 'Warrior') { e.target.parentElement.style.borderColor = "#dc3545"; e.target.parentElement.style.background = "#1c152a"; } 
+            if (e.target.value === 'Warrior') { e.target.parentElement.style.borderColor = "#dc3545"; e.target.parentElement.style.background = "#1c152a"; }
             else if (e.target.value === 'Mage') { e.target.parentElement.style.borderColor = "#00d2ff"; e.target.parentElement.style.background = "#15201b"; }
         }
     });
@@ -339,9 +346,9 @@ export function setupActionRouters() {
         if (targetId === 'btn-copy-uid') { if (uid) { navigator.clipboard.writeText(uid); window.rpgAlert("📋 UID disalin!"); } }
 
         if (targetId.startsWith('btn-toggle-')) {
-            const map = {'btn-toggle-mall': 'panel-mall', 'btn-toggle-shop': 'panel-shop', 'btn-toggle-coin-market': 'panel-coin-market', 'btn-toggle-mail': 'panel-mailbox', 'btn-toggle-friends': 'panel-friends', 'btn-toggle-boss': 'panel-world-boss', 'btn-toggle-tower': 'panel-tower', 'btn-toggle-afk': 'panel-afk', 'btn-toggle-tickets': 'panel-tickets'};
+            const map = { 'btn-toggle-mall': 'panel-mall', 'btn-toggle-shop': 'panel-shop', 'btn-toggle-coin-market': 'panel-coin-market', 'btn-toggle-mail': 'panel-mailbox', 'btn-toggle-friends': 'panel-friends', 'btn-toggle-boss': 'panel-world-boss', 'btn-toggle-tower': 'panel-tower', 'btn-toggle-afk': 'panel-afk', 'btn-toggle-tickets': 'panel-tickets' };
             if (map[targetId]) window.togglePanel(map[targetId]);
-            
+
             if (targetId === 'btn-toggle-leaderboard') {
                 window.togglePanel('panel-leaderboard');
                 const lbContent = document.getElementById('leaderboard-content');
