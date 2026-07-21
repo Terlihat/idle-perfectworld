@@ -410,6 +410,9 @@ export function setupActionRouters() {
             const user = auth.currentUser;
             if (!newEmail || !user) return;
 
+            // 🔥 PERBAIKAN 2: Tutup modal pengaturan sebelum memunculkan konfirmasi
+            document.getElementById('settings-modal').style.display = 'none';
+
             if (await window.rpgConfirm(`Yakin ingin mengubah email menjadi ${newEmail}?`, "Ganti Email")) {
                 try {
                     await updateEmail(user, newEmail);
@@ -442,6 +445,9 @@ export function setupActionRouters() {
             const hasPassword = user.providerData.some(p => p.providerId === 'password');
             if (!hasPassword) return window.rpgAlert("❌ Anda mendaftar menggunakan Google. Tambahkan kata sandi terlebih dahulu sebelum unbind.");
 
+            // 🔥 PERBAIKAN 2: Tutup modal
+            document.getElementById('settings-modal').style.display = 'none';
+
             if (await window.rpgConfirm("Yakin ingin memutuskan tautan akun Google Anda?", "Unbind Akun")) {
                 try {
                     await unlink(user, 'google.com');
@@ -458,9 +464,13 @@ export function setupActionRouters() {
             const user = auth.currentUser;
             if (!user) return;
 
+            // 🔥 PERBAIKAN 2: Tutup modal
+            document.getElementById('settings-modal').style.display = 'none';
+
             const confirm1 = await window.rpgConfirm("⚠️ PERINGATAN KRITIS: Seluruh data karakter, item, dan progres Anda akan dihapus selamanya. Anda yakin?", "Hapus Akun");
             if (confirm1) {
-                const confirm2 = await window.rpgConfirm("Ketik 'HAPUS' (tanpa tanda kutip) untuk mengonfirmasi:", "Verifikasi Akhir", "text");
+                // 🔥 PERBAIKAN 3: Ganti rpgConfirm menjadi rpgPrompt agar muncul kolom input teks
+                const confirm2 = await window.rpgPrompt("Ketik 'HAPUS' (tanpa tanda kutip) untuk mengonfirmasi:", "Verifikasi Akhir", "text");
                 if (confirm2 === "HAPUS") {
                     try {
                         await deleteDoc(doc(db, "users", user.uid));
