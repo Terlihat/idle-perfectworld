@@ -309,19 +309,55 @@ export function setupActionRouters() {
         if (e.target && e.target.id === 'btn-create-char') {
             const charNameInput = document.getElementById('char-name-input');
             const classRadio = document.querySelector('input[name="char-class"]:checked');
+
             if (!charNameInput || !charNameInput.value.trim()) return window.rpgAlert("❌ Nama tidak boleh kosong!");
             if (!classRadio) return window.rpgAlert("❌ Pilih Class!");
 
+            const newCharName = charNameInput.value.trim();
+
+            // 🔥 VALIDASI 1: Cek Panjang Karakter (Misal minimal 4, maksimal 12)
+            if (newCharName.length < 4 || newCharName.length > 12) {
+                return window.rpgAlert("❌ Nama karakter harus antara 4 hingga 12 huruf!", "Nama Tidak Valid");
+            }
+
+            // 🔥 VALIDASI 2: Cek Karakter Aneh (Hanya izinkan huruf dan angka)
+            const regexAlphaNumeric = /^[a-zA-Z0-9]+$/;
+            if (!regexAlphaNumeric.test(newCharName)) {
+                return window.rpgAlert("❌ Nama hanya boleh berisi huruf dan angka (tanpa spasi/simbol)!", "Nama Tidak Valid");
+            }
+
             try {
-                e.target.innerText = "⏳ MENEMPA TAKDIR..."; e.target.style.background = "#555"; e.target.disabled = true;
+                e.target.innerText = "🔍 MEMERIKSA NAMA...";
+                e.target.style.background = "#555";
+                e.target.disabled = true;
+
+                // 🔥 VALIDASI 3: Pengecekan Nama Kembar di Database
+                const usersRef = collection(db, "users");
+                const q = query(usersRef, where("username", "==", newCharName));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    // Jika query tidak kosong, berarti nama sudah dipakai orang lain
+                    e.target.innerText = "🔥 Mulai Petualangan 🔥";
+                    e.target.style.background = "#ff9800";
+                    e.target.disabled = false;
+                    return window.rpgAlert(`❌ Nama pahlawan [<b>${newCharName}</b>] sudah digunakan oleh orang lain di server ini. Silakan cari nama lain.`, "Nama Telah Terpakai");
+                }
+
+                // Jika semua validasi lolos, lanjutkan pembuatan karakter
+                e.target.innerText = "⏳ MENEMPA TAKDIR...";
+
                 await selectCharacterClass(db, window.currentUserUid, classRadio.value);
-                await updateDoc(doc(db, "users", window.currentUserUid), { username: charNameInput.value.trim() });
-                const scChar = document.getElementById('screen-char-select'), scGame = document.getElementById('screen-game');
-                if (scChar) scChar.style.display = 'none';
-                if (scGame) scGame.style.display = 'block';
+                await updateDoc(doc(db, "users", window.currentUserUid), { username: newCharName });
+
+                // Refresh halaman agar masuk ke game dengan memori tas yang fresh
+                window.location.reload();
+
             } catch (error) {
                 window.rpgAlert("Gagal: " + error.message);
-                e.target.innerText = "🔥 Mulai Petualangan 🔥"; e.target.style.background = "#ff9800"; e.target.disabled = false;
+                e.target.innerText = "🔥 Mulai Petualangan 🔥";
+                e.target.style.background = "#ff9800";
+                e.target.disabled = false;
             }
         }
     });
