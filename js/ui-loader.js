@@ -41,7 +41,8 @@ export async function loadUIComponents() {
         { id: 'panel-tickets', file: './components/tickets.html' },
 
         // --- Sistem Modal & Pop-up ---
-        { id: 'component-modals', file: './components/modals.html' }
+        { id: 'component-modals', file: './components/modals.html' },
+        { id: 'component-settings', file: './components/settings.html' }
     ];
 
     for (let comp of components) {

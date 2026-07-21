@@ -1,8 +1,12 @@
 // ==========================================
 // SISTEM ROUTER & EVENT LISTENER GLOBAL
 // ==========================================
-import { db } from '../firebase-config.js';
-import { doc, updateDoc, collection, getDocs, writeBatch, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { db, auth } from '../firebase-config.js';
+import { doc, updateDoc, collection, getDocs, writeBatch, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js"; // 🔥 Tambahkan deleteDoc
+import { updateEmail, linkWithPopup, unlink, GoogleAuthProvider, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js"; // 🔥 Import modul Auth
+
+const googleProvider = new GoogleAuthProvider();
+
 import { MONSTER_DB } from '../data/monsters.js';
 import { ITEM_DB } from '../data/items.js';
 
@@ -382,6 +386,96 @@ export function setupActionRouters() {
 
         if (targetId === 'btn-admin-panel') window.location.href = './admin/index.html';
         if (targetId === 'btn-copy-uid') { if (uid) { navigator.clipboard.writeText(uid); window.rpgAlert("📋 UID disalin!"); } }
+
+        // LOGIKA PENGATURAN AKUN
+        if (targetId === 'btn-settings') {
+            const modal = document.getElementById('settings-modal');
+            const user = auth.currentUser;
+            if (modal && user) {
+                document.getElementById('settings-current-email').innerText = user.email || "Tidak ada email";
+                const isGoogleLinked = user.providerData.some(provider => provider.providerId === 'google.com');
+                document.getElementById('btn-link-google').style.display = isGoogleLinked ? 'none' : 'flex';
+                document.getElementById('btn-unlink-google').style.display = isGoogleLinked ? 'block' : 'none';
+                modal.style.display = 'flex';
+            }
+        }
+
+        if (targetId === 'btn-close-settings') {
+            const modal = document.getElementById('settings-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        if (targetId === 'btn-change-email') {
+            const newEmail = document.getElementById('settings-new-email').value;
+            const user = auth.currentUser;
+            if (!newEmail || !user) return;
+
+            if (await window.rpgConfirm(`Yakin ingin mengubah email menjadi ${newEmail}?`, "Ganti Email")) {
+                try {
+                    await updateEmail(user, newEmail);
+                    window.rpgAlert("Email berhasil diubah! Data di database juga akan disinkronkan.");
+                    document.getElementById('settings-current-email').innerText = newEmail;
+                    document.getElementById('settings-new-email').value = "";
+                } catch (error) {
+                    if (error.code === 'auth/requires-recent-login') window.rpgAlert("Demi keamanan, Anda harus Logout dan Login kembali sebelum dapat mengubah email.");
+                    else window.rpgAlert("Gagal mengubah email: " + error.message);
+                }
+            }
+        }
+
+        if (targetId === 'btn-link-google') {
+            const user = auth.currentUser;
+            if (!user) return;
+            try {
+                await linkWithPopup(user, googleProvider);
+                window.rpgAlert("Akun Google berhasil dihubungkan (Bind)!");
+                document.getElementById('btn-link-google').style.display = 'none';
+                document.getElementById('btn-unlink-google').style.display = 'block';
+            } catch (error) {
+                window.rpgAlert("Gagal menghubungkan Google: " + error.message);
+            }
+        }
+
+        if (targetId === 'btn-unlink-google') {
+            const user = auth.currentUser;
+            if (!user) return;
+            const hasPassword = user.providerData.some(p => p.providerId === 'password');
+            if (!hasPassword) return window.rpgAlert("❌ Anda mendaftar menggunakan Google. Tambahkan kata sandi terlebih dahulu sebelum unbind.");
+
+            if (await window.rpgConfirm("Yakin ingin memutuskan tautan akun Google Anda?", "Unbind Akun")) {
+                try {
+                    await unlink(user, 'google.com');
+                    window.rpgAlert("Akun Google berhasil dilepaskan (Unbind)!");
+                    document.getElementById('btn-link-google').style.display = 'flex';
+                    document.getElementById('btn-unlink-google').style.display = 'none';
+                } catch (error) {
+                    window.rpgAlert("Gagal melepaskan Google: " + error.message);
+                }
+            }
+        }
+
+        if (targetId === 'btn-delete-account') {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const confirm1 = await window.rpgConfirm("⚠️ PERINGATAN KRITIS: Seluruh data karakter, item, dan progres Anda akan dihapus selamanya. Anda yakin?", "Hapus Akun");
+            if (confirm1) {
+                const confirm2 = await window.rpgConfirm("Ketik 'HAPUS' (tanpa tanda kutip) untuk mengonfirmasi:", "Verifikasi Akhir", "text");
+                if (confirm2 === "HAPUS") {
+                    try {
+                        await deleteDoc(doc(db, "users", user.uid));
+                        await deleteUser(user);
+                        alert("Akun berhasil dihapus selamanya. Selamat tinggal Pahlawan!");
+                        window.location.reload();
+                    } catch (error) {
+                        if (error.code === 'auth/requires-recent-login') window.rpgAlert("Sistem menolak penghapusan. Anda harus Logout dan Login kembali sebelum menghapus akun.");
+                        else window.rpgAlert("Gagal menghapus akun: " + error.message);
+                    }
+                } else if (confirm2) {
+                    window.rpgAlert("Kata konfirmasi salah. Penghapusan dibatalkan.");
+                }
+            }
+        }
 
         if (targetId.startsWith('btn-toggle-')) {
             const map = { 'btn-toggle-mall': 'panel-mall', 'btn-toggle-shop': 'panel-shop', 'btn-toggle-coin-market': 'panel-coin-market', 'btn-toggle-mail': 'panel-mailbox', 'btn-toggle-friends': 'panel-friends', 'btn-toggle-boss': 'panel-world-boss', 'btn-toggle-tower': 'panel-tower', 'btn-toggle-afk': 'panel-afk', 'btn-toggle-tickets': 'panel-tickets' };

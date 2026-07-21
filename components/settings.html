@@ -1,0 +1,38 @@
+<!-- File: components/settings.html -->
+<div id="settings-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center;">
+    <div style="background:#121216; border:2px solid #6f42c1; border-radius:8px; padding:20px; width:350px; box-shadow: 0 0 20px rgba(111, 66, 193, 0.4);">
+        <h3 style="color:#00d2ff; margin-top:0; border-bottom: 1px dashed #333; padding-bottom:10px; text-align:center;">⚙️ Pengaturan Akun</h3>
+        
+        <!-- BAGIAN 1: GANTI EMAIL -->
+        <div style="margin-bottom: 20px;">
+            <label style="color:#aaa; font-size:12px;">Email Saat Ini: <span id="settings-current-email" style="color:#fff;">Memuat...</span></label>
+            <div style="display:flex; gap:10px; margin-top:8px;">
+                <input type="email" id="settings-new-email" placeholder="Email Baru" style="flex:1; padding:8px; background:#0d151e; color:#fff; border:1px solid #3f3f52; border-radius:4px; box-sizing: border-box; outline:none;">
+                <button id="btn-change-email" style="background:#28a745; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">Ubah</button>
+            </div>
+        </div>
+
+        <!-- BAGIAN 2: LINK / UNLINK GOOGLE -->
+        <div style="margin-bottom: 25px; border-top: 1px solid #333; padding-top: 15px;">
+            <label style="color:#aaa; font-size:12px; display:block; margin-bottom:10px;">Hubungkan Akun Google</label>
+            
+            <button id="btn-link-google" style="display:none; width:100%; background:#ffffff; color:#444; border:none; padding:10px; border-radius:4px; font-weight:bold; cursor:pointer; align-items:center; justify-content:center; gap:10px;">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:16px;"> Bind Google
+            </button>
+            
+            <button id="btn-unlink-google" style="display:none; width:100%; background:#dc3545; color:#fff; border:none; padding:10px; border-radius:4px; font-weight:bold; cursor:pointer;">
+                Putuskan Tautan (Unbind) Google
+            </button>
+        </div>
+
+        <!-- BAGIAN 3: HAPUS AKUN -->
+        <div style="border-top: 1px solid #333; padding-top: 15px;">
+            <button id="btn-delete-account" style="width:100%; background:#8b0000; color:#fff; border:1px solid #ff4c4c; padding:10px; border-radius:4px; font-weight:bold; cursor:pointer;">
+                ⚠️ Hapus Akun Permanen
+            </button>
+            <p style="font-size:11px; color:#ff4c4c; text-align:center; margin-top:5px; margin-bottom:0;">Tindakan ini tidak bisa dibatalkan!</p>
+        </div>
+
+        <button id="btn-close-settings" style="width:100%; margin-top:20px; background:#333; color:#fff; border:none; padding:10px; border-radius:4px; font-weight:bold; cursor:pointer;">Tutup</button>
+    </div>
+</div>
