@@ -19,14 +19,27 @@ export function listenToParties(db, callbackRender) {
 export async function createOrJoinParty(db, fbKey, playerStats) {
     if (!playerStats.uid) return;
     const boss = FB_BOSSES[fbKey];
-    if (!boss) return console.error("Dungeon tidak valid!");
-    if (playerStats.level < boss.levelReq) return console.error(`Level Anda belum cukup! Butuh Level ${boss.levelReq}.`);
+    if (!boss) {
+        window.rpgAlert("Dungeon tidak valid!", "❌ Error Sistem");
+        return console.error("Dungeon tidak valid!");
+    }
+
+    if (playerStats.level < boss.levelReq) {
+        window.rpgAlert(
+            `Level Anda belum cukup untuk menghadapi <b>${boss.name}</b>.<br>Dibutuhkan minimal Level <span style="color:#ffcc00">${boss.levelReq}</span>.`,
+            "❌ Level Terlalu Rendah"
+        );
+        return console.error(`Level kurang: ${playerStats.level}/${boss.levelReq}`);
+    }
 
     const inv = playerStats.inventory || window.currentInventoryData || {};
     const ticketCount = inv["Batu Dungeon"] || 0;
 
     if (ticketCount < 1) {
-        alert("❌ Gagal! Anda membutuhkan minimal 1x [Batu Dungeon] untuk masuk ke FB.");
+        window.rpgAlert(
+            "Anda membutuhkan minimal 1x <b>[Batu Dungeon]</b> untuk masuk ke dalam Party Fuben ini.",
+            "❌ Tiket Tidak Cukup"
+        );
         return console.error("Tidak punya Batu Dungeon!");
     }
 
