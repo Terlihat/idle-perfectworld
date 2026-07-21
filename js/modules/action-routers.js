@@ -2,7 +2,7 @@
 // SISTEM ROUTER & EVENT LISTENER GLOBAL
 // ==========================================
 import { db } from '../firebase-config.js';
-import { doc, updateDoc, collection, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, updateDoc, collection, getDocs, writeBatch, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { MONSTER_DB } from '../data/monsters.js';
 import { ITEM_DB } from '../data/items.js';
 
