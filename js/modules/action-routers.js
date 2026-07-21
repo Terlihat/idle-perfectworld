@@ -84,7 +84,7 @@ window.handleInventoryClick = async function (itemName) {
     }
     else if (modeSaatIni === "SELL") { sellItemToNPC(db, uid, itemName); }
     else if (modeSaatIni === "BANK") {
-        const inv = stats.inventory || {};
+        const inv = window.currentInventoryData || stats.inventory || {};
         const totalItemDiTas = inv[itemName] || 0;
 
         const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ingin disimpan?`, "Simpan ke Bank", "number", totalItemDiTas);
@@ -133,7 +133,7 @@ window.handleInventoryClick = async function (itemName) {
 // ==========================================
 window.handleBankClick = async function (itemName) {
     const stats = window.currentPlayerStats || {};
-    const bankInv = stats.bankInventory || {};
+    const bankInv = window.currentBankInventoryData || stats.bankInventory || {};
     const totalItemDiBank = bankInv[itemName] || 0;
 
     const qtyStr = await window.rpgPrompt(`Berapa banyak [${itemName}] yang ditarik?`, "Tarik dari Bank", "number", totalItemDiBank);
