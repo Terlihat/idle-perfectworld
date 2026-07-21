@@ -50,8 +50,21 @@
     <input type="email" id="auth-email" placeholder="Alamat Email"
         style="width: 100%; padding: 12px; margin-bottom: 12px; background: #0d151e; color: #fff; border: 1px solid #3f3f52; border-radius: 4px; box-sizing: border-box;">
 
-    <input type="password" id="auth-password" placeholder="Kata Sandi"
-        style="width: 100%; padding: 12px; margin-bottom: 20px; background: #0d151e; color: #fff; border: 1px solid #3f3f52; border-radius: 4px; box-sizing: border-box;">
+    <!-- KOTAK PASSWORD DENGAN IKON MATA -->
+    <div style="position: relative; margin-bottom: 12px;">
+        <input type="password" id="auth-password" placeholder="Kata Sandi"
+            style="width: 100%; padding: 12px; padding-right: 40px; background: #0d151e; color: #fff; border: 1px solid #3f3f52; border-radius: 4px; box-sizing: border-box;">
+        <button type="button" class="btn-toggle-pass" data-target="auth-password"
+            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #aaa; cursor: pointer; font-size: 16px;">👁️</button>
+    </div>
+
+    <!-- KOTAK KONFIRMASI PASSWORD (Bawaannya Sembunyi) -->
+    <div id="auth-confirm-container" style="position: relative; margin-bottom: 20px; display: none;">
+        <input type="password" id="auth-password-confirm" placeholder="Ulangi Kata Sandi"
+            style="width: 100%; padding: 12px; padding-right: 40px; background: #0d151e; color: #fff; border: 1px solid #3f3f52; border-radius: 4px; box-sizing: border-box;">
+        <button type="button" class="btn-toggle-pass" data-target="auth-password-confirm"
+            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #aaa; cursor: pointer; font-size: 16px;">👁️</button>
+    </div>
 
     <button id="btn-primary-auth"
         style="width: 100%; padding: 12px; background: #28a745; color: #fff; font-weight: bold; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; transition: 0.2s;">MASUK</button>
