@@ -32,6 +32,13 @@ window.openAdminTab = function (tabId, btnElement) {
 
 document.getElementById('btn-home')?.addEventListener('click', () => { window.location.href = '../index.html'; });
 
+document.getElementById('btn-toggle-sidebar')?.addEventListener('click', () => {
+    const sidebar = document.querySelector('.admin-sidebar');
+    if (sidebar) {
+        sidebar.style.display = sidebar.style.display === 'none' ? '' : 'none';
+    }
+});
+
 // ==========================================
 // SISTEM AUDIT LOG
 // ==========================================
