@@ -32,7 +32,7 @@ export async function selectCharacterClass(db, uid, charClass, callback) {
             currentStamina: 100,
             maxStamina: 100,
             lastStaminaUpdate: Date.now(),
-            inventory: { "Pedang Besi": 1, "Tongkat Sihir": 1, "Mirage Stone": 5000, "Universal Stone": 3000, "Ramuan HP": 10, "Ramuan MP": 10 },
+            inventory: { "Pedang Besi": 1, "Tongkat Sihir": 1, "Mirage Stone": 5000, "Universal Stone": 3000, "Heaven Stone": 1000, "Underworld Stone": 1000, "Ramuan HP": 10, "Ramuan MP": 10 },
             bankInventory: {},
             equipment: { weapon: null, armor: null, accessory: null },
             statPoints: 0,
