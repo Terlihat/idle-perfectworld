@@ -313,8 +313,9 @@ function startLiveGameSync() {
         }
 
         // Panggil fungsi chat secara mutlak setelah profil selesai dimuat
-        if (typeof window.startDynamicChat === 'function') {
+        if (!window.isChatLoaded && typeof window.startDynamicChat === 'function') {
             window.startDynamicChat();
+            window.isChatLoaded = true; // Tandai bahwa chat sudah berhasil dimuat
         }
     });
 
