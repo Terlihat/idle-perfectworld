@@ -435,7 +435,6 @@ export function setupActionRouters() {
                 return window.rpgAlert("Kata sandi baru tidak boleh kosong dan harus minimal 6 karakter!");
             }
 
-            // Tutup modal pengaturan terlebih dahulu agar pop-up konfirmasi tidak tertumpuk
             document.getElementById('settings-modal').style.display = 'none';
 
             if (await window.rpgConfirm("Yakin ingin mengubah kata sandi Anda?", "Ganti Kata Sandi")) {
@@ -456,9 +455,13 @@ export function setupActionRouters() {
         if (targetId === 'btn-link-google') {
             const user = auth.currentUser;
             if (!user) return;
+
+            document.getElementById('settings-modal').style.display = 'none';
+
             try {
                 await linkWithPopup(user, googleProvider);
                 window.rpgAlert("Akun Google berhasil dihubungkan (Bind)!");
+
                 document.getElementById('btn-link-google').style.display = 'none';
                 document.getElementById('btn-unlink-google').style.display = 'block';
             } catch (error) {
@@ -470,14 +473,11 @@ export function setupActionRouters() {
             const user = auth.currentUser;
             if (!user) return;
 
-            // 🔥 PERBAIKAN: Tutup modal pengaturan DULUAN agar pop-up tidak tertumpuk
             document.getElementById('settings-modal').style.display = 'none';
 
-            // Cek apakah pemain sudah pernah membuat kata sandi
             const hasPassword = user.providerData.some(p => p.providerId === 'password');
 
             if (!hasPassword) {
-                // Minta pemain membuat kata sandi baru menggunakan fitur rpgPrompt
                 const newPass = await window.rpgPrompt("Anda mendaftar via Google. Anda harus membuat Kata Sandi baru (minimal 6 karakter) untuk login nanti:", "Buat Kata Sandi", "text");
 
                 if (!newPass || newPass.length < 6) {
@@ -485,7 +485,6 @@ export function setupActionRouters() {
                 }
 
                 try {
-                    // Simpan kata sandi baru ke Firebase
                     await updatePassword(user, newPass);
                     window.rpgAlert("Kata sandi berhasil dibuat! Anda kini bisa login menggunakan Email dan Kata Sandi tersebut.");
                 } catch (error) {
@@ -496,7 +495,6 @@ export function setupActionRouters() {
                 }
             }
 
-            // Setelah dipastikan punya kata sandi, baru tanyakan konfirmasi unbind
             if (await window.rpgConfirm("Yakin ingin memutuskan tautan akun Google Anda?", "Unbind Akun")) {
                 try {
                     await unlink(user, 'google.com');
