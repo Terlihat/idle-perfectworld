@@ -104,7 +104,26 @@ document.addEventListener('click', async (e) => {
             if (authPasswordConfirm) authPasswordConfirm.value = "";
 
         } catch (error) {
-            alert("Terjadi Kesalahan: " + error.message);
+            let pesanError = "Terjadi Kesalahan: " + error.message;
+
+            // 🔥 PERBAIKAN: Menerjemahkan kode error Firebase ke bahasa yang lebih manusiawi
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                pesanError = "❌ Email atau Kata Sandi yang Anda masukkan salah!";
+            } else if (error.code === 'auth/email-already-in-use') {
+                pesanError = "❌ Pendaftaran Gagal: Email ini sudah terdaftar! Silakan langsung login.";
+            } else if (error.code === 'auth/too-many-requests') {
+                pesanError = "❌ Terlalu banyak percobaan gagal. Demi keamanan, silakan coba lagi beberapa saat lagi.";
+            } else if (error.code === 'auth/network-request-failed') {
+                pesanError = "❌ Koneksi terputus. Pastikan internet Anda stabil.";
+            }
+
+            // Gunakan window.rpgAlert jika sudah tersedia, atau fallback ke alert bawaan browser
+            if (typeof window.rpgAlert === 'function') {
+                window.rpgAlert(pesanError, "Sistem Autentikasi");
+            } else {
+                alert(pesanError);
+            }
+
             btnAuth.innerText = isLoginMode ? "MASUK" : "DAFTAR";
             btnAuth.style.background = isLoginMode ? "#28a745" : "#ff9800";
         } finally {
