@@ -1,18 +1,14 @@
 <h2 style="color: #ffcc00;">🛡️ Guild</h2>
 <div id="guild-unjoined-view" style="display:none;">
 
-    <!-- 🔥 PERBAIKAN: Flexbox, Height, dan Box-sizing -->
+    <!-- Bagian Pembuatan Guild -->
     <div style="display:flex; gap:5px; align-items: stretch; height: 36px;">
         <input type="text" id="input-guild-name" placeholder="Ketik Nama Guild"
             style="flex:1; padding: 0 10px; background: #121216; color: #fff; border: 1px solid #3f3f52; border-radius: 3px; box-sizing: border-box; outline: none; height: 100%;">
-
-        <!-- 🔥 PERBAIKAN: Teks tombol diubah -->
         <button id="btn-create-guild"
             style="background:#28a745; color: white; border: none; padding: 0 15px; border-radius: 3px; font-weight: bold; cursor: pointer; height: 100%; box-sizing: border-box;">Buat
             Guild</button>
     </div>
-
-    <!-- 🔥 PERBAIKAN: Keterangan biaya dipisah ke bawah -->
     <div style="font-size: 11px; color: #aaa; margin-top: 4px; margin-bottom: 10px;">
         Biaya pendirian Guild: <strong style="color: #ffd700;">100.000 Gold</strong>
     </div>
@@ -30,33 +26,46 @@
         Level <strong id="guild-level-display" style="color:#ffcc00;">1</strong> | Ketua: <span
             id="guild-leader-display">...</span>
     </div>
-    <div style="font-size:11px; margin-bottom:5px; padding:4px; background:#28a745; color:#fff; border-radius:3px;">
+    <div style="font-size:11px; margin-bottom:10px; padding:6px; background:#28a745; color:#fff; border-radius:3px;">
         🌟 Buff Guild Aktif: <strong id="guild-buff-display">...</strong>
     </div>
-    <div style="display:flex; align-items:center; gap:5px; margin-bottom:5px;">
-        <div style="font-size:11px; flex:1;">Dana Guild: <strong id="guild-vault-display"
+
+    <!-- 🔥 PERBAIKAN: Posisi dan Ukuran Kolom Donasi -->
+    <div style="display:flex; align-items:center; margin-bottom:10px;">
+        <div style="font-size:12px; flex:1;">Dana Guild: <strong id="guild-vault-display"
                 style="color:#ffd700;">0</strong> G</div>
-        <input type="number" id="input-donate-gold" placeholder="Sumbang" style="width:60px; font-size:10px;">
-        <button id="btn-donate-guild"
-            style="padding:4px 8px; background:#ffca28; color:#000; font-size:10px; font-weight:bold;">Donasi</button>
+
+        <div style="display:flex; gap:5px; align-items: stretch; height: 30px;">
+            <input type="number" id="input-donate-gold" placeholder="Jumlah"
+                style="width: 80px; padding: 0 8px; background: #121216; color: #fff; border: 1px solid #3f3f52; border-radius: 3px; font-size: 11px; box-sizing: border-box; outline: none;">
+            <button id="btn-donate-guild"
+                style="background: #ffca28; color: #000; border: none; padding: 0 12px; border-radius: 3px; font-weight: bold; cursor: pointer; font-size: 11px; box-sizing: border-box;">Donasi</button>
+        </div>
     </div>
 
     <div id="guild-management-controls" style="display:none; gap:5px; margin-bottom:5px;">
-        <button id="btn-upgrade-guild" style="flex:1; background:#007bff; font-size:10px;">⏫ Naik Level</button>
-        <button id="btn-edit-motd" style="flex:1; background:#6f42c1; font-size:10px;">📝 Edit Pengumuman</button>
-        <button id="btn-disband-guild" style="flex:1; background:#dc3545; font-size:10px;">❌ Bubarkan</button>
+        <button id="btn-upgrade-guild"
+            style="flex:1; background:#007bff; font-size:11px; padding: 6px; border: none; border-radius: 3px; color: white; cursor: pointer; font-weight: bold;">⏫
+            Naik Level</button>
+        <button id="btn-edit-motd"
+            style="flex:1; background:#6f42c1; font-size:11px; padding: 6px; border: none; border-radius: 3px; color: white; cursor: pointer; font-weight: bold;">📝
+            Edit Pengumuman</button>
+        <button id="btn-disband-guild"
+            style="flex:1; background:#dc3545; font-size:11px; padding: 6px; border: none; border-radius: 3px; color: white; cursor: pointer; font-weight: bold;">❌
+            Bubarkan</button>
     </div>
 
     <div
-        style="background:#121216; padding:5px; font-size:11px; margin-bottom:5px; font-style:italic; border-left:3px solid #6f42c1;">
+        style="background:#121216; padding:8px; font-size:11px; margin-bottom:10px; font-style:italic; border-left:3px solid #6f42c1;">
         "<span id="guild-motd-display">...</span>"
     </div>
 
     <strong style="font-size:11px; color:#aaa;">Anggota:</strong>
     <div id="guild-member-list"
-        style="max-height: 100px; overflow-y: auto; font-size:11px; border:1px solid #333; padding:5px; background:#121216;">
+        style="max-height: 120px; overflow-y: auto; font-size:11px; border:1px solid #333; padding:5px; background:#121216; margin-bottom: 5px;">
     </div>
 
-    <button id="btn-leave-guild" style="width:100%; background:#dc3545; margin-top:5px; font-size:10px;">Keluar dari
-        Guild</button>
+    <button id="btn-leave-guild"
+        style="width:100%; background:#dc3545; color: white; border: none; padding: 8px; border-radius: 3px; cursor: pointer; margin-top:5px; font-size:11px; font-weight: bold;">Keluar
+        dari Guild</button>
 </div>
