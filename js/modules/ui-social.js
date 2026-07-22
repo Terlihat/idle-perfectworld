@@ -186,14 +186,30 @@ export function renderChatUI(messages, currentChatChannel) {
     const chatBox = document.getElementById('chat-box');
     if (!chatBox) return;
     chatBox.innerHTML = "";
+
     let chColor = '#aaa';
     let chLabel = 'DUNIA';
     if (currentChatChannel === 'guild') { chColor = '#28a745'; chLabel = 'GUILD'; }
     if (currentChatChannel === 'party') { chColor = '#00d2ff'; chLabel = 'PARTY'; }
+
     messages.forEach(m => {
         const vipBadge = (m.vipLevel && m.vipLevel > 0) ? `<span class="vip-badge vip-chat">V${m.vipLevel}</span>` : "";
-        chatBox.innerHTML += `<div><strong style="color:${chColor}; font-size:9px;">[${chLabel}]</strong> ${vipBadge} <span class="chat-name">${escapeHTML(m.username)}</span>: ${escapeHTML(m.text)}</div>`;
+
+        // 🔥 LOGIKA RENDER GM
+        let displayName = escapeHTML(m.username);
+        let textColor = "#ccc"; // Warna chat standar
+
+        // Jika statusnya isAdmin (Thecakepz), ubah namanya jadi tulisan merah
+        if (m.isAdmin) {
+            displayName = `<strong style="color: #ff4c4c;">[GM]</strong>`;
+            textColor = "#ffca28"; // Buat isi pesannya berwarna emas agar menonjol
+        }
+
+        chatBox.innerHTML += `<div style="margin-bottom: 4px; line-height: 1.3;"><strong style="color:${chColor}; font-size:9px;">[${chLabel}]</strong> ${vipBadge} <span class="chat-name">${displayName}</span>: <span style="color: ${textColor};">${escapeHTML(m.text)}</span></div>`;
     });
+
+    // Otomatis scroll layar chat ke pesan paling bawah setiap kali ada chat baru
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 // ==========================================

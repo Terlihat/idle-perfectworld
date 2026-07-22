@@ -312,7 +312,10 @@ function startLiveGameSync() {
             elOwnedStone.innerText = d.inventory && d.inventory['Universal Stone'] ? d.inventory['Universal Stone'] : 0;
         }
 
-        if (!unsubChatListener) startDynamicChat();
+        // Panggil fungsi chat secara mutlak setelah profil selesai dimuat
+        if (typeof window.startDynamicChat === 'function') {
+            window.startDynamicChat();
+        }
     });
 
     const unsubMail = listenToMailbox(db, currentUserUid, (mails) => {
