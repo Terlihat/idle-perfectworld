@@ -302,7 +302,7 @@ export function setupActionRouters() {
     document.addEventListener('change', (e) => {
         if (e.target && e.target.id === 'chat-channel-select') {
             const val = e.target.value;
-            if (val === 'guild' && (!window.currentPlayerStats || !window.currentPlayerStats.guildId)) { window.rpgAlert("Belum gabung Guild!"); e.target.value = window.currentChatChannel; return; }
+            if (val === 'guild' && (!window.currentPlayerStats || !window.currentPlayerStats.guildId)) { window.rpgAlert("Belum Memiliki Guild!"); e.target.value = window.currentChatChannel; return; }
             if (val === 'party' && !window.currentPartyId) { window.rpgAlert("Belum masuk Party FB!"); e.target.value = window.currentChatChannel; return; }
             window.currentChatChannel = val;
             if (window.startDynamicChat) window.startDynamicChat();

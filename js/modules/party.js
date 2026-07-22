@@ -20,14 +20,14 @@ export async function createOrJoinParty(db, fbKey, playerStats) {
     if (!playerStats.uid) return;
     const boss = FB_BOSSES[fbKey];
     if (!boss) {
-        window.rpgAlert("Dungeon tidak valid!", "❌ Error Sistem");
+        window.rpgAlert("Dungeon tidak valid!", "Pesan Sistem");
         return console.error("Dungeon tidak valid!");
     }
 
     if (playerStats.level < boss.levelReq) {
         window.rpgAlert(
             `Level Anda belum cukup untuk menghadapi <b>${boss.name}</b>.<br>Dibutuhkan minimal Level <span style="color:#ffcc00">${boss.levelReq}</span>.`,
-            "❌ Level Terlalu Rendah"
+            "Pesan Sistem"
         );
         return console.error(`Level kurang: ${playerStats.level}/${boss.levelReq}`);
     }
@@ -38,7 +38,7 @@ export async function createOrJoinParty(db, fbKey, playerStats) {
     if (ticketCount < 1) {
         window.rpgAlert(
             "Anda membutuhkan minimal 1x <b>[Batu Dungeon]</b> untuk masuk ke dalam Party Fuben ini.",
-            "❌ Tiket Tidak Cukup"
+            "Pesan Sistem"
         );
         return console.error("Tidak punya Batu Dungeon!");
     }
