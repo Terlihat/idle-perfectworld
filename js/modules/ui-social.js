@@ -201,8 +201,8 @@ export function renderChatUI(messages, currentChatChannel) {
 
         // Jika statusnya isAdmin (Thecakepz), ubah namanya jadi tulisan merah
         if (m.isAdmin) {
-            displayName = `<strong style="color: #ff4c4c;">[GM]</strong>`;
-            textColor = "#ffca28"; // Buat isi pesannya berwarna emas agar menonjol
+            displayName = `<strong style="color: #f84747;">GM</strong>`;
+            textColor = "#fc1c1c"; // Buat isi pesannya berwarna emas agar menonjol
         }
 
         chatBox.innerHTML += `<div style="margin-bottom: 4px; line-height: 1.3;"><strong style="color:${chColor}; font-size:9px;">[${chLabel}]</strong> ${vipBadge} <span class="chat-name">${displayName}</span>: <span style="color: ${textColor};">${escapeHTML(m.text)}</span></div>`;
