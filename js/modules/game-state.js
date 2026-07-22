@@ -24,4 +24,4 @@ window.isForging = false;
 // --- SISTEM PERTARUNGAN (FUBEN) ---
 window.isFbRunning = false;
 
-console.log("✅ [Game State] Brankas variabel berhasil dimuat!");
+console.log("✅ Brankas variabel berhasil dimuat!");

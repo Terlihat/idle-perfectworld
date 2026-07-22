@@ -312,10 +312,17 @@ function startLiveGameSync() {
             elOwnedStone.innerText = d.inventory && d.inventory['Universal Stone'] ? d.inventory['Universal Stone'] : 0;
         }
 
-        // Panggil fungsi chat secara mutlak setelah profil selesai dimuat
-        if (!window.isChatLoaded && typeof window.startDynamicChat === 'function') {
-            window.startDynamicChat();
-            window.isChatLoaded = true; // Tandai bahwa chat sudah berhasil dimuat
+        if (typeof unsubChatListener === 'undefined' || !unsubChatListener) {
+            setTimeout(() => {
+                // Coba jalankan fungsi lokal
+                if (typeof startDynamicChat === 'function') {
+                    startDynamicChat();
+                }
+                // Atau jalankan fungsi global (sebagai cadangan)
+                else if (typeof window.startDynamicChat === 'function') {
+                    window.startDynamicChat();
+                }
+            }, 500);
         }
     });
 
