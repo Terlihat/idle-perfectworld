@@ -1,25 +1,39 @@
-/* ===================================================
+/* ======================================
    MODUL MISI HARIAN & BOUNTY HUNTER
-   =================================================== */
-import { db } from '../firebase-config.js'; // PASTIKAN MENGIMPOR DB
+   ====================================== */
+import { db } from '../firebase-config.js';
 import { doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getVipStats } from './vip.js';
 
-const DAILY_QUESTS = [
-    { id: "slime", title: "Kalahkan 10x Slime Hijau", target: 10, rGold: 3000, rItem: "Ramuan HP" },
-    { id: "goblin", title: "Kalahkan 8x Goblin Perampok", target: 8, rGold: 5000, rItem: "Ramuan MP" },
-    { id: "orc", title: "Kalahkan 5x Orc Warrior", target: 5, rGold: 8000, rItem: "Mirage Stone" },
-    { id: "dragon", title: "Kalahkan 3x Anak Naga", target: 3, rGold: 12000, rItem: "Mirage Stone" }
-];
+// 🔥 FUNGSI BARU: Menentukan Misi Solo berdasarkan Level
+function getDailyQuestByLevel(level) {
+    if (level < 10) return { id: "slime", title: "Kalahkan 10x Slime Hijau", target: 10, rGold: 3000, rItem: "Ramuan HP" };
+    if (level < 20) return { id: "goblin", title: "Kalahkan 12x Goblin Perampok", target: 12, rGold: 6000, rItem: "Ramuan MP" };
+    if (level < 30) return { id: "orc", title: "Kalahkan 15x Orc Warrior", target: 15, rGold: 12000, rItem: "Mirage Stone" };
+    if (level < 40) return { id: "skeleton", title: "Kalahkan 15x Skeleton Archer", target: 15, rGold: 20000, rItem: "Mirage Stone" };
+    if (level < 50) return { id: "golem", title: "Kalahkan 20x Stone Golem", target: 20, rGold: 35000, rItem: "Mirage Stone" };
+    if (level < 60) return { id: "darkelf", title: "Kalahkan 20x Dark Elf Assassin", target: 20, rGold: 50000, rItem: "Ramuan HP" };
+    if (level < 70) return { id: "succubus", title: "Kalahkan 25x Succubus", target: 25, rGold: 75000, rItem: "Ramuan MP" };
+    if (level < 80) return { id: "vampire", title: "Kalahkan 25x Vampire Lord", target: 25, rGold: 100000, rItem: "Mirage Stone" };
+    if (level < 90) return { id: "dragon", title: "Kalahkan 30x Anak Naga", target: 30, rGold: 150000, rItem: "Mirage Stone" };
+    return { id: "demon", title: "Kalahkan 30x Demon King", target: 30, rGold: 250000, rItem: "Mirage Stone" };
+}
 
-const BOUNTY_QUESTS = [
-    { id: "fb19", title: "Selesaikan FB19 (Party)", target: 1, rGold: 15000, rCoin: 0 },
-    { id: "fb29", title: "Selesaikan FB29 (Party)", target: 1, rGold: 25000, rCoin: 0 },
-    { id: "fb39", title: "Selesaikan FB39 (Party)", target: 1, rGold: 40000, rCoin: 0 },
-    { id: "fb51", title: "Selesaikan FB51 (Party)", target: 1, rGold: 80000, rCoin: 0 }
-];
+// 🔥 FUNGSI BARU: Menentukan Bounty Fuben berdasarkan Level
+function getBountyQuestByLevel(level) {
+    if (level < 20) return { id: "fb19", title: "Selesaikan FB19 (Party)", target: 1, rGold: 15000, rCoin: 0 };
+    if (level < 30) return { id: "fb29", title: "Selesaikan FB29 (Party)", target: 1, rGold: 25000, rCoin: 0 };
+    if (level < 40) return { id: "fb39", title: "Selesaikan FB39 (Party)", target: 1, rGold: 40000, rCoin: 0 };
+    if (level < 50) return { id: "fb51", title: "Selesaikan FB51 (Party)", target: 1, rGold: 65000, rCoin: 0 };
+    if (level < 60) return { id: "fb59", title: "Selesaikan FB59 (Party)", target: 1, rGold: 90000, rCoin: 0 };
+    if (level < 70) return { id: "fb69", title: "Selesaikan FB69 (Party)", target: 1, rGold: 130000, rCoin: 0 };
+    if (level < 80) return { id: "fb79", title: "Selesaikan FB79 (Party)", target: 1, rGold: 190000, rCoin: 0 };
+    if (level < 90) return { id: "fb89", title: "Selesaikan FB89 (Party)", target: 1, rGold: 270000, rCoin: 0 };
+    if (level < 100) return { id: "fb99", title: "Selesaikan FB99 (Party)", target: 1, rGold: 400000, rCoin: 0 };
+    return { id: "fb100", title: "Selesaikan FB100 (Party)", target: 1, rGold: 600000, rCoin: 0 };
+}
 
-// FUNGSI HELPER
+// FUNGSI HELPER MENCATAT PROGRESS
 export function getUpdatedQuests(userData, questType, targetId, amount) {
     let q = userData.quests ? JSON.parse(JSON.stringify(userData.quests)) : null;
     if (q && q[questType] && !q[questType].isClaimed && q[questType].targetId === targetId) {
@@ -28,20 +42,24 @@ export function getUpdatedQuests(userData, questType, targetId, amount) {
     return q || userData.quests;
 }
 
-// UBAH JADI WINDOW AGAR TERHUBUNG KE HTML
+// FUNGSI MEMBERIKAN MISI SAAT TOMBOL DIKLIK
 window.assignNewQuests = async function () {
     const uid = window.currentUserUid;
     if (!uid) return;
     const userRef = doc(db, "users", uid);
     const today = new Date().toLocaleDateString('id-ID');
 
-    const dQ = DAILY_QUESTS[Math.floor(Math.random() * DAILY_QUESTS.length)];
-    const bQ = BOUNTY_QUESTS[Math.floor(Math.random() * BOUNTY_QUESTS.length)];
-
     try {
         await runTransaction(db, async (ts) => {
             const snap = await ts.get(userRef);
             if (!snap.exists()) return;
+
+            const data = snap.data();
+            const playerLevel = data.level || 1; // Ambil level asli karakter dari database
+
+            // Pilih misi berdasarkan level karakter
+            const dQ = getDailyQuestByLevel(playerLevel);
+            const bQ = getBountyQuestByLevel(playerLevel);
 
             ts.update(userRef, {
                 quests: {
@@ -51,11 +69,11 @@ window.assignNewQuests = async function () {
                 }
             });
         });
-        alert("📜 Misi berhasil diperbarui! Silakan cek panel misi Anda.");
-    } catch (e) { alert("Gagal mengambil misi: " + e); }
+        window.rpgAlert("📜 Misi berhasil disesuaikan dengan level Anda saat ini! Silakan cek panel misi.");
+    } catch (e) { window.rpgAlert("Gagal mengambil misi: " + e); }
 };
 
-// UBAH JADI WINDOW AGAR TERHUBUNG KE HTML
+// FUNGSI KLAIM HADIAH MISI
 window.claimQuest = async function (questType) {
     const uid = window.currentUserUid;
     if (!uid) return;
@@ -85,10 +103,10 @@ window.claimQuest = async function (questType) {
             let newCoin = (data.coin || 0) + (q[questType].rCoin || 0);
             let inv = data.inventory || {};
 
-            let msg = `🎉 KLAIM BERHASIL! Mendapat +${baseGold} Gold`;
+            let msg = `🎉 KLAIM BERHASIL! Mendapat +${baseGold.toLocaleString()} Gold`;
 
             if (bonusGold > 0) {
-                msg += ` (Bonus VIP 👑: +${bonusGold} Gold)`;
+                msg += ` (Bonus VIP 👑: +${bonusGold.toLocaleString()} Gold)`;
             }
 
             if (q[questType].rItem) {
@@ -98,7 +116,7 @@ window.claimQuest = async function (questType) {
             if (q[questType].rCoin) { msg += `, +${q[questType].rCoin} COIN`; }
 
             ts.update(userRef, { quests: q, gold: newGold, coin: newCoin, inventory: inv });
-            alert(msg);
+            window.rpgAlert(msg);
         });
-    } catch (e) { alert("Klaim Gagal: " + e); }
+    } catch (e) { window.rpgAlert("Klaim Gagal: " + e); }
 };
