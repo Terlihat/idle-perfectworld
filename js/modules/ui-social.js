@@ -121,9 +121,8 @@ export function renderGuildUI(stats, globalGuilds, guildUpgradesMap) {
             controls.style.display = 'none';
         }
 
-        // 🔥 PERBAIKAN: Mengarah ke Tbody Tabel Baru
         const memberList = document.getElementById('guild-member-table-body');
-        if (!memberList) return; // Mencegah error jika HTML belum termuat
+        if (!memberList) return;
         memberList.innerHTML = "";
 
         function toRoman(num) {
@@ -131,29 +130,25 @@ export function renderGuildUI(stats, globalGuilds, guildUpgradesMap) {
             return roman[num] || num;
         }
 
-        // 🔥 LOGIKA SORTING (Jabatan tertinggi di atas, lalu kontribusi)
         const roleWeight = { "Ketua": 5, "Wakil": 4, "Deputy": 3, "Kapten": 2, "Member": 1 };
-
+        const getRole = (member) => member.uid === myGuild.leaderId ? "Ketua" : (member.role || "Member");
         const sortedMembers = [...myGuild.members].sort((a, b) => {
-            const weightA = roleWeight[a.role || "Member"] || 0;
-            const weightB = roleWeight[b.role || "Member"] || 0;
+            const weightA = roleWeight[getRole(a)] || 0;
+            const weightB = roleWeight[getRole(b)] || 0;
             if (weightA !== weightB) return weightB - weightA;
             return (b.contribution || 0) - (a.contribution || 0);
         });
 
-        // 🔥 RENDER TABEL
         sortedMembers.forEach(m => {
             const isMe = m.uid === stats.uid;
-            const memberRole = m.role || "Member";
+            const memberRole = getRole(m);
 
-            // Pewarnaan teks jabatan
             let roleColor = "#aaa";
             if (memberRole === "Ketua") roleColor = "#ffcc00";
             if (memberRole === "Wakil") roleColor = "#00d2ff";
             if (memberRole === "Deputy") roleColor = "#e83e8c";
             if (memberRole === "Kapten") roleColor = "#28a745";
 
-            // Tombol Aksi (Hanya muncul untuk Ketua yang melihat anggota lain)
             let actionHTML = `<span style="color:#555;">-</span>`;
             if (isLeader && !isMe) {
                 actionHTML = `
@@ -173,7 +168,6 @@ export function renderGuildUI(stats, globalGuilds, guildUpgradesMap) {
                 ? `<span style="color: #ff5722; font-weight: bold; font-size: 11px; margin-left: 5px;">[RW ${toRoman(rebirthCount)}]</span>`
                 : "";
 
-            // Menyuntikkan baris <tr> ke dalam <tbody>
             memberList.innerHTML += `
             <tr style="border-bottom: 1px solid #222; background: ${isMe ? '#1a1a24' : 'transparent'};">
                 <td style="padding: 6px;">
