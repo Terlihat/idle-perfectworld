@@ -1,9 +1,22 @@
 <h2 style="color: #ffcc00;">🛡️ Guild</h2>
 <div id="guild-unjoined-view" style="display:none;">
-    <div style="display:flex; gap:5px; margin-bottom:5px;">
-        <input type="text" id="input-guild-name" placeholder="Ketik Nama Guild" style="flex:1;">
-        <button id="btn-create-guild" style="background:#28a745;">Buat (100k Gold)</button>
+
+    <!-- 🔥 PERBAIKAN: Flexbox, Height, dan Box-sizing -->
+    <div style="display:flex; gap:5px; align-items: stretch; height: 36px;">
+        <input type="text" id="input-guild-name" placeholder="Ketik Nama Guild"
+            style="flex:1; padding: 0 10px; background: #121216; color: #fff; border: 1px solid #3f3f52; border-radius: 3px; box-sizing: border-box; outline: none; height: 100%;">
+
+        <!-- 🔥 PERBAIKAN: Teks tombol diubah -->
+        <button id="btn-create-guild"
+            style="background:#28a745; color: white; border: none; padding: 0 15px; border-radius: 3px; font-weight: bold; cursor: pointer; height: 100%; box-sizing: border-box;">Buat
+            Guild</button>
     </div>
+
+    <!-- 🔥 PERBAIKAN: Keterangan biaya dipisah ke bawah -->
+    <div style="font-size: 11px; color: #aaa; margin-top: 4px; margin-bottom: 10px;">
+        Biaya pendirian Guild: <strong style="color: #ffd700;">100.000 Gold</strong>
+    </div>
+
     <hr style="border-color:#333; margin:8px 0;">
     <strong style="font-size:11px; color:#ffcc00;">Daftar Guild Terbuka:</strong>
     <div id="guild-available-list"
