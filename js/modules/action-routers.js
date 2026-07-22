@@ -13,7 +13,7 @@ import { ITEM_DB } from '../data/items.js';
 // Import Fungsi Modul
 import { selectCharacterClass, consumePotion, addCharacterStat } from './character.js';
 import { sendChat } from './chat.js';
-import { createGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, disbandGuild, joinGuild, kickMember } from './guild.js';
+import { createGuild, leaveGuild as dbLeaveGuild, donateGold, upgradeGuild, updateMotd, disbandGuild, joinGuild, kickMember, changeMemberRole } from './guild.js';
 import { depositGold, withdrawGold, depositItem, withdrawItem } from './bank.js';
 import { attackMonster } from './battle.js';
 import { createOrJoinParty, leaveParty, startFbBattle } from './party.js';
@@ -195,6 +195,12 @@ window.startFb = async function (partyId) {
 
 window.joinGuildAction = async function (guildId) { if (await window.rpgConfirm("Bergabung dengan Guild ini?", "Gabung Guild")) joinGuild(db, window.currentUserUid, window.currentPlayerStats, guildId); };
 window.kickMemberAction = async function (targetUid) { if (await window.rpgConfirm("Keluarkan anggota ini?", "Keluarkan")) kickMember(db, window.currentUserUid, window.currentPlayerStats.guildId, targetUid); };
+window.changeRoleAction = async function (targetUid, newRole) {
+    if (!newRole) return;
+    if (await window.rpgConfirm(`Ubah jabatan anggota ini menjadi ${newRole}?`, "Ubah Jabatan")) {
+        changeMemberRole(db, window.currentUserUid, window.currentPlayerStats.guildId, targetUid, newRole);
+    }
+};
 window.actionCraftItem = async function (recipeName) { if (await window.rpgConfirm(`Siap menempa [${recipeName}]?`, "Crafting")) craftItemAction(db, window.currentUserUid, recipeName); };
 window.actionUnequip = function (slotType) { unequipItem(db, window.currentUserUid, slotType); };
 

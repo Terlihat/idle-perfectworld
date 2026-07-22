@@ -79,6 +79,7 @@ export function renderGuildUI(stats, globalGuilds, guildUpgradesMap) {
     const unjoinedView = document.getElementById('guild-unjoined-view');
     const joinedView = document.getElementById('guild-joined-view');
     if (!stats || !stats.uid || !unjoinedView || !joinedView) return;
+
     if (!stats.guildId || !globalGuilds[stats.guildId]) {
         unjoinedView.style.display = 'block';
         joinedView.style.display = 'none';
@@ -110,6 +111,7 @@ export function renderGuildUI(stats, globalGuilds, guildUpgradesMap) {
         document.getElementById('guild-vault-display').innerText = (myGuild.vaultGold || 0).toLocaleString();
         document.getElementById('guild-motd-display').innerText = escapeHTML(myGuild.announcement);
         document.getElementById('guild-buff-display').innerText = `+${b.atk} ATK, +${b.hp} HP, +${b.def} DEF`;
+
         const controls = document.getElementById('guild-management-controls');
         if (isLeader) {
             controls.style.display = 'flex';
@@ -118,7 +120,10 @@ export function renderGuildUI(stats, globalGuilds, guildUpgradesMap) {
         } else {
             controls.style.display = 'none';
         }
-        const memberList = document.getElementById('guild-member-list');
+
+        // 🔥 PERBAIKAN: Mengarah ke Tbody Tabel Baru
+        const memberList = document.getElementById('guild-member-table-body');
+        if (!memberList) return; // Mencegah error jika HTML belum termuat
         memberList.innerHTML = "";
 
         function toRoman(num) {
@@ -126,22 +131,59 @@ export function renderGuildUI(stats, globalGuilds, guildUpgradesMap) {
             return roman[num] || num;
         }
 
-        myGuild.members.forEach(m => {
-            const isMe = m.uid === stats.uid;
-            const kickBtn = (isLeader && !isMe) ? `<button onclick="window.kickMemberAction('${m.uid}')" style="padding:1px 4px; font-size:8px; background:#dc3545; margin-left:5px;">Kick</button>` : '';
+        // 🔥 LOGIKA SORTING (Jabatan tertinggi di atas, lalu kontribusi)
+        const roleWeight = { "Ketua": 5, "Wakil": 4, "Deputy": 3, "Kapten": 2, "Member": 1 };
 
-            // 🔥 3. Logika untuk RW Badge
+        const sortedMembers = [...myGuild.members].sort((a, b) => {
+            const weightA = roleWeight[a.role || "Member"] || 0;
+            const weightB = roleWeight[b.role || "Member"] || 0;
+            if (weightA !== weightB) return weightB - weightA;
+            return (b.contribution || 0) - (a.contribution || 0);
+        });
+
+        // 🔥 RENDER TABEL
+        sortedMembers.forEach(m => {
+            const isMe = m.uid === stats.uid;
+            const memberRole = m.role || "Member";
+
+            // Pewarnaan teks jabatan
+            let roleColor = "#aaa";
+            if (memberRole === "Ketua") roleColor = "#ffcc00";
+            if (memberRole === "Wakil") roleColor = "#00d2ff";
+            if (memberRole === "Deputy") roleColor = "#e83e8c";
+            if (memberRole === "Kapten") roleColor = "#28a745";
+
+            // Tombol Aksi (Hanya muncul untuk Ketua yang melihat anggota lain)
+            let actionHTML = `<span style="color:#555;">-</span>`;
+            if (isLeader && !isMe) {
+                actionHTML = `
+                    <select onchange="window.changeRoleAction('${m.uid}', this.value)" style="background:#0d1117; color:#fff; font-size:10px; padding:2px; border:1px solid #333; border-radius:3px; outline:none;">
+                        <option value="" disabled selected>Jabatan</option>
+                        <option value="Wakil">Wakil</option>
+                        <option value="Deputy">Deputy</option>
+                        <option value="Kapten">Kapten</option>
+                        <option value="Member">Member</option>
+                    </select>
+                    <button onclick="window.kickMemberAction('${m.uid}')" style="background:#dc3545; color:#fff; border:none; padding:3px 6px; font-size:10px; border-radius:3px; cursor:pointer; margin-left:3px; font-weight:bold;">X</button>
+                `;
+            }
+
             const rebirthCount = m.rebirth || 0;
             const rwBadge = rebirthCount > 0
                 ? `<span style="color: #ff5722; font-weight: bold; font-size: 11px; margin-left: 5px;">[RW ${toRoman(rebirthCount)}]</span>`
                 : "";
 
-            // 🔥 4. Menyisipkan rwBadge di sebelah nama pemain
+            // Menyuntikkan baris <tr> ke dalam <tbody>
             memberList.innerHTML += `
-            <div style="border-bottom:1px solid #333; padding:3px 0; display:flex; justify-content:space-between; align-items:center;">
-                <div><span style="color:${isMe ? '#ffca28' : '#fff'};">${escapeHTML(m.name)}</span>${rwBadge} (Lv.${m.level}) ${kickBtn}</div>
-                <div style="color:#aaa;">Donasi: ${m.contribution.toLocaleString()} G</div>
-            </div>`;
+            <tr style="border-bottom: 1px solid #222; background: ${isMe ? '#1a1a24' : 'transparent'};">
+                <td style="padding: 6px;">
+                    <strong style="color: ${isMe ? '#ffca28' : '#fff'};">${escapeHTML(m.name)}</strong>${rwBadge} 
+                    <span style="color:#aaa; font-size:10px;">(Lv.${m.level})</span>
+                </td>
+                <td style="padding: 6px; color: ${roleColor}; font-weight: bold;">${memberRole}</td>
+                <td style="padding: 6px; text-align: right; color: #ffd700;">${(m.contribution || 0).toLocaleString()} G</td>
+                <td style="padding: 6px; text-align: center;">${actionHTML}</td>
+            </tr>`;
         });
     }
 }

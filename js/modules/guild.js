@@ -45,7 +45,7 @@ export async function createGuild(db, uid, playerStats, guildName) {
                 leaderName: uData.username,
                 vaultGold: 0,
                 announcement: "Selamat datang di guild kami!",
-                members: [{ uid: uid, name: uData.username, level: uData.level, rebirth: uData.rebirth || 0, contribution: 0 }],
+                members: [{ uid: uid, name: uData.username, level: uData.level, rebirth: uData.rebirth || 0, contribution: 0, role: "Ketua" }],
                 createdAt: serverTimestamp()
             });
 
@@ -74,7 +74,7 @@ export async function joinGuild(db, uid, playerStats, guildId) {
             const maxM = GUILD_UPGRADES[gData.level].maxMembers;
             if (gData.members.length >= maxM) throw "Guild sudah penuh!";
 
-            let newMembers = [...gData.members, { uid: uid, name: uData.username, level: uData.level, rebirth: uData.rebirth || 0, contribution: 0 }];
+            let newMembers = [...gData.members, { uid: uid, name: uData.username, level: uData.level, rebirth: uData.rebirth || 0, contribution: 0, role: "Member" }];
 
             ts.update(guildRef, { members: newMembers });
             ts.update(userRef, { guildId: guildId, guildName: gData.name });
@@ -194,4 +194,32 @@ export async function disbandGuild(db, leaderUid, guildId) {
         });
         alert("Guild berhasil dibubarkan.");
     } catch (err) { alert(err); }
+}
+
+export async function changeMemberRole(db, leaderUid, guildId, targetUid, newRole) {
+    const guildRef = doc(db, "guilds", guildId);
+    try {
+        await runTransaction(db, async (ts) => {
+            const gSnap = await ts.get(guildRef);
+            if (!gSnap.exists()) throw "Guild tidak ditemukan.";
+            const gData = gSnap.data();
+
+            // Validasi Hak Akses
+            if (gData.leaderId !== leaderUid) throw "Hanya Ketua yang dapat mengubah jabatan!";
+            if (leaderUid === targetUid) throw "Anda adalah Ketua, tidak bisa mengubah jabatan sendiri!";
+
+            const validRoles = ["Wakil", "Deputy", "Kapten", "Member"];
+            if (!validRoles.includes(newRole)) throw "Jabatan tidak dikenali!";
+
+            let newMembers = gData.members.map(m => {
+                if (m.uid === targetUid) m.role = newRole;
+                return m;
+            });
+
+            ts.update(guildRef, { members: newMembers });
+        });
+        alert(`✅ Jabatan anggota berhasil diubah menjadi ${newRole}!`);
+    } catch (err) {
+        alert(err);
+    }
 }

@@ -59,9 +59,22 @@
         "<span id="guild-motd-display">...</span>"
     </div>
 
-    <strong style="font-size:11px; color:#aaa;">Anggota:</strong>
-    <div id="guild-member-list"
-        style="max-height: 120px; overflow-y: auto; font-size:11px; border:1px solid #333; padding:5px; background:#121216; margin-bottom: 5px;">
+    <!-- 🔥 INI BAGIAN YANG BARU DITAMBAHKAN (TABEL ANGGOTA) -->
+    <strong style="font-size:11px; color:#aaa;">Daftar Anggota:</strong>
+    <div style="max-height: 150px; overflow-y: auto; border:1px solid #333; background:#121216; margin-bottom: 5px;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 11px;">
+            <thead style="background: #1c1c24; border-bottom: 1px solid #333;">
+                <tr>
+                    <th style="padding: 6px; color: #aaa;">Anggota</th>
+                    <th style="padding: 6px; color: #aaa;">Jabatan</th>
+                    <th style="padding: 6px; color: #aaa; text-align: right;">Kontribusi</th>
+                    <th style="padding: 6px; color: #aaa; text-align: center;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="guild-member-table-body">
+                <!-- Baris akan dimuat otomatis oleh JavaScript -->
+            </tbody>
+        </table>
     </div>
 
     <button id="btn-leave-guild"
