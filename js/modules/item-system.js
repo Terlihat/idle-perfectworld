@@ -14,7 +14,7 @@ export async function loadCloudItems(db) {
             window.CLOUD_ITEM_DB[doc.id] = doc.data();
         });
 
-        console.log("🎒 Data Item Cloud berhasil dimuat ke memori pemain!");
+        console.log("✅ Data Item Cloud berhasil dimuat ke memori pemain!");
 
         // 🔥 PERBAIKAN: Paksa sistem menggambar ulang UI Tas dan Bank 
         // SETELAH data Cloud benar-benar selesai diunduh.
