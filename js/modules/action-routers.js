@@ -2,8 +2,8 @@
 // SISTEM ROUTER & EVENT LISTENER GLOBAL
 // ==========================================
 import { db, auth } from '../firebase-config.js';
-import { doc, updateDoc, collection, getDocs, writeBatch, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js"; // 🔥 Tambahkan deleteDoc
-import { updateEmail, linkWithPopup, unlink, GoogleAuthProvider, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js"; // 🔥 Import modul Auth
+import { doc, updateDoc, collection, getDocs, writeBatch, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { updateEmail, linkWithPopup, unlink, GoogleAuthProvider, deleteUser, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -425,6 +425,34 @@ export function setupActionRouters() {
             }
         }
 
+        if (targetId === 'btn-change-password') {
+            const newPassword = document.getElementById('settings-new-password').value;
+            const user = auth.currentUser;
+
+            if (!user) return;
+
+            if (!newPassword || newPassword.length < 6) {
+                return window.rpgAlert("Kata sandi baru tidak boleh kosong dan harus minimal 6 karakter!");
+            }
+
+            // Tutup modal pengaturan terlebih dahulu agar pop-up konfirmasi tidak tertumpuk
+            document.getElementById('settings-modal').style.display = 'none';
+
+            if (await window.rpgConfirm("Yakin ingin mengubah kata sandi Anda?", "Ganti Kata Sandi")) {
+                try {
+                    await updatePassword(user, newPassword);
+                    window.rpgAlert("Kata sandi berhasil diubah! Gunakan kata sandi baru ini saat Anda login berikutnya.");
+                    document.getElementById('settings-new-password').value = ""; // Bersihkan kolom input
+                } catch (error) {
+                    if (error.code === 'auth/requires-recent-login') {
+                        window.rpgAlert("Sistem menolak. Anda harus Logout dan Login kembali sebelum dapat mengubah kata sandi.");
+                    } else {
+                        window.rpgAlert("Gagal mengubah kata sandi: " + error.message);
+                    }
+                }
+            }
+        }
+
         if (targetId === 'btn-link-google') {
             const user = auth.currentUser;
             if (!user) return;
@@ -441,17 +469,38 @@ export function setupActionRouters() {
         if (targetId === 'btn-unlink-google') {
             const user = auth.currentUser;
             if (!user) return;
-            const hasPassword = user.providerData.some(p => p.providerId === 'password');
-            if (!hasPassword) return window.rpgAlert("❌ Anda mendaftar menggunakan Google. Tambahkan kata sandi terlebih dahulu sebelum unbind.");
 
+            // 🔥 PERBAIKAN: Tutup modal pengaturan DULUAN agar pop-up tidak tertumpuk
             document.getElementById('settings-modal').style.display = 'none';
 
+            // Cek apakah pemain sudah pernah membuat kata sandi
+            const hasPassword = user.providerData.some(p => p.providerId === 'password');
+
+            if (!hasPassword) {
+                // Minta pemain membuat kata sandi baru menggunakan fitur rpgPrompt
+                const newPass = await window.rpgPrompt("Anda mendaftar via Google. Anda harus membuat Kata Sandi baru (minimal 6 karakter) untuk login nanti:", "Buat Kata Sandi", "text");
+
+                if (!newPass || newPass.length < 6) {
+                    return window.rpgAlert("Dibatalkan! Kata sandi tidak valid atau kurang dari 6 karakter.");
+                }
+
+                try {
+                    // Simpan kata sandi baru ke Firebase
+                    await updatePassword(user, newPass);
+                    window.rpgAlert("Kata sandi berhasil dibuat! Anda kini bisa login menggunakan Email dan Kata Sandi tersebut.");
+                } catch (error) {
+                    if (error.code === 'auth/requires-recent-login') {
+                        return window.rpgAlert("Sistem menolak. Anda harus Logout dan Login kembali sebelum mengatur kata sandi keamanan.");
+                    }
+                    return window.rpgAlert("Gagal membuat kata sandi: " + error.message);
+                }
+            }
+
+            // Setelah dipastikan punya kata sandi, baru tanyakan konfirmasi unbind
             if (await window.rpgConfirm("Yakin ingin memutuskan tautan akun Google Anda?", "Unbind Akun")) {
                 try {
                     await unlink(user, 'google.com');
                     window.rpgAlert("Akun Google berhasil dilepaskan (Unbind)!");
-                    document.getElementById('btn-link-google').style.display = 'flex';
-                    document.getElementById('btn-unlink-google').style.display = 'none';
                 } catch (error) {
                     window.rpgAlert("Gagal melepaskan Google: " + error.message);
                 }
