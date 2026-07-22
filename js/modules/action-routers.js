@@ -433,14 +433,21 @@ export function setupActionRouters() {
 
             if (!user) return;
 
-            // Validasi kelengkapan kolom input
-            if (!oldPassword) return window.rpgAlert("Silakan masukkan kata sandi lama Anda terlebih dahulu.");
-            if (!newPassword || newPassword.length < 6) return window.rpgAlert("Kata sandi baru tidak boleh kosong dan minimal 6 karakter!");
-            if (newPassword !== confirmPassword) return window.rpgAlert("❌ Konfirmasi gagal! Kata sandi baru dan ulangi kata sandi tidak cocok.");
-
-            // Tutup modal pengaturan agar pop-up konfirmasi tidak tertumpuk
+            // 🔥 PERBAIKAN: Tutup modal SEBELUM melakukan pengecekan apapun
             document.getElementById('settings-modal').style.display = 'none';
 
+            // Validasi kelengkapan kolom input
+            if (!oldPassword) {
+                return window.rpgAlert("Silakan masukkan kata sandi lama Anda terlebih dahulu.");
+            }
+            if (!newPassword || newPassword.length < 6) {
+                return window.rpgAlert("Kata sandi baru tidak boleh kosong dan minimal 6 karakter!");
+            }
+            if (newPassword !== confirmPassword) {
+                return window.rpgAlert("❌ Konfirmasi gagal! Kata sandi baru dan ulangi kata sandi tidak cocok.");
+            }
+
+            // Jika semua validasi lolos, baru tanyakan konfirmasi
             if (await window.rpgConfirm("Yakin ingin mengubah kata sandi Anda?", "Ganti Kata Sandi")) {
                 try {
                     // 1. Verifikasi (Re-authenticate) menggunakan kata sandi lama
