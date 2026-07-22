@@ -18,17 +18,26 @@
                 <button id="btn-change-email"
                     style="background:#28a745; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer; font-weight:bold; height:38px; box-sizing:border-box;">Ubah</button>
             </div>
-
-            <label style="color:#aaa; font-size:12px; display:block; margin-bottom:8px;">Ganti Kata Sandi</label>
-            <div style="display:flex; gap:10px;">
-                <input type="password" id="settings-new-password" placeholder="Sandi Baru (Min 6 karakter)"
-                    style="flex:1; padding:8px 10px; background:#0d151e; color:#fff; border:1px solid #3f3f52; border-radius:4px; box-sizing: border-box; outline:none; height:38px;">
-                <button id="btn-change-password"
-                    style="background:#ffca28; color:#000; border:none; padding:0 15px; border-radius:4px; cursor:pointer; font-weight:bold; height:38px; box-sizing:border-box;">Ubah</button>
-            </div>
         </div>
 
+        <!-- BAGIAN 1.5: GANTI KATA SANDI -->
+        <div style="margin-bottom: 20px; border-top: 1px solid #333; padding-top: 15px;">
+            <label style="color:#aaa; font-size:12px; display:block; margin-bottom:10px;">Ganti Kata Sandi</label>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <input type="password" id="settings-old-password" placeholder="Kata Sandi Lama"
+                    style="width:100%; padding:8px 10px; background:#0d151e; color:#fff; border:1px solid #3f3f52; border-radius:4px; box-sizing: border-box; outline:none; height:38px;">
 
+                <input type="password" id="settings-new-password" placeholder="Sandi Baru (Min 6 karakter)"
+                    style="width:100%; padding:8px 10px; background:#0d151e; color:#fff; border:1px solid #3f3f52; border-radius:4px; box-sizing: border-box; outline:none; height:38px;">
+
+                <input type="password" id="settings-confirm-password" placeholder="Ulangi Sandi Baru"
+                    style="width:100%; padding:8px 10px; background:#0d151e; color:#fff; border:1px solid #3f3f52; border-radius:4px; box-sizing: border-box; outline:none; height:38px;">
+
+                <button id="btn-change-password"
+                    style="width:100%; background:#ffca28; color:#000; border:none; padding:0 15px; border-radius:4px; cursor:pointer; font-weight:bold; height:38px; box-sizing:border-box;">Ubah
+                    Kata Sandi</button>
+            </div>
+        </div>
 
         <!-- BAGIAN 2: LINK / UNLINK GOOGLE -->
         <div style="margin-bottom: 25px; border-top: 1px solid #333; padding-top: 15px;">

@@ -3,7 +3,7 @@
 // ==========================================
 import { db, auth } from '../firebase-config.js';
 import { doc, updateDoc, collection, getDocs, writeBatch, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { updateEmail, linkWithPopup, unlink, GoogleAuthProvider, deleteUser, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { updateEmail, linkWithPopup, unlink, GoogleAuthProvider, deleteUser, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -426,25 +426,41 @@ export function setupActionRouters() {
         }
 
         if (targetId === 'btn-change-password') {
+            const oldPassword = document.getElementById('settings-old-password').value;
             const newPassword = document.getElementById('settings-new-password').value;
+            const confirmPassword = document.getElementById('settings-confirm-password').value;
             const user = auth.currentUser;
 
             if (!user) return;
 
-            if (!newPassword || newPassword.length < 6) {
-                return window.rpgAlert("Kata sandi baru tidak boleh kosong dan harus minimal 6 karakter!");
-            }
+            // Validasi kelengkapan kolom input
+            if (!oldPassword) return window.rpgAlert("Silakan masukkan kata sandi lama Anda terlebih dahulu.");
+            if (!newPassword || newPassword.length < 6) return window.rpgAlert("Kata sandi baru tidak boleh kosong dan minimal 6 karakter!");
+            if (newPassword !== confirmPassword) return window.rpgAlert("❌ Konfirmasi gagal! Kata sandi baru dan ulangi kata sandi tidak cocok.");
 
+            // Tutup modal pengaturan agar pop-up konfirmasi tidak tertumpuk
             document.getElementById('settings-modal').style.display = 'none';
 
             if (await window.rpgConfirm("Yakin ingin mengubah kata sandi Anda?", "Ganti Kata Sandi")) {
                 try {
+                    // 1. Verifikasi (Re-authenticate) menggunakan kata sandi lama
+                    const credential = EmailAuthProvider.credential(user.email, oldPassword);
+                    await reauthenticateWithCredential(user, credential);
+
+                    // 2. Jika sandi lama benar, proses perubahan ke sandi baru
                     await updatePassword(user, newPassword);
-                    window.rpgAlert("Kata sandi berhasil diubah! Gunakan kata sandi baru ini saat Anda login berikutnya.");
-                    document.getElementById('settings-new-password').value = ""; // Bersihkan kolom input
+                    window.rpgAlert("✅ Kata sandi berhasil diubah! Gunakan kata sandi baru ini saat Anda login berikutnya.");
+
+                    // Bersihkan kolom input
+                    document.getElementById('settings-old-password').value = "";
+                    document.getElementById('settings-new-password').value = "";
+                    document.getElementById('settings-confirm-password').value = "";
                 } catch (error) {
-                    if (error.code === 'auth/requires-recent-login') {
-                        window.rpgAlert("Sistem menolak. Anda harus Logout dan Login kembali sebelum dapat mengubah kata sandi.");
+                    // Deteksi jika pemain salah memasukkan sandi lamanya
+                    if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                        window.rpgAlert("❌ Kata sandi lama yang Anda masukkan salah!");
+                    } else if (error.code === 'auth/too-many-requests') {
+                        window.rpgAlert("❌ Terlalu banyak percobaan yang gagal. Silakan coba lagi nanti.");
                     } else {
                         window.rpgAlert("Gagal mengubah kata sandi: " + error.message);
                     }
